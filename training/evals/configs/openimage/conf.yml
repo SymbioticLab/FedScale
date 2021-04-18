@@ -1,0 +1,45 @@
+# Configuration file of Kuiper training experiment
+
+# ========== Cluster configuration ========== 
+# ip address of the parameter server (need 1 GPU)
+ps_ip: 10.0.0.5
+
+# ip address of each worker:# of gpus on this worker
+# Note that if we collocate ps and worker, then we need to decrease this number of gpus by 1
+# E.g., master node has 4 GPUs, then 1 for the ps, and worker should be set to: worker:3
+worker_ips: 
+    - 10.0.0.3:1 # worker_ip: # of gpus
+    - 10.0.0.4:1 
+    - 10.0.0.2:1
+    - 10.0.0.1:1
+
+exp_path: $HOME/Kuiper/training
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run kuiper (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate kuiper    
+    - export NCCL_SOCKET_IFNAME='enp94s0f0'         # Run "ifconfig" to ensure the right NIC for nccl if you have multiple NICs
+
+# ========== Additional job configuration ========== 
+# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+
+job_conf: 
+    - log_path: $HOME/Kuiper/training/evals # Path of log files
+    - job_name: openimage                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - total_worker: 100                     # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: openImg                     # Dataset: openImg, google_speech, stackoverflow
+    - data_dir: $HOME/Kuiper/FLPerf/open_images    # Path of the dataset
+    - data_mapfile: $HOME/Kuiper/FLPerf/open_images/clientDataMap              # Allocation of data to each client, turn to iid setting if not provided
+    - client_path: $HOME/Kuiper/FLPerf/data/device_info/client_profile.pkl     # Path of the client trace
+    - sample_mode: kuiper                                  # Client selection: random, kuiper
+    - model: shufflenet_v2_x2_0                            # Models: shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
+    - gradient_policy: yogi                 # Commenting out this line will turn to "Fedprox"
+    - round_penalty: 2.0                    # Penalty factor in our paper (\alpha), \alpha -> 0 turns to (Kuiper w/o sys)
+    - eval_interval: 20                     # How many rounds to run a testing on the testing set
+    - epochs: 500                           # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - pacer_delta: 10
+
