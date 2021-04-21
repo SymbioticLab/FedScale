@@ -38,7 +38,16 @@ elif args.task == 'speech':
     from utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
     from utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
     from utils.speech import BackgroundNoiseDataset
-
+elif args.task == 'detection':
+    from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
+    from utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
+    from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+    from utils.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
+        adjust_learning_rate, save_checkpoint, clip_gradient
+    from utils.rcnn.lib.model.faster_rcnn.resnet import resnet
+    from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
+    from utils.rcnn.lib.model.roi_layers import nms
+    from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
 from helper.clientSampler import clientSampler
 from utils.yogi import YoGi
 
@@ -56,7 +65,7 @@ def init_dataset():
     global tokenizer
 
     outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
-                    'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5
+                    'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist' : 1010
                 }
 
     logging.info("====Initialize the model")
@@ -121,6 +130,20 @@ def init_dataset():
                            rnn_type=supported_rnns[args.rnn_type.lower()],
                            audio_conf=audio_conf,
                            bidirectional=args.bidirectional)
+    elif args.task == 'detection':
+        imdb_name = "voc_2007_trainval"
+        imdbval_name = "voc_2007_test"
+        np.random.seed(cfg.RNG_SEED)
+        cfg_from_file(args.cfg_file)
+        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name)
+        # train_size = len(roidb)
+        train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, training=True)
+        imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, False)
+        imdb_.competition_mode(on=True)
+        test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, training=False, normalize = False)
+        model = resnet(imdb.classes, 101, pretrained=True, class_agnostic=False)
+        model.create_architecture()
+        return model, train_dataset, test_dataset
     else:
         model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 

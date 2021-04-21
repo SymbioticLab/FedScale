@@ -114,6 +114,11 @@ parser.add_argument('--yogi_tau', type=float, default=1e-3)
 parser.add_argument('--yogi_beta', type=float, default=0.999)
 parser.add_argument('--yogi_beta2', type=float, default=-1)
 
+# for detection
+parser.add_argument('--cfg_file', type=str, default='./utils/rcnn/cfgs/res101.yml')
+parser.add_argument('--test_output_dir', type=str, default='./logs/server')
+
+
 # for albert
 
 parser.add_argument(

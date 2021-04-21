@@ -30,7 +30,7 @@ workers = [int(v) for v in str(args.learners).split('-')]
 
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
-# os.environ['NCCL_DEBUG'] = 'INFO'
+os.environ['NCCL_DEBUG'] = 'INFO'
 
 logging.info("===== Experiment start =====")
 
@@ -151,7 +151,37 @@ def run_client(clientId, cmodel, iters, learning_rate, argdicts = {}):
 
     curBatch = -1
 
-    if args.task != 'nlp' and args.task != 'text_clf':
+    im_data = torch.FloatTensor(1)
+    im_info = torch.FloatTensor(1)
+    num_boxes = torch.LongTensor(1)
+    gt_boxes = torch.FloatTensor(1)
+
+    # ship to cuda
+    if args.task == "detection":
+        im_data = im_data.cuda()
+        im_info = im_info.cuda()
+        num_boxes = num_boxes.cuda()
+        gt_boxes = gt_boxes.cuda()
+
+        # make variable
+        im_data = Variable(im_data)
+        im_info = Variable(im_info)
+        num_boxes = Variable(num_boxes)
+        gt_boxes = Variable(gt_boxes)
+
+    if args.task == "detection":
+        lr = 1e-3
+        params = []
+        for key, value in dict(cmodel.named_parameters()).items():
+            if value.requires_grad:
+                if 'bias' in key:
+                    params += [{'params':[value],'lr':lr*(cfg.TRAIN.DOUBLE_BIAS + 1), \
+                            'weight_decay': cfg.TRAIN.BIAS_DECAY and cfg.TRAIN.WEIGHT_DECAY or 0}]
+                else:
+                    params += [{'params':[value],'lr':lr, 'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
+        # params = cmodel.parameters()
+        optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
+    elif args.task != 'nlp' and args.task != 'text_clf':
         optimizer = MySGD(cmodel.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
     else:
         no_decay = ["bias", "LayerNorm.weight"]
@@ -229,6 +259,10 @@ def run_client(clientId, cmodel, iters, learning_rate, argdicts = {}):
                     elif args.task == 'voice':
                         (data, target, input_percentages, target_sizes), _ = next(train_data_itr_list[0])
                         input_sizes = input_percentages.mul_(int(data.size(3))).int()
+                    elif args.task == 'detection':
+                        temp_data = next(train_data_itr_list[0])
+                        target = temp_data[4]
+                        data = temp_data[0:4]
                     else:
                         (data, target) = next(train_data_itr_list[0])
 
@@ -268,7 +302,14 @@ def run_client(clientId, cmodel, iters, learning_rate, argdicts = {}):
             for idx, x in enumerate(target):
                 target[idx] = flip_label_mapping[int(x.item())]
 
-        data = Variable(data).to(device=device)
+        if args.task == "detection":
+            with torch.no_grad():
+                im_data.resize_(data[0].size()).copy_(data[0])
+                im_info.resize_(data[1].size()).copy_(data[1])
+                gt_boxes.resize_(data[2].size()).copy_(data[2])
+                num_boxes.resize_(data[3].size()).copy_(data[3])
+        if args.task != "detection":
+            data = Variable(data).to(device=device)
         if args.task != 'voice':
             target = Variable(target).to(device=device)
         if args.task == 'speech':
@@ -289,14 +330,36 @@ def run_client(clientId, cmodel, iters, learning_rate, argdicts = {}):
             outputs, output_sizes = cmodel(data, input_sizes)
             outputs = outputs.transpose(0, 1).float()  # TxNxH
             loss = criterion(outputs, target, output_sizes, target_sizes).to(device=device)
+        elif args.task == "detection":
+            cmodel.zero_grad()
+            rois, cls_prob, bbox_pred, \
+            rpn_loss_cls, rpn_loss_box, \
+            RCNN_loss_cls, RCNN_loss_bbox, \
+            rois_label = cmodel(im_data, im_info, gt_boxes, num_boxes)
+        
+            loss = rpn_loss_cls + rpn_loss_box \
+                    + RCNN_loss_cls + RCNN_loss_bbox
+
+            loss_rpn_cls = rpn_loss_cls.item()
+            loss_rpn_box = rpn_loss_box.item()
+            loss_rcnn_cls = RCNN_loss_cls.item()
+            loss_rcnn_box = RCNN_loss_bbox.item()
+           
+            print("\t\t\trpn_cls: %.4f, rpn_box: %.4f, rcnn_cls: %.4f, rcnn_box %.4f" \
+                      % (loss_rpn_cls, loss_rpn_box, loss_rcnn_cls, loss_rcnn_box))
         else:
             output = cmodel(data)
             loss = criterion(output, target)
 
         temp_loss = 0.
         loss_cnt = 1.
+        if args.task == 'nlp':
+            loss_list = [loss.item()]
+        elif args.task == "detection":
+            loss_list = [loss.tolist()]
+        else:
+            loss_list = loss.tolist()
 
-        loss_list = loss.tolist() if args.task != 'nlp' else [loss.item()]
         for l in loss_list:
             temp_loss += l**2
 
@@ -317,7 +380,7 @@ def run_client(clientId, cmodel, iters, learning_rate, argdicts = {}):
         optimizer.zero_grad()
         loss.mean().backward()
 
-        if args.task != 'nlp' and args.task != 'text_clf':
+        if args.task != 'nlp' and args.task != 'text_clf' and args.task != 'detection':
             delta_w = optimizer.get_delta_w(learning_rate)
 
             if not args.proxy_avg:

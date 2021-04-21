@@ -13,6 +13,22 @@ from argParser import args
 from utils.nlp import mask_tokens
 from utils.decoder import GreedyDecoder
 
+if args.task == "detection":
+    import os
+    import sys
+    from torch.autograd import Variable
+    import torch.nn as nn
+    import torch.optim as optim
+    import pickle
+    from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
+    from utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
+    from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+    from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
+    from utils.rcnn.lib.model.roi_layers import nms
+    from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
+    import numpy as np
+    from utils.rcnn.lib.model.faster_rcnn.resnet import resnet
+
 class MySGD(optim.SGD):
 
     def __init__(self, params, lr=0.01, momentum=0.0,
@@ -131,6 +147,90 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
 
     if args.task == 'voice':
         decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
+
+    if args.task == 'detection':
+        model.eval()
+        imdbval_name = "voc_2007_test"
+        cfg_from_file(args.cfg_file)
+        np.random.seed(cfg.RNG_SEED)
+        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdbval_name)
+        data_iter = iter(test_data)
+        num_images = len(test_data.dataset)
+        imdb._reset_index(test_data.dataset.index)
+        with torch.no_grad():
+            all_boxes = [[[] for _ in range(num_images)]
+               for _ in range(imdb.num_classes)]
+            max_per_image = 100
+            thresh = 0.0
+            empty_array = np.transpose(np.array([[],[],[],[],[]]), (1,0))
+            for i in range(num_images):
+                data = next(data_iter)
+                im_data = Variable(torch.FloatTensor(1).cuda())
+                im_info = Variable(torch.FloatTensor(1).cuda())
+                num_boxes = Variable(torch.LongTensor(1).cuda())
+                gt_boxes = Variable(torch.FloatTensor(1).cuda())
+
+                im_data.resize_(data[0].size()).copy_(data[0])
+                im_info.resize_(data[1].size()).copy_(data[1])
+                gt_boxes.resize_(data[2].size()).copy_(data[2])
+                num_boxes.resize_(data[3].size()).copy_(data[3])
+
+                rois, cls_prob, bbox_pred, \
+                rpn_loss_cls, rpn_loss_box, \
+                RCNN_loss_cls, RCNN_loss_bbox, \
+                rois_label = model(im_data, im_info, gt_boxes, num_boxes)
+
+                scores = cls_prob.data
+                boxes = rois.data[:, :, 1:5]
+
+                if cfg.TEST.BBOX_REG:
+                # Apply bounding-box regression deltas
+                    box_deltas = bbox_pred.data
+                    if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
+                        box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
+                                + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
+                        box_deltas = box_deltas.view(1, -1, 4 * len(imdb.classes))
+
+                    pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)
+                    pred_boxes = clip_boxes(pred_boxes, im_info.data, 1)
+                else:
+                    # Simply repeat the boxes, once for each class
+                    pred_boxes = np.tile(boxes, (1, scores.shape[1]))
+
+
+                pred_boxes /= data[1][0][2].item()
+
+                scores = scores.squeeze()
+                pred_boxes = pred_boxes.squeeze()
+                
+               
+                for j in range(1, imdb.num_classes):
+                    inds = torch.nonzero(scores[:,j]>thresh).view(-1)
+                    # if there is det
+                    if inds.numel() > 0:
+                        cls_scores = scores[:,j][inds]
+                        _, order = torch.sort(cls_scores, 0, True)
+                        cls_boxes = pred_boxes[inds][:, j * 4:(j + 1) * 4]
+                        
+                        cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
+                        # cls_dets = torch.cat((cls_boxes, cls_scores), 1)
+                        cls_dets = cls_dets[order]
+                        keep = nms(cls_boxes[order, :], cls_scores[order], cfg.TEST.NMS)
+                        cls_dets = cls_dets[keep.view(-1).long()]
+                        all_boxes[j][i] = cls_dets.cpu().numpy()
+                    else:
+                        all_boxes[j][i] = empty_array
+
+                # Limit to max_per_image detections *over all classes*
+                if max_per_image > 0:
+                    image_scores = np.hstack([all_boxes[j][i][:, -1]
+                                                for j in range(1, imdb.num_classes)])
+                    if len(image_scores) > max_per_image:
+                        image_thresh = np.sort(image_scores)[-max_per_image]
+                        for j in range(1, imdb.num_classes):
+                            keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
+                            all_boxes[j][i] = all_boxes[j][i][keep, :]
+            return 0, 0, 0, [0, test_data.dataset.index, all_boxes, num_images]
 
     for data, target in test_data:
         if args.task == 'nlp':

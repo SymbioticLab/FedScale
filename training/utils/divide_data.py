@@ -170,6 +170,39 @@ class DataPartitioner(object):
 
         return indicesToRm
 
+    def loadFilterInfoDetection(self):
+        # load data-to-client mapping
+        indicesToRm = []
+
+        try:
+            dataToClient = OrderedDict()
+
+            with open(self.args.data_mapfile, 'rb') as db:
+                dataToClient = pickle.load(db)
+
+            clientNumSamples = {}
+            sampleIdToClient = []
+
+            # data share the same index with labels
+            for index in range(len(self.data)):
+                clientId = dataToClient[index]
+
+                if clientId not in clientNumSamples:
+                    clientNumSamples[clientId] = 0
+
+                clientNumSamples[clientId] += 1
+                sampleIdToClient.append(clientId)
+
+            for index, clientId in enumerate(sampleIdToClient):
+                if clientNumSamples[clientId] < self.args.filter_less:
+                    indicesToRm.append(index)
+
+        except Exception as e:
+            logging.info("====Failed to generate indicesToRm, because of {}".format(e))
+            #pass 
+
+        return indicesToRm
+
     def loadFilterInfoNLP(self):
         indices = []
         base = 0
@@ -354,6 +387,8 @@ class DataPartitioner(object):
             if self.args.filter_less != 0 and self.isTest is False:
                 if self.task == 'cv':
                     indicesToRm = set(self.loadFilterInfo())
+                elif self.task == "detection":
+                    indicesToRm = set(self.loadFilterInfoDetection())
                 else:
                     indicesToRm = set(self.loadFilterInfoBase())
 
@@ -539,9 +574,10 @@ def select_dataset(rank: int, partition: DataPartitioner, batch_size: int, isTes
     timeOut = 0 if isTest else 60
     numOfThreads = args.num_loaders #int(min(args.num_loaders, len(partition)/(batch_size+1)))
     dropLast = False if isTest else True
+    isShuffle = False if isTest else True
 
     if collate_fn is None:
-        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=numOfThreads, drop_last=dropLast, timeout=timeOut)#, worker_init_fn=np.random.seed(12))
+        return DataLoader(partition, batch_size=batch_size, shuffle=isShuffle, pin_memory=False, num_workers=numOfThreads, drop_last=dropLast, timeout=timeOut)#, worker_init_fn=np.random.seed(12))
     else:
-        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=numOfThreads, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)#, worker_init_fn=np.random.seed(12))
+        return DataLoader(partition, batch_size=batch_size, shuffle=isShuffle, pin_memory=False, num_workers=numOfThreads, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)#, worker_init_fn=np.random.seed(12))
 

@@ -20,7 +20,15 @@ sampledClientSet = set()
 
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
-#os.environ['NCCL_DEBUG'] = 'INFO'
+# os.environ['NCCL_DEBUG'] = 'INFO'
+
+##for detection
+if args.task == "detection":
+    imdbval_name = "voc_2007_test"
+    cfg_from_file(args.cfg_file)
+    np.random.seed(cfg.RNG_SEED)
+    imdb, _, _, _ = combined_roidb(imdbval_name)
+
 
 def initiate_sampler_query(queue, numOfClients):
     # Initiate the clientSampler
@@ -281,34 +289,60 @@ def run(model, queue, param_q, stop_signal, clientSampler):
                 updateEpoch = testRes[-1]
                 if updateEpoch not in test_results:
                     # [top_1, top_5, loss, total_size, # of collected ranks]
-                    test_results[updateEpoch] = [0., 0., 0., 0., 0]
+                    if args.task != "detection":
+                        test_results[updateEpoch] = [0., 0., 0., 0., 0]
+                    else:
+                        all_boxes = [[[] for _ in range(0)]
+                                        for _ in range(imdb.num_classes)]
+                        test_results[updateEpoch] = [0., [], all_boxes, 0., 0]
 
                 if updateEpoch != -1:
-                    for idx, c in enumerate(testRes[:-1]):
-                        test_results[updateEpoch][idx] += c
+                    if args.task != "detection":
+                        for idx, c in enumerate(testRes[:-1]):
+                            test_results[updateEpoch][idx] += c
 
-                    test_results[updateEpoch][-1] += 1
-                    # have collected all ranks
-                    if test_results[updateEpoch][-1] == len(workers):
-                        top_1_str = 'top_1: '
-                        top_5_str = 'top_5: '
+                        test_results[updateEpoch][-1] += 1
+                        # have collected all ranks
+                        if test_results[updateEpoch][-1] == len(workers):
+                            top_1_str = 'top_1: '
+                            top_5_str = 'top_5: '
 
-                        try:
-                            logging.info("====After aggregation in epoch: {}, virtual_clock: {}, {}: {} % ({}), {}: {} % ({}), test loss: {}, test len: {}"
-                                    .format(updateEpoch, global_virtual_clock, top_1_str, round(test_results[updateEpoch][0]/test_results[updateEpoch][3]*100.0, 4),
-                                    test_results[updateEpoch][0], top_5_str, round(test_results[updateEpoch][1]/test_results[updateEpoch][3]*100.0, 4),
-                                    test_results[updateEpoch][1], test_results[updateEpoch][2]/test_results[updateEpoch][3], test_results[updateEpoch][3]))
-                            training_history['perf'][updateEpoch] = {'round': updateEpoch, 'clock': global_virtual_clock,
-                                top_1_str: round(test_results[updateEpoch][0]/test_results[updateEpoch][3]*100.0, 4),
-                                top_5_str: round(test_results[updateEpoch][1]/test_results[updateEpoch][3]*100.0, 4),
-                                'loss': test_results[updateEpoch][2]/test_results[updateEpoch][3],
-                                }
+                            try:
+                                logging.info("====After aggregation in epoch: {}, virtual_clock: {}, {}: {} % ({}), {}: {} % ({}), test loss: {}, test len: {}"
+                                        .format(updateEpoch, global_virtual_clock, top_1_str, round(test_results[updateEpoch][0]/test_results[updateEpoch][3]*100.0, 4),
+                                        test_results[updateEpoch][0], top_5_str, round(test_results[updateEpoch][1]/test_results[updateEpoch][3]*100.0, 4),
+                                        test_results[updateEpoch][1], test_results[updateEpoch][2]/test_results[updateEpoch][3], test_results[updateEpoch][3]))
+                                training_history['perf'][updateEpoch] = {'round': updateEpoch, 'clock': global_virtual_clock,
+                                    top_1_str: round(test_results[updateEpoch][0]/test_results[updateEpoch][3]*100.0, 4),
+                                    top_5_str: round(test_results[updateEpoch][1]/test_results[updateEpoch][3]*100.0, 4),
+                                    'loss': test_results[updateEpoch][2]/test_results[updateEpoch][3],
+                                    }
 
-                            with open(os.path.join(logDir, 'training_perf'), 'wb') as fout:
-                                pickle.dump(training_history, fout)
+                                with open(os.path.join(logDir, 'training_perf'), 'wb') as fout:
+                                    pickle.dump(training_history, fout)
 
-                        except Exception as e:
-                            logging.info(f"====Error {e}")
+                            except Exception as e:
+                                logging.info(f"====Error {e}")
+                    else:
+                        if updateEpoch != 0:
+                            for idx, c in enumerate(testRes[:-1]):
+                                if idx != 2:
+                                    test_results[updateEpoch][idx] += c
+                                else:
+                                    for i in range(imdb.num_classes):
+                                        test_results[updateEpoch][idx][i] = test_results[updateEpoch][idx][i] + c[i]
+                                test_results[updateEpoch][-1] += 1
+                                # have collected all ranks
+                                if test_results[updateEpoch][-1] == len(workers):
+                                    imdb._reset_index(test_results[updateEpoch][1])
+                                    output_dir = args.test_output_dir + "/" + str(updateEpoch) 
+                                    aps, mean_ap = imdb.evaluate_detections( test_results[updateEpoch][2], output_dir)
+                                    print("mean_ap ", mean_ap)
+                                    try:
+                                        logging.info("====After aggregation in epoch: {}, virtual_clock: {}, mean_ap: {}, aps: {} test len: {}"
+                                                .format(updateEpoch, global_virtual_clock, mean_ap, aps, test_results[updateEpoch][3]))
+                                    except Exception as e:
+                                        logging.info(f"====Error {e}")
 
                 handlerDur = time.time() - handlerStart
                 global_update += 1
