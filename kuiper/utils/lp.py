@@ -1,10 +1,10 @@
 import pickle, math
 import numpy as np
-import gurobipy as gp
-from gurobipy import *
+#import gurobipy as gp
+#from gurobipy import *
 import time, sys
 from numpy import *
-from .lp_gurobi import *
+#from .lp_gurobi import *
 import logging
 
 def select_by_sorted_num(raw_datas, pref, budget):

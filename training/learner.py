@@ -3,14 +3,15 @@ from fl_client_libs import *
 
 initiate_client_setting()
 
-for i in range(torch.cuda.device_count()):
+total_gpus = 4
+for i in range(total_gpus):
     try:
         device = torch.device('cuda:'+str(i))
         torch.cuda.set_device(i)
         logging.info(f'End up with cuda device {torch.rand(1).to(device=device)}')
         break
     except Exception as e:
-        assert i == torch.cuda.device_count()-1, 'Can not find a feasible GPU'
+        assert i != total_gpus-1, 'Can not find a feasible GPU'
 
 world_size = 0
 global_trainDB = None
@@ -30,7 +31,10 @@ workers = [int(v) for v in str(args.learners).split('-')]
 
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
+os.environ['NCCL_SOCKET_IFNAME'] = 'ib0'
+os.environ['GLOO_SOCKET_IFNAME'] = 'vlan260'
 os.environ['NCCL_DEBUG'] = 'INFO'
+
 
 logging.info("===== Experiment start =====")
 
