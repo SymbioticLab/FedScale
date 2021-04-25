@@ -33,7 +33,10 @@ def dump_ps_ip():
     with open(os.path.join(logDir, 'ip'), 'wb') as fout:
         pickle.dump(ps_ip, fout)
 
+    logging.info(f"Load aggregator ip: {ps_ip}")
+
 
 def initiate_aggregator_setting():
     init_logging()
     dump_ps_ip()
+

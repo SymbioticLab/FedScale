@@ -1,7 +1,7 @@
 import sys, os, time, datetime, random
 
-ps_port = random.randint(1000, 60000)
-manager_port = random.randint(1000, 60000)
+ps_port = random.randint(1000, 8000)
+manager_port = random.randint(1000, 8000)
 
 
 print(ps_port, manager_port)
@@ -68,7 +68,7 @@ jobPrefix = 'learner_' + timeStamp
 # get the join of parameters
 params = ' '.join(sys.argv[2:]) + learner + ' --time_stamp=' + _time_stamp + ' '
 
-rawCmd = '\npython ~/FLPerf-Private/training/learner.py' + paramsCmd
+rawCmd = '\npython ~/FLPerf-Private/training/executor.py' + paramsCmd
 
 assignedVMs = []
 # assert(len(availGPUs) > numOfWorkers)
@@ -95,7 +95,7 @@ for w in range(1, numOfWorkers + 1):
         fout.writelines(runCmd)
 
 # deal with ps
-rawCmdPs = '\npython ~/FLPerf-Private/training/param_server.py ' + paramsCmd + ' --this_rank=0 ' + params
+rawCmdPs = '\npython ~/FLPerf-Private/training/aggregator.py ' + paramsCmd + ' --this_rank=0 ' + params
 
 with open('server.lsf', 'w') as fout:
     master_node = sorted(avaiVms, key=avaiVms.get, reverse=True)[0]

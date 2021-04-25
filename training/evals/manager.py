@@ -62,7 +62,7 @@ def process_cmd(yaml_file):
     learner_conf = '-'.join([str(_) for _ in list(range(1, sum(total_gpus)+1))])
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
-    ps_cmd = f" python {yaml_conf['exp_path']}/param_server.py {conf_script} --this_rank=0 --learner={learner_conf} "
+    ps_cmd = f" python {yaml_conf['exp_path']}/aggregator.py {conf_script} --this_rank=0 --learner={learner_conf} "
 
     with open(f"{job_name}_logging", 'wb') as fout:
         pass
@@ -81,7 +81,7 @@ def process_cmd(yaml_file):
         for _  in range(gpu):
             time.sleep(1)
 
-            worker_cmd = f" python {yaml_conf['exp_path']}/learner.py {conf_script} --this_rank={rank_id} --learner={learner_conf} "
+            worker_cmd = f" python {yaml_conf['exp_path']}/executor.py {conf_script} --this_rank={rank_id} --learner={learner_conf} "
             rank_id += 1
 
             with open(f"{job_name}_logging", 'a') as fout:

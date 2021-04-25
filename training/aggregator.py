@@ -1,0 +1,387 @@
+# -*- coding: utf-8 -*-
+from fl_aggregator_libs import *
+from random import Random
+
+
+class Aggregator(object):
+    """Each executor takes certain resource to run real training.
+       Each run simulates the execution of an individual client"""
+    def __init__(self, args):
+        
+        self.device = torch.device('cuda') if args.use_cuda else torch.device('cpu')
+        self.executors = [int(v) for v in str(args.learners).split('-')]
+
+        # ======== env information ======== 
+        self.this_rank = 0
+        self.global_virtual_clock = 0.
+
+        # ======== model and data ======== 
+        self.model = None
+
+        # list of parameters in model.parameters()
+        self.model_in_update = []
+        self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
+
+        # ======== channels ======== 
+        self.server_event_queue = self.client_event_queue = None
+        self.control_manager = None
+        # event queue of its own functions
+        self.event_queue = collections.deque()
+
+        # ======== runtime information ======== 
+        self.client_run_queue = [] # client ids to run
+        self.client_run_queue_idx = 0
+
+        self.collate_fn = None
+        self.task = args.task
+        self.epoch = 0
+
+        self.start_run_time = time.time()
+        self.num_executors = len(self.executors)
+        self.client_conf = {}
+
+        self.stats_util_accumulator = []
+
+        # number of registered executors
+        self.registered_executor_info = 0
+        self.test_result_accumulator = []
+        self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
+                        'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
+
+        # ======== runtime components =========
+        self.client_manager = None
+
+
+    def setup_env(self):
+        self.setup_seed(seed=self.this_rank)
+        # initiate the log path, and executor ips
+        initiate_aggregator_setting()
+        
+        # set up device
+        if self.args.use_cuda:
+            for i in range(torch.cuda.device_count()):
+                try:
+                    self.device = torch.device('cuda:'+str(i))
+                    torch.cuda.set_device(i)
+                    logging.info(f'End up with cuda device {torch.rand(1).to(device=self.device)}')
+                    break
+                except Exception as e:
+                    assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
+
+        self.control_manager = self.init_control_communication()
+        self.init_data_communication()
+        self.init_client_manager(args=self.args)
+
+    def setup_seed(self, seed=1):
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+
+
+    def init_control_communication(self):
+        # Create communication channel between aggregator and worker
+        # This channel serves control messages
+        os.environ['MASTER_ADDR'] = args.ps_ip
+        os.environ['MASTER_PORT'] = args.ps_port
+        server_event_queue = Queue()
+        client_event_queue = Queue()
+
+        BaseManager.register('get_server_event', callable=lambda: server_event_queue)
+        BaseManager.register('get_client_event', callable=lambda: client_event_queue)
+        manager = BaseManager(address=(args.ps_ip, args.manager_port), authkey=b'queue')
+        manager.connect()
+
+        self.server_event_queue = manager.get_server_event()  # queue for parameter_server signal process
+        self.client_event_queue = manager.get_client_event() 
+
+        return manager
+
+    def init_data_communication(self):
+        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
+
+
+    def init_model(self):
+        """Load model"""
+        return init_model()
+        
+
+    def init_client_manager(self, args):
+        """
+            Currently we implement two client managers:
+            1. Random client sampler
+                - it selects participants randomly in each round
+                - [Ref]: https://arxiv.org/abs/1902.01046
+            2. Kuiper sampler
+                - Kuiper prioritizes the use of those clients who have both data that offers the greatest utility 
+                  in improving model accuracy and the capability to run training quickly.
+                - [Ref]: https://arxiv.org/abs/2010.06081
+        """
+
+        # sample_mode: random or kuiper
+        client_sampler = clientSampler(args.sample_mode, args=args)
+
+        return client_sampler
+
+    def load_client_profile(self, file_path):
+        # load client profiles
+        global_client_profile = {}
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as fin:
+                # {clientId: [computer, bandwidth]}
+                global_client_profile = pickle.load(fin)
+
+        return global_client_profile
+
+    def executor_info_handler(self, executorId, info):
+
+        self.registered_executor_info += 1
+
+        # have collected all executors
+        # In this simulation, we run data split on each worker, so collecting info from one executor is enough
+        # Waiting for data information from executors, or timeout
+
+        if self.registered_executor_info == len(self.workers):
+
+            clientId = 1
+
+            for index, _size in enumerate(info['size']):
+                # since the worker rankId starts from 1, we also configure the initial dataId as 1
+                mapped_id = clientId%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
+                systemProfile = self.client_profiles[mapped_id] if mapped_id in self.client_profiles else [1.0, 1.0]
+
+                self.client_sampler.registerClient(executorId, clientId, dis=[], size=_size, speed=systemProfile)
+                self.client_sampler.registerDuration(clientId, batch_size=self.args.batch_size, 
+                    upload_epoch=self.args.upload_epoch, model_size=self.args.model_size)
+
+                clientId += 1
+
+            logging.info("Info of all feasible clients {}".format(self.client_sampler.getDataInfo()))
+
+            self.event_queue.append('update_model')
+            self.event_queue.append('start_round')
+
+
+    def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
+        """We try to remove dummy events as much as possible, by removing the stragglers/offline clients in overcommitment"""
+
+        sampledClientsReal = []
+        completionTimes = []
+        completed_client_clock = {}
+        # 1. remove dummy clients that are not available to the end of training
+        for client_to_run in sampled_clients:
+            client_cfg = self.client_conf.get(client_to_run, self.args)
+            roundDuration = self.clientSampler.getCompletionTime(client_to_run,
+                                    batch_size=client_cfg.batch_size, upload_epoch=client_cfg.upload_epoch,
+                                    model_size=client_cfg.model_size) * client_cfg.clock_factor
+
+            # if the client is not active by the time of collection, we consider it is lost in this round
+            if self.clientSampler.isClientActive(client_to_run, roundDuration + self.global_virtual_clock):
+                sampledClientsReal.append(client_to_run)
+                completionTimes.append(roundDuration)
+                completed_client_clock[client_to_run] = roundDuration
+
+        # 2. get the top-k completions to remove stragglers
+        sortedWorkersByCompletion = sorted(range(len(completionTimes)), key=lambda k:completionTimes[k])
+        top_k_index = sortedWorkersByCompletion[:num_clients_to_collect]
+        clients_to_run = [sampledClientsReal[k] for k in top_k_index]
+
+        dummy_clients = [sampledClientsReal[k] for k in sortedWorkersByCompletion[num_clients_to_collect:]]
+        round_duration = completionTimes[top_k_index[-1]]
+
+        return clients_to_run, dummy_clients, completed_client_clock, round_duration
+
+
+    def run(self):
+        self.setup_env()
+        self.model = self.init_model()
+
+        self.client_profiles = self.load_client_profile(file_path=self.args.client_path)
+        self.event_monitor()
+
+
+    def generate_broadcast_msg(self, msg):
+        return {executorId:msg for executorId in self.executors}
+
+
+    def assign_participant_list(self, clientsToRun):
+        self.client_run_queue = clientsToRun
+        self.client_run_queue_idx = 0
+
+
+    def pop_next_participant(self):
+        if self.client_run_queue_idx < len(self.client_run_queue):
+            clientId = self.client_run_queue[self.client_run_queue_idx]
+            self.client_run_queue_idx += 1
+            return clientId
+
+        return None
+
+
+    def select_participants(self, select_num_participants, overcommitment=1.3):
+        return sorted(self.clientSampler.resampleClients(int(select_num_participants*overcommitment), cur_time=self.epoch))
+
+
+    def client_completion_handler(self, results):
+        """We may need to keep all updates from clients, if so, we need to append results to the cache"""
+        # Format:
+        #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
+        #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
+        
+        # Feed metrics to client sampler
+        self.stats_util_accumulator.append(math.sqrt(results['moving_loss']))
+        self.clientSampler.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
+                                    time_stamp=self.epoch, duration=self.virtual_client_clock[results['clientId']]
+                      )
+
+        # Start to take the average of updates, and we do not keep updates to save memory
+        # Importance of each update is 1/#_of_participants
+        importance = 1./self.args.total_worker
+        if len(self.model_in_update) == 0:
+            self.model_in_update = [torch.from_numpy(param).to(device=device)*importance for param in results['update_weight']]
+        else:
+            for idx, param in enumerate(results['update_weight']):
+                client_model_weight = torch.from_numpy(param).to(device=device)
+                self.model_in_update[idx] += client_model_weight*importance
+
+        del results
+
+
+    def round_completion_handler(self):
+        self.global_virtual_clock += self.round_duration
+        self.epoch += 1
+
+        avgUtilLastEpoch = sum(self.stats_util_accumulator)/max(1, len(self.stats_util_accumulator))
+        # assign avg reward to explored, but not ran workers
+        for clientId in self.round_stragglers:
+            clientSampler.registerScore(clientId, avgUtilLastEpoch,
+                                    time_stamp=self.epoch, duration=self.virtual_client_clock[clientId],
+                                    success=False)
+
+
+        # update select participants
+        sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
+        clientsToRun, round_stragglers, virtual_client_clock, round_duration = 
+                                        self.tictak_client_tasks(sampled_participants, self.args.total_worker)
+
+        # ordered by the completion time
+        self.assign_participant_list(clientsToRun)
+
+        # update the global model
+        for idx, param in enumerate(self.model.parameters()):
+            param.data = self.model_in_update[idx]
+
+        self.round_stragglers = round_stragglers
+        self.virtual_client_clock = virtual_client_clock
+        self.round_duration = round_duration
+        self.model_in_update = []
+        self.test_result_accumulator = []
+        self.stats_util_accumulator = []
+
+        if self.epoch >= self.args.epochs:
+            self.event_queue.append('stop')
+        else:
+            self.event_queue.append('update_model')
+            self.event_queue.append('start_round')
+
+
+    def broadcast_models(self):
+        """Push the latest model to executors"""
+        for executorId in self.executors:
+            for name, param in self.model.named_parameters():
+                dist.send(tensor=param.data.to(device='cpu'), dst=executorId)
+
+
+    def testing_completion_handler(self, results):
+        self.test_result_accumulator.append(results)
+        
+        # Have collected all testing results
+        if len(self.test_result_accumulator) == len(self.executors):
+            accumulator = self.test_result_accumulator[0]
+            for i in range(1, len(self.test_result_accumulator)):
+                for key in accumulator:
+                    accumulator[key] += self.test_result_accumulator[i][key]
+
+            self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
+                'top_1': round(accumulator['top_1']/accumulator['test_len']*100.0, 4),
+                'top_5': round(accumulator['top_5']/accumulator['test_len']*100.0, 4),
+                'loss': accumulator['test_loss']/len(self.executors),
+                'test_len': accumulator['test_len']
+                }
+
+
+            logging.info("After aggregation in epoch: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {}, test len: {}"
+                    .format(self.epoch, self.global_virtual_clock, self.testing_history['perf'][self.epoch]['top_1'], 
+                    self.testing_history['perf'][self.epoch]['top_5'], self.testing_history['perf'][self.epoch]['loss'], 
+                    self.testing_history['perf'][self.epoch]['test_len']))
+
+
+            self.event_queue.append('start_round')
+
+
+    def event_monitor(self):
+
+        while True:
+            if self.event_queue:
+                event_msg = self.event_queue.popleft()
+
+                if event_msg == 'update_model':
+                    self.server_event_queue.put(self.generate_broadcast_msg(event_msg))
+                    self.broadcast_models()
+
+                elif event_msg == 'start_round':
+                    for executorId in self.executors:
+                        next_clientId = self.pop_next_participant()
+                        if next_clientId is not None:
+                            self.server_event_queue.put({executorId: {'clientId':next_clientId, 'conf': None}})
+
+                elif event_msg == 'stop':
+                    self.server_event_queue.put(self.generate_broadcast_msg(event_msg))
+                    self.stop()
+
+                elif event_msg == 'report_executor_info':
+                    self.server_event_queue.put(self.generate_broadcast_msg(event_msg))
+
+            elif not self.client_event_queue.empty():
+
+                event_dict = self.client_event_queue.get()
+                event_msg, executorId, results = event_dict['event'], event_dict['executorId'], event_dict['return']
+
+                # collect training returns from the executor
+                if event_msg == 'train':
+                    # push training results
+                    self.client_completion_handler(results)
+
+                    # pop a new client to run
+                    next_clientId = self.pop_next_participant()
+
+                    if next_clientId is not None:
+                        self.server_event_queue.put({executorId: {'clientId':next_clientId, 'conf': None}})
+
+                    if len(self.stats_util_accumulator) == self.args.total_worker:
+                        self.round_completion_handler()
+                        
+                elif event_msg == 'test':
+                    self.testing_completion_handler(results)
+
+                elif event_msg == 'report_executor_info':
+                    self.executor_info_handler(executorId, results)
+
+                else:
+                    logging.error("Unknown message types!")
+
+            # execute every 100 ms
+            time.sleep(0.1)
+
+
+    def stop(self):
+        logging.info(f"Terminating Executor {self.this_rank} ...")
+        time.sleep(5)
+        self.control_manager.shutdown()
+
+if __name__ == "__main__":
+    aggregator = Aggregator(args)
+    aggregator.run()
+
+

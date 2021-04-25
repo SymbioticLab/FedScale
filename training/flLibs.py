@@ -48,6 +48,7 @@ elif args.task == 'detection':
     from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
     from utils.rcnn.lib.model.roi_layers import nms
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
+
 from helper.clientSampler import clientSampler
 from utils.yogi import YoGi
 
@@ -59,15 +60,14 @@ if args.task == 'nlp' or args.task == 'text_clf':
     tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 
 modelDir = os.path.join(args.log_path, args.model)
-modelPath = modelDir+'/'+str(args.model)+'.pth.tar' if args.model_path is None else args.model_path
+modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar' if args.model_path is None else args.model_path)
 
-def init_dataset():
-    global tokenizer
 
-    outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
-                    'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist' : 1010
-                }
+outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
+                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist' : 1010
+            }
 
+def init_model():
     logging.info("====Initialize the model")
 
     if args.task == 'nlp':
@@ -157,6 +157,10 @@ def init_dataset():
             logging.info("====Error: Failed to load model due to {}\n".format(str(e)))
             sys.exit(-1)
 
+    return model
+
+
+def init_dataset():
     train_dataset, test_dataset = [], []
 
     # Load data if the machine acts as clients
@@ -252,4 +256,5 @@ def init_dataset():
             print('DataSet must be {}!'.format(['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
             sys.exit(-1)
 
-    return model, train_dataset, test_dataset
+    return train_dataset, test_dataset
+

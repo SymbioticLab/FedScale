@@ -7,11 +7,10 @@ import logging
 
 class clientSampler(object):
 
-    def __init__(self, mode, score, args, filter=0, sample_seed=233):
+    def __init__(self, mode, args, sample_seed=233):
         self.Clients = {}
         self.clientOnHosts = {}
         self.mode = mode
-        self.score = score
         self.filter_less = args.filter_less
         self.filter_more = args.filter_more
 
@@ -200,3 +199,4 @@ class clientSampler(object):
         if self.mode == 'kuiper':
             return self.ucbSampler.get_median_reward()
         return 0.
+
