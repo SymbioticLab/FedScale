@@ -5,7 +5,7 @@ from flLibs import *
 # logFile = os.path.join(logDir, 'log_'+str(args.this_rank))
 import os
 
-logDir = os.path.join(os.environ['HOME'], "models", args.model, args.time_stamp, 'learner')
+logDir = os.path.join(os.environ['HOME'], "models", args.model, args.time_stamp, 'executor')
 logFile = os.path.join(logDir, 'log_'+str(args.this_rank))
 
 def init_logging():
@@ -13,8 +13,8 @@ def init_logging():
         os.makedirs(logDir, exist_ok=True)
 
     logging.basicConfig(
-                    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                    datefmt='%m-%d:%H:%M:%S',
+                    format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='(%m-%d) %H:%M:%S',
                     level=logging.INFO,
                     handlers=[
                         logging.FileHandler(logFile, mode='a'),

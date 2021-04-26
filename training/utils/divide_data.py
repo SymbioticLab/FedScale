@@ -89,14 +89,14 @@ class DataPartitioner(object):
 
     def uniform_partition(self, num_clients):
         # random partition
-        logging.info("Randomly partitioning data ...")
         numOfLabels = self.getNumOfLabels()
         data_len = self.getDataLen()
+        logging.info(f"Randomly partitioning data, {data_len} samples...")
 
         indexes = list(range(data_len))
         self.rng.shuffle(indexes)
 
-        for _ in num_clients:
+        for _ in range(num_clients):
             part_len = int(1./num_clients * data_len)
             self.partitions.append(indexes[0:part_len])
             indexes = indexes[part_len:]
@@ -104,7 +104,7 @@ class DataPartitioner(object):
     def use(self, partition, istest):
         resultIndex = self.partitions[partition]
 
-        exeuteLength = -1 if not istest else int(len(resultIndex) * args.test_ratio)
+        exeuteLength = -1 if not istest else int(len(resultIndex) * self.args.test_ratio)
         resultIndex = resultIndex[:exeuteLength]
         self.rng.shuffle(resultIndex)
 
@@ -122,6 +122,9 @@ def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     timeOut = 0 if isTest else 60
     dropLast = False if isTest else True
 
-    return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)
+    if collate_fn is not None:
+        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)
+    return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut)
+
 
 

@@ -2,13 +2,10 @@
 import os, re, shutil, sys, time, datetime, logging, pickle, json, socket
 import random, math, gc, copy
 from collections import OrderedDict
-from ctypes import c_bool
 from multiprocessing import Process, Value
 from multiprocessing.managers import BaseManager
 import multiprocessing, threading
 import numpy as np
-from collections import deque
-from collections import OrderedDict
 import collections
 import numba
 
@@ -26,10 +23,9 @@ from torch_baidu_ctc import CTCLoss
 
 # libs from FLBench
 from argParser import args
-from utils.divide_data import partition_dataset, select_dataset, DataPartitioner
-#from utils.models import *
 from utils.utils_data import get_data_transform
 from utils.utils_model import MySGD, test_model
+from utils.divide_data import select_dataset, DataPartitioner
 
 if args.task == 'nlp':
     from utils.nlp import *
@@ -60,7 +56,7 @@ if args.task == 'nlp' or args.task == 'text_clf':
     tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 
 modelDir = os.path.join(args.log_path, args.model)
-modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar' if args.model_path is None else args.model_path)
+modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar')
 
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
@@ -68,7 +64,7 @@ outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
             }
 
 def init_model():
-    logging.info("====Initialize the model")
+    logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
         # we should train from scratch
@@ -257,4 +253,3 @@ def init_dataset():
             sys.exit(-1)
 
     return train_dataset, test_dataset
-

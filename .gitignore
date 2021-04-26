@@ -20,4 +20,5 @@ learn*.lsf
 server*.lsf
 vms
 jobinfo
+quotas
 ./scripts/logs/*

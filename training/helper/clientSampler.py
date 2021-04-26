@@ -190,7 +190,7 @@ class clientSampler(object):
         return {}
 
     def getDataInfo(self):
-        return {'total_feasible_clients': len(self.feasibleClients), 'total_length': self.feasible_samples}
+        return {'total_feasible_clients': len(self.feasibleClients), 'total_num_samples': self.feasible_samples}
 
     def getClientReward(self, clientId):
         return self.ucbSampler.get_client_reward(clientId)

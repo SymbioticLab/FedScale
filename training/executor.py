@@ -2,6 +2,13 @@
 from fl_client_libs import *
 from fl_client_libs import tokenizer, collate, voice_collate_fn, args
 
+# initiate the log path, and executor ips
+initiate_client_setting()
+os.environ['MASTER_ADDR'] = args.ps_ip
+os.environ['MASTER_PORT'] = args.ps_port
+os.environ['GLOO_SOCKET_IFNAME'] = 'enP5p7s0f1'
+
+
 class Executor(object):
     """Each executor takes certain resource to run real training.
        Each run simulates the execution of an individual client"""
@@ -19,7 +26,7 @@ class Executor(object):
         self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
         # ======== channels ======== 
-        self.server_event_queue = self.client_event_queue = None
+        self.server_event_queue = self.client_event_queue = Queue()
         self.control_manager = None
 
         # ======== runtime information ======== 
@@ -28,10 +35,11 @@ class Executor(object):
         self.epoch = 0
         self.start_run_time = time.time()
 
+
     def setup_env(self):
+        logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
+
         self.setup_seed(seed=self.this_rank)
-        # initiate the log path, and executor ips
-        initiate_client_setting()
         
         # set up device
         if self.args.use_cuda:
@@ -39,12 +47,20 @@ class Executor(object):
                 try:
                     self.device = torch.device('cuda:'+str(i))
                     torch.cuda.set_device(i)
-                    logging.info(f'End up with cuda device {torch.rand(1).to(device=self.device)}')
+                    print(torch.rand(1).to(device=self.device))
+                    logging.info(f'End up with cuda device ({self.device})')
                     break
                 except Exception as e:
                     assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
 
-        self.control_manager = self.init_control_communication()
+        self.control_manager = self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.this_rank)
+        self.control_manager.connect()
+
+        self.server_event_queue = eval('self.control_manager.get_server_event_'+str(self.this_rank)+'()')
+        #self.control_manager.get_server_event_1() if self.this_rank == 1 else self.control_manager.get_server_event_2()
+        #
+        self.client_event_queue = self.control_manager.get_client_event() 
+
         self.init_data_communication()
 
 
@@ -56,20 +72,14 @@ class Executor(object):
         torch.backends.cudnn.deterministic = True
 
 
-    def init_control_communication(self):
+    def init_control_communication(self, ps_ip, ps_port, executorId):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
-        os.environ['MASTER_ADDR'] = self.args.ps_ip
-        os.environ['MASTER_PORT'] = self.args.ps_port
+        logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication for get_server_event_{executorId} ...")
 
-        BaseManager.register('get_server_event')
+        BaseManager.register(f'get_server_event_{executorId}')
         BaseManager.register('get_client_event')
-        manager = BaseManager(address=(self.args.ps_ip, self.args.manager_port), authkey=b'queue')
-
-        manager.connect()
-
-        self.server_event_queue = manager.get_server_event()  # queue for parameter_server signal process
-        self.client_event_queue = manager.get_client_event() 
+        manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
 
         return manager
 
@@ -88,10 +98,10 @@ class Executor(object):
         logging.info("Data partitioner starts ...")
 
         training_sets = DataPartitioner(data=train_dataset, numOfClass=self.args.num_class)
-        training_sets.partition_data_helper(num_clients=self.num_clients, data_map_file=self.args.data_map_file)
+        training_sets.partition_data_helper(num_clients=self.args.total_worker, data_map_file=self.args.data_map_file)
 
         testing_sets = DataPartitioner(data=test_dataset, numOfClass=self.args.num_class, isTest=True)
-        testing_sets.partition_data_helper(num_clients=len(self.workers))
+        testing_sets.partition_data_helper(num_clients=self.args.total_worker)
 
         logging.info("Data partitioner completes ...")
 
@@ -137,7 +147,7 @@ class Executor(object):
         numOfFailures, numOfTries = 0, 3
 
         # TODO: if indeed enforce FedAvg, we will run fixed number of epochs, instead of iterations
-        for itr in range(local_steps):
+        for itr in range(args.local_steps):
             fetchSuccess = False
             numOfFailures = 0
 
@@ -213,9 +223,10 @@ class Executor(object):
         self.training_sets, self.testing_sets = self.init_data()
         self.event_monitor()
 
-    def push_msg_to_server(self, event, results):
 
+    def push_msg_to_server(self, event, results):
         self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
+
 
     def report_executor_info_handler(self):
         return self.training_sets.getSize()
@@ -225,7 +236,7 @@ class Executor(object):
         for name, param in self.model.named_parameters():
             tmp_tensor = torch.zeros_like(param.data, device='cpu')
             dist.recv(tensor=tmp_tensor, src=0)
-            param.data = tmp_tensor.to(device=device)
+            param.data = tmp_tensor.to(device=self.device)
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
@@ -234,7 +245,7 @@ class Executor(object):
         # Periodically back up models
         if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
             with open(os.path.join(logDir, str(self.args.model)+'_'+str(self.epoch)+'.pth.tar'), 'wb') as model_out:
-                pickle.dump(model.to(device='cpu'), model_out)
+                pickle.dump(self.model.to(device='cpu'), model_out)
 
 
     def training_handler(self, clientId, conf):
@@ -245,7 +256,7 @@ class Executor(object):
             client_model = pickle.load(model_in)
 
         client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
-        train_res = run_client(client_data=client_data, model=client_model, conf=conf, clientId=clientId)
+        train_res = self.run_client(client_data=client_data, model=client_model, conf=conf, clientId=clientId)
 
         return train_res
 
@@ -257,7 +268,7 @@ class Executor(object):
         data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
         criterion = CTCLoss(reduction='mean').to(device=device) if self.task == 'voice' else torch.nn.CrossEntropyLoss().to(device=device)
 
-        test_res = test_model(rank, self.model, data_loader, criterion=criterion, tokenizer=tokenizer)
+        test_res = test_model(self.this_rank, self.model, data_loader, criterion=criterion, tokenizer=tokenizer)
 
         test_loss, acc, acc_5, testResults = test_res
         logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {}, test_5_accuracy {} \n"
@@ -267,15 +278,14 @@ class Executor(object):
 
 
     def event_monitor(self):
+        logging.info("Start monitoring events ...")
+
         while True:
             if not self.server_event_queue.empty():
                 event_dict = self.server_event_queue.get()
+                event_msg = event_dict['event']
 
-                # whether this event belongs to this rank
-                if self.this_rank not in event_dict:
-                    continue
-
-                event_msg = event_dict[self.this_rank]['event']
+                logging.info(f"Received (Event:{event_msg.upper()}) from aggregator ...")
 
                 if event_msg == 'report_executor_info':
                     executor_info = self.report_executor_info_handler()
@@ -286,12 +296,12 @@ class Executor(object):
 
                 # initiate each training round
                 elif event_msg == 'train':
-                    clientId, client_conf = event_msg[self.this_rank]['clientId'], event_msg[self.this_rank]['conf']
+                    clientId, client_conf = event_dict['clientId'], event_dict['conf']
                     train_res = self.training_handler(clientId=clientId, conf=client_conf if client_conf is not None else self.args)
                     self.push_msg_to_server(event_msg, train_res)
 
                 elif event_msg == 'test':
-                    test_res = self.testing_handler(args=event_msg[self.this_rank]['conf'])
+                    test_res = self.testing_handler(args=self.args)
                     self.push_msg_to_server(event_msg, test_res)
 
                 elif event_msg == 'stop':
@@ -300,6 +310,8 @@ class Executor(object):
 
                 else:
                     logging.error("Unknown message types!")
+
+            time.sleep(0.1)
 
     def stop(self):
         logging.info(f"Terminating Executor {self.this_rank} ...")

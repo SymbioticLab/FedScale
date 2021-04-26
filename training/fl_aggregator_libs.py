@@ -14,8 +14,8 @@ def init_logging():
         os.makedirs(logDir, exist_ok=True)
 
     logging.basicConfig(
-                    format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                    datefmt='%m-%d:%H:%M:%S',
+                    format='%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='(%m-%d) %H:%M:%S',
                     level=logging.INFO,
                     handlers=[
                         logging.FileHandler(logFile, mode='a'),
@@ -39,4 +39,5 @@ def dump_ps_ip():
 def initiate_aggregator_setting():
     init_logging()
     dump_ps_ip()
+
 
