@@ -355,27 +355,23 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
     logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), Top-5 Accuracy: {}'
           .format(rank, test_loss, correct, len(test_data.dataset), acc, acc_5))
 
-    return test_loss, acc, acc_5, [correct, top_5, sum_loss, test_len]
+    testRes = {'top_1':correct, 'top_5':top_5, 'test_loss':sum_loss, 'test_len':test_len}
+    
+    return test_loss, acc, acc_5, testRes
 
 def accuracy(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():
         maxk = max(topk)
-        #batch_size = target.size(0)
 
-        #logging.info("====To get accuracy, top-k is {}, while shape is {}".format(maxk, output.shape))
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
         correct = pred.eq(target.view(1, -1).expand_as(pred))
 
-        # print the target
-        #logging.info(f"====Target:{target.cpu().numpy().flatten()}")
         res = []
         for k in topk:
             correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
             res.append(correct_k)
-
-            #logging.info(f"====top: {k}, sum: {correct_k.item()}, predictions: {correct[:k].cpu().numpy().sum(0).flatten()}")
 
         return res
 
@@ -394,4 +390,3 @@ class RandomParams(object):
         part_len = int(math.floor(self.ratio * len(params_indices)))
         result = indexes[0: part_len]
         return [params_indices[i] for i in result]
-

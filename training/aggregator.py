@@ -82,8 +82,6 @@ class Aggregator(object):
 
         for executorId in self.executors:
            self.server_event_queue[executorId] = eval(f'self.control_manager.get_server_event_{executorId}()')
-        # self.server_event_queue[1] = self.control_manager.get_server_event_1()
-        # self.server_event_queue[2] = self.control_manager.get_server_event_2()
             
         self.client_event_queue = self.control_manager.get_client_event()
 
@@ -336,7 +334,7 @@ class Aggregator(object):
             self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
                 'top_1': round(accumulator['top_1']/accumulator['test_len']*100.0, 4),
                 'top_5': round(accumulator['top_5']/accumulator['test_len']*100.0, 4),
-                'loss': accumulator['test_loss']/len(self.executors),
+                'loss': accumulator['test_loss']/accumulator['test_len'],
                 'test_len': accumulator['test_len']
                 }
 
@@ -386,15 +384,16 @@ class Aggregator(object):
                 logging.info(f"Receive (Event:{event_msg.upper()}) from (Executor:{executorId})")
 
                 # collect training returns from the executor
-                if event_msg == 'train':
-                    # push training results
-                    self.client_completion_handler(results)
-
+                if event_msg == 'train_nowait':
                     # pop a new client to run
                     next_clientId = self.pop_next_participant()
 
                     if next_clientId is not None:
                         self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': None})
+
+                elif event_msg == 'train':
+                    # push training results
+                    self.client_completion_handler(results)
 
                     if len(self.stats_util_accumulator) == self.args.total_worker:
                         self.round_completion_handler()

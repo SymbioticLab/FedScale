@@ -53,10 +53,10 @@ class Executor(object):
                 except Exception as e:
                     assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
 
-        self.control_manager = self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.this_rank)
+        self.control_manager = self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.workers)
         self.control_manager.connect()
 
-        self.server_event_queue = eval('self.control_manager.get_server_event_'+str(self.this_rank)+'()')
+        self.server_event_queue = eval(f'self.control_manager.get_server_event_{self.this_rank}()')
         #self.control_manager.get_server_event_1() if self.this_rank == 1 else self.control_manager.get_server_event_2()
         #
         self.client_event_queue = self.control_manager.get_client_event() 
@@ -72,12 +72,14 @@ class Executor(object):
         torch.backends.cudnn.deterministic = True
 
 
-    def init_control_communication(self, ps_ip, ps_port, executorId):
+    def init_control_communication(self, ps_ip, ps_port, executors):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
-        logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication for get_server_event_{executorId} ...")
+        logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
 
-        BaseManager.register(f'get_server_event_{executorId}')
+        for executor_id in executors:
+            BaseManager.register(f'get_server_event_{executor_id}')
+
         BaseManager.register('get_client_event')
         manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
 
@@ -227,6 +229,8 @@ class Executor(object):
     def push_msg_to_server(self, event, results):
         self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
 
+    def push_msg_to_server_asyn(self, event, results):
+        self.client_event_queue.put_nowait({'return': results, 'event': event, 'executorId': self.this_rank})
 
     def report_executor_info_handler(self):
         return self.training_sets.getSize()
@@ -268,11 +272,11 @@ class Executor(object):
         data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
         criterion = CTCLoss(reduction='mean').to(device=device) if self.task == 'voice' else torch.nn.CrossEntropyLoss().to(device=device)
 
-        test_res = test_model(self.this_rank, self.model, data_loader, criterion=criterion, tokenizer=tokenizer)
+        test_res = test_model(self.this_rank, self.model.to(device=device), data_loader, criterion=criterion, tokenizer=tokenizer)
 
         test_loss, acc, acc_5, testResults = test_res
-        logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {}, test_5_accuracy {} \n"
-                    .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc, acc_5))
+        logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
+                    .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
         return testResults
 
@@ -298,7 +302,9 @@ class Executor(object):
                 elif event_msg == 'train':
                     clientId, client_conf = event_dict['clientId'], event_dict['conf']
                     train_res = self.training_handler(clientId=clientId, conf=client_conf if client_conf is not None else self.args)
-                    self.push_msg_to_server(event_msg, train_res)
+                    self.push_msg_to_server('train_nowait', None)
+                    # model updates may be time-consuming, thus we apply asyn push for better communication-computation overlaps
+                    self.push_msg_to_server_asyn(event_msg, train_res)
 
                 elif event_msg == 'test':
                     test_res = self.testing_handler(args=self.args)
