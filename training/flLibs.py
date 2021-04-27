@@ -45,7 +45,7 @@ elif args.task == 'detection':
     from utils.rcnn.lib.model.roi_layers import nms
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
 
-from helper.clientSampler import clientSampler
+from client_manager import clientManager
 from utils.yogi import YoGi
 
 # shared functions of aggregator and clients
@@ -183,12 +183,11 @@ def init_dataset():
             test_dataset = FEMNIST(args.data_dir, train=False, transform=test_transform)
 
         elif args.data_set == 'openImg':
-            from utils.openImg import OPENIMG
+            from utils.openimage import OpenImage
 
-            transformer_ns = 'openImg' if args.model != 'inception_v3' else 'openImgInception'
-            train_transform, test_transform = get_data_transform(transformer_ns)
-            train_dataset = OPENIMG(args.data_dir, train=True, transform=train_transform)
-            test_dataset = OPENIMG(args.data_dir, train=False, transform=test_transform)
+            train_transform, test_transform = get_data_transform('openImg')
+            train_dataset = OpenImage(args.data_dir, dataset='train', transform=train_transform)
+            test_dataset = OpenImage(args.data_dir, dataset='test', transform=test_transform)
 
         elif args.data_set == 'blog':
             train_dataset = load_and_cache_examples(args, tokenizer, evaluate=False)
@@ -242,4 +241,3 @@ def init_dataset():
             sys.exit(-1)
 
     return train_dataset, test_dataset
-

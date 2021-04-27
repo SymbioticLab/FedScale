@@ -48,35 +48,33 @@ class DataPartitioner(object):
         return self.data_len
 
     def trace_partition(self, data_map_file):
-        """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category>"""
+        """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category, category_id>"""
         logging.info(f"Partitioning data by profile {data_map_file}...")
 
-        last_client_id = -1
-        client_stat = {}
-        category_dict = {}
-        numOfLabels = self.getNumOfLabels()
-
+        clientId_maps = {}
+        unique_clientIds = {}
+        # load meta data from the data_map_file
         with open(data_map_file) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
-            line_count = -1
+            read_first = True
 
             for row in csv_reader:
-                if line_count == -1:
-                    logging.info(f'Column names are {", ".join(row)}')
+                if read_first:
+                    logging.info(f'Trace names are {", ".join(row)}')
+                    read_first = False
                 else:
-                    client_id, sample_name, sample_category = int(row[0]), row[1], row[2]
+                    client_id, sample_name = row[0], row[1]
 
-                    if client_id != last_client_id:
-                        self.partitions.append([])
-                        client_stat[client_id] = [0] * num_of_labels
+                    if client_id not in unique_clientIds:
+                        unique_clientIds[client_id] = len(unique_clientIds)
 
-                    if sample_category not in category_dict:
-                        category_dict[sample_category] = len(category_dict)
+                    clientId_maps[sample_name] = unique_clientIds[client_id]
 
-                    self.partitions[-1].append(line_count)
-                    client_stat[client_id][category_dict[sample_category]] += 1
+        # Partition data given mapping
+        self.partitions = [[] for _ in range(len(unique_clientIds))]
 
-                line_count += 1
+        for idx, data_path in enumerate(self.data.data):
+            self.partitions[clientId_maps[data_path]].append(idx)
 
 
     def partition_data_helper(self, num_clients, data_map_file=None):
@@ -125,6 +123,4 @@ def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     if collate_fn is not None:
         return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)
     return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut)
-
-
 

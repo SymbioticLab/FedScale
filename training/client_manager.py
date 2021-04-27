@@ -5,7 +5,7 @@ import pickle
 from kuiper import create_training_selector
 import logging
 
-class clientSampler(object):
+class clientManager(object):
 
     def __init__(self, mode, args, sample_seed=233):
         self.Clients = {}
@@ -23,16 +23,16 @@ class clientSampler(object):
         self.user_trace = None
         self.args = args
 
-        if args.user_trace is not None:
-            with open(args.user_trace, 'rb') as fin:    
+        if args.device_avail_file is not None:
+            with open(args.device_avail_file, 'rb') as fin:    
                 self.user_trace = pickle.load(fin)
 
-    def registerClient(self, hostId, clientId, dis, size, speed=[1.0, 1.0], duration=1):
+    def registerClient(self, hostId, clientId, size, speed, duration=1):
 
         uniqueId = self.getUniqueId(hostId, clientId)
         user_trace = None if self.user_trace is None else self.user_trace[int(clientId)]
 
-        self.Clients[uniqueId] = Client(hostId, clientId, dis, size, speed, user_trace)
+        self.Clients[uniqueId] = Client(hostId, clientId, speed, user_trace)
 
         # remove clients
         if size >= self.filter_less and size <= self.filter_more:
@@ -150,15 +150,14 @@ class clientSampler(object):
 
     def getFeasibleClients(self, cur_time):
         if self.user_trace is None:
-            return self.feasibleClients
+            clients_online = self.feasibleClients
+        else:
+            clients_online = [clientId for clientId in self.feasibleClients if self.Clients[self.getUniqueId(0, clientId)].isActive(cur_time)]
 
-        feasible_clients = []
+        logging.info(f"Wall clock time: {round(cur_time)}, {len(clients_online)} clients online, " + \
+                    f"{len(self.feasibleClients)-len(clients_online)} clients offline")
 
-        for clientId in self.feasibleClients:
-            if self.Clients[self.getUniqueId(0, clientId)].isActive(cur_time):
-                feasible_clients.append(clientId)
-
-        return feasible_clients
+        return clients_online
 
     def isClientActive(self, clientId, cur_time):
         return self.Clients[self.getUniqueId(0, clientId)].isActive(cur_time)
@@ -166,24 +165,21 @@ class clientSampler(object):
     def resampleClients(self, numOfClients, cur_time=0):
         self.count += 1
 
-        feasible_clients = self.getFeasibleClients(cur_time)
+        clients_online = self.getFeasibleClients(cur_time)
 
-        if len(feasible_clients) <= numOfClients:
-            return feasible_clients
+        if len(clients_online) <= numOfClients:
+            return clients_online
 
         pickled_clients = None
-        feasible_clients_set = set(feasible_clients)
+        clients_online_set = set(clients_online)
 
         if self.mode == "kuiper" and self.count > 1:
-            pickled_clients = self.ucbSampler.select_participant(numOfClients, feasible_clients=feasible_clients_set)
+            pickled_clients = self.ucbSampler.select_participant(numOfClients, feasible_clients=clients_online_set)
         else:
-            self.rng.shuffle(feasible_clients)
-            client_len = min(numOfClients, len(feasible_clients) -1)
-            pickled_clients = feasible_clients[:client_len]
+            self.rng.shuffle(clients_online)
+            client_len = min(numOfClients, len(clients_online) -1)
+            pickled_clients = clients_online[:client_len]
 
-
-        for item in pickled_clients:    
-            assert (item in feasible_clients_set)
         return pickled_clients
 
     def getAllMetrics(self):

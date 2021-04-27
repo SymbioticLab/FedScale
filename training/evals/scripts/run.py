@@ -4,8 +4,6 @@ ps_port = random.randint(1000, 8000)
 manager_port = random.randint(1000, 8000)
 
 
-print(ps_port, manager_port)
-
 paramsCmd = ' --model=shufflenet_v2_x2_0 --epochs=20000 --upload_epoch=20 --dump_epoch=1000 --learning_rate=0.04 --batch_size=30 ' + \
             ' --ps_port='+str(ps_port)+' --manager_port='+str(manager_port) + ' '
 

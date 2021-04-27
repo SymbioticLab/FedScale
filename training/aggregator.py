@@ -39,6 +39,8 @@ class Aggregator(object):
         # ======== runtime information ======== 
         self.client_run_queue = [] # client ids to run
         self.client_run_queue_idx = 0
+        self.sampled_participants = []
+
         self.round_stragglers = []
         self.model_update_size = 0.
 
@@ -134,7 +136,7 @@ class Aggregator(object):
         """
 
         # sample_mode: random or kuiper
-        client_manager = clientSampler(args.sample_mode, args=args)
+        client_manager = clientManager(args.sample_mode, args=args)
 
         return client_manager
 
@@ -212,8 +214,8 @@ class Aggregator(object):
         self.setup_env()
         self.model = self.init_model()
 
-        self.model_update_size = sys.getsizeof(pickle.dump(self.model))
-        self.client_profiles = self.load_client_profile(file_path=self.args.client_path)
+        self.model_update_size = sys.getsizeof(pickle.dumps(self.model))/1024.0*8. # kbits
+        self.client_profiles = self.load_client_profile(file_path=self.args.device_conf_file)
         self.start_event()
         self.event_monitor()
 
@@ -227,7 +229,7 @@ class Aggregator(object):
             self.server_event_queue[executorId].put(msg)
 
     def assign_participant_list(self, clientsToRun):
-        logging.info(f"Participant selection results:\n{clientsToRun}")
+        logging.info(f"Selected participants to run: {clientsToRun}")
 
         self.client_run_queue = clientsToRun
         self.client_run_queue_idx = 0
@@ -243,7 +245,7 @@ class Aggregator(object):
 
 
     def select_participants(self, select_num_participants, overcommitment=1.3):
-        return sorted(self.client_manager.resampleClients(int(select_num_participants*overcommitment), cur_time=self.epoch))
+        return sorted(self.client_manager.resampleClients(int(select_num_participants*overcommitment), cur_time=self.global_virtual_clock))
 
 
     def client_completion_handler(self, results):
@@ -283,17 +285,19 @@ class Aggregator(object):
                                     time_stamp=self.epoch, duration=self.virtual_client_clock[clientId],
                                     success=False)
 
+        logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, Epoch: {self.epoch}, Planned participants: " + \
+            f"{len(self.client_run_queue)}, Succeed participants: {len(self.client_run_queue)}, Training loss: {avgUtilLastEpoch}")
 
         # update select participants
-        sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
-        clientsToRun, round_stragglers, virtual_client_clock, round_duration = self.tictak_client_tasks(sampled_participants, self.args.total_worker)
+        self.sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
+        clientsToRun, round_stragglers, virtual_client_clock, round_duration = self.tictak_client_tasks(self.sampled_participants, self.args.total_worker)
 
         # ordered by the completion time
         self.assign_participant_list(clientsToRun)
 
         # update the global model
         for idx, param in enumerate(self.model.parameters()):
-            param.data = self.model_in_update[idx]
+            param.data = self.model_in_update[idx].clone()
 
         self.round_stragglers = round_stragglers
         self.virtual_client_clock = virtual_client_clock
@@ -315,7 +319,7 @@ class Aggregator(object):
     def broadcast_models(self):
         """Push the latest model to executors"""
         for executorId in self.executors:
-            for name, param in self.model.named_parameters():
+            for param in self.model.parameters():
                 dist.send(tensor=param.data.to(device='cpu'), dst=executorId)
 
 
@@ -379,7 +383,8 @@ class Aggregator(object):
                 event_dict = self.client_event_queue.get()
                 event_msg, executorId, results = event_dict['event'], event_dict['executorId'], event_dict['return']
 
-                logging.info(f"Round {self.epoch}: Receive (Event:{event_msg.upper()}) from (Executor:{executorId})")
+                if event_msg != 'train_nowait':
+                    logging.info(f"Round {self.epoch}: Receive (Event:{event_msg.upper()}) from (Executor:{executorId})")
 
                 # collect training returns from the executor
                 if event_msg == 'train_nowait':
@@ -395,7 +400,7 @@ class Aggregator(object):
                     # push training results
                     self.client_completion_handler(results)
 
-                    if len(self.stats_util_accumulator) == self.args.total_worker:
+                    if len(self.stats_util_accumulator) == len(self.client_run_queue):
                         self.round_completion_handler()
                         
                 elif event_msg == 'test':

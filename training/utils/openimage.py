@@ -3,13 +3,9 @@ import warnings
 from PIL import Image
 import os
 import os.path
-import numpy as np
-import torch
-import codecs
-import string
-import time
+import csv
 
-class OPENIMG():
+class OpenImage():
     """
     Args:
         root (string): Root directory of dataset where ``MNIST/processed/training.pt``
@@ -25,8 +21,6 @@ class OPENIMG():
             target and transforms it.
     """
 
-    training_file = 'train'
-    test_file = 'test'
     classes = []
 
     @property
@@ -49,31 +43,20 @@ class OPENIMG():
         warnings.warn("test_data has been renamed data")
         return self.data
 
-    def __init__(self, root, train=True, transform=None, target_transform=None, imgview=False):
+    def __init__(self, root, dataset='train', transform=None, target_transform=None, imgview=False):
         
-        self.train = train  # training set or test set
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
-
-        if self.train:
-            self.data_file = self.training_file
-        else:
-            self.data_file = self.test_file
+        self.data_file = dataset # 'train', 'test', 'validation'
 
         if not self._check_exists():
             raise RuntimeError('Dataset not found.' +
                                ' You have to download it')
 
-        # load class information
-        with open(os.path.join(self.processed_folder, 'classTags'), 'r') as fin:
-            self.classes = [tag.strip() for tag in fin.readlines()]
-
-        self.classMapping = self.class_to_idx
         self.path = os.path.join(self.processed_folder, self.data_file)
         # load data and targets
         self.data, self.targets = self.load_file(self.path)
-
         self.imgview = imgview
 
     def __getitem__(self, index):
@@ -91,7 +74,8 @@ class OPENIMG():
         img = Image.open(os.path.join(self.path, imgName))
         
         # avoid channel error
-        img = img.convert('RGB')
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
 
         if self.transform is not None:
             img = self.transform(img)
@@ -112,28 +96,34 @@ class OPENIMG():
     def processed_folder(self):
         return self.root
 
-    @property
-    def class_to_idx(self):
-        return {_class: i for i, _class in enumerate(self.classes)}
-
     def _check_exists(self):
         return (os.path.exists(os.path.join(self.processed_folder,
                                             self.data_file)))
 
+    def load_meta_data(self, path):
+        data_to_label = {}
+        with open(path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count != 0:
+                    data_to_label[row[1]] = int(row[-1])
+                line_count += 1
+
+        return data_to_label
+
     def load_file(self, path):
-        stime = time.time()
         rawImg, rawTags = [], []
 
+        # load meta file to get labels
+        classMapping = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
+
         imgFiles = os.scandir(path)
-        #imgFiles = [f for f in os.listdir(path)]# if os.path.isfile(os.path.join(path, f)) and '.jpg' in f]
 
         for imgFile in imgFiles:
             imgFile = imgFile.name
-            classTag = imgFile.replace('.jpg', '').split('__')[1]
-            if classTag in self.classMapping:
-                rawImg.append(imgFile)
-                rawTags.append(self.classMapping[classTag])
+            rawImg.append(imgFile)
+            rawTags.append(classMapping[imgFile])
 
-        dtime = time.time() - stime
-        print(dtime)
         return rawImg, rawTags
+

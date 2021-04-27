@@ -99,7 +99,7 @@ class Executor(object):
         training_sets.partition_data_helper(num_clients=self.args.total_worker, data_map_file=self.args.data_map_file)
 
         testing_sets = DataPartitioner(data=test_dataset, numOfClass=self.args.num_class, isTest=True)
-        testing_sets.partition_data_helper(num_clients=self.args.total_worker)
+        testing_sets.partition_data_helper(num_clients=len(self.executors))
 
         logging.info("Data partitioner completes ...")
 
@@ -120,20 +120,7 @@ class Executor(object):
         device = self.device
         args = conf
 
-        if args.task != 'nlp':
-            optimizer = MySGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
-        else:
-            no_decay = ["bias", "LayerNorm.weight"]
-            optimizer_grouped_parameters = [
-                {
-                    "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-                    "weight_decay": 5e-4,
-                },
-                {"params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
-            ]
-            optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
-
-
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
         criterion = CTCLoss(reduction='none').to(device=device) if args.task=='voice' else torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
 
         epoch_train_loss = None
@@ -169,7 +156,9 @@ class Executor(object):
 
                 assert numOfFailures < numOfTries, 'Error: Failed to load client data'
 
+            optimizer.zero_grad()
             data = Variable(data).to(device=device)
+
             if args.task != 'voice':
                 target = Variable(target).to(device=device)
             if args.task == 'speech':
@@ -186,7 +175,7 @@ class Executor(object):
                 output = model(data)
                 loss = criterion(output, target)
 
-            # ======== collect training feedback for other decision components ======
+            # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
             loss_list = loss.tolist() if args.task != 'nlp' else [loss.item()]
             temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
 
@@ -198,13 +187,12 @@ class Executor(object):
                     epoch_train_loss = (1. - args.loss_decay) * epoch_train_loss + args.loss_decay * temp_loss
 
             # ========= Define the backward loss ==============
-            optimizer.zero_grad()
             loss.mean().backward()
             optimizer.step()
 
             count += len(target)
 
-        model_param = [param.data.cpu().numpy() for idx, param in enumerate(model.parameters())]
+        model_param = [param.data.cpu().numpy() for param in model.parameters()]
         results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
                   'trained_size': count, 'wall_duration': 0, 'success': count > 0, 
                   'utility':math.sqrt(epoch_train_loss)*total_batch_size*args.batch_size}
@@ -224,19 +212,26 @@ class Executor(object):
     def push_msg_to_server(self, event, results):
         self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
 
+
     def push_msg_to_server_asyn(self, event, results):
         self.client_event_queue.put_nowait({'return': results, 'event': event, 'executorId': self.this_rank})
+
+
+    def get_serialized_size(self, data):
+        return sys.getsizeof(pickle.dump(data))
+
 
     def report_executor_info_handler(self):
         return self.training_sets.getSize()
 
+
     def update_model_handler(self):
         self.epoch += 1
+
         """Update the model copy on this executor"""
-        for name, param in self.model.named_parameters():
-            tmp_tensor = torch.zeros_like(param.data, device='cpu')
-            dist.recv(tensor=tmp_tensor, src=0)
-            param.data = tmp_tensor.to(device=self.device)
+        for param in self.model.parameters():
+            dist.recv(tensor=param.data, src=0)
+        self.model = self.model.to(device=self.device)
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
@@ -313,12 +308,12 @@ class Executor(object):
                 else:
                     logging.error("Unknown message types!")
 
-            #time.sleep(0.1)
 
     def stop(self):
         logging.info(f"Terminating (Executor {self.this_rank}) ...")
 
         self.control_manager.shutdown()
+
 
 if __name__ == "__main__":
     executor = Executor(args)
