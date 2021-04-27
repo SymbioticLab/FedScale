@@ -30,10 +30,8 @@ class Aggregator(object):
         self.model_in_update = []
 
         # ======== channels ======== 
-        self.dummy_server_queue = {executorId:Queue() for executorId in self.executors}
         self.server_event_queue = {}
-        self.dummy_client_queue = Queue()
-        self.client_event_queue = None
+        self.client_event_queue = Queue()
         self.control_manager = None
         # event queue of its own functions
         self.event_queue = collections.deque()
@@ -42,6 +40,7 @@ class Aggregator(object):
         self.client_run_queue = [] # client ids to run
         self.client_run_queue_idx = 0
         self.round_stragglers = []
+        self.model_update_size = 0.
 
         self.collate_fn = None
         self.task = args.task
@@ -77,14 +76,7 @@ class Aggregator(object):
                 except Exception as e:
                     assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
 
-        self.control_manager = self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
-        self.control_manager.start()
-
-        for executorId in self.executors:
-           self.server_event_queue[executorId] = eval(f'self.control_manager.get_server_event_{executorId}()')
-            
-        self.client_event_queue = self.control_manager.get_client_event()
-
+        self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
         self.init_data_communication()
 
         self.client_manager = self.init_client_manager(args=self.args)
@@ -103,14 +95,23 @@ class Aggregator(object):
         # This channel serves control messages
         logging.info(f"Start to initiate {ps_ip}:{ps_port} for control plane communication ...")
 
+        dummy_que = {executorId:Queue() for executorId in executors}
         # create multiple queue for each aggregator_executor pair
         for executorId in executors:
-            BaseManager.register(f'get_server_event_{executorId}', callable=lambda: self.dummy_server_queue[executorId])
+            BaseManager.register('get_server_event_que'+str(executorId), callable=lambda: dummy_que[executorId])
 
-        BaseManager.register('get_client_event', callable=lambda: self.dummy_client_queue)
-        manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
+        dummy_client_que = Queue()
+        BaseManager.register('get_client_event', callable=lambda: dummy_client_que)
 
-        return manager
+        self.control_manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
+        self.control_manager.start()
+
+        #self.server_event_queue = torch.multiprocessing.Manager().dict()
+        for executorId in self.executors:
+            self.server_event_queue[executorId] = eval('self.control_manager.get_server_event_que'+str(executorId)+'()')
+
+        self.client_event_queue = self.control_manager.get_client_event()
+
 
     def init_data_communication(self):
         dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
@@ -119,7 +120,6 @@ class Aggregator(object):
     def init_model(self):
         """Load model"""
         return init_model()
-        
 
     def init_client_manager(self, args):
         """
@@ -163,11 +163,12 @@ class Aggregator(object):
             for index, _size in enumerate(info['size']):
                 # since the worker rankId starts from 1, we also configure the initial dataId as 1
                 mapped_id = clientId%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
-                systemProfile = self.client_profiles[mapped_id] if mapped_id in self.client_profiles else [1.0, 1.0]
+                systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
 
-                self.client_manager.registerClient(executorId, clientId, dis=[], size=_size, speed=systemProfile)
+                systemProfile['computation'] *= self.args.clock_factor
+                self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
                 self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size, 
-                    upload_epoch=self.args.upload_epoch, model_size=self.args.model_size)
+                    upload_epoch=self.args.upload_epoch, upload_size=self.model_update_size, download_size=self.model_update_size)
 
                 clientId += 1
 
@@ -175,8 +176,6 @@ class Aggregator(object):
 
             # start to sample clients
             self.round_completion_handler()
-            self.event_queue.append('update_model')
-            self.event_queue.append('start_round')
 
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
@@ -190,7 +189,7 @@ class Aggregator(object):
             client_cfg = self.client_conf.get(client_to_run, self.args)
             roundDuration = self.client_manager.getCompletionTime(client_to_run,
                                     batch_size=client_cfg.batch_size, upload_epoch=client_cfg.upload_epoch,
-                                    model_size=client_cfg.model_size) * client_cfg.clock_factor
+                                    upload_size=self.model_update_size, download_size=self.model_update_size)
 
             # if the client is not active by the time of collection, we consider it is lost in this round
             if self.client_manager.isClientActive(client_to_run, roundDuration + self.global_virtual_clock):
@@ -213,6 +212,7 @@ class Aggregator(object):
         self.setup_env()
         self.model = self.init_model()
 
+        self.model_update_size = sys.getsizeof(pickle.dump(self.model))
         self.client_profiles = self.load_client_profile(file_path=self.args.client_path)
         self.start_event()
         self.event_monitor()
@@ -224,8 +224,6 @@ class Aggregator(object):
 
     def broadcast_msg(self, msg):
         for executorId in self.executors:
-            #logging.info(f"broadcast_msg {msg} to {executorId}")
-            #eval(f'self.control_manager.get_server_event_{executorId}().put({msg})')
             self.server_event_queue[executorId].put(msg)
 
     def assign_participant_list(self, clientsToRun):
@@ -339,7 +337,7 @@ class Aggregator(object):
                 }
 
 
-            logging.info("After aggregation in epoch: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {}, test len: {}"
+            logging.info("FL Testing in epoch: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {:.4f}, test len: {}"
                     .format(self.epoch, self.global_virtual_clock, self.testing_history['perf'][self.epoch]['top_1'], 
                     self.testing_history['perf'][self.epoch]['top_5'], self.testing_history['perf'][self.epoch]['loss'], 
                     self.testing_history['perf'][self.epoch]['test_len']))
@@ -381,7 +379,7 @@ class Aggregator(object):
                 event_dict = self.client_event_queue.get()
                 event_msg, executorId, results = event_dict['event'], event_dict['executorId'], event_dict['return']
 
-                logging.info(f"Receive (Event:{event_msg.upper()}) from (Executor:{executorId})")
+                logging.info(f"Round {self.epoch}: Receive (Event:{event_msg.upper()}) from (Executor:{executorId})")
 
                 # collect training returns from the executor
                 if event_msg == 'train_nowait':
@@ -389,7 +387,9 @@ class Aggregator(object):
                     next_clientId = self.pop_next_participant()
 
                     if next_clientId is not None:
-                        self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': None})
+                        runtime_profile = {'event': 'train', 'clientId':next_clientId, 'conf': None}
+                        self.server_event_queue[executorId].put(runtime_profile)
+
 
                 elif event_msg == 'train':
                     # push training results

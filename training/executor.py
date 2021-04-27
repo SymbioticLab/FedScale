@@ -16,7 +16,7 @@ class Executor(object):
         
         self.args = args
         self.device = torch.device('cuda') if args.use_cuda else torch.device('cpu')
-        self.workers = [int(v) for v in str(args.learners).split('-')]
+        self.executors = [int(v) for v in str(args.learners).split('-')]
 
         # ======== env information ======== 
         self.this_rank = args.this_rank
@@ -26,7 +26,7 @@ class Executor(object):
         self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
         # ======== channels ======== 
-        self.server_event_queue = self.client_event_queue = Queue()
+        self.server_event_queue = self.client_event_queue = None
         self.control_manager = None
 
         # ======== runtime information ======== 
@@ -53,14 +53,7 @@ class Executor(object):
                 except Exception as e:
                     assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
 
-        self.control_manager = self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.workers)
-        self.control_manager.connect()
-
-        self.server_event_queue = eval(f'self.control_manager.get_server_event_{self.this_rank}()')
-        #self.control_manager.get_server_event_1() if self.this_rank == 1 else self.control_manager.get_server_event_2()
-        #
-        self.client_event_queue = self.control_manager.get_client_event() 
-
+        self.init_control_communication(self.args.ps_ip, self.args.manager_port)
         self.init_data_communication()
 
 
@@ -72,21 +65,24 @@ class Executor(object):
         torch.backends.cudnn.deterministic = True
 
 
-    def init_control_communication(self, ps_ip, ps_port, executors):
+    def init_control_communication(self, ps_ip, ps_port):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
         logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
 
-        for executor_id in executors:
-            BaseManager.register(f'get_server_event_{executor_id}')
-
+        #for executor_id in self.executors:
+        BaseManager.register('get_server_event_que'+str(self.this_rank))
         BaseManager.register('get_client_event')
-        manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
 
-        return manager
+        self.control_manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
+        self.control_manager.connect()
+
+        self.server_event_queue = eval('self.control_manager.get_server_event_que'+str(self.this_rank)+'()')
+        self.client_event_queue = self.control_manager.get_client_event()
+
 
     def init_data_communication(self):
-        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.workers) + 1)
+        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
 
 
     def init_model(self):
@@ -117,7 +113,7 @@ class Executor(object):
 
     def run_client(self, client_data, model, conf, clientId):
 
-        logging.info(f"Start to train client {clientId} ...")
+        logging.info(f"Start to train (CLIENT: {clientId}) ...")
 
         train_data_itr = iter(client_data)
         total_batch_size = len(train_data_itr)
@@ -153,7 +149,7 @@ class Executor(object):
             fetchSuccess = False
             numOfFailures = 0
 
-            while not fetchSuccess and numOfFailures < numOfTries:
+            while not fetchSuccess:
                 try:
                     if args.task == 'nlp':
                         # target is None in this case
@@ -171,8 +167,7 @@ class Executor(object):
                     train_data_itr = iter(client_data)
                     numOfFailures += 1
 
-            if numOfFailures >= numOfTries:
-                break
+                assert numOfFailures < numOfTries, 'Error: Failed to load client data'
 
             data = Variable(data).to(device=device)
             if args.task != 'voice':
@@ -214,7 +209,7 @@ class Executor(object):
                   'trained_size': count, 'wall_duration': 0, 'success': count > 0, 
                   'utility':math.sqrt(epoch_train_loss)*total_batch_size*args.batch_size}
 
-        logging.info(f"Training of client {clientId} completes")
+        logging.info(f"Training of (CLIENT: {clientId}) completes")
 
         return results
 
@@ -236,6 +231,7 @@ class Executor(object):
         return self.training_sets.getSize()
 
     def update_model_handler(self):
+        self.epoch += 1
         """Update the model copy on this executor"""
         for name, param in self.model.named_parameters():
             tmp_tensor = torch.zeros_like(param.data, device='cpu')
@@ -289,7 +285,7 @@ class Executor(object):
                 event_dict = self.server_event_queue.get()
                 event_msg = event_dict['event']
 
-                logging.info(f"Received (Event:{event_msg.upper()}) from aggregator ...")
+                logging.info(f"Received (Event:{event_msg.upper()}) from aggregator")
 
                 if event_msg == 'report_executor_info':
                     executor_info = self.report_executor_info_handler()
@@ -317,10 +313,10 @@ class Executor(object):
                 else:
                     logging.error("Unknown message types!")
 
-            time.sleep(0.1)
+            #time.sleep(0.1)
 
     def stop(self):
-        logging.info(f"Terminating Executor {self.this_rank} ...")
+        logging.info(f"Terminating (Executor {self.this_rank}) ...")
 
         self.control_manager.shutdown()
 

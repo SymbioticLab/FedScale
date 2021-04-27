@@ -1,14 +1,12 @@
 
 class Client(object):
 
-    def __init__(self, hostId, clientId, dis, size, speed, traces=None):
+    def __init__(self, hostId, clientId, speed, traces=None):
         self.hostId = hostId
         self.clientId = clientId
-        self.compute_speed = speed[0]
-        self.bandwidth = speed[1]
-        self.distance = dis
-        self.size = size
-        self.score = dis
+        self.compute_speed = speed['computation']
+        self.bandwidth = speed['communication']
+        self.score = 0
         self.traces = traces
         self.behavior_index = 0
 
@@ -34,6 +32,12 @@ class Client(object):
 
         return False
 
-    def getCompletionTime(self, batch_size, upload_epoch, model_size):
-        return (3.0 * batch_size * upload_epoch/float(self.compute_speed) + model_size/float(self.bandwidth))
-        #return (3.0 * batch_size * upload_epoch*float(self.compute_speed)/1000. + model_size/float(self.bandwidth))
+    def getCompletionTime(self, batch_size, upload_epoch, upload_size, download_size, augmentation_factor=3.0):
+        """
+           Computation latency: compute_speed is the inference latency of models (ms/sample). As reproted in many papers, 
+                                backward-pass takes around 2x the latency, so we multiple it by 3x;
+           Communication latency: communication latency = (pull + push)_update_size/bandwidth;
+        """
+        #return (3.0 * batch_size * upload_epoch/float(self.compute_speed) + model_size/float(self.bandwidth))
+        return (augmentation_factor * batch_size * upload_epoch*float(self.compute_speed)/1000. + \
+                (upload_size+download_size)/float(self.bandwidth))

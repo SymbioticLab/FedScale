@@ -51,10 +51,6 @@ from utils.yogi import YoGi
 # shared functions of aggregator and clients
 # initiate for nlp
 tokenizer = None
-
-if args.task == 'nlp' or args.task == 'text_clf':
-    tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
-
 modelDir = os.path.join(args.log_path, args.model)
 modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar')
 
@@ -64,9 +60,12 @@ outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
             }
 
 def init_model():
+    global tokenizer
+
     logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
+        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
         # we should train from scratch
         config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
         model = AutoModelWithLMHead.from_config(config)
@@ -142,16 +141,6 @@ def init_model():
         return model, train_dataset, test_dataset
     else:
         model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
-
-    if args.load_model:
-        try:
-            with open(modelPath, 'rb') as fin:
-                model = pickle.load(fin)
-
-            logging.info("====Load model successfully\n")
-        except Exception as e:
-            logging.info("====Error: Failed to load model due to {}\n".format(str(e)))
-            sys.exit(-1)
 
     return model
 
@@ -253,3 +242,4 @@ def init_dataset():
             sys.exit(-1)
 
     return train_dataset, test_dataset
+
