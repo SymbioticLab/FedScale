@@ -263,7 +263,7 @@ class Aggregator(object):
         device = self.device
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
-        importance = 1./self.args.total_worker
+        importance = 1./len(self.client_run_queue)
         if len(self.model_in_update) == 0:
             self.model_in_update = [True]
 

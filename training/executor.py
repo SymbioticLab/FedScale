@@ -114,14 +114,17 @@ class Executor(object):
     def run_client(self, client_data, model, conf, clientId):
 
         logging.info(f"Start to train (CLIENT: {clientId}) ...")
+        device = self.device
+
+        model = model.to(device=device)
 
         train_data_itr = iter(client_data)
         total_batch_size = len(train_data_itr)
-        device = self.device
+        
         args = conf
 
         optimizer = MySGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
-        #torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
+        #optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
         criterion = CTCLoss(reduction='none').to(device=device) if args.task=='voice' else torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
 
         epoch_train_loss = None
@@ -187,11 +190,7 @@ class Executor(object):
             # ========= Define the backward loss ==============
             optimizer.zero_grad()
             loss.mean().backward()
-            
-            #optimizer.step()
-            delta_w = optimizer.get_delta_w(args.learning_rate)
-            for idx, param in enumerate(model.parameters()):
-                param.data -= delta_w[idx].to(device=device)
+            optimizer.step()
 
             count += len(target)
 
@@ -208,6 +207,7 @@ class Executor(object):
     def run(self):
         self.setup_env()
         self.model = self.init_model()
+        self.model = self.model.to(device=self.device)
         self.training_sets, self.testing_sets = self.init_data()
         self.event_monitor()
 
@@ -220,16 +220,16 @@ class Executor(object):
         self.client_event_queue.put_nowait({'return': results, 'event': event, 'executorId': self.this_rank})
 
 
-    def get_serialized_size(self, data):
-        return sys.getsizeof(pickle.dump(data))
-
-
     def report_executor_info_handler(self):
         return self.training_sets.getSize()
 
 
     def update_model_handler(self):
         self.epoch += 1
+
+        # learning rate scheduler
+        if self.epoch % self.args.decay_epoch == 0:
+            self.args.learning_rate = max(self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
 
         """Update the model copy on this executor"""
         for param in self.model.parameters():
@@ -239,7 +239,8 @@ class Executor(object):
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
-            pickle.dump(self.model.to(device='cpu'), model_out)
+            pickle.dump(self.model, model_out)
+
 
     def load_global_model(self):
         # load last global model
@@ -247,16 +248,18 @@ class Executor(object):
             model = pickle.load(model_in)
         return model
 
+
     def training_handler(self, clientId, conf):
         """Train model given client ids"""
 
         # load last global model
         client_model = self.load_global_model()
-        client_model = client_model.to(device=self.device)
 
         client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
         train_res = self.run_client(client_data=client_data, model=client_model, conf=conf, clientId=clientId)
 
+        # we need to get runtime variance for BN
+        self.model = client_model
         return train_res
 
 
@@ -267,9 +270,7 @@ class Executor(object):
         data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
         criterion = CTCLoss(reduction='mean').to(device=device) if self.task == 'voice' else torch.nn.CrossEntropyLoss().to(device=device)
 
-        model = self.load_global_model()
-        model = model.to(device=device)
-        test_res = test_model(self.this_rank, model, data_loader, criterion=criterion, tokenizer=tokenizer)
+        test_res = test_model(self.this_rank, self.model, data_loader, criterion=criterion, tokenizer=tokenizer)
 
         test_loss, acc, acc_5, testResults = test_res
         logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
@@ -301,7 +302,7 @@ class Executor(object):
                     train_res = self.training_handler(clientId=clientId, conf=client_conf if client_conf is not None else self.args)
                     self.push_msg_to_server('train_nowait', None)
                     # model updates may be time-consuming, thus we apply asyn push for better communication-computation overlaps
-                    self.push_msg_to_server(event_msg, train_res)
+                    self.push_msg_to_server_asyn(event_msg, train_res)
 
                 elif event_msg == 'test':
                     test_res = self.testing_handler(args=self.args)
