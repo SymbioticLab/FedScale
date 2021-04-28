@@ -120,13 +120,12 @@ class Executor(object):
         device = self.device
         args = conf
 
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
+        optimizer = MySGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
+        #torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
         criterion = CTCLoss(reduction='none').to(device=device) if args.task=='voice' else torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
 
         epoch_train_loss = None
         count = 0
-
-        model = model.to(device=device)
         model.train()
 
         numOfFailures, numOfTries = 0, 3
@@ -156,7 +155,6 @@ class Executor(object):
 
                 assert numOfFailures < numOfTries, 'Error: Failed to load client data'
 
-            optimizer.zero_grad()
             data = Variable(data).to(device=device)
 
             if args.task != 'voice':
@@ -170,7 +168,7 @@ class Executor(object):
             elif args.task == 'voice':
                 outputs, output_sizes = model(data, input_sizes)
                 outputs = outputs.transpose(0, 1).float()  # TxNxH
-                loss = criterion(outputs, target, output_sizes, target_sizes).to(device=device)
+                loss = criterion(outputs, target, output_sizes, target_sizes)
             else:
                 output = model(data)
                 loss = criterion(output, target)
@@ -187,8 +185,13 @@ class Executor(object):
                     epoch_train_loss = (1. - args.loss_decay) * epoch_train_loss + args.loss_decay * temp_loss
 
             # ========= Define the backward loss ==============
+            optimizer.zero_grad()
             loss.mean().backward()
-            optimizer.step()
+            
+            #optimizer.step()
+            delta_w = optimizer.get_delta_w(args.learning_rate)
+            for idx, param in enumerate(model.parameters()):
+                param.data -= delta_w[idx].to(device=device)
 
             count += len(target)
 
@@ -230,25 +233,26 @@ class Executor(object):
 
         """Update the model copy on this executor"""
         for param in self.model.parameters():
-            dist.recv(tensor=param.data, src=0)
-        self.model = self.model.to(device=self.device)
+            temp_tensor = torch.zeros_like(param.data, device='cpu')
+            dist.recv(tensor=temp_tensor, src=0)
+            param.data = temp_tensor.to(device=self.device)
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
-            pickle.dump(self.model, model_out)
+            pickle.dump(self.model.to(device='cpu'), model_out)
 
-        # Periodically back up models
-        if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
-            with open(os.path.join(logDir, str(self.args.model)+'_'+str(self.epoch)+'.pth.tar'), 'wb') as model_out:
-                pickle.dump(self.model.to(device='cpu'), model_out)
-
+    def load_global_model(self):
+        # load last global model
+        with open(self.temp_model_path, 'rb') as model_in:
+            model = pickle.load(model_in)
+        return model
 
     def training_handler(self, clientId, conf):
         """Train model given client ids"""
 
         # load last global model
-        with open(self.temp_model_path, 'rb') as model_in:
-            client_model = pickle.load(model_in)
+        client_model = self.load_global_model()
+        client_model = client_model.to(device=self.device)
 
         client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
         train_res = self.run_client(client_data=client_data, model=client_model, conf=conf, clientId=clientId)
@@ -263,7 +267,9 @@ class Executor(object):
         data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
         criterion = CTCLoss(reduction='mean').to(device=device) if self.task == 'voice' else torch.nn.CrossEntropyLoss().to(device=device)
 
-        test_res = test_model(self.this_rank, self.model.to(device=device), data_loader, criterion=criterion, tokenizer=tokenizer)
+        model = self.load_global_model()
+        model = model.to(device=device)
+        test_res = test_model(self.this_rank, model, data_loader, criterion=criterion, tokenizer=tokenizer)
 
         test_loss, acc, acc_5, testResults = test_res
         logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
@@ -295,7 +301,7 @@ class Executor(object):
                     train_res = self.training_handler(clientId=clientId, conf=client_conf if client_conf is not None else self.args)
                     self.push_msg_to_server('train_nowait', None)
                     # model updates may be time-consuming, thus we apply asyn push for better communication-computation overlaps
-                    self.push_msg_to_server_asyn(event_msg, train_res)
+                    self.push_msg_to_server(event_msg, train_res)
 
                 elif event_msg == 'test':
                     test_res = self.testing_handler(args=self.args)

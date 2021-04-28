@@ -221,7 +221,7 @@ class Aggregator(object):
 
 
     def start_event(self):
-        self.model_in_update = [param.data for idx, param in enumerate(self.model.parameters())]
+        #self.model_in_update = [param.data for idx, param in enumerate(self.model.parameters())]
         self.event_queue.append('report_executor_info')
 
     def broadcast_msg(self, msg):
@@ -265,13 +265,13 @@ class Aggregator(object):
         # Importance of each update is 1/#_of_participants
         importance = 1./self.args.total_worker
         if len(self.model_in_update) == 0:
-            self.model_in_update = [torch.from_numpy(param).to(device=device)*importance for param in results['update_weight']]
-        else:
-            for idx, param in enumerate(results['update_weight']):
-                client_model_weight = torch.from_numpy(param).to(device=device)
-                self.model_in_update[idx] += client_model_weight*importance
+            self.model_in_update = [True]
 
-        del results
+            for idx, param in enumerate(self.model.parameters()):
+                param.data = torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance
+        else:
+            for idx, param in enumerate(self.model.parameters()):
+                param.data += torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance
 
 
     def round_completion_handler(self):
@@ -295,9 +295,6 @@ class Aggregator(object):
         # ordered by the completion time
         self.assign_participant_list(clientsToRun)
 
-        # update the global model
-        for idx, param in enumerate(self.model.parameters()):
-            param.data = self.model_in_update[idx].clone()
 
         self.round_stragglers = round_stragglers
         self.virtual_client_clock = virtual_client_clock
@@ -320,7 +317,8 @@ class Aggregator(object):
         """Push the latest model to executors"""
         for executorId in self.executors:
             for param in self.model.parameters():
-                dist.send(tensor=param.data.to(device='cpu'), dst=executorId)
+                temp_tensor = param.data.to(device='cpu')
+                dist.send(tensor=temp_tensor, dst=executorId)
 
 
     def testing_completion_handler(self, results):
