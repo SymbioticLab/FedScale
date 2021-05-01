@@ -12,6 +12,7 @@ os.environ['GLOO_SOCKET_IFNAME'] = 'enP5p7s0f1'
 class Aggregator(object):
     """This centralized aggregator collects training/testing feedbacks from executors"""
     def __init__(self, args):
+        logging.info(f"Job args {args}")
         
         self.args = args
         self.device = torch.device('cuda') if args.use_cuda else torch.device('cpu')

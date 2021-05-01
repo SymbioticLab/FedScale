@@ -118,10 +118,7 @@ class OpenImage():
         # load meta file to get labels
         classMapping = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
 
-        imgFiles = os.scandir(path)
-
-        for imgFile in imgFiles:
-            imgFile = imgFile.name
+        for imgFile in list(classMapping.keys()):
             rawImg.append(imgFile)
             rawTags.append(classMapping[imgFile])
 

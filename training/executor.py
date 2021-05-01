@@ -117,89 +117,89 @@ class Executor(object):
         device = self.device
 
         model = model.to(device=device)
-
-        train_data_itr = iter(client_data)
-        total_batch_size = len(train_data_itr)
+        total_batch_size = len(client_data)
         
         args = conf
 
-        optimizer = MySGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
         #optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
         criterion = CTCLoss(reduction='none').to(device=device) if args.task=='voice' else torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
 
-        epoch_train_loss = None
+        epoch_train_loss = 1e-4#None
         count = 0
         model.train()
 
-        numOfFailures, numOfTries = 0, 3
+        error_type = None
 
+        completed_steps = 0
         # TODO: if indeed enforce FedAvg, we will run fixed number of epochs, instead of iterations
-        for itr in range(args.local_steps):
-            fetchSuccess = False
-            numOfFailures = 0
 
-            while not fetchSuccess:
-                try:
+        while completed_steps < args.local_steps:
+            try:
+                for data_pair in client_data:
+
                     if args.task == 'nlp':
-                        # target is None in this case
-                        (data, _) = next(train_data_itr)
+                        (data, _) = data_pair
                         data, target = mask_tokens(data, tokenizer, args) if args.mlm else (data, data)
                     elif args.task == 'voice':
-                        (data, target, input_percentages, target_sizes), _ = next(train_data_itr)
+                        (data, target, input_percentages, target_sizes), _ = data_pair
                         input_sizes = input_percentages.mul_(int(data.size(3))).int()
                     else:
-                        (data, target) = next(train_data_itr)
+                        (data, target) = data_pair
 
-                    fetchSuccess = True
+                    data = Variable(data).to(device=device)
 
-                except StopIteration as ex:
-                    train_data_itr = iter(client_data)
-                    numOfFailures += 1
+                    if args.task != 'voice':
+                        target = Variable(target).to(device=device)
+                    if args.task == 'speech':
+                        data = torch.unsqueeze(data, 1)
 
-                assert numOfFailures < numOfTries, 'Error: Failed to load client data'
+                    if args.task == 'nlp':
+                        outputs = model(data, masked_lm_labels=target) if args.mlm else model(data, labels=target)
+                        loss = outputs[0]
+                    elif args.task == 'voice':
+                        outputs, output_sizes = model(data, input_sizes)
+                        outputs = outputs.transpose(0, 1).float()  # TxNxH
+                        loss = criterion(outputs, target, output_sizes, target_sizes)
+                    else:
+                        output = model(data)
+                        loss = criterion(output, target)
 
-            data = Variable(data).to(device=device)
+                    # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
+                    loss_list = loss.tolist() if args.task != 'nlp' else [loss.item()]
+                    temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
 
-            if args.task != 'voice':
-                target = Variable(target).to(device=device)
-            if args.task == 'speech':
-                data = torch.unsqueeze(data, 1)
+                    # only measure the loss of the first epoch
+                    if completed_steps < total_batch_size:
+                        if epoch_train_loss == 1e-4:
+                            epoch_train_loss = temp_loss
+                        else:
+                            epoch_train_loss = (1. - args.loss_decay) * epoch_train_loss + args.loss_decay * temp_loss
 
-            if args.task == 'nlp':
-                outputs = model(data, masked_lm_labels=target) if args.mlm else model(data, labels=target)
-                loss = outputs[0]
-            elif args.task == 'voice':
-                outputs, output_sizes = model(data, input_sizes)
-                outputs = outputs.transpose(0, 1).float()  # TxNxH
-                loss = criterion(outputs, target, output_sizes, target_sizes)
-            else:
-                output = model(data)
-                loss = criterion(output, target)
+                    # ========= Define the backward loss ==============
+                    optimizer.zero_grad()
+                    loss.mean().backward()
+                    optimizer.step()
 
-            # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
-            loss_list = loss.tolist() if args.task != 'nlp' else [loss.item()]
-            temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
+                    count += len(target)
+                    completed_steps += 1
 
-            # only measure the loss of the first epoch
-            if itr < total_batch_size:
-                if epoch_train_loss is None:
-                    epoch_train_loss = temp_loss
-                else:
-                    epoch_train_loss = (1. - args.loss_decay) * epoch_train_loss + args.loss_decay * temp_loss
+                    if completed_steps == args.local_steps:
+                        break
 
-            # ========= Define the backward loss ==============
-            optimizer.zero_grad()
-            loss.mean().backward()
-            optimizer.step()
-
-            count += len(target)
+            except Exception as ex:
+                error_type = ex
+                break
 
         model_param = [param.data.cpu().numpy() for param in model.parameters()]
         results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
                   'trained_size': count, 'wall_duration': 0, 'success': count > 0, 
                   'utility':math.sqrt(epoch_train_loss)*total_batch_size*args.batch_size}
 
-        logging.info(f"Training of (CLIENT: {clientId}) completes")
+        if count > 0:
+            logging.info(f"Training of (CLIENT: {clientId}) completes")
+        else:
+            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
 
         return results
 
