@@ -148,10 +148,10 @@ def init_dataset():
             imdb_name = "voc_2007_trainval"
             imdbval_name = "voc_2007_test"
             imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name)
-            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, training=True)
+            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
             imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, False)
             imdb_.competition_mode(on=True)
-            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, training=False, normalize = False)
+            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
             return train_dataset, test_dataset
 
         if args.data_set == 'Mnist':

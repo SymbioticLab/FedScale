@@ -22,10 +22,11 @@ import time
 import pdb
 
 class roibatchLoader(data.Dataset):
-  def __init__(self, roidb, ratio_list, ratio_index, batch_size, num_classes, training=True, normalize=None):
+  def __init__(self, roidb, ratio_list, ratio_index, batch_size, num_classes, data, training=True, normalize=None):
     self._roidb = roidb
     self._num_classes = num_classes
     # we make the height of image consistent to trim_height, trim_width
+    self.data = data
     self.trim_height = cfg.TRAIN.TRIM_HEIGHT
     self.trim_width = cfg.TRAIN.TRIM_WIDTH
     self.max_num_box = cfg.MAX_NUM_GT_BOXES

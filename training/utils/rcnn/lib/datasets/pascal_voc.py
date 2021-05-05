@@ -59,11 +59,10 @@ class pascal_voc(imdb):
         #                  'cow', 'diningtable', 'dog', 'horse',
         #                  'motorbike', 'person', 'pottedplant',
         #                  'sheep', 'sofa', 'train', 'tvmonitor')
-        self._classes = readClass('/gpfs/gpfs0/groups/chowdhury/dywsjtu/data_preprocess_scripts/OpenImagePreprocesser/class.txt')
+        self._classes = readClass(cfg.DATA_DIR + 'class.txt')
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_ext = '.jpg'
-        self._image_index = self._load_image_set_index()
-        self._image_index_temp = self._image_index
+        self._image_index,  self._image_index_temp = self._load_image_set_index()
         # Default to roidb handler
         # self._roidb_handler = self.selective_search_roidb
         self._roidb_handler = self.gt_roidb
@@ -116,8 +115,9 @@ class pascal_voc(imdb):
         assert os.path.exists(image_set_file), \
             'Path does not exist: {}'.format(image_set_file)
         with open(image_set_file) as f:
-            image_index = [x.strip() for x in f.readlines()]
-        return image_index
+            image_index = [x.strip().split('.')[0] for x in f.readlines()]
+            jpg_image_index = [x.strip() for x in f.readlines()]
+        return image_index, jpg_image_index
 
     def _get_default_path(self):
         """
@@ -298,7 +298,7 @@ class pascal_voc(imdb):
                                        dets[k, 2] + 1, dets[k, 3] + 1))
 
     def _reset_index(self, index):
-         self._image_index = [self._image_index_temp[i] for i in index] 
+         self._image_index = [self._image_index_temp[i].split(".")[0] for i in index] 
 
     def _do_python_eval(self, output_dir='output'):
         annopath = os.path.join(
