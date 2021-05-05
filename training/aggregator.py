@@ -29,6 +29,7 @@ class Aggregator(object):
 
         # list of parameters in model.parameters()
         self.model_in_update = []
+        self.last_global_model = []
 
         # ======== channels ======== 
         self.server_event_queue = {}
@@ -59,6 +60,11 @@ class Aggregator(object):
         self.test_result_accumulator = []
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                         'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
+
+        self.gradient_controller = None
+        if self.args.gradient_policy == 'yogi':
+            from utils.yogi import YoGi
+            self.gradient_controller = YoGi(eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
 
         # ======== runtime components =========
         self.client_manager = None
@@ -220,6 +226,7 @@ class Aggregator(object):
     def run(self):
         self.setup_env()
         self.model = self.init_model()
+        self.save_last_param()
 
         self.model_update_size = sys.getsizeof(pickle.dumps(self.model))/1024.0*8. # kbits
         self.client_profiles = self.load_client_profile(file_path=self.args.device_conf_file)
@@ -281,9 +288,25 @@ class Aggregator(object):
                 param.data += torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance
 
 
+    def save_last_param(self):
+        self.last_global_model = [param.data.clone() for param in self.model.parameters()]
+
+    def round_weight_handler(self, last_model, current_model):
+
+        if self.args.gradient_policy == 'yogi':
+
+            diff_weight = self.gradient_controller.update([pb.to(device=self.device)-pa.to(device=self.device) for pa, pb in zip(last_model, current_model)])
+
+            for idx, param in enumerate(self.model.parameters()):
+                self.model.data = last_model[idx].to(device=self.device) + diff_weight[idx].to(device=self.device)
+
+
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
         self.epoch += 1
+
+        # handle the global update w/ current and last
+        self.round_weight_handler(self.last_global_model, [param.data.clone() for param in self.model.parameters()])
 
         avgUtilLastEpoch = sum(self.stats_util_accumulator)/max(1, len(self.stats_util_accumulator))
         # assign avg reward to explored, but not ran workers
@@ -302,7 +325,7 @@ class Aggregator(object):
         # ordered by the completion time
         self.assign_participant_list(clientsToRun)
 
-
+        self.save_last_param()
         self.round_stragglers = round_stragglers
         self.virtual_client_clock = virtual_client_clock
         self.round_duration = round_duration

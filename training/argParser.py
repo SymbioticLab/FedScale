@@ -20,6 +20,7 @@ parser.add_argument('--pacer_step', type=int, default=20)
 parser.add_argument('--exploration_alpha', type=float, default=0.3)
 parser.add_argument('--exploration_factor', type=float, default=0.9)
 parser.add_argument('--exploration_decay', type=float, default=0.95)
+parser.add_argument('--sample_window', type=float, default=5.0)
 parser.add_argument('--device_avail_file', type=str, default=None)
 parser.add_argument('--clock_factor', type=float, default=2.5, help="Refactor the clock time given the profile")
 
@@ -70,7 +71,7 @@ parser.add_argument('--cut_off_util', type=float, default=0.7)
 
 
 # for yogi
-parser.add_argument('--gradient_policy', type=str, default='')
+parser.add_argument('--gradient_policy', type=str, default=None)
 parser.add_argument('--yogi_eta', type=float, default=5e-3)
 parser.add_argument('--yogi_tau', type=float, default=1e-3)
 parser.add_argument('--yogi_beta', type=float, default=0.999)
