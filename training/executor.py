@@ -117,10 +117,12 @@ class Executor(object):
         device = self.device
 
         model = model.to(device=device)
-        total_batch_size = len(client_data)
         
         args = conf
 
+        trained_unique_samples = min(len(client_data), args.batch_size * args.local_steps)
+
+        global_model = [param.data.clone() for param in model.parameters()]
         optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
         #optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
         criterion = CTCLoss(reduction='none').to(device=device) if args.task=='voice' else torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
@@ -181,6 +183,11 @@ class Executor(object):
                     loss.mean().backward()
                     optimizer.step()
 
+                    # ========= Weight handler ========================
+                    if args.proxy_avg:
+                        for idx, param in enumerate(model.parameters()):
+                            param.data += args.learning_rate * args.proxy_mu * (param.data - global_model[idx])
+
                     count += len(target)
                     completed_steps += 1
 
@@ -194,7 +201,7 @@ class Executor(object):
         model_param = [param.data.cpu().numpy() for param in model.parameters()]
         results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
                   'trained_size': count, 'wall_duration': 0, 'success': count > 0, 
-                  'utility':math.sqrt(epoch_train_loss)*total_batch_size*args.batch_size}
+                  'utility':math.sqrt(epoch_train_loss)*trained_unique_samples}
 
         if count > 0:
             logging.info(f"Training of (CLIENT: {clientId}) completes")

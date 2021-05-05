@@ -310,30 +310,13 @@ class _training_selector(object):
 
         clientLakes = list(scores.keys())
         self.exploration = max(self.exploration*self.decay_factor, self.exploration_min)
-        exploitLen = min(int(numOfSamples*(1.0 - self.exploration)), len(clientLakes))
+        explorationLen = int(numOfSamples*self.exploration)
 
-        # take the top-k, and then sample by probability, take 95% of the cut-off loss
-        sortedClientUtil = sorted(scores, key=scores.get, reverse=True)
-
-        # take cut-off utility
-        cut_off_util = scores[sortedClientUtil[exploitLen]] * self.args.cut_off_util
-
-        pickedClients = []
-        for clientId in sortedClientUtil:
-            if scores[clientId] < cut_off_util:
-                break
-            pickedClients.append(clientId)
-
-        augment_factor = len(pickedClients)
-
-        totalSc = max(1e-4, float(sum([scores[key] for key in pickedClients])))
-        pickedClients = list(np2.random.choice(pickedClients, exploitLen, p=[scores[key]/totalSc for key in pickedClients], replace=False))
-        self.exploitClients = pickedClients
+        pickedClients = []  
 
         # exploration
-        if len(self.unexplored) > 0:
-            _unexplored = [x for x in list(self.unexplored) if int(x) in feasible_clients]
-
+        _unexplored = [x for x in list(self.unexplored) if int(x) in feasible_clients]
+        if len(_unexplored) > 0:
             init_reward = {}
             for cl in _unexplored:
                 init_reward[cl] = self.totalArms[cl]['reward']
@@ -343,7 +326,7 @@ class _training_selector(object):
                     init_reward[cl] *= ((float(self.round_prefer_duration)/max(1e-4, clientDuration)) ** self.args.round_penalty)
 
             # prioritize w/ some rewards (i.e., size)
-            exploreLen = min(len(_unexplored), numOfSamples - len(pickedClients))
+            exploreLen = min(len(_unexplored), explorationLen)
             pickedUnexploredClients = sorted(init_reward, key=init_reward.get, reverse=True)[:min(int(self.sample_window*exploreLen), len(init_reward))]
 
             unexploredSc = float(sum([init_reward[key] for key in pickedUnexploredClients]))
@@ -352,16 +335,31 @@ class _training_selector(object):
                             p=[init_reward[key]/max(1e-4, unexploredSc) for key in pickedUnexploredClients], replace=False))
 
             self.exploreClients = pickedUnexplored
-            pickedClients = pickedClients + pickedUnexplored
-        else:
-            # no clients left for exploration
-            self.exploration_min = 0.
-            self.exploration = 0.
+            pickedClients = pickedUnexplored
 
-        while len(pickedClients) < numOfSamples:
-            nextId = self.rng.choice(orderedKeys)
-            if nextId not in pickedClients:
-                pickedClients.append(nextId)
+        # exploitation
+        exploitLen = min(numOfSamples-len(pickedClients), len(clientLakes))
+
+        # take the top-k, and then sample by probability, take 95% of the cut-off loss
+        sortedClientUtil = sorted(scores, key=scores.get, reverse=True)
+
+        # take cut-off utility
+        cut_off_util = scores[sortedClientUtil[exploitLen]] * self.args.cut_off_util
+
+        tempPickedClients = []
+        for clientId in sortedClientUtil:
+            if scores[clientId] < cut_off_util:
+                break
+            tempPickedClients.append(clientId)
+
+        augment_factor = len(tempPickedClients)
+
+        totalSc = max(1e-4, float(sum([scores[key] for key in tempPickedClients])))
+        tempPickedClients = list(np2.random.choice(tempPickedClients, exploitLen, p=[scores[key]/totalSc for key in tempPickedClients], replace=False))
+        self.exploitClients = tempPickedClients
+
+        pickedClients = pickedClients + tempPickedClients
+
 
         top_k_score = []
         for i in range(min(3, len(pickedClients))):
