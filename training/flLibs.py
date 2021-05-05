@@ -36,6 +36,7 @@ elif args.task == 'speech':
     from utils.speech import BackgroundNoiseDataset
 elif args.task == 'detection':
     from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
+    from utils.rcnn.lib.datasets.factory import get_imdb
     from utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
     from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
     from utils.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
@@ -126,19 +127,12 @@ def init_model():
                            audio_conf=audio_conf,
                            bidirectional=args.bidirectional)
     elif args.task == 'detection':
-        imdb_name = "voc_2007_trainval"
-        imdbval_name = "voc_2007_test"
         np.random.seed(cfg.RNG_SEED)
         cfg_from_file(args.cfg_file)
-        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name)
-        # train_size = len(roidb)
-        train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, training=True)
-        imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, False)
-        imdb_.competition_mode(on=True)
-        test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, training=False, normalize = False)
+        imdb = get_imdb("voc_2007_trainval")
         model = resnet(imdb.classes, 101, pretrained=True, class_agnostic=False)
         model.create_architecture()
-        return model, train_dataset, test_dataset
+        return model
     else:
         model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 
@@ -150,6 +144,15 @@ def init_dataset():
 
     # Load data if the machine acts as clients
     if args.this_rank != 0:
+        if args.task == "detection":
+            imdb_name = "voc_2007_trainval"
+            imdbval_name = "voc_2007_test"
+            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name)
+            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, training=True)
+            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, False)
+            imdb_.competition_mode(on=True)
+            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, training=False, normalize = False)
+            return train_dataset, test_dataset
 
         if args.data_set == 'Mnist':
             train_transform, test_transform = get_data_transform('mnist')

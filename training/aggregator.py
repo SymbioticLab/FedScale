@@ -63,6 +63,12 @@ class Aggregator(object):
         # ======== runtime components =========
         self.client_manager = None
 
+        # ======== object detection =========
+        if args.task == "detection":
+            cfg_from_file(args.cfg_file)
+            np.random.seed(cfg.RNG_SEED)
+            self.imdb, _, _, _ = combined_roidb("voc_2007_test")
+
 
     def setup_env(self):
         self.setup_seed(seed=self.this_rank)
@@ -329,15 +335,38 @@ class Aggregator(object):
         if len(self.test_result_accumulator) == len(self.executors):
             accumulator = self.test_result_accumulator[0]
             for i in range(1, len(self.test_result_accumulator)):
-                for key in accumulator:
-                    accumulator[key] += self.test_result_accumulator[i][key]
-
-            self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
-                'top_1': round(accumulator['top_1']/accumulator['test_len']*100.0, 4),
-                'top_5': round(accumulator['top_5']/accumulator['test_len']*100.0, 4),
-                'loss': accumulator['test_loss']/accumulator['test_len'],
-                'test_len': accumulator['test_len']
-                }
+                if self.args.task == "detection":
+                    for key in accumulator:
+                        accumulator[key] += self.test_result_accumulator[i][key]
+                else:
+                    for key in enumerate(accumulator):
+                        if key == "boxes":
+                            accumulator[key] = accumulator[key] + self.test_result_accumulator[i][key]
+                        else:
+                            accumulator[key] += self.test_result_accumulator[i][key]
+            if self.args == "detection":
+                self.imdb._reset_index(accumulator["idx"])
+                output_dir = args.test_output_dir + "/" + str(self.epoch) 
+                aps, mean_ap = self.imdb.evaluate_detections(accumulator["boxes"], output_dir)
+                self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
+                    'top_1': mean_ap,
+                    'top_5': mean_ap,
+                    'loss': accumulator['test_loss'],
+                    'test_len': accumulator['test_len']
+                    }
+                
+                try:
+                    logging.info("====After aggregation in epoch: {}, virtual_clock: {}, mean_ap: {}, aps: {} test len: {}"
+                            .format(updateEpoch, global_virtual_clock, mean_ap, aps, test_results[updateEpoch][3]))
+                except Exception as e:
+                    logging.info(f"====Error {e}")
+            else:
+                self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
+                    'top_1': round(accumulator['top_1']/accumulator['test_len']*100.0, 4),
+                    'top_5': round(accumulator['top_5']/accumulator['test_len']*100.0, 4),
+                    'loss': accumulator['test_loss']/accumulator['test_len'],
+                    'test_len': accumulator['test_len']
+                    }
 
 
             logging.info("FL Testing in epoch: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {:.4f}, test len: {}"

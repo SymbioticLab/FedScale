@@ -10,8 +10,8 @@ from torch.autograd import Variable
 import numpy as np
 import logging
 from argParser import args
-from utils.nlp import mask_tokens
-from utils.decoder import GreedyDecoder
+# from utils.nlp import mask_tokens
+# from utils.decoder import GreedyDecoder
 
 if args.task == "detection":
     import os
@@ -163,6 +163,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
             max_per_image = 100
             thresh = 0.0
             empty_array = np.transpose(np.array([[],[],[],[],[]]), (1,0))
+            loss = 0
             for i in range(num_images):
                 data = next(data_iter)
                 im_data = Variable(torch.FloatTensor(1).cuda())
@@ -179,7 +180,8 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                 rpn_loss_cls, rpn_loss_box, \
                 RCNN_loss_cls, RCNN_loss_bbox, \
                 rois_label = model(im_data, im_info, gt_boxes, num_boxes)
-
+                print( rpn_loss_cls, rpn_loss_box, RCNN_loss_cls, RCNN_loss_bbox)
+                loss = loss + rpn_loss_cls + rpn_loss_box + RCNN_loss_cls + RCNN_loss_bbox
                 scores = cls_prob.data
                 boxes = rois.data[:, :, 1:5]
 
@@ -230,7 +232,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                         for j in range(1, imdb.num_classes):
                             keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
-            return 0, 0, 0, [0, test_data.dataset.index, all_boxes, num_images]
+            return 0, 0, 0, {'top_1':0, 'top_5':0, 'test_loss': loss, 'idx':test_data.dataset.index, 'boxes':all_boxes, 'test_len':num_images}
 
     for data, target in test_data:
         if args.task == 'nlp':

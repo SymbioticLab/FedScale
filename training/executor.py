@@ -120,8 +120,19 @@ class Executor(object):
         total_batch_size = len(client_data)
         
         args = conf
-
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
+        if args.task == "detection":
+            lr = args.learning_rate
+            params = []
+            for key, value in dict(model.named_parameters()).items():
+                if value.requires_grad:
+                    if 'bias' in key:
+                        params += [{'params':[value],'lr':lr*(cfg.TRAIN.DOUBLE_BIAS + 1), \
+                                'weight_decay': cfg.TRAIN.BIAS_DECAY and cfg.TRAIN.WEIGHT_DECAY or 0}]
+                    else:
+                        params += [{'params':[value],'lr':lr, 'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
+            optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
+        else:
+            optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
         #optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
         criterion = CTCLoss(reduction='none').to(device=device) if args.task=='voice' else torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
 
@@ -132,6 +143,11 @@ class Executor(object):
         error_type = None
 
         completed_steps = 0
+        if args.task == "detection":
+            im_data = Variable(torch.FloatTensor(1).cuda())
+            im_info = Variable(torch.FloatTensor(1).cuda())
+            num_boxes = Variable(torch.LongTensor(1).cuda())
+            gt_boxes = Variable(torch.FloatTensor(1).cuda())
         # TODO: if indeed enforce FedAvg, we will run fixed number of epochs, instead of iterations
 
         while completed_steps < args.local_steps:
@@ -144,10 +160,20 @@ class Executor(object):
                     elif args.task == 'voice':
                         (data, target, input_percentages, target_sizes), _ = data_pair
                         input_sizes = input_percentages.mul_(int(data.size(3))).int()
+                    elif args.task == 'detection':
+                        temp_data = data_pair
+                        target = temp_data[4]
+                        data = temp_data[0:4]
                     else:
                         (data, target) = data_pair
 
-                    data = Variable(data).to(device=device)
+                    if args.task != "detection":
+                        data = Variable(data).to(device=device)
+                    else:
+                        im_data.resize_(data[0].size()).copy_(data[0])
+                        im_info.resize_(data[1].size()).copy_(data[1])
+                        gt_boxes.resize_(data[2].size()).copy_(data[2])
+                        num_boxes.resize_(data[3].size()).copy_(data[3])
 
                     if args.task != 'voice':
                         target = Variable(target).to(device=device)
@@ -161,12 +187,34 @@ class Executor(object):
                         outputs, output_sizes = model(data, input_sizes)
                         outputs = outputs.transpose(0, 1).float()  # TxNxH
                         loss = criterion(outputs, target, output_sizes, target_sizes)
+                    elif args.task == "detection":
+                        model.zero_grad()
+                        rois, cls_prob, bbox_pred, \
+                        rpn_loss_cls, rpn_loss_box, \
+                        RCNN_loss_cls, RCNN_loss_bbox, \
+                        rois_label = model(im_data, im_info, gt_boxes, num_boxes)
+                    
+                        loss = rpn_loss_cls + rpn_loss_box \
+                                + RCNN_loss_cls + RCNN_loss_bbox
+
+                        loss_rpn_cls = rpn_loss_cls.item()
+                        loss_rpn_box = rpn_loss_box.item()
+                        loss_rcnn_cls = RCNN_loss_cls.item()
+                        loss_rcnn_box = RCNN_loss_bbox.item()
+                        print("\t\t\trpn_cls: %.4f, rpn_box: %.4f, rcnn_cls: %.4f, rcnn_box %.4f" \
+                        % (loss_rpn_cls, loss_rpn_box, loss_rcnn_cls, loss_rcnn_box))
                     else:
                         output = model(data)
                         loss = criterion(output, target)
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
                     loss_list = loss.tolist() if args.task != 'nlp' else [loss.item()]
+                    if args.task == 'nlp':
+                        loss_list = [loss.item()]
+                    elif args.task == "detection":
+                        loss_list = [loss.tolist()]
+                    else:
+                        loss_list = loss.tolist()
                     temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
 
                     # only measure the loss of the first epoch
