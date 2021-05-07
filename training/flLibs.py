@@ -37,6 +37,7 @@ elif args.task == 'speech':
 elif args.task == 'detection':
     from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
     from utils.rcnn.lib.datasets.factory import get_imdb
+    from utils.rcnn.lib.datasets.pascal_voc import readClass
     from utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
     from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
     from utils.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
@@ -129,8 +130,8 @@ def init_model():
     elif args.task == 'detection':
         np.random.seed(cfg.RNG_SEED)
         cfg_from_file(args.cfg_file)
-        imdb = get_imdb("voc_2007_trainval")
-        model = resnet(imdb.classes, 101, pretrained=True, class_agnostic=False)
+        cfg_from_list(['DATA_DIR', args.data_dir])
+        model = resnet(readClass(args.data_dir + "/class.txt"), 101, pretrained=True, class_agnostic=False)
         model.create_architecture()
         return model
     else:
@@ -147,9 +148,9 @@ def init_dataset():
         if args.task == "detection":
             imdb_name = "voc_2007_trainval"
             imdbval_name = "voc_2007_test"
-            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name)
+            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir])
             train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
-            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, False)
+            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], False)
             imdb_.competition_mode(on=True)
             test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
             return train_dataset, test_dataset

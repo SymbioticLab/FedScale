@@ -53,13 +53,7 @@ class pascal_voc(imdb):
         self._devkit_path = self._get_default_path() if devkit_path is None \
             else devkit_path
         self._data_path = os.path.join(self._devkit_path, 'VOC' + self._year)
-        # self._classes = ('__background__',  # always index 0
-        #                  'aeroplane', 'bicycle', 'bird', 'boat',
-        #                  'bottle', 'bus', 'car', 'cat', 'chair',
-        #                  'cow', 'diningtable', 'dog', 'horse',
-        #                  'motorbike', 'person', 'pottedplant',
-        #                  'sheep', 'sofa', 'train', 'tvmonitor')
-        self._classes = readClass(cfg.DATA_DIR + 'class.txt')
+        self._classes = readClass(cfg.DATA_DIR + '/class.txt')
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_ext = '.jpg'
         self._image_index,  self._image_index_temp = self._load_image_set_index()
@@ -116,6 +110,7 @@ class pascal_voc(imdb):
             'Path does not exist: {}'.format(image_set_file)
         with open(image_set_file) as f:
             image_index = [x.strip().split('.')[0] for x in f.readlines()]
+        with open(image_set_file) as f:
             jpg_image_index = [x.strip() for x in f.readlines()]
         return image_index, jpg_image_index
 
@@ -297,8 +292,8 @@ class pascal_voc(imdb):
                                        dets[k, 0] + 1, dets[k, 1] + 1,
                                        dets[k, 2] + 1, dets[k, 3] + 1))
 
-    def _reset_index(self, index):
-         self._image_index = [self._image_index_temp[i].split(".")[0] for i in index] 
+    def _reset_index(self, index): 
+        self._image_index = [self._image_index_temp[i].split(".")[0] for i in index] 
 
     def _do_python_eval(self, output_dir='output'):
         annopath = os.path.join(

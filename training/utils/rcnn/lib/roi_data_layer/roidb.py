@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import datasets
 import numpy as np
-from model.utils.config import cfg
+from model.utils.config import cfg, cfg_from_list
 from datasets.factory import get_imdb
 import PIL
 import pdb
@@ -85,7 +85,7 @@ def filter_roidb(roidb):
     print('after filtering, there are %d images...' % (len(roidb)))
     return roidb
 
-def combined_roidb(imdb_names, training=True):
+def combined_roidb(imdb_names, cfg_list, training=True):
   """
   Combine multiple roidbs
   """
@@ -98,7 +98,7 @@ def combined_roidb(imdb_names, training=True):
       print('done')
 
     print('Preparing training data...')
-
+    
     prepare_roidb(imdb)
     #ratio_index = rank_roidb_ratio(imdb)
     print('done')
@@ -112,7 +112,8 @@ def combined_roidb(imdb_names, training=True):
     print('Set proposal method: {:s}'.format(cfg.TRAIN.PROPOSAL_METHOD))
     roidb = get_training_roidb(imdb)
     return roidb
-
+  cfg_from_list(cfg_list)
+  print("combined_roid", cfg.DATA_DIR)
   roidbs = [get_roidb(s) for s in imdb_names.split('+')]
   roidb = roidbs[0]
 

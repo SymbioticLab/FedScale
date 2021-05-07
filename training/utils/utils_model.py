@@ -25,6 +25,7 @@ if args.task == "detection":
     from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
     from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
     from utils.rcnn.lib.model.roi_layers import nms
+    from utils.rcnn.lib.datasets.pascal_voc import readClass
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
     import numpy as np
     from utils.rcnn.lib.model.faster_rcnn.resnet import resnet
@@ -150,20 +151,22 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
 
     if args.task == 'detection':
         model.eval()
-        imdbval_name = "voc_2007_test"
-        cfg_from_file(args.cfg_file)
-        np.random.seed(cfg.RNG_SEED)
-        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdbval_name)
+        # imdbval_name = "voc_2007_test"
+        # cfg_from_file(args.cfg_file)
+        # np.random.seed(cfg.RNG_SEED)
+        # imdb, roidb, ratio_list, ratio_index = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir])
+        
         data_iter = iter(test_data)
         num_images = len(test_data.dataset)
-        imdb._reset_index(test_data.dataset.index)
+        # imdb._reset_index(test_data.dataset.index)
+
+        num_classes = len(readClass(args.data_dir + "/class.txt"))
         with torch.no_grad():
             all_boxes = [[[] for _ in range(num_images)]
-               for _ in range(imdb.num_classes)]
+               for _ in range(num_classes)]
             max_per_image = 100
             thresh = 0.0
             empty_array = np.transpose(np.array([[],[],[],[],[]]), (1,0))
-            loss = 0
             for i in range(num_images):
                 data = next(data_iter)
                 im_data = Variable(torch.FloatTensor(1).cuda())
@@ -180,8 +183,6 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                 rpn_loss_cls, rpn_loss_box, \
                 RCNN_loss_cls, RCNN_loss_bbox, \
                 rois_label = model(im_data, im_info, gt_boxes, num_boxes)
-                print( rpn_loss_cls, rpn_loss_box, RCNN_loss_cls, RCNN_loss_bbox)
-                loss = loss + rpn_loss_cls + rpn_loss_box + RCNN_loss_cls + RCNN_loss_bbox
                 scores = cls_prob.data
                 boxes = rois.data[:, :, 1:5]
 
@@ -191,7 +192,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                     if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
                         box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
                                 + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
-                        box_deltas = box_deltas.view(1, -1, 4 * len(imdb.classes))
+                        box_deltas = box_deltas.view(1, -1, 4 * num_classes)
 
                     pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)
                     pred_boxes = clip_boxes(pred_boxes, im_info.data, 1)
@@ -206,7 +207,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                 pred_boxes = pred_boxes.squeeze()
                 
                
-                for j in range(1, imdb.num_classes):
+                for j in range(1, num_classes):
                     inds = torch.nonzero(scores[:,j]>thresh).view(-1)
                     # if there is det
                     if inds.numel() > 0:
@@ -226,10 +227,10 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                 # Limit to max_per_image detections *over all classes*
                 if max_per_image > 0:
                     image_scores = np.hstack([all_boxes[j][i][:, -1]
-                                                for j in range(1, imdb.num_classes)])
+                                                for j in range(1, num_classes)])
                     if len(image_scores) > max_per_image:
                         image_thresh = np.sort(image_scores)[-max_per_image]
-                        for j in range(1, imdb.num_classes):
+                        for j in range(1, num_classes):
                             keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
             return 0, 0, 0, {'top_1':0, 'top_5':0, 'test_loss': loss, 'idx':test_data.dataset.index, 'boxes':all_boxes, 'test_len':num_images}
