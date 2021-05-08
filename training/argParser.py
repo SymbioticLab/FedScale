@@ -41,7 +41,7 @@ parser.add_argument('--overcommitment', type=float, default=1.3)
 parser.add_argument('--model_size', type=float, default=65536)
 parser.add_argument('--round_threshold', type=float, default=10)
 parser.add_argument('--round_penalty', type=float, default=2.0)
-parser.add_argument('--clip_bound', type=float, default=0.98)
+parser.add_argument('--clip_bound', type=float, default=0.9)
 parser.add_argument('--blacklist_rounds', type=int, default=-1)
 parser.add_argument('--blacklist_max_len', type=float, default=0.3)
 

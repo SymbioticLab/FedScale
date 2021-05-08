@@ -55,6 +55,8 @@ class Aggregator(object):
 
         self.stats_util_accumulator = []
 
+        self.client_training_results = []
+
         # number of registered executors
         self.registered_executor_info = 0
         self.test_result_accumulator = []
@@ -267,7 +269,8 @@ class Aggregator(object):
         # Format:
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
-        
+        self.client_training_results.append(results)
+
         # Feed metrics to client sampler
         self.stats_util_accumulator.append(math.sqrt(results['moving_loss']))
         self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
@@ -292,18 +295,47 @@ class Aggregator(object):
         self.last_global_model = [param.data.clone() for param in self.model.parameters()]
 
     def round_weight_handler(self, last_model, current_model):
+        if self.epoch > 1:
 
-        if self.args.gradient_policy == 'yogi':
+            if self.args.gradient_policy == 'yogi':
+                last_model = [x.to(device=self.device) for x in last_model]
+                current_model = [x.to(device=self.device) for x in current_model]
 
-            diff_weight = self.gradient_controller.update([pb.to(device=self.device)-pa.to(device=self.device) for pa, pb in zip(last_model, current_model)])
+                diff_weight = self.gradient_controller.update([pb-pa for pa, pb in zip(last_model, current_model)])
 
-            for idx, param in enumerate(self.model.parameters()):
-                self.model.data = last_model[idx].to(device=self.device) + diff_weight[idx].to(device=self.device)
+                for idx, param in enumerate(self.model.parameters()):
+                    self.param.data = last_model[idx] + diff_weight[idx]
 
+            elif self.args.gradient_policy == 'qfedavg':
+
+                learning_rate, qfedq = self.args.learning_rate, self.args.qfed_q
+                Deltas, hs = None, 0.
+                last_model = [x.to(device=self.device) for x in last_model]
+
+                for result in self.client_training_results:
+                    # plug in the weight updates into the gradient
+                    grads = [(u - torch.from_numpy(v).to(device=self.device)) * 1.0 / learning_rate for u, v in zip(last_model, result['update_weight'])]
+                    loss = result['moving_loss']
+
+                    if Deltas is None:
+                        Deltas = [np.float_power(loss+1e-10, qfedq) * grad for grad in grads]
+                    else:
+                        for idx in range(len(Deltas)):
+                            Deltas[idx] += np.float_power(loss+1e-10, qfedq) * grads[idx]
+
+                    # estimation of the local Lipchitz constant
+                    hs += (qfedq * np.float_power(loss+1e-10, (qfedq-1)) * torch.norm(grads, 2) + (1.0/learning_rate) * np.float_power(loss+1e-10, qfedq))
+
+                # update global model
+                for idx, param in enumerate(self.model.parameters()):
+                    self.param.data = last_model[idx] - Deltas[idx]/(hs+1e-10)
 
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
         self.epoch += 1
+        
+        if self.epoch % self.args.decay_epoch == 0:
+            self.args.learning_rate = max(self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
 
         # handle the global update w/ current and last
         self.round_weight_handler(self.last_global_model, [param.data.clone() for param in self.model.parameters()])
@@ -332,6 +364,7 @@ class Aggregator(object):
         self.model_in_update = []
         self.test_result_accumulator = []
         self.stats_util_accumulator = []
+        self.client_training_results = []
 
         if self.epoch >= self.args.epochs:
             self.event_queue.append('stop')
@@ -400,6 +433,11 @@ class Aggregator(object):
 
             self.event_queue.append('start_round')
 
+    def get_client_conf(self, clientId):
+        # learning rate scheduler
+        conf = {}
+        conf['learning_rate'] = self.args.learning_rate
+        return conf
 
     def event_monitor(self):
         logging.info("Start monitoring events ...")
@@ -416,8 +454,10 @@ class Aggregator(object):
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
                         next_clientId = self.pop_next_participant()
+                
                         if next_clientId is not None:
-                            self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': None})
+                            config = self.get_client_conf(next_clientId)
+                            self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': config})
 
                 elif event_msg == 'stop':
                     self.broadcast_msg(send_msg)
@@ -443,7 +483,8 @@ class Aggregator(object):
                     next_clientId = self.pop_next_participant()
 
                     if next_clientId is not None:
-                        runtime_profile = {'event': 'train', 'clientId':next_clientId, 'conf': None}
+                        config = self.get_client_conf(next_clientId)
+                        runtime_profile = {'event': 'train', 'clientId':next_clientId, 'conf': config}
                         self.server_event_queue[executorId].put(runtime_profile)
 
 
@@ -475,5 +516,4 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-
 

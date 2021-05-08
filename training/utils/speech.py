@@ -1,15 +1,10 @@
 from __future__ import print_function
 import warnings
 import os
-import os.path
 import numpy as np
-import torch
-import codecs
-import string
-import time
 import numba
 import librosa
-from torch.utils.data import Dataset
+import csv
 
 CLASSES = ['up', 'two', 'sheila', 'zero', 'yes', 'five', 'one', 'happy', 'marvin', 'no', 'go', 'seven', 'eight', 'tree', 'stop', 'down', 'forward', 'learn', 'house', 'three', 'six', 'backward', 'dog', 'cat', 'wow', 'left', 'off', 'on', 'four', 'visual', 'nine', 'bird', 'right', 'follow', 'bed']
 
@@ -30,8 +25,6 @@ class SPEECH():
             target and transforms it.
     """
 
-    training_file = 'train'
-    test_file = 'test'
     classes = []
 
     @property
@@ -54,36 +47,21 @@ class SPEECH():
         warnings.warn("test_data has been renamed data")
         return self.data
 
-    def __init__(self, root, train=True, transform=None, target_transform=None, classes=CLASSES):
+    def __init__(self, root, dataset='train', transform=None, target_transform=None, classes=CLASSES):
 
-
-
-        self.train = train  # training set or test set
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
 
         self.classMapping = {classes[i]: i for i in range(len(classes))}
+        self.data_file = dataset # 'train', 'test', 'validation'
 
-        if self.train:
-            self.data_file = self.training_file
-        else:
-            self.data_file = self.test_file
-
-        #if not self._check_exists():
-        #    raise RuntimeError('Dataset not found.' +
-        #                       ' You have to download it')
-
-        # # load class information
-        # with open(os.path.join(self.processed_folder, 'classTags'), 'r') as fin:
-        #     self.classes = [tag.strip() for tag in fin.readlines()]
 
         self.path = os.path.join(self.processed_folder, self.data_file)
         # load data and targets
         self.data, self.targets = self.load_file(self.path)
-        #print(self.data[:10])
-        #print(self.targets[:10])
 
+        self.data_dir =  os.path.join(self.root, self.data_file)
 
     def __getitem__(self, index):
         """
@@ -94,17 +72,11 @@ class SPEECH():
             tuple: (image, target) where target is index of the target class.
         """
         path, target = self.data[index], int(self.targets[index])
-        data_dir = os.path.join(self.root, 'train') if self.train else os.path.join(self.root, 'test')
-        data = {'path': os.path.join(data_dir, path), 'target': target}
-
+        data = {'path': os.path.join(self.data_dir, path), 'target': target}
 
         if self.transform is not None:
             data = self.transform(data)
 
-        #if self.target_transform is not None:
-        #    target = self.target_transform(target)
-        #logging.info('====== data input shape is =====')
-        #logging.info(data['input'].shape)
         return data['input'], data['target']
 
     def __len__(self):
@@ -126,18 +98,27 @@ class SPEECH():
         return (os.path.exists(os.path.join(self.processed_folder,
                                             self.data_file)))
 
+    def load_meta_data(self, path):
+        data_to_label = {}
+        with open(path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count != 0:
+                    data_to_label[row[1]] = self.classMapping[row[-2]]
+                line_count += 1
+
+        return data_to_label
+
     def load_file(self, path):
         rawData, rawTags = [], []
+        # load meta file to get labels
+        classMapping = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
 
-        audioFiles = os.scandir(path)
+        for imgFile in list(classMapping.keys()):
+            rawData.append(imgFile)
+            rawTags.append(classMapping[imgFile])
 
-        clientMap = {}
-        for idx, audio in enumerate(audioFiles):
-            audio = audio.name
-            classTag = audio.split('_')[0]
-            if classTag in self.classMapping:
-                rawData.append(audio)
-                rawTags.append(self.classMapping[classTag])
         return rawData, rawTags
 
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from fl_client_libs import *
 from fl_client_libs import tokenizer, collate, voice_collate_fn, args
+from argparse import Namespace
 
 # initiate the log path, and executor ips
 initiate_client_setting()
@@ -111,14 +112,16 @@ class Executor(object):
 
         return training_sets, testing_sets
 
-    def run_client(self, client_data, model, conf, clientId):
+    def run_client(self, client_data, model, conf):
+        args = conf
 
+        clientId = args.clientId
         logging.info(f"Start to train (CLIENT: {clientId}) ...")
         device = self.device
 
         model = model.to(device=device)
+        trained_unique_samples = min(len(client_data), args.local_steps) * args.batch_size
         
-        args = conf
         global_model = [param.data.clone() for param in model.parameters()]
         if args.task == "detection":
             lr = args.learning_rate
@@ -134,7 +137,6 @@ class Executor(object):
         else:
             optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
 
-        trained_unique_samples = min(len(client_data), args.batch_size * args.local_steps)
 
         # optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
         #optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, eps=args.adam_epsilon, weight_decay=5e-4)
@@ -222,7 +224,7 @@ class Executor(object):
                     temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
 
                     # only measure the loss of the first epoch
-                    if completed_steps < total_batch_size:
+                    if completed_steps < len(client_data):
                         if epoch_train_loss == 1e-4:
                             epoch_train_loss = temp_loss
                         else:
@@ -284,10 +286,6 @@ class Executor(object):
     def update_model_handler(self):
         self.epoch += 1
 
-        # learning rate scheduler
-        if self.epoch % self.args.decay_epoch == 0:
-            self.args.learning_rate = max(self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
-
         """Update the model copy on this executor"""
         for param in self.model.parameters():
             temp_tensor = torch.zeros_like(param.data, device='cpu')
@@ -306,14 +304,23 @@ class Executor(object):
         return model
 
 
+    def override_conf(self, config):
+        default_conf = vars(self.args).copy()
+
+        for key in config:
+            default_conf[key] = config[key]
+
+        return Namespace(**default_conf)
+
     def training_handler(self, clientId, conf):
         """Train model given client ids"""
 
         # load last global model
         client_model = self.load_global_model()
 
+        conf.clientId = clientId
         client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
-        train_res = self.run_client(client_data=client_data, model=client_model, conf=conf, clientId=clientId)
+        train_res = self.run_client(client_data=client_data, model=client_model, conf=conf)
 
         # we need to get runtime variance for BN
         self.model = client_model
@@ -355,8 +362,9 @@ class Executor(object):
 
                 # initiate each training round
                 elif event_msg == 'train':
-                    clientId, client_conf = event_dict['clientId'], event_dict['conf']
-                    train_res = self.training_handler(clientId=clientId, conf=client_conf if client_conf is not None else self.args)
+                    clientId, client_conf = event_dict['clientId'], self.override_conf(event_dict['conf'])
+
+                    train_res = self.training_handler(clientId=clientId, conf=client_conf)
                     self.push_msg_to_server('train_nowait', None)
                     # model updates may be time-consuming, thus we apply asyn push for better communication-computation overlaps
                     self.push_msg_to_server_asyn(event_msg, train_res)
@@ -382,4 +390,4 @@ class Executor(object):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
-    
+

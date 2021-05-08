@@ -86,7 +86,7 @@ def init_model():
     elif args.task == 'speech':
         if args.model == 'mobilenet':
             from utils.resnet_speech import mobilenet_v2
-            model = mobilenet_v2(num_classes=outputClass[args.data_set], inchannels=1)
+            model = mobilenet_v2(num_classes=outputClass[args.data_set])
         elif args.model == "resnet18":
             from utils.resnet_speech import resnet18
             model = resnet18(num_classes=outputClass[args.data_set], in_channels=1)
@@ -215,13 +215,13 @@ def init_dataset():
             bg_dataset = BackgroundNoiseDataset(os.path.join(args.data_dir, bkg), data_aug_transform)
             add_bg_noise = AddBackgroundNoiseOnSTFT(bg_dataset)
             train_feature_transform = transforms.Compose([ToMelSpectrogramFromSTFT(n_mels=32), DeleteSTFT(), ToTensor('mel_spectrogram', 'input')])
-            train_dataset = SPEECH(args.data_dir, train= True,
+            train_dataset = SPEECH(args.data_dir, dataset= 'train',
                                     transform=transforms.Compose([LoadAudio(),
                                              data_aug_transform,
                                              add_bg_noise,
                                              train_feature_transform]))
             valid_feature_transform = transforms.Compose([ToMelSpectrogram(n_mels=32), ToTensor('mel_spectrogram', 'input')])
-            test_dataset = SPEECH(args.data_dir, train=False,
+            test_dataset = SPEECH(args.data_dir, dataset='test',
                                     transform=transforms.Compose([LoadAudio(),
                                              FixAudioLength(),
                                              valid_feature_transform]))
@@ -245,3 +245,4 @@ def init_dataset():
             sys.exit(-1)
 
     return train_dataset, test_dataset
+

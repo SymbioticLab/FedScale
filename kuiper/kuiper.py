@@ -348,7 +348,8 @@ class _training_selector(object):
 
         tempPickedClients = []
         for clientId in sortedClientUtil:
-            if scores[clientId] < cut_off_util:
+            # we want at least 10 times of clients for augmentation
+            if scores[clientId] < cut_off_util and len(tempPickedClients) > 10.*exploitLen:
                 break
             tempPickedClients.append(clientId)
 
