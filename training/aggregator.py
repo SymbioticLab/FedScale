@@ -392,15 +392,16 @@ class Aggregator(object):
             accumulator = self.test_result_accumulator[0]
             for i in range(1, len(self.test_result_accumulator)):
                 if self.args.task == "detection":
-                    for key in accumulator:
-                        accumulator[key] += self.test_result_accumulator[i][key]
-                else:
                     for key in enumerate(accumulator):
                         if key == "boxes":
                             accumulator[key] = accumulator[key] + self.test_result_accumulator[i][key]
                         else:
                             accumulator[key] += self.test_result_accumulator[i][key]
-            if self.args == "detection":
+                else:
+                    for key in accumulator:
+                        accumulator[key] += self.test_result_accumulator[i][key]
+
+            if self.args.task == "detection":
                 self.imdb._reset_index(accumulator["idx"])
                 output_dir = args.test_output_dir + "/" + str(self.epoch) 
                 aps, mean_ap = self.imdb.evaluate_detections(accumulator["boxes"], output_dir)
