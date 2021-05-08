@@ -150,16 +150,9 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
         decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
 
     if args.task == 'detection':
-        model.eval()
-        # imdbval_name = "voc_2007_test"
-        # cfg_from_file(args.cfg_file)
-        # np.random.seed(cfg.RNG_SEED)
-        # imdb, roidb, ratio_list, ratio_index = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir])
-        
+        model.eval()      
         data_iter = iter(test_data)
         num_images = len(test_data.dataset)
-        # imdb._reset_index(test_data.dataset.index)
-
         num_classes = len(readClass(args.data_dir + "/class.txt"))
         with torch.no_grad():
             all_boxes = [[[] for _ in range(num_images)]
@@ -233,7 +226,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                         for j in range(1, num_classes):
                             keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
-            return 0, 0, 0, {'top_1':0, 'top_5':0, 'test_loss': loss, 'idx':test_data.dataset.index, 'boxes':all_boxes, 'test_len':num_images}
+            return 0, 0, 0, {'top_1':0, 'top_5':0, 'test_loss': 0, 'idx':test_data.dataset.index, 'boxes':all_boxes, 'test_len':num_images}
 
     for data, target in test_data:
         if args.task == 'nlp':
