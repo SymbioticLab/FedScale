@@ -128,10 +128,10 @@ def init_model():
                            audio_conf=audio_conf,
                            bidirectional=args.bidirectional)
     elif args.task == 'detection':
-        np.random.seed(cfg.RNG_SEED)
+        #np.random.seed(cfg.RNG_SEED)
         cfg_from_file(args.cfg_file)
         cfg_from_list(['DATA_DIR', args.data_dir])
-        model = resnet(readClass(args.data_dir + "/class.txt"), 101, pretrained=True, class_agnostic=False)
+        model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 101, pretrained=False, class_agnostic=False)
         model.create_architecture()
         return model
     else:
@@ -141,108 +141,103 @@ def init_model():
 
 
 def init_dataset():
-    train_dataset, test_dataset = [], []
 
-    # Load data if the machine acts as clients
-    if args.this_rank != 0:
-        if args.task == "detection":
-            imdb_name = "voc_2007_trainval"
-            imdbval_name = "voc_2007_test"
-            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir])
-            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
-            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], False)
-            imdb_.competition_mode(on=True)
-            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
-            return train_dataset, test_dataset
+    if args.task == "detection":
+        imdb_name = "voc_2007_trainval"
+        imdbval_name = "voc_2007_test"
+        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir])
+        train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
+        imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], False)
+        imdb_.competition_mode(on=True)
+        test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
 
-        if args.data_set == 'Mnist':
-            train_transform, test_transform = get_data_transform('mnist')
+    if args.data_set == 'Mnist':
+        train_transform, test_transform = get_data_transform('mnist')
 
-            train_dataset = datasets.MNIST(args.data_dir, train=True, download=True,
-                                           transform=train_transform)
-            test_dataset = datasets.MNIST(args.data_dir, train=False, download=True,
-                                          transform=test_transform)
+        train_dataset = datasets.MNIST(args.data_dir, train=True, download=True,
+                                       transform=train_transform)
+        test_dataset = datasets.MNIST(args.data_dir, train=False, download=True,
+                                      transform=test_transform)
 
-        elif args.data_set == 'cifar10':
-            train_transform, test_transform = get_data_transform('cifar')
-            train_dataset = datasets.CIFAR10(args.data_dir, train=True, download=True,
-                                             transform=train_transform)
-            test_dataset = datasets.CIFAR10(args.data_dir, train=False, download=True,
-                                            transform=test_transform)
+    elif args.data_set == 'cifar10':
+        train_transform, test_transform = get_data_transform('cifar')
+        train_dataset = datasets.CIFAR10(args.data_dir, train=True, download=True,
+                                         transform=train_transform)
+        test_dataset = datasets.CIFAR10(args.data_dir, train=False, download=True,
+                                        transform=test_transform)
 
-        elif args.data_set == "imagenet":
-            train_transform, test_transform = get_data_transform('imagenet')
-            train_dataset = datasets.ImageNet(args.data_dir, split='train', download=False, transform=train_transform)
-            test_dataset = datasets.ImageNet(args.data_dir, split='val', download=False, transform=test_transform)
+    elif args.data_set == "imagenet":
+        train_transform, test_transform = get_data_transform('imagenet')
+        train_dataset = datasets.ImageNet(args.data_dir, split='train', download=False, transform=train_transform)
+        test_dataset = datasets.ImageNet(args.data_dir, split='val', download=False, transform=test_transform)
 
-        elif args.data_set == 'emnist':
-            test_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=False, download=True, transform=transforms.ToTensor())
-            train_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=True, download=True, transform=transforms.ToTensor())
+    elif args.data_set == 'emnist':
+        test_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=False, download=True, transform=transforms.ToTensor())
+        train_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=True, download=True, transform=transforms.ToTensor())
 
-        elif args.data_set == 'femnist':
-            from utils.femnist import FEMNIST
+    elif args.data_set == 'femnist':
+        from utils.femnist import FEMNIST
 
-            train_transform, test_transform = get_data_transform('mnist')
-            train_dataset = FEMNIST(args.data_dir, train=True, transform=train_transform)
-            test_dataset = FEMNIST(args.data_dir, train=False, transform=test_transform)
+        train_transform, test_transform = get_data_transform('mnist')
+        train_dataset = FEMNIST(args.data_dir, train=True, transform=train_transform)
+        test_dataset = FEMNIST(args.data_dir, train=False, transform=test_transform)
 
-        elif args.data_set == 'openImg':
-            from utils.openimage import OpenImage
+    elif args.data_set == 'openImg':
+        from utils.openimage import OpenImage
 
-            train_transform, test_transform = get_data_transform('openImg')
-            train_dataset = OpenImage(args.data_dir, dataset='train', transform=train_transform)
-            test_dataset = OpenImage(args.data_dir, dataset='test', transform=test_transform)
+        train_transform, test_transform = get_data_transform('openImg')
+        train_dataset = OpenImage(args.data_dir, dataset='train', transform=train_transform)
+        test_dataset = OpenImage(args.data_dir, dataset='test', transform=test_transform)
 
-        elif args.data_set == 'blog':
-            train_dataset = load_and_cache_examples(args, tokenizer, evaluate=False)
-            test_dataset = load_and_cache_examples(args, tokenizer, evaluate=True)
+    elif args.data_set == 'blog':
+        train_dataset = load_and_cache_examples(args, tokenizer, evaluate=False)
+        test_dataset = load_and_cache_examples(args, tokenizer, evaluate=True)
 
-        elif args.data_set == 'stackoverflow':
-            from utils.stackoverflow import stackoverflow
+    elif args.data_set == 'stackoverflow':
+        from utils.stackoverflow import stackoverflow
 
-            train_dataset = stackoverflow(args.data_dir, train=True)
-            test_dataset = stackoverflow(args.data_dir, train=False)
+        train_dataset = stackoverflow(args.data_dir, train=True)
+        test_dataset = stackoverflow(args.data_dir, train=False)
 
-        elif args.data_set == 'yelp':
-            import utils.dataloaders as fl_loader
+    elif args.data_set == 'yelp':
+        import utils.dataloaders as fl_loader
 
-            train_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size)
-            test_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size)
+        train_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size)
+        test_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size)
 
-        elif args.data_set == 'google_speech':
-            bkg = '_background_noise_'
-            data_aug_transform = transforms.Compose([ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(), TimeshiftAudioOnSTFT(), FixSTFTDimension()])
-            bg_dataset = BackgroundNoiseDataset(os.path.join(args.data_dir, bkg), data_aug_transform)
-            add_bg_noise = AddBackgroundNoiseOnSTFT(bg_dataset)
-            train_feature_transform = transforms.Compose([ToMelSpectrogramFromSTFT(n_mels=32), DeleteSTFT(), ToTensor('mel_spectrogram', 'input')])
-            train_dataset = SPEECH(args.data_dir, dataset= 'train',
-                                    transform=transforms.Compose([LoadAudio(),
-                                             data_aug_transform,
-                                             add_bg_noise,
-                                             train_feature_transform]))
-            valid_feature_transform = transforms.Compose([ToMelSpectrogram(n_mels=32), ToTensor('mel_spectrogram', 'input')])
-            test_dataset = SPEECH(args.data_dir, dataset='test',
-                                    transform=transforms.Compose([LoadAudio(),
-                                             FixAudioLength(),
-                                             valid_feature_transform]))
-        elif args.data_set == 'common_voice':
-            from utils.voice_data_loader import SpectrogramDataset
-            train_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
-                                           manifest_filepath=args.train_manifest,
-                                           labels=model.labels,
-                                           normalize=True,
-                                           speed_volume_perturb=args.speed_volume_perturb,
-                                           spec_augment=args.spec_augment,
-                                           data_mapfile=args.data_mapfile)
-            test_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
-                                          manifest_filepath=args.test_manifest,
-                                          labels=model.labels,
-                                          normalize=True,
-                                          speed_volume_perturb=False,
-                                          spec_augment=False)
-        else:
-            print('DataSet must be {}!'.format(['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
-            sys.exit(-1)
+    elif args.data_set == 'google_speech':
+        bkg = '_background_noise_'
+        data_aug_transform = transforms.Compose([ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(), TimeshiftAudioOnSTFT(), FixSTFTDimension()])
+        bg_dataset = BackgroundNoiseDataset(os.path.join(args.data_dir, bkg), data_aug_transform)
+        add_bg_noise = AddBackgroundNoiseOnSTFT(bg_dataset)
+        train_feature_transform = transforms.Compose([ToMelSpectrogramFromSTFT(n_mels=32), DeleteSTFT(), ToTensor('mel_spectrogram', 'input')])
+        train_dataset = SPEECH(args.data_dir, dataset= 'train',
+                                transform=transforms.Compose([LoadAudio(),
+                                         data_aug_transform,
+                                         add_bg_noise,
+                                         train_feature_transform]))
+        valid_feature_transform = transforms.Compose([ToMelSpectrogram(n_mels=32), ToTensor('mel_spectrogram', 'input')])
+        test_dataset = SPEECH(args.data_dir, dataset='test',
+                                transform=transforms.Compose([LoadAudio(),
+                                         FixAudioLength(),
+                                         valid_feature_transform]))
+    elif args.data_set == 'common_voice':
+        from utils.voice_data_loader import SpectrogramDataset
+        train_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
+                                       manifest_filepath=args.train_manifest,
+                                       labels=model.labels,
+                                       normalize=True,
+                                       speed_volume_perturb=args.speed_volume_perturb,
+                                       spec_augment=args.spec_augment,
+                                       data_mapfile=args.data_mapfile)
+        test_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
+                                      manifest_filepath=args.test_manifest,
+                                      labels=model.labels,
+                                      normalize=True,
+                                      speed_volume_perturb=False,
+                                      spec_augment=False)
+    else:
+        print('DataSet must be {}!'.format(['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
+        sys.exit(-1)
 
     return train_dataset, test_dataset
-

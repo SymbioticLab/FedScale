@@ -117,10 +117,11 @@ class DataPartitioner(object):
 def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     """Load data given client Id"""
     partition = partition.use(rank - 1, isTest)
-    timeOut = 0 if isTest else 60
+    timeOut = 5
     dropLast = False if isTest else True
+    num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
 
     if collate_fn is not None:
-        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)
-    return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut)
+        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)
+    return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut)
 

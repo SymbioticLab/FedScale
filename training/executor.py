@@ -162,7 +162,7 @@ class Executor(object):
 
                     if args.task == 'nlp':
                         (data, _) = data_pair
-                        data, target = mask_tokens(data, tokenizer, args) if args.mlm else (data, data)
+                        data, target = mask_tokens(data, tokenizer, args, device=device) if args.mlm else (data, data)
                     elif args.task == 'voice':
                         (data, target, input_percentages, target_sizes), _ = data_pair
                         input_sizes = input_percentages.mul_(int(data.size(3))).int()
@@ -173,18 +173,17 @@ class Executor(object):
                     else:
                         (data, target) = data_pair
 
-                    if args.task != "detection":
-                        data = Variable(data).to(device=device)
-                    else:
+                    if args.task == "detection":
                         im_data.resize_(data[0].size()).copy_(data[0])
                         im_info.resize_(data[1].size()).copy_(data[1])
                         gt_boxes.resize_(data[2].size()).copy_(data[2])
                         num_boxes.resize_(data[3].size()).copy_(data[3])
-
-                    if args.task != 'voice':
-                        target = Variable(target).to(device=device)
-                    if args.task == 'speech':
+                    elif args.task == 'speech':
                         data = torch.unsqueeze(data, 1)
+                    else:
+                        data = Variable(data).to(device=device)
+
+                    target = Variable(target).to(device=device)
 
                     if args.task == 'nlp':
                         outputs = model(data, masked_lm_labels=target) if args.mlm else model(data, labels=target)
@@ -194,7 +193,6 @@ class Executor(object):
                         outputs = outputs.transpose(0, 1).float()  # TxNxH
                         loss = criterion(outputs, target, output_sizes, target_sizes)
                     elif args.task == "detection":
-                        model.zero_grad()
                         rois, cls_prob, bbox_pred, \
                         rpn_loss_cls, rpn_loss_box, \
                         RCNN_loss_cls, RCNN_loss_bbox, \
@@ -214,13 +212,13 @@ class Executor(object):
                         loss = criterion(output, target)
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
-                    loss_list = loss.tolist() if args.task != 'nlp' else [loss.item()]
                     if args.task == 'nlp':
                         loss_list = [loss.item()]
                     elif args.task == "detection":
                         loss_list = [loss.tolist()]
                     else:
                         loss_list = loss.tolist()
+
                     temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
 
                     # only measure the loss of the first epoch
@@ -334,7 +332,7 @@ class Executor(object):
         data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
         criterion = CTCLoss(reduction='mean').to(device=device) if self.task == 'voice' else torch.nn.CrossEntropyLoss().to(device=device)
 
-        test_res = test_model(self.this_rank, self.model, data_loader, criterion=criterion, tokenizer=tokenizer)
+        test_res = test_model(self.this_rank, self.model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
 
         test_loss, acc, acc_5, testResults = test_res
         logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"

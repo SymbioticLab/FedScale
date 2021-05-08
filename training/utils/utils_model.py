@@ -10,8 +10,6 @@ from torch.autograd import Variable
 import numpy as np
 import logging
 from argParser import args
-# from utils.nlp import mask_tokens
-# from utils.decoder import GreedyDecoder
 
 if args.task == "detection":
     import os
@@ -129,7 +127,8 @@ def cal_accuracy(targets, outputs):
 
     return temp_acc, temp_all_or_false, temp_len
 
-def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
+def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tokenizer=None):
+    
     test_loss = 0
     correct = 0
     top_5 = 0
@@ -149,8 +148,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
     if args.task == 'voice':
         decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
 
-    if args.task == 'detection':
-        model.eval()      
+    if args.task == 'detection':     
         data_iter = iter(test_data)
         num_images = len(test_data.dataset)
         num_classes = len(readClass(args.data_dir + "/class.txt"))
@@ -162,10 +160,10 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
             empty_array = np.transpose(np.array([[],[],[],[],[]]), (1,0))
             for i in range(num_images):
                 data = next(data_iter)
-                im_data = Variable(torch.FloatTensor(1).cuda())
-                im_info = Variable(torch.FloatTensor(1).cuda())
-                num_boxes = Variable(torch.LongTensor(1).cuda())
-                gt_boxes = Variable(torch.FloatTensor(1).cuda())
+                im_data = Variable(torch.FloatTensor(1, device=device))
+                im_info = Variable(torch.FloatTensor(1, device=device))
+                num_boxes = Variable(torch.LongTensor(1, device=device))
+                gt_boxes = Variable(torch.FloatTensor(1, device=device))
 
                 im_data.resize_(data[0].size()).copy_(data[0])
                 im_info.resize_(data[1].size()).copy_(data[1])
@@ -183,8 +181,8 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                 # Apply bounding-box regression deltas
                     box_deltas = bbox_pred.data
                     if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
-                        box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).cuda() \
-                                + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).cuda()
+                        box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).to(device=device) \
+                                + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).to(device=device)
                         box_deltas = box_deltas.view(1, -1, 4 * num_classes)
 
                     pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)
@@ -226,13 +224,14 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
                         for j in range(1, num_classes):
                             keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
+
             return 0, 0, 0, {'top_1':0, 'top_5':0, 'test_loss': 0, 'idx':test_data.dataset.index, 'boxes':all_boxes, 'test_len':num_images}
 
     for data, target in test_data:
         if args.task == 'nlp':
 
-            data, target = mask_tokens(data, tokenizer, args) if args.mlm else (data, data)
-            data, target = Variable(data).cuda(), Variable(target).cuda()
+            data, target = mask_tokens(data, tokenizer, args, device=device) if args.mlm else (data, data)
+            data, target = Variable(data).to(device=device), Variable(target).to(device=device)
 
             outputs = model(data, masked_lm_labels=target) if args.mlm else model(data, labels=target)
 
@@ -247,7 +246,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
             top_5 += acc[1].item()
 
         elif args.task == 'tag':
-            data, target = Variable(data).cuda(), Variable(target).cuda()
+            data, target = Variable(data).to(device=device), Variable(target).to(device=device)
             output = model(data)
             loss = criterion(output, target)
 
@@ -261,7 +260,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
             test_loss += loss.data.item()
 
         elif args.task == 'speech':
-            data, target = Variable(data).cuda(), Variable(target).cuda()
+            data, target = Variable(data).to(device=device), Variable(target).to(device=device)
             data = torch.unsqueeze(data, 1)
 
             output = model(data)
@@ -275,7 +274,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
 
         elif args.task == 'text_clf':
             (inputs, masks) = data
-            inputs, masks, target = Variable(inputs).cuda(), Variable(masks).cuda(), Variable(target).cuda()
+            inputs, masks, target = Variable(inputs).to(device=device), Variable(masks).to(device=device), Variable(target).to(device=device)
             loss, output = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
 
             #loss = torch.mean(loss)
@@ -289,7 +288,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
             (inputs, target, input_percentages, target_sizes) = data
 
             input_sizes = input_percentages.mul_(int(inputs.size(3))).int()
-            inputs = Variable(inputs).cuda()
+            inputs = Variable(inputs).to(device=device)
 
             # unflatten targets
             split_targets = []
@@ -317,7 +316,7 @@ def test_model(rank, model, test_data, criterion=nn.NLLLoss(), tokenizer=None):
             loss = criterion(outputs, target, output_sizes, target_sizes)
             test_loss += loss.data.item()
         else:
-            data, target = Variable(data).cuda(), Variable(target).cuda()
+            data, target = Variable(data).to(device=device), Variable(target).to(device=device)
 
             output = model(data)
             loss = criterion(output, target)
@@ -386,3 +385,4 @@ class RandomParams(object):
         part_len = int(math.floor(self.ratio * len(params_indices)))
         result = indexes[0: part_len]
         return [params_indices[i] for i in result]
+
