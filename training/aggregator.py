@@ -75,8 +75,7 @@ class Aggregator(object):
         if args.task == "detection":
             cfg_from_file(args.cfg_file)
             np.random.seed(cfg.RNG_SEED)
-            self.imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', args.data_dir])
-
+            self.imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', args.data_dir], server=True)
 
     def setup_env(self):
         self.setup_seed(seed=self.this_rank)

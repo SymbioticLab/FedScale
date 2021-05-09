@@ -85,7 +85,7 @@ def filter_roidb(roidb):
     print('after filtering, there are %d images...' % (len(roidb)))
     return roidb
 
-def combined_roidb(imdb_names, cfg_list, training=True):
+def combined_roidb(imdb_names, cfg_list, training=True, server=False):
   """
   Combine multiple roidbs
   """
@@ -113,10 +113,11 @@ def combined_roidb(imdb_names, cfg_list, training=True):
     roidb = get_training_roidb(imdb)
     return roidb
   cfg_from_list(cfg_list)
-  print("combined_roid", cfg.DATA_DIR)
+  if server:
+    return get_imdb(imdb_names), None, None, None
   roidbs = [get_roidb(s) for s in imdb_names.split('+')]
   roidb = roidbs[0]
-
+  
   if len(roidbs) > 1:
     for r in roidbs[1:]:
       roidb.extend(r)
@@ -124,7 +125,6 @@ def combined_roidb(imdb_names, cfg_list, training=True):
     imdb = datasets.imdb.imdb(imdb_names, tmp.classes)
   else:
     imdb = get_imdb(imdb_names)
-
   if training:
     roidb = filter_roidb(roidb)
 
