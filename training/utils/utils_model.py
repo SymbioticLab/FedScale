@@ -160,10 +160,10 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
             empty_array = np.transpose(np.array([[],[],[],[],[]]), (1,0))
             for i in range(num_images):
                 data = next(data_iter)
-                im_data = Variable(torch.FloatTensor(1, device=device))
-                im_info = Variable(torch.FloatTensor(1, device=device))
-                num_boxes = Variable(torch.LongTensor(1, device=device))
-                gt_boxes = Variable(torch.FloatTensor(1, device=device))
+                im_data = Variable(torch.FloatTensor(1).to(device))
+                im_info = Variable(torch.FloatTensor(1).to(device))
+                num_boxes = Variable(torch.LongTensor(1).to(device))
+                gt_boxes = Variable(torch.FloatTensor(1).to(device))
 
                 im_data.resize_(data[0].size()).copy_(data[0])
                 im_info.resize_(data[1].size()).copy_(data[1])

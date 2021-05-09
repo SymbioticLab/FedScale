@@ -219,7 +219,7 @@ def resnet152(pretrained=False):
 
 class resnet(_fasterRCNN):
   def __init__(self, classes, num_layers=101, pretrained=False, class_agnostic=False):
-    self.model_path = '/gpfs/gpfs0/groups/chowdhury/dywsjtu/faster-rcnn.pytorch/data/pretrained_model/resnet101_caffe.pth'
+    self.model_path = '/gpfs/gpfs0/groups/chowdhury/dywsjtu/resnet50.pth'
     self.dout_base_model = 1024
     self.pretrained = pretrained
     self.class_agnostic = class_agnostic
