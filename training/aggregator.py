@@ -303,7 +303,7 @@ class Aggregator(object):
                 diff_weight = self.gradient_controller.update([pb-pa for pa, pb in zip(last_model, current_model)])
 
                 for idx, param in enumerate(self.model.parameters()):
-                    self.param.data = last_model[idx] + diff_weight[idx]
+                    param.data = last_model[idx] + diff_weight[idx]
 
             elif self.args.gradient_policy == 'qfedavg':
 

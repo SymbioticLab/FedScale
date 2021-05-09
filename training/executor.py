@@ -179,7 +179,7 @@ class Executor(object):
                         gt_boxes.resize_(data[2].size()).copy_(data[2])
                         num_boxes.resize_(data[3].size()).copy_(data[3])
                     elif args.task == 'speech':
-                        data = torch.unsqueeze(data, 1)
+                        data = torch.unsqueeze(data, 1).to(device=device)
                     else:
                         data = Variable(data).to(device=device)
 
