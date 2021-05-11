@@ -24,11 +24,18 @@ from torch_baidu_ctc import CTCLoss
 # libs from FLBench
 from argParser import args
 from utils.utils_data import get_data_transform
-from utils.utils_model import MySGD, test_model
+from utils.utils_model import test_model
 from utils.divide_data import select_dataset, DataPartitioner
 
 if args.task == 'nlp':
-    from utils.nlp import *
+    from utils.nlp import mask_tokens
+    from transformers import (
+        AdamW,
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        MobileBertForPreTraining, 
+    )
 elif args.task == 'speech':
     from utils.speech import SPEECH
     from utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
@@ -67,15 +74,15 @@ def init_model():
     logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
-        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
-        # we should train from scratch
-        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
-        model = AutoModelWithLMHead.from_config(config)
+        model_name = 'google/mobilebert-uncased'
+        config = AutoConfig.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+        model = MobileBertForPreTraining.from_pretrained(model_name)
+        # model = AutoModelWithLMHead.from_config(config)
+
     elif args.task == 'text_clf':
         config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
         config.num_labels = outputClass[args.data_set]
-        # config.output_attentions = False
-        # config.output_hidden_states = False
         from transformers import AlbertForSequenceClassification
 
         model = AlbertForSequenceClassification(config)

@@ -101,26 +101,22 @@ class OpenImage():
                                             self.data_file)))
 
     def load_meta_data(self, path):
-        data_to_label = {}
+        datas, labels = [], []
+
         with open(path) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0
             for row in csv_reader:
                 if line_count != 0:
-                    data_to_label[row[1]] = int(row[-1])
+                    datas.append(row[1])
+                    labels.append(int(row[-1]))
                 line_count += 1
 
-        return data_to_label
+        return datas, labels
 
     def load_file(self, path):
-        rawImg, rawTags = [], []
 
         # load meta file to get labels
-        classMapping = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
+        datas, labels = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
 
-        for imgFile in list(classMapping.keys()):
-            rawImg.append(imgFile)
-            rawTags.append(classMapping[imgFile])
-
-        return rawImg, rawTags
-
+        return datas, labels

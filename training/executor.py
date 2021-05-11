@@ -134,6 +134,19 @@ class Executor(object):
                     else:
                         params += [{'params':[value],'lr':lr, 'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
             optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
+        elif args.task == 'nlp':
+            no_decay = ["bias", "LayerNorm.weight"]
+            optimizer_grouped_parameters = [
+                {
+                    "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+                    "weight_decay": args.weight_decay,
+                },
+                {
+                    "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
+                    "weight_decay": 0.0,
+                },
+            ]
+            optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
         else:
             optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
 
@@ -377,6 +390,8 @@ class Executor(object):
 
                 else:
                     logging.error("Unknown message types!")
+
+                time.sleep(0.1)
 
 
     def stop(self):

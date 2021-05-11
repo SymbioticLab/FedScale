@@ -57,24 +57,26 @@ class DataPartitioner(object):
         with open(data_map_file) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             read_first = True
+            sample_id = 0
 
             for row in csv_reader:
                 if read_first:
                     logging.info(f'Trace names are {", ".join(row)}')
                     read_first = False
                 else:
-                    client_id, sample_name = row[0], row[1]
+                    client_id = row[0]
 
                     if client_id not in unique_clientIds:
                         unique_clientIds[client_id] = len(unique_clientIds)
 
-                    clientId_maps[sample_name] = unique_clientIds[client_id]
+                    clientId_maps[sample_id] = unique_clientIds[client_id]
+                    sample_id += 1
 
         # Partition data given mapping
         self.partitions = [[] for _ in range(len(unique_clientIds))]
 
-        for idx, data_path in enumerate(self.data.data):
-            self.partitions[clientId_maps[data_path]].append(idx)
+        for idx in range(len(self.data.data)):
+            self.partitions[clientId_maps[idx]].append(idx)
 
 
     def partition_data_helper(self, num_clients, data_map_file=None):
@@ -117,11 +119,11 @@ class DataPartitioner(object):
 def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     """Load data given client Id"""
     partition = partition.use(rank - 1, isTest)
-    timeOut = 5
     dropLast = False if isTest else True
     num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
 
     if collate_fn is not None:
-        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut, collate_fn=collate_fn)
-    return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=args.num_loaders, drop_last=dropLast, timeout=timeOut)
+        return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=args.num_loaders, drop_last=dropLast, collate_fn=collate_fn)
+    return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=args.num_loaders, drop_last=dropLast)
+
 

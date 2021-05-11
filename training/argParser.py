@@ -72,10 +72,10 @@ parser.add_argument('--cut_off_util', type=float, default=0.7)
 
 # for yogi
 parser.add_argument('--gradient_policy', type=str, default=None)
-parser.add_argument('--yogi_eta', type=float, default=5e-3)
-parser.add_argument('--yogi_tau', type=float, default=1e-3)
-parser.add_argument('--yogi_beta', type=float, default=0.999)
-parser.add_argument('--yogi_beta2', type=float, default=-1)
+parser.add_argument('--yogi_eta', type=float, default=1.5)
+parser.add_argument('--yogi_tau', type=float, default=3)
+parser.add_argument('--yogi_beta', type=float, default=0.9)
+parser.add_argument('--yogi_beta2', type=float, default=0.99)
 
 # for detection
 parser.add_argument('--cfg_file', type=str, default='./utils/rcnn/cfgs/res101.yml')
