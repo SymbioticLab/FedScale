@@ -152,9 +152,9 @@ def init_dataset():
     if args.task == "detection":
         imdb_name = "voc_2007_trainval"
         imdbval_name = "voc_2007_test"
-        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir])
+        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir], sizes=args.train_size_file)
         train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
-        imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], training=False)
+        imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
         imdb_.competition_mode(on=True)
         test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
     else:

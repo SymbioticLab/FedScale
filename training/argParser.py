@@ -80,7 +80,8 @@ parser.add_argument('--yogi_beta2', type=float, default=0.99)
 # for detection
 parser.add_argument('--cfg_file', type=str, default='./utils/rcnn/cfgs/res101.yml')
 parser.add_argument('--test_output_dir', type=str, default='./logs/server')
-
+parser.add_argument('--train_size_file', type=str, default='')
+parser.add_argument('--test_size_file', type=str, default='')
 
 # for albert
 

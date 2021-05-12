@@ -9,20 +9,31 @@ from model.utils.config import cfg, cfg_from_list
 from datasets.factory import get_imdb
 import PIL
 import pdb
+import logging
 
-def prepare_roidb(imdb):
+def read_sizes(size_file):
+  result = []
+  with open(size_file) as f:
+    sizes = f.readlines()
+    for i in range(len(sizes)):
+      result.append([int(sizes[i].split(" ")[1]), int(sizes[i].split(" ")[2])])
+  return result
+
+def prepare_roidb(imdb, size_file):
   """Enrich the imdb's roidb by adding some derived quantities that
   are useful for training. This function precomputes the maximum
   overlap, taken over ground-truth boxes, between each ROI and
   each ground-truth box. The class with maximum overlap is also
   recorded.
   """
-
+  logging.info(f'Start PIL')
   roidb = imdb.roidb
   if not (imdb.name.startswith('coco')):
-    sizes = [PIL.Image.open(imdb.image_path_at(i)).size
-         for i in range(imdb.num_images)]
-         
+    # sizes = [PIL.Image.open(imdb.image_path_at(i)).size
+    #      for i in range(imdb.num_images)]
+    sizes = read_sizes(size_file)
+    assert len(sizes) == imdb.num_images
+  logging.info(f'Finish PIL')      
   for i in range(len(imdb.image_index)):
     roidb[i]['img_id'] = imdb.image_id_at(i)
     roidb[i]['image'] = imdb.image_path_at(i)
@@ -85,12 +96,12 @@ def filter_roidb(roidb):
     print('after filtering, there are %d images...' % (len(roidb)))
     return roidb
 
-def combined_roidb(imdb_names, cfg_list, training=True, server=False):
+def combined_roidb(imdb_names, cfg_list, sizes=None, training=True, server=False):
   """
   Combine multiple roidbs
   """
 
-  def get_training_roidb(imdb):
+  def get_training_roidb(imdb,sizes=None):
     """Returns a roidb (Region of Interest database) for use in training."""
     if cfg.TRAIN.USE_FLIPPED:
       print('Appending horizontally-flipped training examples...')
@@ -98,24 +109,23 @@ def combined_roidb(imdb_names, cfg_list, training=True, server=False):
       print('done')
 
     print('Preparing training data...')
-    
-    prepare_roidb(imdb)
+    prepare_roidb(imdb, size_file=sizes)
     #ratio_index = rank_roidb_ratio(imdb)
     print('done')
 
     return imdb.roidb
   
-  def get_roidb(imdb_name):
+  def get_roidb(imdb_name, sizes = None):
     imdb = get_imdb(imdb_name)
     print('Loaded dataset `{:s}` for training'.format(imdb.name))
     imdb.set_proposal_method(cfg.TRAIN.PROPOSAL_METHOD)
     print('Set proposal method: {:s}'.format(cfg.TRAIN.PROPOSAL_METHOD))
-    roidb = get_training_roidb(imdb)
+    roidb = get_training_roidb(imdb, sizes=sizes)
     return roidb
   cfg_from_list(cfg_list)
   if server:
     return get_imdb(imdb_names), None, None, None
-  roidbs = [get_roidb(s) for s in imdb_names.split('+')]
+  roidbs = [get_roidb(s, sizes=sizes) for s in imdb_names.split('+')]
   roidb = roidbs[0]
   
   if len(roidbs) > 1:
