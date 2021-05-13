@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from fl_aggregator_libs import *
 from random import Random
 
@@ -391,15 +392,15 @@ class Aggregator(object):
             accumulator = self.test_result_accumulator[0]
             for i in range(1, len(self.test_result_accumulator)):
                 if self.args.task == "detection":
-                    for key in enumerate(accumulator):
+                    for key in accumulator:
                         if key == "boxes":
-                            accumulator[key] = accumulator[key] + self.test_result_accumulator[i][key]
+                            for j in range(self.imdb.num_classes):
+                                accumulator[key][j] = accumulator[key][j] + self.test_result_accumulator[i][key][j]
                         else:
                             accumulator[key] += self.test_result_accumulator[i][key]
                 else:
                     for key in accumulator:
                         accumulator[key] += self.test_result_accumulator[i][key]
-
             if self.args.task == "detection":
                 self.imdb._reset_index(accumulator["idx"])
                 output_dir = args.test_output_dir + "/" + str(self.epoch) 

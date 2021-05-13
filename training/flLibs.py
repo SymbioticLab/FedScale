@@ -42,6 +42,7 @@ elif args.task == 'speech':
     from utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
     from utils.speech import BackgroundNoiseDataset
 elif args.task == 'detection':
+    import pickle
     from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
     from utils.rcnn.lib.datasets.factory import get_imdb
     from utils.rcnn.lib.datasets.pascal_voc import readClass
@@ -150,13 +151,21 @@ def init_model():
 def init_dataset():
 
     if args.task == "detection":
-        imdb_name = "voc_2007_trainval"
-        imdbval_name = "voc_2007_test"
-        imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir], sizes=args.train_size_file)
-        train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
-        imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
-        imdb_.competition_mode(on=True)
-        test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
+        if not os.path.exists(args.data_cache):
+            imdb_name = "voc_2007_trainval"
+            imdbval_name = "voc_2007_test"
+            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir], sizes=args.train_size_file)
+            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
+            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
+            imdb_.competition_mode(on=True)
+            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
+            with open(args.data_cache, 'wb') as f:
+                pickle.dump(train_dataset, f, -1)
+                pickle.dump(test_dataset, f, -1)
+        else:
+            with open(args.data_cache, 'rb') as f:
+                train_dataset = pickle.load(f)
+                test_dataset = pickle.load(f)
     else:
 
         if args.data_set == 'Mnist':
