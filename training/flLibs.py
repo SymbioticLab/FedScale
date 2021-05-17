@@ -19,7 +19,6 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 import torchvision.models as tormodels
 from torch.utils.data.sampler import WeightedRandomSampler
-from torch_baidu_ctc import CTCLoss
 
 # libs from FLBench
 from argParser import args
@@ -28,11 +27,10 @@ from utils.utils_model import test_model
 from utils.divide_data import select_dataset, DataPartitioner
 
 if args.task == 'nlp':
-    from utils.nlp import mask_tokens
+    from utils.nlp import mask_tokens, load_and_cache_examples
     from transformers import (
         AdamW,
         AutoConfig,
-        AutoModelForCausalLM,
         AutoTokenizer,
         MobileBertForPreTraining, 
     )
@@ -54,6 +52,8 @@ elif args.task == 'detection':
     from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
     from utils.rcnn.lib.model.roi_layers import nms
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
+elif args.task == 'voice':
+    from torch_baidu_ctc import CTCLoss
 
 from client_manager import clientManager
 from utils.yogi import YoGi
@@ -75,10 +75,18 @@ def init_model():
     logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
-        model_name = 'google/mobilebert-uncased'
-        config = AutoConfig.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
-        model = MobileBertForPreTraining.from_pretrained(model_name)
+        # config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'mobilebert-uncased-config.json'))
+        # model = AutoModelWithLMHead.from_config(config)
+        # tokenizer = AlbertTokenizer.from_pretrained('mobilebert-uncased', do_lower_case=True)
+
+        with open(os.path.join(args.data_dir, 'mobilebert.pkl'), 'rb') as fin:
+            config = pickle.load(fin)
+            tokenizer = pickle.load(fin)
+            model = pickle.load(fin)
+        # model_name = 'google/mobilebert-uncased'
+        # config = AutoConfig.from_pretrained(model_name)
+        # tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+        # model = MobileBertForPreTraining.from_pretrained(model_name)
         # model = AutoModelWithLMHead.from_config(config)
 
     elif args.task == 'text_clf':

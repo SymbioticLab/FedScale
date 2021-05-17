@@ -242,7 +242,16 @@ class Aggregator(object):
 
     def broadcast_msg(self, msg):
         for executorId in self.executors:
-            self.server_event_queue[executorId].put(msg)
+            self.server_event_queue[executorId].put_nowait(msg)
+
+
+    def broadcast_models(self):
+        """Push the latest model to executors"""
+        for param in self.model.parameters():
+            temp_tensor = param.data.to(device='cpu')
+            for executorId in self.executors:
+                dist.send(tensor=temp_tensor, dst=executorId)
+
 
     def assign_participant_list(self, clientsToRun):
         logging.info(f"Selected participants to run: {clientsToRun}")
@@ -374,14 +383,6 @@ class Aggregator(object):
         else:
             self.event_queue.append('update_model')
             self.event_queue.append('start_round')
-
-
-    def broadcast_models(self):
-        """Push the latest model to executors"""
-        for executorId in self.executors:
-            for param in self.model.parameters():
-                temp_tensor = param.data.to(device='cpu')
-                dist.send(tensor=temp_tensor, dst=executorId)
 
 
     def testing_completion_handler(self, results):
