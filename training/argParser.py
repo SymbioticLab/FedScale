@@ -31,8 +31,6 @@ parser.add_argument('--device_conf_file', type=str, default='/tmp/client.cfg')
 parser.add_argument('--model', type=str, default='shufflenet_v2_x2_0')
 parser.add_argument('--data_set', type=str, default='cifar10')
 parser.add_argument('--sample_mode', type=str, default='random')
-parser.add_argument('--proxy_avg', type=bool, default=False)
-parser.add_argument('--proxy_mu', type=float, default=0.1)
 parser.add_argument('--filter_less', type=int, default=32)
 parser.add_argument('--filter_more', type=int, default=1e15)
 parser.add_argument('--train_uniform', type=bool, default=False)
@@ -69,13 +67,17 @@ parser.add_argument('--loss_decay', type=float, default=0.2)
 parser.add_argument('--exploration_min', type=float, default=0.2)
 parser.add_argument('--cut_off_util', type=float, default=0.7)
 
+parser.add_argument('--gradient_policy', type=str, default=None)
 
 # for yogi
-parser.add_argument('--gradient_policy', type=str, default=None)
 parser.add_argument('--yogi_eta', type=float, default=3e-3)
 parser.add_argument('--yogi_tau', type=float, default=1e-8)
 parser.add_argument('--yogi_beta', type=float, default=0.9)
 parser.add_argument('--yogi_beta2', type=float, default=0.99)
+
+
+# for prox
+parser.add_argument('--proxy_mu', type=float, default=0.1)
 
 # for detection
 parser.add_argument('--cfg_file', type=str, default='./utils/rcnn/cfgs/res101.yml')
@@ -275,5 +277,4 @@ for model_name in model_factor:
     if model_name in args.model:
         args.clock_factor = args.clock_factor * model_factor[model_name]
         break
-
 
