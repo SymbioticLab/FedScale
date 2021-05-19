@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 import os
 import pickle
 import numpy as np
+import logging
 
 def parse_rec(filename):
   """ Parse a PASCAL VOC xml file """
@@ -106,27 +107,37 @@ def voc_eval(detpath,
   # read list of images
   # with open(imagesetfile, 'r') as f:
   #   lines = f.readlines()
+  # imagenames_temp = [x.strip().split('.')[0] for x in lines]
   imagenames = imageset
-
-  if not os.path.isfile(cachefile):
-    # load annotations
-    recs = {}
-    for i, imagename in enumerate(imagenames):
-      recs[imagename] = parse_rec(annopath.format(imagename))
-      if i % 100 == 0:
-        print('Reading annotation for {:d}/{:d}'.format(
-          i + 1, len(imagenames)))
-    # save
-    print('Saving cached annotations to {:s}'.format(cachefile))
-    with open(cachefile, 'wb') as f:
-      pickle.dump(recs, f)
-  else:
-    # load
-    with open(cachefile, 'rb') as f:
-      try:
-        recs = pickle.load(f)
-      except:
-        recs = pickle.load(f, encoding='bytes')
+  recs = {}
+  for i, imagename in enumerate(imagenames):
+    recs[imagename] = parse_rec(annopath.format(imagename))
+    if i % 100 == 0:
+      print('Reading annotation for {:d}/{:d}'.format(
+        i + 1, len(imagenames)))
+  # logging.info(f"parse annotation finishes for {classname}")
+  # if not os.path.isfile(cachefile):
+  #   logging.info(f"{cachefile} not exists, length of temp {len(imagenames)}")
+  #   # load annotations
+  #   recs = {}
+  #   for i, imagename in enumerate(imagenames):
+  #     recs[imagename] = parse_rec(annopath.format(imagename))
+  #     if i % 100 == 0:
+  #       print('Reading annotation for {:d}/{:d}'.format(
+  #         i + 1, len(imagenames)))
+  #   # save
+  #   print('Saving cached annotations to {:s}'.format(cachefile))
+  #   with open(cachefile, 'wb') as f:
+  #     pickle.dump(recs, f)
+  #   logging.info(f"{cachefile} finish caching")
+  # else:
+  #   # load
+   
+  #   with open(cachefile, 'rb') as f:
+  #     try:
+  #       recs = pickle.load(f)
+  #     except:
+  #       recs = pickle.load(f, encoding='bytes')
 
   # extract gt objects for this class
   class_recs = {}

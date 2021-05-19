@@ -411,12 +411,6 @@ class Aggregator(object):
                     'loss': accumulator['test_loss'],
                     'test_len': accumulator['test_len']
                     }
-                
-                try:
-                    logging.info("====After aggregation in epoch: {}, virtual_clock: {}, mean_ap: {}, aps: {} test len: {}"
-                            .format(updateEpoch, global_virtual_clock, mean_ap, aps, test_results[updateEpoch][3]))
-                except Exception as e:
-                    logging.info(f"====Error {e}")
             else:
                 self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
                     'top_1': round(accumulator['top_1']/accumulator['test_len']*100.0, 4),

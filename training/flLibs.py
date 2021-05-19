@@ -139,8 +139,10 @@ def init_model():
         #np.random.seed(cfg.RNG_SEED)
         cfg_from_file(args.cfg_file)
         cfg_from_list(['DATA_DIR', args.data_dir])
-        model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False)
+        model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False, pretrained_model='/gpfs/gpfs0/groups/chowdhury/dywsjtu/resnet50.pth')
         model.create_architecture()
+        # checkpoint = torch.load("/gpfs/gpfs0/groups/chowdhury/dywsjtu/faster_rcnn_1_7_10021.pth")
+        # model.load_state_dict(checkpoint['model'])
         return model
     else:
         model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
@@ -166,7 +168,11 @@ def init_dataset():
             with open(args.data_cache, 'rb') as f:
                 train_dataset = pickle.load(f)
                 test_dataset = pickle.load(f)
-    else:
+            # imdbval_name = "voc_2007_test"
+            # imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
+            # imdb_.competition_mode(on=True)
+            # test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
+    else:   
 
         if args.data_set == 'Mnist':
             train_transform, test_transform = get_data_transform('mnist')

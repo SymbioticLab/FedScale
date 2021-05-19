@@ -24,6 +24,7 @@ from .imdb import imdb
 from .imdb import ROOT_DIR
 from . import ds_utils
 from .voc_eval import voc_eval
+import logging
 
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
@@ -322,6 +323,7 @@ class pascal_voc(imdb):
                 filename, annopath, self._image_index, imagesetfile, cls, cachedir, ovthresh=0.5,
                 use_07_metric=use_07_metric)
             aps += [ap]
+            logging.info('AP for {} = {:.4f}'.format(cls, ap))
             # print('AP for {} = {:.4f}'.format(cls, ap))
             with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
                 pickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
