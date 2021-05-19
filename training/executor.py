@@ -2,6 +2,7 @@
 from fl_client_libs import *
 from fl_client_libs import tokenizer, collate, voice_collate_fn, args
 from argparse import Namespace
+import gc
 
 # initiate the log path, and executor ips
 initiate_client_setting()
@@ -123,6 +124,7 @@ class Executor(object):
         trained_unique_samples = min(len(client_data), args.local_steps) * args.batch_size
         
         global_model = [param.data.clone() for param in model.parameters()]
+
         if args.task == "detection":
             lr = args.learning_rate
             params = []
@@ -134,6 +136,7 @@ class Executor(object):
                     else:
                         params += [{'params':[value],'lr':lr, 'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
             optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
+
         elif args.task == 'nlp':
             no_decay = ["bias", "LayerNorm.weight"]
             optimizer_grouped_parameters = [
@@ -147,6 +150,7 @@ class Executor(object):
                 },
             ]
             optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+            
         else:
             optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
 
@@ -247,7 +251,7 @@ class Executor(object):
                     optimizer.step()
 
                     # ========= Weight handler ========================
-                    if args.proxy_avg:
+                    if args.gradient_policy == 'prox':
                         for idx, param in enumerate(model.parameters()):
                             param.data += args.learning_rate * args.proxy_mu * (param.data - global_model[idx])
 
@@ -351,6 +355,7 @@ class Executor(object):
         logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
                     .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
+        gc.collect()
         return testResults
 
 
@@ -391,7 +396,7 @@ class Executor(object):
                 else:
                     logging.error("Unknown message types!")
 
-                time.sleep(0.1)
+                time.sleep(0.3)
 
 
     def stop(self):

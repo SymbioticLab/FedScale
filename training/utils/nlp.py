@@ -23,7 +23,7 @@ using a masked language modeling (MLM) loss.
 import argparse
 import glob
 import logging
-import os
+import os, gc
 import pickle
 import random
 import re
@@ -33,13 +33,14 @@ import numpy as np
 import torch
 import collections
 import csv
+from torch.utils.data import DataLoader, Dataset
 
 logger = logging.getLogger(__name__)
 
 class TextDataset(Dataset):
-    def __init__(self, tokenizer: PreTrainedTokenizer, args, file_path: str, block_size=512):
+    def __init__(self, tokenizer, args, file_path, block_size=512):
 
-        block_size = block_size - (tokenizer.max_len - tokenizer.max_len_single_sentence)
+        block_size = block_size - (tokenizer.model_max_length - tokenizer.max_len_single_sentence)
 
         directory = file_path
         cached_features_file = os.path.join(
@@ -48,9 +49,11 @@ class TextDataset(Dataset):
 
         if os.path.exists(cached_features_file) and not args.overwrite_cache:
             logger.info("Loading features from cached file %s", cached_features_file)
+            gc.disable()
             with open(cached_features_file, "rb") as handle:
                 self.examples = pickle.load(handle)
                 self.client_mapping = pickle.load(handle)
+            gc.enable()
         else:
             logger.info("Creating features from dataset file at %s", directory)
 
@@ -108,7 +111,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False):
 
     return TextDataset(tokenizer, args, file_path=file_path, block_size=args.block_size)
 
-def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args, device='cpu') -> Tuple[torch.Tensor, torch.Tensor]:
+def mask_tokens(inputs, tokenizer, args, device='cpu') -> Tuple[torch.Tensor, torch.Tensor]:
     """ Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original. """
     labels = inputs.clone(device=device)
     # We sample a few tokens in each sequence for masked-LM training (with probability args.mlm_probability defaults to 0.15 in Bert/RoBERTa)
@@ -135,5 +138,3 @@ def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args, devi
 
     # The rest of the time (10% of the time) we keep the masked input tokens unchanged
     return inputs, labels
-
-
