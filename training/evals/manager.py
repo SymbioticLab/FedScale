@@ -21,9 +21,9 @@ def process_cmd(yaml_file):
     cmd_script_list = []
 
     for ip_gpu in yaml_conf['worker_ips']:
-        ip, num_gpu = ip_gpu.strip().split(':')
+        ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
-        total_gpus.append(int(num_gpu))
+        total_gpus.append(eval(gpu_list))
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime('%m%d_%H%M%S')
     running_vms = set()
@@ -32,7 +32,6 @@ def process_cmd(yaml_file):
     submit_user = f"{yaml_conf['auth']['ssh_user']}@" if len(yaml_conf['auth']['ssh_user']) else ""
 
     job_conf = {'time_stamp':time_stamp,
-                'total_worker': sum(total_gpus),
                 'ps_ip':ps_ip,
                 'ps_port':random.randint(1000, 60000),
                 'manager_port':random.randint(1000, 60000)
@@ -58,34 +57,35 @@ def process_cmd(yaml_file):
         if conf_name == "log_path":
             log_path = os.path.join(job_conf[conf_name], 'log', job_name, time_stamp)
 
-    learner_conf = '-'.join([str(_) for _ in list(range(1, sum(total_gpus)+1))])
+    total_gpu_processes =  sum([sum(x) for x in total_gpus])
+    learner_conf = '-'.join([str(_) for _ in list(range(1, total_gpu_processes+1))])
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
     ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --learner={learner_conf} "
 
     with open(f"{job_name}_logging", 'wb') as fout:
         pass
-        
+
     print(f"Starting aggregator on {ps_ip}...")
     with open(f"{job_name}_logging", 'a') as fout:
         subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
                         shell=True, stdout=fout, stderr=fout)
 
-    #time.sleep(2)
+    time.sleep(3)
     # =========== Submit job to each worker ============
     rank_id = 1
     for worker, gpu in zip(worker_ips, total_gpus):
         running_vms.add(worker)
         print(f"Starting workers on {worker} ...")
-        for _  in range(gpu):
-            time.sleep(1)
 
-            worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} "
-            rank_id += 1
+        for cuda_id in range(len(gpu)):
+            for _  in range(gpu[cuda_id]):
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} --cuda_device=cuda:{cuda_id} "
+                rank_id += 1
 
-            with open(f"{job_name}_logging", 'a') as fout:
-                subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
-                                shell=True, stdout=fout, stderr=fout)
+                with open(f"{job_name}_logging", 'a') as fout:
+                    subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
+                                    shell=True, stdout=fout, stderr=fout)
 
     # dump the address of running workers
     current_path = os.path.dirname(os.path.abspath(__file__))
@@ -110,7 +110,11 @@ def terminate(job_name):
     for vm_ip in job_meta['vms']:
         # os.system(f'scp shutdown.py {job_meta["user"]}{vm_ip}:~/')
         print(f"Shutting down job on {vm_ip}")
-        os.system(f"ssh {job_meta['user']}{vm_ip} 'python {current_path}/shutdown.py {job_name}'")
+        with open(f"{job_name}_logging", 'a') as fout:
+            subprocess.Popen(f'ssh {job_meta["user"]}{vm_ip} "python {current_path}/shutdown.py {job_name}"',
+                            shell=True, stdout=fout, stderr=fout)
+
+        # _ = os.system(f"ssh {job_meta['user']}{vm_ip} 'python {current_path}/shutdown.py {job_name}'")
 
 if sys.argv[1] == 'submit':
     process_cmd(sys.argv[2])

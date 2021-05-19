@@ -14,32 +14,32 @@ class Aggregator(object):
     """This centralized aggregator collects training/testing feedbacks from executors"""
     def __init__(self, args):
         logging.info(f"Job args {args}")
-        
+
         self.args = args
-        self.device = torch.device('cuda') if args.use_cuda else torch.device('cpu')
+        self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
         self.executors = [int(v) for v in str(args.learners).split('-')]
         self.num_executors = len(self.executors)
 
-        # ======== env information ======== 
+        # ======== env information ========
         self.this_rank = 0
         self.global_virtual_clock = 0.
         self.round_duration = 0.
 
-        # ======== model and data ======== 
+        # ======== model and data ========
         self.model = None
 
         # list of parameters in model.parameters()
         self.model_in_update = []
         self.last_global_model = []
 
-        # ======== channels ======== 
+        # ======== channels ========
         self.server_event_queue = {}
         self.client_event_queue = Queue()
         self.control_manager = None
         # event queue of its own functions
         self.event_queue = collections.deque()
 
-        # ======== runtime information ======== 
+        # ======== runtime information ========
         self.client_run_queue = [] # client ids to run
         self.client_run_queue_idx = 0
         self.sampled_participants = []
@@ -80,14 +80,14 @@ class Aggregator(object):
 
     def setup_env(self):
         self.setup_seed(seed=self.this_rank)
-        
+
         # set up device
-        if self.args.use_cuda:
+        if self.args.use_cuda and self.device == None:
             for i in range(torch.cuda.device_count()):
                 try:
                     self.device = torch.device('cuda:'+str(i))
                     torch.cuda.set_device(i)
-                    print(torch.rand(1).to(device=self.device))
+                    _ = torch.rand(1).to(device=self.device)
                     logging.info(f'End up with cuda device ({self.device})')
                     break
                 except Exception as e:
@@ -145,7 +145,7 @@ class Aggregator(object):
                 - it selects participants randomly in each round
                 - [Ref]: https://arxiv.org/abs/1902.01046
             2. Kuiper sampler
-                - Kuiper prioritizes the use of those clients who have both data that offers the greatest utility 
+                - Kuiper prioritizes the use of those clients who have both data that offers the greatest utility
                   in improving model accuracy and the capability to run training quickly.
                 - [Ref]: https://arxiv.org/abs/2010.06081
         """
@@ -184,8 +184,8 @@ class Aggregator(object):
 
                 systemProfile['computation'] *= self.args.clock_factor
                 self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
-                self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size, 
-                    upload_epoch=self.args.upload_epoch, upload_size=self.model_update_size, download_size=self.model_update_size)
+                self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
+                    upload_epoch=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
 
                 clientId += 1
 
@@ -205,7 +205,7 @@ class Aggregator(object):
         for client_to_run in sampled_clients:
             client_cfg = self.client_conf.get(client_to_run, self.args)
             roundDuration = self.client_manager.getCompletionTime(client_to_run,
-                                    batch_size=client_cfg.batch_size, upload_epoch=client_cfg.upload_epoch,
+                                    batch_size=client_cfg.batch_size, upload_epoch=client_cfg.local_steps,
                                     upload_size=self.model_update_size, download_size=self.model_update_size)
 
             # if the client is not active by the time of collection, we consider it is lost in this round
@@ -214,6 +214,7 @@ class Aggregator(object):
                 completionTimes.append(roundDuration)
                 completed_client_clock[client_to_run] = roundDuration
 
+        num_clients_to_collect = min(num_clients_to_collect, len(completionTimes))
         # 2. get the top-k completions to remove stragglers
         sortedWorkersByCompletion = sorted(range(len(completionTimes)), key=lambda k:completionTimes[k])
         top_k_index = sortedWorkersByCompletion[:num_clients_to_collect]
@@ -238,7 +239,8 @@ class Aggregator(object):
 
     def start_event(self):
         #self.model_in_update = [param.data for idx, param in enumerate(self.model.parameters())]
-        self.event_queue.append('report_executor_info')
+        #self.event_queue.append('report_executor_info')
+        pass
 
     def broadcast_msg(self, msg):
         for executorId in self.executors:
@@ -247,11 +249,20 @@ class Aggregator(object):
 
     def broadcast_models(self):
         """Push the latest model to executors"""
+        # self.model = self.model.to(device='cpu')
+
+        # waiting_list = []
         for param in self.model.parameters():
             temp_tensor = param.data.to(device='cpu')
             for executorId in self.executors:
                 dist.send(tensor=temp_tensor, dst=executorId)
+                # req = dist.isend(tensor=param.data, dst=executorId)
+                # waiting_list.append(req)
 
+        # for req in waiting_list:
+        #     req.wait()
+
+        # self.model = self.model.to(device=self.device)
 
     def assign_participant_list(self, clientsToRun):
         logging.info(f"Selected participants to run: {clientsToRun}")
@@ -276,7 +287,7 @@ class Aggregator(object):
     def client_completion_handler(self, results):
         """We may need to keep all updates from clients, if so, we need to append results to the cache"""
         # Format:
-        #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
+        #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
         self.client_training_results.append(results)
 
@@ -342,7 +353,7 @@ class Aggregator(object):
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
         self.epoch += 1
-        
+
         if self.epoch % self.args.decay_epoch == 0:
             self.args.learning_rate = max(self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
 
@@ -387,7 +398,7 @@ class Aggregator(object):
 
     def testing_completion_handler(self, results):
         self.test_result_accumulator.append(results)
-        
+
         # Have collected all testing results
         if len(self.test_result_accumulator) == len(self.executors):
             accumulator = self.test_result_accumulator[0]
@@ -404,7 +415,7 @@ class Aggregator(object):
                         accumulator[key] += self.test_result_accumulator[i][key]
             if self.args.task == "detection":
                 self.imdb._reset_index(accumulator["idx"])
-                output_dir = args.test_output_dir + "/" + str(self.epoch) 
+                output_dir = args.test_output_dir + "/" + str(self.epoch)
                 aps, mean_ap = self.imdb.evaluate_detections(accumulator["boxes"], output_dir)
                 self.testing_history['perf'][self.epoch] = {'round': self.epoch, 'clock': self.global_virtual_clock,
                     'top_1': mean_ap,
@@ -422,8 +433,8 @@ class Aggregator(object):
 
 
             logging.info("FL Testing in epoch: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {:.4f}, test len: {}"
-                    .format(self.epoch, self.global_virtual_clock, self.testing_history['perf'][self.epoch]['top_1'], 
-                    self.testing_history['perf'][self.epoch]['top_5'], self.testing_history['perf'][self.epoch]['loss'], 
+                    .format(self.epoch, self.global_virtual_clock, self.testing_history['perf'][self.epoch]['top_1'],
+                    self.testing_history['perf'][self.epoch]['top_5'], self.testing_history['perf'][self.epoch]['loss'],
                     self.testing_history['perf'][self.epoch]['test_len']))
 
 
@@ -450,7 +461,7 @@ class Aggregator(object):
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
                         next_clientId = self.pop_next_participant()
-                
+
                         if next_clientId is not None:
                             config = self.get_client_conf(next_clientId)
                             self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': config})
@@ -490,7 +501,7 @@ class Aggregator(object):
 
                     if len(self.stats_util_accumulator) == len(self.client_run_queue):
                         self.round_completion_handler()
-                        
+
                 elif event_msg == 'test':
                     self.testing_completion_handler(results)
 

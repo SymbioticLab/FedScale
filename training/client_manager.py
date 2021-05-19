@@ -2,7 +2,6 @@ from helper.client import Client
 import math
 from random import Random
 import pickle
-from kuiper import create_training_selector
 import logging
 
 class clientManager(object):
@@ -14,7 +13,12 @@ class clientManager(object):
         self.filter_less = args.filter_less
         self.filter_more = args.filter_more
 
-        self.ucbSampler = create_training_selector(args=args) if self.mode == 'kuiper' else None
+        self.ucbSampler = None 
+
+        if self.mode == 'kuiper':
+            from kuiper import create_training_selector
+            self.ucbSampler = create_training_selector(args=args)
+            
         self.feasibleClients = []
         self.rng = Random()
         self.rng.seed(sample_seed)
@@ -24,7 +28,7 @@ class clientManager(object):
         self.args = args
 
         if args.device_avail_file is not None:
-            with open(args.device_avail_file, 'rb') as fin:    
+            with open(args.device_avail_file, 'rb') as fin:
                 self.user_trace = pickle.load(fin)
 
     def registerClient(self, hostId, clientId, size, speed, duration=1):
@@ -57,14 +61,14 @@ class clientManager(object):
     def registerDuration(self, clientId, batch_size, upload_epoch, upload_size, download_size):
         if self.mode == "kuiper":
             roundDuration = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-                    batch_size=batch_size, upload_epoch=upload_epoch, 
+                    batch_size=batch_size, upload_epoch=upload_epoch,
                     upload_size=upload_size, download_size=download_size
             )
             self.ucbSampler.update_duration(clientId, roundDuration)
 
     def getCompletionTime(self, clientId, batch_size, upload_epoch, upload_size, download_size):
         return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-                batch_size=batch_size, upload_epoch=upload_epoch, 
+                batch_size=batch_size, upload_epoch=upload_epoch,
                 upload_size=upload_size, download_size=download_size
             )
 

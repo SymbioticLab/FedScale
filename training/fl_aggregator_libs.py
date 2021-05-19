@@ -38,6 +38,6 @@ def dump_ps_ip():
 
 def initiate_aggregator_setting():
     init_logging()
-    dump_ps_ip()
+    #dump_ps_ip()
 
 

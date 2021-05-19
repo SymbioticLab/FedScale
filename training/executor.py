@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from fl_client_libs import *
-from fl_client_libs import tokenizer, collate, voice_collate_fn, args
+#from fl_client_libs import tokenizer, collate, voice_collate_fn, args
 from argparse import Namespace
 import gc
 
@@ -15,23 +15,23 @@ class Executor(object):
     """Each executor takes certain resource to run real training.
        Each run simulates the execution of an individual client"""
     def __init__(self, args):
-        
+
         self.args = args
-        self.device = torch.device('cuda') if args.use_cuda else torch.device('cpu')
+        self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
         self.executors = [int(v) for v in str(args.learners).split('-')]
 
-        # ======== env information ======== 
+        # ======== env information ========
         self.this_rank = args.this_rank
 
-        # ======== model and data ======== 
+        # ======== model and data ========
         self.model = self.training_sets = self.test_dataset = None
         self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
-        # ======== channels ======== 
+        # ======== channels ========
         self.server_event_queue = self.client_event_queue = None
         self.control_manager = None
 
-        # ======== runtime information ======== 
+        # ======== runtime information ========
         self.collate_fn = None
         self.task = args.task
         self.epoch = 0
@@ -42,9 +42,9 @@ class Executor(object):
         logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
 
         self.setup_seed(seed=self.this_rank)
-        
+
         # set up device
-        if self.args.use_cuda:
+        if self.args.use_cuda and self.device == None:
             for i in range(torch.cuda.device_count()):
                 try:
                     self.device = torch.device('cuda:'+str(i))
@@ -70,6 +70,7 @@ class Executor(object):
     def init_control_communication(self, ps_ip, ps_port):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
+        time.sleep(0.1*self.this_rank)
         logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
 
         #for executor_id in self.executors:
@@ -77,7 +78,17 @@ class Executor(object):
         BaseManager.register('get_client_event')
 
         self.control_manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
-        self.control_manager.connect()
+        start_time, is_connected = time.time(), False
+
+        while time.time() - start_time < 15 and not is_connected:
+            try:
+                self.control_manager.connect()
+                is_connected = True
+            except Exception as e:
+                pass
+
+        assert is_connected, 'Failed to connect to the aggregator'
+
 
         self.server_event_queue = eval('self.control_manager.get_server_event_que'+str(self.this_rank)+'()')
         self.client_event_queue = self.control_manager.get_client_event()
@@ -93,7 +104,7 @@ class Executor(object):
     def init_data(self):
         """Load data and """
         train_dataset, test_dataset = init_dataset()
-        
+
         # load data partitioner (entire_train_data)
         logging.info("Data partitioner starts ...")
 
@@ -122,7 +133,7 @@ class Executor(object):
 
         model = model.to(device=device)
         trained_unique_samples = min(len(client_data), args.local_steps) * args.batch_size
-        
+
         global_model = [param.data.clone() for param in model.parameters()]
 
         if args.task == "detection":
@@ -149,8 +160,11 @@ class Executor(object):
                     "weight_decay": 0.0,
                 },
             ]
-            optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
-            
+            # use the LAMB optimizer
+            import torch_optimizer as optim
+            optimizer = optim.Lamb(optimizer_grouped_parameters, lr=args.learning_rate)
+            #optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+
         else:
             optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=5e-4)
 
@@ -179,7 +193,7 @@ class Executor(object):
 
                     if args.task == 'nlp':
                         (data, _) = data_pair
-                        data, target = mask_tokens(data, tokenizer, args, device=device) if args.mlm else (data, data)
+                        data, target = mask_tokens(data, tokenizer, args, device=device)# if args.mlm else (data, data)
                     elif args.task == 'voice':
                         (data, target, input_percentages, target_sizes), _ = data_pair
                         input_sizes = input_percentages.mul_(int(data.size(3))).int()
@@ -203,7 +217,7 @@ class Executor(object):
                     target = Variable(target).to(device=device)
 
                     if args.task == 'nlp':
-                        outputs = model(data, masked_lm_labels=target) if args.mlm else model(data, labels=target)
+                        outputs = model(data, labels=target) #if args.mlm else model(data, labels=target)
                         loss = outputs[0]
                     elif args.task == 'voice':
                         outputs, output_sizes = model(data, input_sizes)
@@ -214,7 +228,7 @@ class Executor(object):
                         rpn_loss_cls, rpn_loss_box, \
                         RCNN_loss_cls, RCNN_loss_bbox, \
                         rois_label = model(im_data, im_info, gt_boxes, num_boxes)
-                    
+
                         loss = rpn_loss_cls + rpn_loss_box \
                                 + RCNN_loss_cls + RCNN_loss_bbox
 
@@ -230,7 +244,7 @@ class Executor(object):
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
                     if args.task == 'nlp':
-                        loss_list = [loss.item()]
+                        loss_list = [loss.item()] #[loss.mean().data.item()]
                     elif args.task == "detection":
                         loss_list = [loss.tolist()]
                     else:
@@ -266,11 +280,11 @@ class Executor(object):
                 break
 
         model_param = [param.data.cpu().numpy() for param in model.parameters()]
-        results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss, 
-                  'trained_size': count, 'wall_duration': 0, 'success': count > 0, 
+        results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss,
+                  'trained_size': count, 'wall_duration': 0, 'success': count > 0,
                   'utility':math.sqrt(epoch_train_loss)*trained_unique_samples}
 
-        if count > 0:
+        if error_type is None:
             logging.info(f"Training of (CLIENT: {clientId}) completes")
         else:
             logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
@@ -283,8 +297,12 @@ class Executor(object):
         self.model = self.init_model()
         self.model = self.model.to(device=self.device)
         self.training_sets, self.testing_sets = self.init_data()
+        self.start_event()
         self.event_monitor()
 
+    def start_event(self):
+        executor_info = self.report_executor_info_handler()
+        self.push_msg_to_server('report_executor_info', executor_info)
 
     def push_msg_to_server(self, event, results):
         self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
@@ -301,11 +319,21 @@ class Executor(object):
     def update_model_handler(self):
         self.epoch += 1
 
+        # self.model = self.model.to(device='cpu')
+
+        # waiting_list = []
         """Update the model copy on this executor"""
         for param in self.model.parameters():
             temp_tensor = torch.zeros_like(param.data, device='cpu')
             dist.recv(tensor=temp_tensor, src=0)
+            #req = dist.irecv(tensor=param.data, src=0)
             param.data = temp_tensor.to(device=self.device)
+        #     waiting_list.append(req)
+
+        # for req in waiting_list:
+        #     req.wait()
+
+        # self.model = self.model.to(device=self.device)
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
@@ -367,7 +395,7 @@ class Executor(object):
                 event_dict = self.server_event_queue.get()
                 event_msg = event_dict['event']
 
-                logging.info(f"Received (Event:{event_msg.upper()}) from aggregator")
+                logging.info(f"Executor {self.this_rank}: Received (Event:{event_msg.upper()}) from aggregator")
 
                 if event_msg == 'report_executor_info':
                     executor_info = self.report_executor_info_handler()
@@ -408,4 +436,5 @@ class Executor(object):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
+
 

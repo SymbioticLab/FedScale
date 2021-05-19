@@ -61,6 +61,11 @@ from utils.yogi import YoGi
 # shared functions of aggregator and clients
 # initiate for nlp
 tokenizer = None
+if args.task == 'nlp':
+    with open(os.path.join(args.data_dir, 'mobilebert.pkl'), 'rb') as fin:
+        _ = pickle.load(fin)
+        tokenizer = pickle.load(fin)
+
 modelDir = os.path.join(args.log_path, args.model)
 modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar')
 

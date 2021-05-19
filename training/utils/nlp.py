@@ -44,7 +44,7 @@ class TextDataset(Dataset):
 
         directory = file_path
         cached_features_file = os.path.join(
-                directory, args.model_type + "_cached_lm_" + str(block_size)
+                directory, args.model + "_cached_lm_" + str(block_size)
             )
 
         if os.path.exists(cached_features_file) and not args.overwrite_cache:
@@ -65,7 +65,7 @@ class TextDataset(Dataset):
             files = [entry.name for entry in os.scandir(file_path) if '_cached_lm_' not in entry.name]
             # make sure files are ordered
             files = [os.path.join(file_path, x) for x in sorted(files)]
-            
+
             for file in files:
                 with open(file, encoding="utf-8") as f:
                     text = f.read()
@@ -99,7 +99,7 @@ class TextDataset(Dataset):
 
         self.data = self.examples
         self.targets = [0 for i in range(len(self.data))]
-        
+
     def __len__(self):
         return len(self.examples)
 
@@ -113,7 +113,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False):
 
 def mask_tokens(inputs, tokenizer, args, device='cpu') -> Tuple[torch.Tensor, torch.Tensor]:
     """ Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original. """
-    labels = inputs.clone(device=device)
+    labels = inputs.clone().to(device=device)
     # We sample a few tokens in each sequence for masked-LM training (with probability args.mlm_probability defaults to 0.15 in Bert/RoBERTa)
     probability_matrix = torch.full(labels.shape, args.mlm_probability, device=device)
     special_tokens_mask = [
@@ -138,3 +138,4 @@ def mask_tokens(inputs, tokenizer, args, device='cpu') -> Tuple[torch.Tensor, to
 
     # The rest of the time (10% of the time) we keep the masked input tokens unchanged
     return inputs, labels
+

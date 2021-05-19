@@ -1,5 +1,6 @@
 # package for client
 from flLibs import *
+from torch.nn.utils.rnn import pad_sequence
 
 # logDir = os.path.join(args.log_path, 'logs', args.job_name, args.time_stamp, 'worker')
 # logFile = os.path.join(logDir, 'log_'+str(args.this_rank))
@@ -38,7 +39,7 @@ def get_ps_ip():
 
 def initiate_client_setting():
     init_logging()
-    get_ps_ip()
+    #get_ps_ip()
 
 
 def collate(examples):
