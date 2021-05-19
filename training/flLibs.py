@@ -8,6 +8,7 @@ import multiprocessing, threading
 import numpy as np
 import collections
 import numba
+import numpy
 
 # PyTorch libs
 import torch
@@ -32,7 +33,7 @@ if args.task == 'nlp':
         AdamW,
         AutoConfig,
         AutoTokenizer,
-        MobileBertForPreTraining, 
+        MobileBertForPreTraining,
     )
 elif args.task == 'speech':
     from utils.speech import SPEECH
@@ -185,7 +186,7 @@ def init_dataset():
             # imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
             # imdb_.competition_mode(on=True)
             # test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
-    else:   
+    else:
 
         if args.data_set == 'Mnist':
             train_transform, test_transform = get_data_transform('mnist')
