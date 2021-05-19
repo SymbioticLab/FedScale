@@ -70,7 +70,7 @@ class Executor(object):
     def init_control_communication(self, ps_ip, ps_port):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
-        time.sleep(0.1*self.this_rank)
+
         logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
 
         #for executor_id in self.executors:
@@ -85,6 +85,7 @@ class Executor(object):
                 self.control_manager.connect()
                 is_connected = True
             except Exception as e:
+                time.sleep(numpy.random.rand(1)[0]*5+0.1)
                 pass
 
         assert is_connected, 'Failed to connect to the aggregator'
@@ -436,5 +437,4 @@ class Executor(object):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
-
 
