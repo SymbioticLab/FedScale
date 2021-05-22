@@ -44,7 +44,7 @@ class clientManager(object):
             self.feasible_samples += size
 
             if self.mode == "kuiper":
-                feedbacks = {'reward':min(size, self.args.upload_epoch*self.args.batch_size),
+                feedbacks = {'reward':min(size, self.args.local_steps*self.args.batch_size),
                             'duration':duration,
                             }
                 self.ucbSampler.register_client(clientId, feedbacks=feedbacks)

@@ -57,7 +57,7 @@ class Aggregator(object):
         self.client_conf = {}
 
         self.stats_util_accumulator = []
-
+        self.loss_accumulator = []
         self.client_training_results = []
 
         # number of registered executors
@@ -278,7 +278,9 @@ class Aggregator(object):
         self.client_training_results.append(results)
 
         # Feed metrics to client sampler
-        self.stats_util_accumulator.append(math.sqrt(results['moving_loss']))
+        self.stats_util_accumulator.append(results['utility'])
+        self.loss_accumulator.append(math.sqrt(results['moving_loss']))
+
         self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
                     time_stamp=self.epoch, 
                     duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
@@ -355,8 +357,9 @@ class Aggregator(object):
                                     duration=self.virtual_client_clock[clientId]['computation']+self.virtual_client_clock[clientId]['communication'],
                                     success=False)
 
+        avg_loss = sum(self.loss_accumulator)/max(1, len(self.loss_accumulator))
         logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, Epoch: {self.epoch}, Planned participants: " + \
-            f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avgUtilLastEpoch}")
+            f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
 
         # update select participants
         self.sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)

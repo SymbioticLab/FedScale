@@ -19,7 +19,7 @@ class Client(object):
         model = model.to(device=device)
         model.train()
 
-        trained_unique_samples = min(len(client_data), args.local_steps) * args.batch_size
+        trained_unique_samples = min(len(client_data.dataset), args.local_steps* args.batch_size)
         global_model = [param.data.clone() for param in model.parameters()]
 
         if args.task == "detection":
@@ -165,6 +165,7 @@ class Client(object):
         model_param = [param.data.cpu().numpy() for param in model.parameters()]
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': count, 'success': count > 0}
+        results['utility'] = math.sqrt(epoch_train_loss)*float(trained_unique_samples)
 
         if error_type is None:
             logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
@@ -173,11 +174,11 @@ class Client(object):
 
         results['update_weight'] = model_param
         results['wall_duration'] = 0
-        results['utility'] = math.sqrt(epoch_train_loss)*trained_unique_samples
-
+        
         return results
 
 
     def test(self, args):
         pass
+
 

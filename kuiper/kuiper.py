@@ -292,11 +292,11 @@ class _training_selector(object):
                 creward = min(self.totalArms[key]['reward'], clip_value)
                 numOfExploited += 1
 
-                sc = (creward - min_reward)/float(range_reward) \
-                     + math.sqrt(0.1*math.log(cur_time)/self.totalArms[key]['time_stamp']) # temporal uncertainty
-
                 #sc = (creward - min_reward)/float(range_reward) \
-                #    + self.alpha*((cur_time-self.totalArms[key]['time_stamp']) - min_staleness)/float(range_staleness)
+                #     + math.sqrt(0.1*math.log(cur_time)/self.totalArms[key]['time_stamp']) # temporal uncertainty
+
+                sc = (creward - min_reward)/float(range_reward) \
+                    + self.alpha*((cur_time-self.totalArms[key]['time_stamp']) - min_staleness)/float(range_staleness)
 
                 clientDuration = self.totalArms[key]['duration']
                 if clientDuration > self.round_prefer_duration:
@@ -305,7 +305,7 @@ class _training_selector(object):
                 if self.totalArms[key]['time_stamp']==cur_time:
                     allloss[key] = sc
 
-                scores[key] = sc
+                scores[key] = abs(sc)
 
 
         clientLakes = list(scores.keys())
@@ -394,8 +394,8 @@ class _training_selector(object):
         aList.sort()
         clip_value = aList[min(int(len(aList)*clip_bound), len(aList)-1)]
 
-        _max = max(aList)
-        _min = min(aList)*0.999
+        _max = aList[-1]
+        _min = aList[0]*0.999
         _range = max(_max - _min, thres)
         _avg = sum(aList)/max(1e-4, float(len(aList)))
 
