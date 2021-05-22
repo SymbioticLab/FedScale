@@ -60,11 +60,11 @@ class clientManager(object):
 
     def registerDuration(self, clientId, batch_size, upload_epoch, upload_size, download_size):
         if self.mode == "kuiper":
-            roundDuration = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
+            exe_cost = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
                     batch_size=batch_size, upload_epoch=upload_epoch,
                     upload_size=upload_size, download_size=download_size
             )
-            self.ucbSampler.update_duration(clientId, roundDuration)
+            self.ucbSampler.update_duration(clientId, exe_cost['computation']+exe_cost['communication'])
 
     def getCompletionTime(self, clientId, batch_size, upload_epoch, upload_size, download_size):
         return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
@@ -201,4 +201,5 @@ class clientManager(object):
         if self.mode == 'kuiper':
             return self.ucbSampler.get_median_reward()
         return 0.
+
 

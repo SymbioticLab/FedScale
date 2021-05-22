@@ -26,7 +26,7 @@ class Aggregator(object):
         self.global_virtual_clock = 0.
         self.round_duration = 0.
         self.resource_manager = ResourceManager()
-        self.client_manager = init_client_manager(args=args)
+        self.client_manager = self.init_client_manager(args=args)
 
         # ======== model and data ========
         self.model = None
@@ -203,6 +203,7 @@ class Aggregator(object):
         # 1. remove dummy clients that are not available to the end of training
         for client_to_run in sampled_clients:
             client_cfg = self.client_conf.get(client_to_run, self.args)
+
             exe_cost = self.client_manager.getCompletionTime(client_to_run,
                                     batch_size=client_cfg.batch_size, upload_epoch=client_cfg.local_steps,
                                     upload_size=self.model_update_size, download_size=self.model_update_size)
@@ -451,7 +452,6 @@ class Aggregator(object):
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
                         next_clientId = self.resource_manager.get_next_task()
-
                         if next_clientId is not None:
                             config = self.get_client_conf(next_clientId)
                             self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': config})

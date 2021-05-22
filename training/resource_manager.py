@@ -9,7 +9,7 @@ class ResourceManager(object):
         self.client_run_queue_idx = 0
 
     
-    def assign_participant_list(self, clientsToRun):
+    def register_tasks(self, clientsToRun):
         self.client_run_queue = clientsToRun
         self.client_run_queue_idx = 0
 
@@ -21,3 +21,4 @@ class ResourceManager(object):
             return clientId
 
         return None
+

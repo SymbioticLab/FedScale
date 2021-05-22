@@ -65,8 +65,8 @@ parser.add_argument('--eval_interval', type=int, default=5)
 parser.add_argument('--sample_seed', type=int, default=233) #123 #233
 parser.add_argument('--test_ratio', type=float, default=1.0)
 parser.add_argument('--loss_decay', type=float, default=0.2)
-parser.add_argument('--exploration_min', type=float, default=0.2)
-parser.add_argument('--cut_off_util', type=float, default=0.7)
+parser.add_argument('--exploration_min', type=float, default=0.3)
+parser.add_argument('--cut_off_util', type=float, default=0)
 
 parser.add_argument('--gradient_policy', type=str, default=None)
 
@@ -113,6 +113,7 @@ parser.add_argument(
     "The training dataset will be truncated in block of this size for training."
     "Default to the model max input length for single sentence inputs (take into account special tokens).",
 )
+
 
 parser.add_argument("--weight_decay", default=0, type=float, help="Weight decay if we apply some.")
 parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
@@ -173,4 +174,5 @@ for model_name in model_factor:
     if model_name in args.model:
         args.clock_factor = args.clock_factor * model_factor[model_name]
         break
+
 

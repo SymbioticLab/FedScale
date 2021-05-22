@@ -137,6 +137,9 @@ class Executor(object):
         self.start_event()
         self.event_monitor()
 
+    def start_event(self):
+        executor_info = self.report_executor_info_handler()
+        self.push_msg_to_server('report_executor_info', executor_info)
 
     def start_event(self):
         executor_info = self.report_executor_info_handler()
@@ -174,6 +177,12 @@ class Executor(object):
         #     req.wait()
 
         # self.model = self.model.to(device=self.device)
+
+        # Dump model every dumping interval
+
+        if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
+            with open(self.temp_model_path+'_'+str(self.epoch), 'wb') as model_out:
+                pickle.dump(self.model, model_out)
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
@@ -286,4 +295,5 @@ class Executor(object):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
+
 
