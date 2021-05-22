@@ -2,6 +2,7 @@
 
 from fl_aggregator_libs import *
 from random import Random
+from resource_manager import ResourceManager
 
 # initiate the log path, and executor ips
 initiate_aggregator_setting()
@@ -24,6 +25,8 @@ class Aggregator(object):
         self.this_rank = 0
         self.global_virtual_clock = 0.
         self.round_duration = 0.
+        self.resource_manager = ResourceManager()
+        self.client_manager = init_client_manager(args=args)
 
         # ======== model and data ========
         self.model = None
@@ -40,8 +43,7 @@ class Aggregator(object):
         self.event_queue = collections.deque()
 
         # ======== runtime information ========
-        self.client_run_queue = [] # client ids to run
-        self.client_run_queue_idx = 0
+        self.tasks_round = 0
         self.sampled_participants = []
 
         self.round_stragglers = []
@@ -69,14 +71,9 @@ class Aggregator(object):
             from utils.yogi import YoGi
             self.gradient_controller = YoGi(eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
 
-        # ======== runtime components =========
-        self.client_manager = None
+        # ======== Task specific ============
+        self.imdb = None           # object detection
 
-        # ======== object detection =========
-        if args.task == "detection":
-            cfg_from_file(args.cfg_file)
-            np.random.seed(cfg.RNG_SEED)
-            self.imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', args.data_dir], server=True)
 
     def setup_env(self):
         self.setup_seed(seed=self.this_rank)
@@ -95,8 +92,6 @@ class Aggregator(object):
 
         self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
         self.init_data_communication()
-
-        self.client_manager = self.init_client_manager(args=self.args)
 
 
     def setup_seed(self, seed=1):
@@ -136,6 +131,11 @@ class Aggregator(object):
 
     def init_model(self):
         """Load model"""
+        if self.args.task == "detection":
+            cfg_from_file(self.args.cfg_file)
+            np.random.seed(self.cfg.RNG_SEED)
+            self.imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', self.args.data_dir], server=True)
+
         return init_model()
 
     def init_client_manager(self, args):
@@ -264,21 +264,6 @@ class Aggregator(object):
 
         # self.model = self.model.to(device=self.device)
 
-    def assign_participant_list(self, clientsToRun):
-        logging.info(f"Selected participants to run: {clientsToRun}")
-
-        self.client_run_queue = clientsToRun
-        self.client_run_queue_idx = 0
-
-
-    def pop_next_participant(self):
-        if self.client_run_queue_idx < len(self.client_run_queue):
-            clientId = self.client_run_queue[self.client_run_queue_idx]
-            self.client_run_queue_idx += 1
-            return clientId
-
-        return None
-
 
     def select_participants(self, select_num_participants, overcommitment=1.3):
         return sorted(self.client_manager.resampleClients(int(select_num_participants*overcommitment), cur_time=self.global_virtual_clock))
@@ -300,7 +285,7 @@ class Aggregator(object):
         device = self.device
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
-        importance = 1./len(self.client_run_queue)
+        importance = 1./self.tasks_round
         if len(self.model_in_update) == 0:
             self.model_in_update = [True]
 
@@ -368,14 +353,17 @@ class Aggregator(object):
                                     success=False)
 
         logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, Epoch: {self.epoch}, Planned participants: " + \
-            f"{len(self.client_run_queue)}, Succeed participants: {len(self.client_run_queue)}, Training loss: {avgUtilLastEpoch}")
+            f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avgUtilLastEpoch}")
 
         # update select participants
         self.sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
         clientsToRun, round_stragglers, virtual_client_clock, round_duration = self.tictak_client_tasks(self.sampled_participants, self.args.total_worker)
 
-        # ordered by the completion time
-        self.assign_participant_list(clientsToRun)
+        logging.info(f"Selected participants to run: {clientsToRun}")
+
+        # Issue requests to the resource manager; Tasks ordered by the completion time
+        self.resource_manager.register_tasks(clientsToRun)
+        self.tasks_round = len(clientsToRun)
 
         self.save_last_param()
         self.round_stragglers = round_stragglers
@@ -460,7 +448,7 @@ class Aggregator(object):
 
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
-                        next_clientId = self.pop_next_participant()
+                        next_clientId = self.resource_manager.get_next_task()
 
                         if next_clientId is not None:
                             config = self.get_client_conf(next_clientId)
@@ -487,7 +475,7 @@ class Aggregator(object):
                 # collect training returns from the executor
                 if event_msg == 'train_nowait':
                     # pop a new client to run
-                    next_clientId = self.pop_next_participant()
+                    next_clientId = self.resource_manager.get_next_task()
 
                     if next_clientId is not None:
                         config = self.get_client_conf(next_clientId)
@@ -499,7 +487,7 @@ class Aggregator(object):
                     # push training results
                     self.client_completion_handler(results)
 
-                    if len(self.stats_util_accumulator) == len(self.client_run_queue):
+                    if len(self.stats_util_accumulator) == self.tasks_round:
                         self.round_completion_handler()
 
                 elif event_msg == 'test':
@@ -523,4 +511,5 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
+
 

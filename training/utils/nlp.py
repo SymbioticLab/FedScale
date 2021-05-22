@@ -119,19 +119,19 @@ def mask_tokens(inputs, tokenizer, args, device='cpu') -> Tuple[torch.Tensor, to
     special_tokens_mask = [
         tokenizer.get_special_tokens_mask(val, already_has_special_tokens=True) for val in labels.tolist()
     ]
-    probability_matrix.masked_fill_(torch.tensor(special_tokens_mask, dtype=torch.uint8, device=device), value=0.0)
+    probability_matrix.masked_fill_(torch.tensor(special_tokens_mask, dtype=torch.bool, device=device), value=0.0)
     if tokenizer._pad_token is not None:
         padding_mask = labels.eq(tokenizer.pad_token_id)
         probability_matrix.masked_fill_(padding_mask, value=0.0)
-    masked_indices = torch.tensor(torch.bernoulli(probability_matrix), dtype=torch.uint8).detach().to(device=device)
+    masked_indices = torch.tensor(torch.bernoulli(probability_matrix), dtype=torch.bool).detach().to(device=device)
     labels[~masked_indices] = -100  # We only compute loss on masked tokens
 
     # 80% of the time, we replace masked input tokens with tokenizer.mask_token ([MASK])
-    indices_replaced = torch.tensor(torch.bernoulli(torch.full(labels.shape, 0.8)), dtype=torch.uint8, device=device) & masked_indices
+    indices_replaced = torch.tensor(torch.bernoulli(torch.full(labels.shape, 0.8)), dtype=torch.bool, device=device) & masked_indices
     inputs[indices_replaced] = tokenizer.convert_tokens_to_ids(tokenizer.mask_token)
 
     # 10% of the time, we replace masked input tokens with random word
-    indices_random = torch.tensor(torch.bernoulli(torch.full(labels.shape, 0.5)), dtype=torch.uint8, device=device) & masked_indices & ~indices_replaced
+    indices_random = torch.tensor(torch.bernoulli(torch.full(labels.shape, 0.5)), dtype=torch.bool, device=device) & masked_indices & ~indices_replaced
     random_words = torch.randint(len(tokenizer), labels.shape, dtype=torch.long)
     bool_indices_random = indices_random
     inputs[bool_indices_random] = random_words[bool_indices_random]

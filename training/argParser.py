@@ -100,7 +100,7 @@ parser.add_argument(
     "--mlm", type=bool, default=False, help="Train with masked-language modeling loss instead of language modeling."
 )
 parser.add_argument(
-    "--mlm_probability", type=float, default=0.1, help="Ratio of tokens to mask for masked language modeling loss"
+    "--mlm_probability", type=float, default=0.15, help="Ratio of tokens to mask for masked language modeling loss"
 )
 parser.add_argument(
     "--overwrite_cache", type=bool, default=False, help="Overwrite the cached training and evaluation sets"
@@ -114,7 +114,7 @@ parser.add_argument(
     "Default to the model max input length for single sentence inputs (take into account special tokens).",
 )
 
-parser.add_argument("--weight_decay", default=5e-4, type=float, help="Weight decay if we apply some.")
+parser.add_argument("--weight_decay", default=0, type=float, help="Weight decay if we apply some.")
 parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
 
 # for tag prediction

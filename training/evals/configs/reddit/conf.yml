@@ -19,7 +19,7 @@ worker_ips:
     - 10.0.0.11:[2]
     - 10.0.0.12:[2]
     - 10.0.0.13:[2]
-    - 10.0.0.14:[2]
+      #- 10.0.0.14:[2]
 
 exp_path: $HOME/FLPerf-Private/training
 
@@ -50,14 +50,15 @@ job_conf:
     #- device_conf_file: $HOME/FLPerf/data/device_info/client_device_capacity     # Path of the client trace
     #- device_avail_file: $HOME/FLPerf/data/device_info/client_behave_trace
     - model: mobilebert                            # Models: shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
-    #- gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
-    - eval_interval: 3                     # How many rounds to run a testing on the testing set
+      #- gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
+    - eval_interval: 30                     # How many rounds to run a testing on the testing set
     - epochs: 5000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
-    - num_loaders: 8
+    - num_loaders: 4
     - batch_size: 16
+    - local_steps: 20
     - test_bsz: 16
     - task: nlp
     - test_ratio: 0.2
-    - learning_rate: 5e-5
-    - min_learning_rate: 1e-6
-
+    - learning_rate: 4e-5
+    - min_learning_rate: 1e-5
+    - decay_epoch: 10

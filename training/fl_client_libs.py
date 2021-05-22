@@ -1,5 +1,5 @@
 # package for client
-from flLibs import *
+from fllibs import *
 from torch.nn.utils.rnn import pad_sequence
 
 # logDir = os.path.join(args.log_path, 'logs', args.job_name, args.time_stamp, 'worker')

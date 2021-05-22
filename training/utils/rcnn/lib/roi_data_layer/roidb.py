@@ -29,12 +29,10 @@ def prepare_roidb(imdb, size_file):
   logging.info(f'Start PIL')
   roidb = imdb.roidb
   if not (imdb.name.startswith('coco')):
-    if size_file == "":
-      sizes = [PIL.Image.open(imdb.image_path_at(i)).size
-          for i in range(imdb.num_images)]
-    else:
-      sizes = read_sizes(size_file)
-      assert len(sizes) == imdb.num_images
+    # sizes = [PIL.Image.open(imdb.image_path_at(i)).size
+    #      for i in range(imdb.num_images)]
+    sizes = read_sizes(size_file)
+    assert len(sizes) == imdb.num_images
   logging.info(f'Finish PIL')      
   for i in range(len(imdb.image_index)):
     roidb[i]['img_id'] = imdb.image_id_at(i)

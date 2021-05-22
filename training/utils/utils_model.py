@@ -10,6 +10,7 @@ from torch.autograd import Variable
 import numpy as np
 import logging
 from argParser import args
+from utils.nlp import mask_tokens
 
 if args.task == "detection":
     import os
@@ -147,7 +148,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
     if args.task == 'voice':
         decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
-        
+
     with torch.no_grad():
 
         if args.task == 'detection':
@@ -235,14 +236,14 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                 data, target = mask_tokens(data, tokenizer, args, device=device)# if args.mlm else (data, data)
                 data, target = Variable(data).to(device=device), Variable(target).to(device=device)
 
-                outputs = model(data, masked_lm_labels=target)# if args.mlm else model(data, labels=target)
+                outputs = model(data, labels=target)# if args.mlm else model(data, labels=target)
 
                 loss = outputs[0]
                 #criterion(outputs[1].view(-1, 30000), target.view(-1))
-                test_loss += loss.mean().data.item()
-                perplexity_loss += loss.mean().data.item()
+                test_loss += loss.data.item()
+                perplexity_loss += loss.data.item()
 
-                acc = accuracy(outputs[1].contiguous().view(-1, target.shape[2]), target.view(-1), topk=(1, 5))
+                acc = accuracy(outputs[1].reshape(-1, outputs[1].shape[2]), target.reshape(-1), topk=(1, 5))
 
                 correct += acc[0].item()
                 top_5 += acc[1].item()
@@ -363,11 +364,11 @@ def accuracy(output, target, topk=(1,)):
 
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
-        correct = pred.eq(target.contiguous().view(1, -1).expand_as(pred))
+        correct = pred.eq(target.reshape(1, -1).expand_as(pred))
 
         res = []
         for k in topk:
-            correct_k = correct[:k].contiguous().view(-1).float().sum(0, keepdim=True)
+            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k)
 
         return res
