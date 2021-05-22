@@ -182,7 +182,6 @@ class Aggregator(object):
                 mapped_id = clientId%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
                 systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
 
-                systemProfile['computation'] *= self.args.clock_factor
                 self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
                 self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
                     upload_epoch=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
@@ -204,15 +203,16 @@ class Aggregator(object):
         # 1. remove dummy clients that are not available to the end of training
         for client_to_run in sampled_clients:
             client_cfg = self.client_conf.get(client_to_run, self.args)
-            roundDuration = self.client_manager.getCompletionTime(client_to_run,
+            exe_cost = self.client_manager.getCompletionTime(client_to_run,
                                     batch_size=client_cfg.batch_size, upload_epoch=client_cfg.local_steps,
                                     upload_size=self.model_update_size, download_size=self.model_update_size)
 
+            roundDuration = exe_cost['computation'] + exe_cost['communication']
             # if the client is not active by the time of collection, we consider it is lost in this round
             if self.client_manager.isClientActive(client_to_run, roundDuration + self.global_virtual_clock):
                 sampledClientsReal.append(client_to_run)
                 completionTimes.append(roundDuration)
-                completed_client_clock[client_to_run] = roundDuration
+                completed_client_clock[client_to_run] = exe_cost
 
         num_clients_to_collect = min(num_clients_to_collect, len(completionTimes))
         # 2. get the top-k completions to remove stragglers
@@ -279,8 +279,9 @@ class Aggregator(object):
         # Feed metrics to client sampler
         self.stats_util_accumulator.append(math.sqrt(results['moving_loss']))
         self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
-                                    time_stamp=self.epoch, duration=self.virtual_client_clock[results['clientId']]
-                      )
+                    time_stamp=self.epoch, 
+                    duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
+                )
 
         device = self.device
         # Start to take the average of updates, and we do not keep updates to save memory
@@ -349,7 +350,8 @@ class Aggregator(object):
         # assign avg reward to explored, but not ran workers
         for clientId in self.round_stragglers:
             self.client_manager.registerScore(clientId, avgUtilLastEpoch,
-                                    time_stamp=self.epoch, duration=self.virtual_client_clock[clientId],
+                                    time_stamp=self.epoch, 
+                                    duration=self.virtual_client_clock[clientId]['computation']+self.virtual_client_clock[clientId]['communication'],
                                     success=False)
 
         logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, Epoch: {self.epoch}, Planned participants: " + \
@@ -359,7 +361,7 @@ class Aggregator(object):
         self.sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
         clientsToRun, round_stragglers, virtual_client_clock, round_duration = self.tictak_client_tasks(self.sampled_participants, self.args.total_worker)
 
-        logging.info(f"Selected participants to run: {clientsToRun}")
+        logging.info(f"Selected participants to run: {clientsToRun}:\n{virtual_client_clock}")
 
         # Issue requests to the resource manager; Tasks ordered by the completion time
         self.resource_manager.register_tasks(clientsToRun)
