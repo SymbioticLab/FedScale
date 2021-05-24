@@ -1,0 +1,7 @@
+#!/bin/bash
+#
+#BSUB -W 168:00                          # 24 hours of walltime requested
+#BSUB -n 1                            # number of tasks in job; we get (4 nodes x 40 CPU slots), one gpu node has 40 cpu slots
+#BSUB -q gpu_p100                       # choose the queue to use: normal or large_memory
+#BSUB -R "select[ngpus>3] rusage[ngpus_excl_p=4]"
+sleep 7d

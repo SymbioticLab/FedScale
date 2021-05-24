@@ -1,13 +1,16 @@
-# Kuiper
+# FedScale: Benchmarking Model and System Performance of Federated Learning
 
-This repository contains scripts and instructions for reproducing the experiments in our OSDI '21 paper "Efficient Federated Learning via Guided Participant Selection". 
+This repository contains scripts and instructions of building FedScale, a diverse set of challenging and realistic benchmark datasets to facilitate scalable, comprehensive, and reproducible federated learning (FL) research. FedScale datasets are large-scale, encompassing a diverse range of important FL tasks, such as image classification, object detection, language modeling, speech recognition, and reinforcement learning. For each dataset, we provide a unified evaluation protocol using realistic data splits and evaluation metrics. To meet the pressing need for reproducing realistic FL at scale, we have also built an efficient evaluation platform, FedScale Automated Runtime (FAR), to simplify and standardize the process of FL experimental setup and model evaluation. Our evaluation platform provides flexible APIs to implement new FL algorithms and include new execution backends with minimal developer efforts.  
+
+***FedScale is open-source with permissive licenses and actively maintained, and we welcome feedback and contributions from the community.***
 
 # Overview
 
 * [Getting Started](#getting-started)
-* [Run Experiments and Validate Results](#run-experiments-and-validate-results)
+* [Realistic FL Datasets](#real-fl-dataset)
+* [Run Experiments](#run-experiments)
 * [Repo Structure](#repo-structure)
-* [Acknowledgements](#acknowledgements)
+* [Note](#acknowledgements)
 * [Contact](#contact)
 
 # Getting Started 
@@ -19,64 +22,96 @@ Our ```install.sh``` will install the following automatically:
 
 Note: if you prefer different versions of conda and CUDA, please check  comments in `install.sh` for details.
 
-Run the following commands to install kuiper. 
+Run the following commands to install FedScale. 
 
 ```
-git clone https://github.com/SymbioticLab/Kuiper
-cd Kuiper
+git clone https://github.com/SymbioticLab/FedScale
+cd FedScale
 source install.sh 
 ```
 
-# Run Experiments and Validate Results
+## Realistic FL Datasets
 
-The output of the experiment will validate the following major claims in our evaluation (section 7 in paper):
+***We are adding more datasets! Please feel free to contribute.***
 
-####    **FL Training:**
-1. Kuiper outperforms existing random participant selection by 1.2×-14.1× in time-to-accuracy performance, while achieving 1.3%-9.8% better final model accuracy (§7.2.1) -> Table 1 and Figure 9.
-2. Kuiper achieves close-to-optimal model efficiency by adaptively striking the trade-off between statistical and system efficiency with different components (§7.2.2) -> Figure 11 and 12.
-3. Kuiper outperforms its counterpart over a wide range of parameters and different scales of experiments, while being robust to outliers (§7.2.3) -> Figure 13, 14 and 15.
+We provide real-world datasets for the federated learning community, and plan to release much more soon! Each is associated with its training, validation and testing dataset. A summary of statistics for training datasets can be found in Table, and you can refer to each folder for more details. Due to the super large scale of datasets, we are uploading these data and carefully validating their implementations to FAR. So we are actively making each dataset available for FAR experiments. 
 
-####    **FL Testing:**
-1. Kuiper can serve developer testing criteria on data deviation while reducing costs by bounding the number of participants needed even without individual data characteristics(§7.3.1) —> Figure 16.
-2. With the individual information, Kuiper improves the testing duration by 4.7× w.r.t. Mixed Integer Linear Programming (MILP) solver, and is able to efficiently enforce developer preferences across millions of clients (§7.3.2) -> Figure 17.
+CV tasks:
 
-## Training
+| Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
+| -----------   | ----------- | -----------  |  ----------- |    ----------- |
+| iNature       |   Image     |   2,295      |   193K        |   Classification |
+| FMNIST        |   Image     |   3,400      |   640K        |   Classification  |    
+| OpenImage     |   Image     |   13,771     |   1.3M        |   Classification, Object detection      |
+| Google Landmark|  Image     |   43,484     |   3.6M        |   Classification       |
+| Charades      |   Video     |    266       |   10K         |   Action recognition   |
 
-Please go to `./training` directory and follow the training [README](https://github.com/SymbioticLab/Kuiper/blob/master/training/README.md) to run training scripts.
+NLP tasks:
 
-## Testing
+| Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
+| -----------   | ----------- | -----------  |  ----------- |   ----------- |
+| Europarl      |   Text      |   27,835     |   1.2M        |   Text translation  |
+| Blog Corpus   |   Text      |   19,320     |   137M        |   Word prediction      |
+| Stackoverflow |   Text      |   342,477    |   135M        |  Word prediction, classification |
+| Reddit        |   Text      |  1,660,820   |   351M        |  Word prediction   |
+| Amazon Review |   Text      | 1,822,925    |   166M        | Classification, Word prediction |
+|  CoQA         |   Text      |     7,189    |   114K        |  Question Answering |
+|LibriTTS       |   Text      |     2,456    |    37K        |   Text to speech    |
+|Google Speech  |   Audio     |     2,618    |   105K        |   Speech recognition |
+|Common Voice   |   Audio     |     12,976   |    1.1M       |   Speech recognition |
 
-Please go to `./testing` directory and follow the testing [README](https://github.com/SymbioticLab/Kuiper/blob/master/testing/README.md) to run testing scripts.
+Misc Applications:
+
+| Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
+| -----------   | ----------- | -----------  |  ----------- |   ----------- |
+|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation |
+|Go dataset     |   Text      |     150,333  |    4.9M       |   Reinforcement learning | 
+
+***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only. ***
+
+Please go to `./dataset` directory and follow the dataset [README](https://github.com/SymbioticLab/FedScale/blob/master/dataset/README.md) for more details.
+
+## Run Experiments with FAR
+FedScale Automated Runtime (FAR), an automated and easily-deployable evaluation platform, to simplify and standardize the FL experimental setup and model evaluation under a practical setting. FAR is based on our [Oort project](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
+
+
+Please go to `./core` directory and follow the FAR [README](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md) to set up FL training scripts.
+
 
 # Repo Structure
 
 ```
 Repo Root
-|---- kuiper        # Kuiper code base.
-|---- training
-    |---- evals     # Submit/terminate training jobs
-        |---- configs   # Configuration examples
-|---- testing       # Testing scripts    
+|---- data        # Realistic datasets in FedScale
+|---- core        # Experiment platform of FedScale
+|---- thirdparty  # Applications of FL benchmarking (e.g., Oort)   
     
 ```
 
 # Notes
 please consider to cite our paper if you use the code or data in your research project.
+
 ```bibtex
-@inproceedings{kuiper-osdi21,
-  title={Efficient Federated Learning via Guided Participant Selection},
+@inproceedings{fedscale-arxiv,
+  title={FedScale: Benchmarking Model and System Performance of Federated Learning},
+  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Mosharaf Chowdhury},
+  booktitle={arxiv},
+  year={2021}
+}
+```
+
+or 
+
+```bibtex
+@inproceedings{oort-osdi21,
+  title={Oort: Efficient Federated Learning via Guided Participant Selection},
   author={Fan Lai and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
   booktitle={USENIX Symposium on Operating Systems Design and Implementation (OSDI)},
   year={2021}
 }
 ```
 
-# Acknowledgements
-
-Thanks to Qihua Zhou for his [Falcon repo](https://github.com/kimihe/Falcon).
-
 # Contact
-Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu) and Xiangfeng Zhu (xzhu0027@gmail.com)
-
+Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xzhu0027@gmail.com) and Mosharaf Chowdhury from the University of Michigan.
 
 

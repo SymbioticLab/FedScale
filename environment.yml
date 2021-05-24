@@ -1,4 +1,4 @@
-name: kuiper
+name: fedscale
 channels:
   - pytorch
   - conda-forge
@@ -27,6 +27,3 @@ dependencies:
     - PyYAML
     - h5py
     - gdown
-    
-
-

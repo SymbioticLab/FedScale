@@ -7,12 +7,11 @@ bash Anaconda3-2020.11-Linux-x86_64.sh -b -p  $install_dir
 export PATH=$install_dir/bin:$PATH
 
 
-# Install Kuiper and create conda env
+# create conda env
 conda init bash
 . ~/.bashrc
 conda env create -f environment.yml # Install dependencies
-conda activate kuiper
-python setup.py install  # install kuiper
+conda activate fedscale
 
 
 # un-comment to install cuda
