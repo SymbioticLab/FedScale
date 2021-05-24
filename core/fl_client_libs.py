@@ -39,7 +39,7 @@ def get_ps_ip():
 
 def initiate_client_setting():
     init_logging()
-    get_ps_ip()
+    #get_ps_ip()
 
 
 def collate(examples):

@@ -1,4 +1,5 @@
-# FedScale: Benchmarking Model and System Performance of Federated Learning
+
+## FedScale: Benchmarking Model and System Performance of Federated Learning
 
 ## Getting Started
 
@@ -48,9 +49,7 @@ Misc Applications:
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only. ***
 
-Please go to `./dataset` directory and follow the dataset [README](https://github.com/SymbioticLab/FedScale/blob/master/dataset/README.md) for more details.
-
-# Repo Structure
+## Repo Structure
 
 ```
 Current Folder
@@ -71,16 +70,16 @@ A speech recognition dataset with over ten thousand clips of one-second-long dur
 ### Reddit and StackOverflow
 Reddit (StackOverflow) consists of comments from the Reddit (StackOverflow) website. It has been widely used for language modeling tasks, and we consider each user as a client. In our benchmark, we restrict to the 30k most frequently used words, and represent each sentence as a sequence of indices corresponding to these 30k frequently used words. We use Transformers to tokenize these sequences with a block size 64.
 
-## Dataset of System Performance and Availability
+### Dataset of System Performance and Availability
 
-### Heterogeneous System Performance
+#### Heterogeneous System Performance
 We use the [AIBench](http://ai-benchmark.com/ranking_deeplearning_detailed.html) dataset and [MobiPerf](https://www.measurementlab.net/tests/mobiperf/) dataset. AIBench dataset provides the computation capacity of different models across a wide range of devices. As specified in real [FL deployments](https://arxiv.org/abs/1902.01046), we focus on the capability of mobile devices that have > 2GB RAM in this benchmark. To understand the network capacity of these devices, we clean up the MobiPerf dataset, and provide the available bandwidth when they are connected with WiFi, which is preferred in FL as well. 
 
-### Availability of Clients
+#### Availability of Clients
 We use a large-scale real-world user behavior dataset from [FLASH](https://github.com/PKU-Chengxu/FLASH). It comes from a popular input method app (IMA) that can be downloaded from Google Play, and covers 136k users and spans one week from January 31st to February 6th in 2020. This dataset includes 180 million trace items (e.g., battery charge or screen lock) and we consider user devices that are in charging to be available, as specified in real [FL deployments](https://arxiv.org/abs/1902.01046).
 
 
-# Notes
+## Notes
 please consider to cite our paper if you use the code or data in your research project.
 
 ```bibtex
@@ -103,7 +102,7 @@ or
 }
 ```
 
-# Contact
+## Contact
 Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xzhu0027@gmail.com) and Mosharaf Chowdhury from the University of Michigan.
 
 

@@ -13,9 +13,9 @@ dependencies:
   - gurobi=9.1.0
   - pip=20.0.2
   - pip:
-    - torch==1.1.0
+    - torch
     - torch_baidu_ctc==0.3.0
-    - torchvision==0.4.0  
+    - torchvision  
     - transformers
     - scipy==1.4.1
     - matplotlib==3.1.3

@@ -8,7 +8,7 @@ from resource_manager import ResourceManager
 initiate_aggregator_setting()
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
-os.environ['GLOO_SOCKET_IFNAME'] = 'enP5p7s0f1'
+#os.environ['GLOO_SOCKET_IFNAME'] = 'enP5p7s0f1'
 
 
 class Aggregator(object):
