@@ -152,6 +152,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     with torch.no_grad():
 
         if args.task == 'detection':
+            imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', args.data_dir], server=True)
             data_iter = iter(test_data)
             num_images = len(test_data.dataset)
             num_classes = len(readClass(args.data_dir + "/class.txt"))
@@ -228,7 +229,10 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                             keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
 
-            return 0, 0, 0, {'top_1':0, 'top_5':0, 'test_loss': 0, 'idx':test_data.dataset.index, 'boxes':all_boxes, 'test_len':num_images}
+                imdb._reset_index(test_data.dataset.index)
+                output_dir = args.test_output_dir + "/learner/" + str(args.this_rank)
+                _, mean_ap = imdb.evaluate_detections(all_boxes, output_dir, args.this_rank)
+                return 0, mean_ap, mean_ap, {'top_1':mean_ap, 'top_5':mean_ap, 'test_loss': 0, 'test_len':num_images}
 
         for data, target in test_data:
             if args.task == 'nlp':

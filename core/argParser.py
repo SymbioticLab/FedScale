@@ -86,7 +86,7 @@ parser.add_argument('--test_output_dir', type=str, default='./logs/server')
 parser.add_argument('--train_size_file', type=str, default='')
 parser.add_argument('--test_size_file', type=str, default='')
 parser.add_argument('--data_cache', type=str, default='')
-
+parser.add_argument('--backbone', type=str, default='./resnet50.pth')
 # for albert
 
 parser.add_argument(

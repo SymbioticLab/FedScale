@@ -153,7 +153,7 @@ def init_model():
         #np.random.seed(cfg.RNG_SEED)
         cfg_from_file(args.cfg_file)
         cfg_from_list(['DATA_DIR', args.data_dir])
-        model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False)
+        model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False,pretrained_model=args.backbone)
         model.create_architecture()
         return model
     else:
