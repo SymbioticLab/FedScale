@@ -34,7 +34,7 @@ i.e., if the number of participants in each round is K, then we would better use
 
 - ***Master Node***: Make sure that the master node (parameter server) has access to other worker nodes via ```ssh```. 
 
-- ***All Nodes***: Follow [this](https://github.com/SymbioticLab/FedScale#getting-started) to install all necessary libs, and then run the following command to download the datasets:
+- ***All Nodes***: Follow [this](https://github.com/SymbioticLab/FedScale#getting-started) to install all necessary libs, and then download the datasets following [this](https://github.com/SymbioticLab/FedScale/blob/master/dataset/README.md).
 
 ### Setting Job Configuration
 
@@ -50,5 +50,6 @@ They are close to the settings used in our evaluations. Comments in our example 
 ***We are working on building the leaderboards for better visualization. So far, all logs will be dumped to ```log_path``` (specified in the config file) on each node. 
 ```training_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. 
 Meanwhile, the user can check ```/evals/[job_name]_logging``` to see whether the job is moving on.***
+
 
 
