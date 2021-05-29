@@ -4,13 +4,6 @@ from fl_aggregator_libs import *
 from random import Random
 from resource_manager import ResourceManager
 
-# initiate the log path, and executor ips
-initiate_aggregator_setting()
-os.environ['MASTER_ADDR'] = args.ps_ip
-os.environ['MASTER_PORT'] = args.ps_port
-#os.environ['GLOO_SOCKET_IFNAME'] = 'enP5p7s0f1'
-
-
 class Aggregator(object):
     """This centralized aggregator collects training/testing feedbacks from executors"""
     def __init__(self, args):
@@ -282,7 +275,7 @@ class Aggregator(object):
         self.loss_accumulator.append(math.sqrt(results['moving_loss']))
 
         self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
-                    time_stamp=self.epoch, 
+                    time_stamp=self.epoch,
                     duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
                 )
 
@@ -353,7 +346,7 @@ class Aggregator(object):
         # assign avg reward to explored, but not ran workers
         for clientId in self.round_stragglers:
             self.client_manager.registerScore(clientId, avgUtilLastEpoch,
-                                    time_stamp=self.epoch, 
+                                    time_stamp=self.epoch,
                                     duration=self.virtual_client_clock[clientId]['computation']+self.virtual_client_clock[clientId]['communication'],
                                     success=False)
 

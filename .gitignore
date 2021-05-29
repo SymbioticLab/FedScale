@@ -21,4 +21,5 @@ server*.lsf
 vms
 jobinfo
 quotas
+./data/*
 ./scripts/logs/*
