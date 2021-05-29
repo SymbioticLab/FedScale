@@ -2,28 +2,30 @@
 
 # ========== Cluster configuration ========== 
 # ip address of the parameter server (need 1 GPU)
-ps_ip: 10.0.0.2
+ps_ip: 10.0.0.1
 
 # ip address of each worker:# of gpus on this worker
 # Note that if we collocate ps and worker, then we need to decrease this number of gpus by 1
 # E.g., master node has 4 GPUs, then 1 for the ps, and worker should be set to: worker:3
 worker_ips: 
-    - 10.0.0.3:[5] # worker_ip: [(# processes on gpu) for gpu in available_gpus]
-    - 10.0.0.4:[5]
-    - 10.0.0.5:[5]
-    - 10.0.0.6:[5]
-    - 10.0.0.7:[5]
-    - 10.0.0.8:[5]
+    - 10.0.0.2:[4] # worker_ip: [(# processes on gpu) for gpu in available_gpus]
+    - 10.0.0.3:[4] # worker_ip: [(# processes on gpu) for gpu in available_gpus]
+    - 10.0.0.4:[4]
+    - 10.0.0.5:[4]
+    - 10.0.0.6:[4]
+    - 10.0.0.7:[4]
+    - 10.0.0.8:[4]
     - 10.0.0.9:[4]
     - 10.0.0.10:[4]
     - 10.0.0.11:[4]
     - 10.0.0.12:[4]
     - 10.0.0.13:[4]
+    - 10.0.0.14:[4]
 
 exp_path: $HOME/FedScale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: executor.py
+executor_entry: examples/poisoning_setting/customized_executor.py
 
 aggregator_entry: aggregator.py
 
@@ -56,9 +58,10 @@ job_conf:
     - num_loaders: 4
     - yogi_eta: 3e-3 
     - yogi_tau: 1e-8
-    - local_steps: 30
+    - local_steps: 20
     - learning_rate: 0.05
     - batch_size: 20
     - test_bsz: 20
+    - malicious_factor: 10
 
 

@@ -197,6 +197,15 @@ class Executor(object):
 
         return Namespace(**default_conf)
 
+
+    def get_client_trainer(self, conf):
+        """Developer can redefine to this function to customize the training:
+           API:
+            - train(client_data=client_data, model=client_model, conf=conf)
+        """
+        return Client(conf)
+
+
     def training_handler(self, clientId, conf):
         """Train model given client ids"""
 
@@ -208,7 +217,7 @@ class Executor(object):
 
         client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
 
-        client = Client()
+        client = self.get_client_trainer(conf)
         train_res = client.train(client_data=client_data, model=client_model, conf=conf)
 
         # we need to get runtime variance for BN
@@ -288,6 +297,5 @@ class Executor(object):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
-
 
 

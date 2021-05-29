@@ -7,7 +7,6 @@ from multiprocessing.managers import BaseManager
 import multiprocessing, threading
 import numpy as np
 import collections
-import numba
 import numpy
 
 # PyTorch libs
@@ -36,6 +35,7 @@ if args.task == 'nlp':
         MobileBertForPreTraining,
     )
 elif args.task == 'speech':
+    import numba
     from utils.speech import SPEECH
     from utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
     from utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
