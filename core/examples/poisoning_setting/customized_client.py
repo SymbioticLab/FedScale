@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import numpy as np 
 
 import sys, os
-
+from clip_norm import clip_grad_norm_
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 
 from client import Client
@@ -28,6 +28,7 @@ class Customized_Client(Client):
         logging.info(f"Start to train (CLIENT: {clientId}) ...")
         device = conf.device
 
+        last_model_params = [p.data.clone() for p in model.parameters()]
         model = model.to(device=device)
         model.train()
 
@@ -77,6 +78,19 @@ class Customized_Client(Client):
             except Exception as ex:
                 error_type = ex
                 break
+
+        # Backdoor paper: https://arxiv.org/pdf/1911.07963.pdf
+        # 1. clip norm of delta weight
+        delta_weight = []
+        for param in model.parameters():
+            delta_weight.append(param.data - last_model_params[len(delta_weight)])
+        clip_grad_norm_(delta_weight, max_norm=3.)
+
+        # recover model weights
+        idx = 0
+        for param in model.parameters():
+            param.data += delta_weight[idx]
+            idx += 1
 
         model_param = [param.data.cpu().numpy() for param in model.parameters()]
 

@@ -272,7 +272,7 @@ class Aggregator(object):
 
         # Feed metrics to client sampler
         self.stats_util_accumulator.append(results['utility'])
-        self.loss_accumulator.append(math.sqrt(results['moving_loss']))
+        self.loss_accumulator.append(results['moving_loss'])
 
         self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
                     time_stamp=self.epoch,
@@ -506,5 +506,4 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-
 
