@@ -3,7 +3,7 @@
 
 ## Organization
 
-TODO
+The dataset is splited into training and testing set. Random ids were assigned to each client.
 
 # References
 The original location of this dataset is at
