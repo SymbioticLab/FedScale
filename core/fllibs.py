@@ -7,7 +7,6 @@ from multiprocessing.managers import BaseManager
 import multiprocessing, threading
 import numpy as np
 import collections
-import numba
 import numpy
 
 # PyTorch libs
@@ -36,6 +35,7 @@ if args.task == 'nlp':
         MobileBertForPreTraining,
     )
 elif args.task == 'speech':
+    import numba
     from utils.speech import SPEECH
     from utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
     from utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
@@ -62,13 +62,8 @@ from utils.yogi import YoGi
 # shared functions of aggregator and clients
 # initiate for nlp
 tokenizer = None
-if args.task == 'nlp':
-    with open(os.path.join(args.data_dir, 'mobilebert.pkl'), 'rb') as fin:
-        _ = pickle.load(fin)
-        tokenizer = pickle.load(fin)
-
-modelDir = os.path.join(args.log_path, args.model)
-modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar')
+os.environ['MASTER_ADDR'] = args.ps_ip
+os.environ['MASTER_PORT'] = args.ps_port
 
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
@@ -81,14 +76,10 @@ def init_model():
     logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
-        # config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'mobilebert-uncased-config.json'))
-        # model = AutoModelWithLMHead.from_config(config)
-        # tokenizer = AlbertTokenizer.from_pretrained('mobilebert-uncased', do_lower_case=True)
+        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model_name+'-config.json'))
+        model = AutoModelWithLMHead.from_config(config)
+        tokenizer = AlbertTokenizer.from_pretrained(args.model_name, do_lower_case=True)
 
-        with open(os.path.join(args.data_dir, 'mobilebert.pkl'), 'rb') as fin:
-            config = pickle.load(fin)
-            tokenizer = pickle.load(fin)
-            model = pickle.load(fin)
         # model_name = 'google/mobilebert-uncased'
         # config = AutoConfig.from_pretrained(model_name)
         # tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)

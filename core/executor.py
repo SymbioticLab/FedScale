@@ -1,274 +1,301 @@
-# Standard libs
-import os, re, shutil, sys, time, datetime, logging, pickle, json, socket
-import random, math, gc, copy
-from collections import OrderedDict
-from multiprocessing import Process, Value
-from multiprocessing.managers import BaseManager
-import multiprocessing, threading
-import numpy as np
-import collections
-import numba
-import numpy
-
-# PyTorch libs
-import torch
-from torch.multiprocessing import Process
-from torch.multiprocessing import Queue
-from torch.utils.data import DataLoader
-import torch.distributed as dist
-from torch.autograd import Variable
-from torchvision import datasets, transforms
-import torchvision.models as tormodels
-from torch.utils.data.sampler import WeightedRandomSampler
-
-# libs from FLBench
-from argParser import args
-from utils.utils_data import get_data_transform
-from utils.utils_model import test_model
-from utils.divide_data import select_dataset, DataPartitioner
-
-if args.task == 'nlp':
-    from utils.nlp import mask_tokens, load_and_cache_examples
-    from transformers import (
-        AdamW,
-        AutoConfig,
-        AutoTokenizer,
-        MobileBertForPreTraining,
-    )
-elif args.task == 'speech':
-    from utils.speech import SPEECH
-    from utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
-    from utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
-    from utils.speech import BackgroundNoiseDataset
-elif args.task == 'detection':
-    import pickle
-    from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
-    from utils.rcnn.lib.datasets.factory import get_imdb
-    from utils.rcnn.lib.datasets.pascal_voc import readClass
-    from utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
-    from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-    from utils.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
-        adjust_learning_rate, save_checkpoint, clip_gradient
-    from utils.rcnn.lib.model.faster_rcnn.resnet import resnet
-    from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
-    from utils.rcnn.lib.model.roi_layers import nms
-    from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
-elif args.task == 'voice':
-    from torch_baidu_ctc import CTCLoss
-
-from client_manager import clientManager
-from utils.yogi import YoGi
-
-# shared functions of aggregator and clients
-# initiate for nlp
-tokenizer = None
-if args.task == 'nlp':
-    with open(os.path.join(args.data_dir, 'mobilebert.pkl'), 'rb') as fin:
-        _ = pickle.load(fin)
-        tokenizer = pickle.load(fin)
-
-modelDir = os.path.join(args.log_path, args.model)
-modelPath = os.path.join(modelDir, str(args.model)+'.pth.tar')
+# -*- coding: utf-8 -*-
+from fl_client_libs import *
+from argparse import Namespace
+import gc
+from client import Client
 
 
-outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
-                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist' : 1010
-            }
+class Executor(object):
+    """Each executor takes certain resource to run real training.
+       Each run simulates the execution of an individual client"""
+    def __init__(self, args):
 
-def init_model():
-    global tokenizer
+        self.args = args
+        self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
+        self.executors = [int(v) for v in str(args.learners).split('-')]
 
-    logging.info("Initializing the model ...")
+        # ======== env information ========
+        self.this_rank = args.this_rank
 
-    if args.task == 'nlp':
-        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model_name+'-config.json'))
-        model = AutoModelWithLMHead.from_config(config)
-        tokenizer = AlbertTokenizer.from_pretrained(args.model_name, do_lower_case=True)
+        # ======== model and data ========
+        self.model = self.training_sets = self.test_dataset = None
+        self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
-        # with open(os.path.join(args.data_dir, 'mobilebert.pkl'), 'rb') as fin:
-        #     config = pickle.load(fin)
-        #     tokenizer = pickle.load(fin)
-        #     model = pickle.load(fin)
-        # model_name = 'google/mobilebert-uncased'
-        # config = AutoConfig.from_pretrained(model_name)
-        # tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
-        # model = MobileBertForPreTraining.from_pretrained(model_name)
-        # model = AutoModelWithLMHead.from_config(config)
+        # ======== channels ========
+        self.server_event_queue = self.client_event_queue = None
+        self.control_manager = None
 
-    elif args.task == 'text_clf':
-        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
-        config.num_labels = outputClass[args.data_set]
-        from transformers import AlbertForSequenceClassification
+        # ======== runtime information ========
+        self.collate_fn = None
+        self.task = args.task
+        self.epoch = 0
+        self.start_run_time = time.time()
 
-        model = AlbertForSequenceClassification(config)
 
-    elif args.task == 'tag-one-sample':
-        # Load LR model for tag prediction
-        model = LogisticRegression(args.vocab_token_size, args.vocab_tag_size)
-    elif args.task == 'speech':
-        if args.model == 'mobilenet':
-            from utils.resnet_speech import mobilenet_v2
-            model = mobilenet_v2(num_classes=outputClass[args.data_set])
-        elif args.model == "resnet18":
-            from utils.resnet_speech import resnet18
-            model = resnet18(num_classes=outputClass[args.data_set], in_channels=1)
-        elif args.model == "resnet34":
-            from utils.resnet_speech import resnet34
-            model = resnet34(num_classes=outputClass[args.data_set], in_channels=1)
-        elif args.model == "resnet50":
-            from utils.resnet_speech import resnet50
-            model = resnet50(num_classes=outputClass[args.data_set], in_channels=1)
-        elif args.model == "resnet101":
-            from utils.resnet_speech import resnet101
-            model = resnet101(num_classes=outputClass[args.data_set], in_channels=1)
-        elif args.model == "resnet152":
-            from utils.resnet_speech import resnet152
-            model = resnet152(num_classes=outputClass[args.data_set], in_channels=1)
-        else:
-            # Should not reach here
-            logging.info('Model must be resnet or mobilenet')
-            sys.exit(-1)
+    def setup_env(self):
+        logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
 
-    elif args.task == 'voice':
-        from utils.voice_model import DeepSpeech, supported_rnns
+        self.setup_seed(seed=self.this_rank)
 
-        # Initialise new model training
-        with open(args.labels_path) as label_file:
-            labels = json.load(label_file)
+        # set up device
+        if self.args.use_cuda and self.device == None:
+            for i in range(torch.cuda.device_count()):
+                try:
+                    self.device = torch.device('cuda:'+str(i))
+                    torch.cuda.set_device(i)
+                    print(torch.rand(1).to(device=self.device))
+                    logging.info(f'End up with cuda device ({self.device})')
+                    break
+                except Exception as e:
+                    assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
 
-        audio_conf = dict(sample_rate=args.sample_rate,
-                          window_size=args.window_size,
-                          window_stride=args.window_stride,
-                          window=args.window,
-                          noise_dir=args.noise_dir,
-                          noise_prob=args.noise_prob,
-                          noise_levels=(args.noise_min, args.noise_max))
-        model = DeepSpeech(rnn_hidden_size=args.hidden_size,
-                           nb_layers=args.hidden_layers,
-                           labels=labels,
-                           rnn_type=supported_rnns[args.rnn_type.lower()],
-                           audio_conf=audio_conf,
-                           bidirectional=args.bidirectional)
-    elif args.task == 'detection':
-        #np.random.seed(cfg.RNG_SEED)
-        cfg_from_file(args.cfg_file)
-        cfg_from_list(['DATA_DIR', args.data_dir])
-        model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False)
-        model.create_architecture()
+        self.init_control_communication(self.args.ps_ip, self.args.manager_port)
+        self.init_data_communication()
+
+
+    def setup_seed(self, seed=1):
+        """Set random seed for reproducibility"""
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+
+
+    def init_control_communication(self, ps_ip, ps_port):
+        # Create communication channel between aggregator and worker
+        # This channel serves control messages
+
+        logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
+
+        #for executor_id in self.executors:
+        BaseManager.register('get_server_event_que'+str(self.this_rank))
+        BaseManager.register('get_client_event')
+
+        self.control_manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
+        start_time, is_connected = time.time(), False
+
+        while time.time() - start_time < 15 and not is_connected:
+            try:
+                self.control_manager.connect()
+                is_connected = True
+            except Exception as e:
+                time.sleep(numpy.random.rand(1)[0]*5+0.1)
+                pass
+
+        assert is_connected, 'Failed to connect to the aggregator'
+
+
+        self.server_event_queue = eval('self.control_manager.get_server_event_que'+str(self.this_rank)+'()')
+        self.client_event_queue = self.control_manager.get_client_event()
+
+
+    def init_data_communication(self):
+        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
+
+
+    def init_model(self):
+        """Return the model architecture used in training"""
+        return init_model()
+
+    def init_data(self):
+        """Return the training and testing dataset"""
+        train_dataset, test_dataset = init_dataset()
+
+        # load data partitioner (entire_train_data)
+        logging.info("Data partitioner starts ...")
+
+        training_sets = DataPartitioner(data=train_dataset, numOfClass=self.args.num_class)
+        training_sets.partition_data_helper(num_clients=self.args.total_worker, data_map_file=self.args.data_map_file)
+
+        testing_sets = DataPartitioner(data=test_dataset, numOfClass=self.args.num_class, isTest=True)
+        testing_sets.partition_data_helper(num_clients=len(self.executors))
+
+        logging.info("Data partitioner completes ...")
+
+
+        if self.task == 'nlp':
+            self.collate_fn = collate
+        elif self.task == 'voice':
+            self.collate_fn = voice_collate_fn
+
+        return training_sets, testing_sets
+
+
+    def run(self):
+        self.setup_env()
+        self.model = self.init_model()
+        self.model = self.model.to(device=self.device)
+        self.training_sets, self.testing_sets = self.init_data()
+        self.start_event()
+        self.event_monitor()
+
+    def start_event(self):
+        executor_info = self.report_executor_info_handler()
+        self.push_msg_to_server('report_executor_info', executor_info)
+
+    def start_event(self):
+        executor_info = self.report_executor_info_handler()
+        self.push_msg_to_server('report_executor_info', executor_info)
+
+
+    def push_msg_to_server(self, event, results):
+        self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
+
+
+    def push_msg_to_server_asyn(self, event, results):
+        self.client_event_queue.put_nowait({'return': results, 'event': event, 'executorId': self.this_rank})
+
+
+    def report_executor_info_handler(self):
+        """Return the statistics of training dataset"""
+        return self.training_sets.getSize()
+
+
+    def update_model_handler(self):
+        self.epoch += 1
+
+        # self.model = self.model.to(device='cpu')
+
+        # waiting_list = []
+        """Update the model copy on this executor"""
+        for param in self.model.parameters():
+            temp_tensor = torch.zeros_like(param.data, device='cpu')
+            dist.recv(tensor=temp_tensor, src=0)
+            #req = dist.irecv(tensor=param.data, src=0)
+            param.data = temp_tensor.to(device=self.device)
+        #     waiting_list.append(req)
+
+        # for req in waiting_list:
+        #     req.wait()
+
+        # self.model = self.model.to(device=self.device)
+
+        # Dump model every dumping interval
+
+        if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
+            with open(self.temp_model_path+'_'+str(self.epoch), 'wb') as model_out:
+                pickle.dump(self.model, model_out)
+
+        # Dump latest model to disk
+        with open(self.temp_model_path, 'wb') as model_out:
+            pickle.dump(self.model, model_out)
+
+
+    def load_global_model(self):
+        # load last global model
+        with open(self.temp_model_path, 'rb') as model_in:
+            model = pickle.load(model_in)
         return model
-    else:
-        model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
-
-    return model
 
 
-def init_dataset():
+    def override_conf(self, config):
+        default_conf = vars(self.args).copy()
 
-    if args.task == "detection":
-        if not os.path.exists(args.data_cache):
-            imdb_name = "voc_2007_trainval"
-            imdbval_name = "voc_2007_test"
-            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir], sizes=args.train_size_file)
-            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
-            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
-            imdb_.competition_mode(on=True)
-            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
-            with open(args.data_cache, 'wb') as f:
-                pickle.dump(train_dataset, f, -1)
-                pickle.dump(test_dataset, f, -1)
+        for key in config:
+            default_conf[key] = config[key]
+
+        return Namespace(**default_conf)
+
+
+    def get_client_trainer(self, conf):
+        """Developer can redefine to this function to customize the training:
+           API:
+            - train(client_data=client_data, model=client_model, conf=conf)
+        """
+        return Client(conf)
+
+
+    def training_handler(self, clientId, conf):
+        """Train model given client ids"""
+
+        # load last global model
+        client_model = self.load_global_model()
+
+        conf.clientId, conf.device = clientId, self.device
+        conf.tokenizer = tokenizer
+
+        client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
+
+        client = self.get_client_trainer(conf)
+        train_res = client.train(client_data=client_data, model=client_model, conf=conf)
+
+        # we need to get runtime variance for BN
+        self.model = client_model
+        return train_res
+
+
+    def testing_handler(self, args):
+        """Test model"""
+        evalStart = time.time()
+        device = self.device
+        data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
+
+        if self.task == 'voice':
+            criterion = CTCLoss(reduction='mean').to(device=device)
         else:
-            with open(args.data_cache, 'rb') as f:
-                train_dataset = pickle.load(f)
-                test_dataset = pickle.load(f)
-    else:
+            criterion = torch.nn.CrossEntropyLoss().to(device=device)
 
-        if args.data_set == 'Mnist':
-            train_transform, test_transform = get_data_transform('mnist')
+        test_res = test_model(self.this_rank, self.model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
 
-            train_dataset = datasets.MNIST(args.data_dir, train=True, download=True,
-                                        transform=train_transform)
-            test_dataset = datasets.MNIST(args.data_dir, train=False, download=True,
-                                        transform=test_transform)
+        test_loss, acc, acc_5, testResults = test_res
+        logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
+                    .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
-        elif args.data_set == 'cifar10':
-            train_transform, test_transform = get_data_transform('cifar')
-            train_dataset = datasets.CIFAR10(args.data_dir, train=True, download=True,
-                                            transform=train_transform)
-            test_dataset = datasets.CIFAR10(args.data_dir, train=False, download=True,
-                                            transform=test_transform)
+        gc.collect()
 
-        elif args.data_set == "imagenet":
-            train_transform, test_transform = get_data_transform('imagenet')
-            train_dataset = datasets.ImageNet(args.data_dir, split='train', download=False, transform=train_transform)
-            test_dataset = datasets.ImageNet(args.data_dir, split='val', download=False, transform=test_transform)
+        return testResults
 
-        elif args.data_set == 'emnist':
-            test_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=False, download=True, transform=transforms.ToTensor())
-            train_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=True, download=True, transform=transforms.ToTensor())
 
-        elif args.data_set == 'femnist':
-            from utils.femnist import FEMNIST
+    def event_monitor(self):
+        """Activate event handler once receiving new message"""
+        logging.info("Start monitoring events ...")
 
-            train_transform, test_transform = get_data_transform('mnist')
-            train_dataset = FEMNIST(args.data_dir, train=True, transform=train_transform)
-            test_dataset = FEMNIST(args.data_dir, train=False, transform=test_transform)
+        while True:
+            if not self.server_event_queue.empty():
+                event_dict = self.server_event_queue.get()
+                event_msg = event_dict['event']
 
-        elif args.data_set == 'openImg':
-            from utils.openimage import OpenImage
+                logging.info(f"Executor {self.this_rank}: Received (Event:{event_msg.upper()}) from aggregator")
 
-            train_transform, test_transform = get_data_transform('openImg')
-            train_dataset = OpenImage(args.data_dir, dataset='train', transform=train_transform)
-            test_dataset = OpenImage(args.data_dir, dataset='test', transform=test_transform)
+                if event_msg == 'report_executor_info':
+                    executor_info = self.report_executor_info_handler()
+                    self.push_msg_to_server(event_msg, executor_info)
 
-        elif args.data_set == 'blog':
-            train_dataset = load_and_cache_examples(args, tokenizer, evaluate=False)
-            test_dataset = load_and_cache_examples(args, tokenizer, evaluate=True)
+                elif event_msg == 'update_model':
+                    self.update_model_handler()
 
-        elif args.data_set == 'stackoverflow':
-            from utils.stackoverflow import stackoverflow
+                # initiate each training round
+                elif event_msg == 'train':
+                    clientId, client_conf = event_dict['clientId'], self.override_conf(event_dict['conf'])
 
-            train_dataset = stackoverflow(args.data_dir, train=True)
-            test_dataset = stackoverflow(args.data_dir, train=False)
+                    train_res = self.training_handler(clientId=clientId, conf=client_conf)
+                    self.push_msg_to_server('train_nowait', None)
+                    # model updates may be time-consuming, thus we apply asyn push for better communication-computation overlaps
+                    self.push_msg_to_server_asyn(event_msg, train_res)
 
-        elif args.data_set == 'yelp':
-            import utils.dataloaders as fl_loader
+                elif event_msg == 'test':
+                    test_res = self.testing_handler(args=self.args)
+                    self.push_msg_to_server(event_msg, test_res)
 
-            train_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size)
-            test_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size)
+                elif event_msg == 'stop':
+                    self.stop()
+                    break
 
-        elif args.data_set == 'google_speech':
-            bkg = '_background_noise_'
-            data_aug_transform = transforms.Compose([ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(), TimeshiftAudioOnSTFT(), FixSTFTDimension()])
-            bg_dataset = BackgroundNoiseDataset(os.path.join(args.data_dir, bkg), data_aug_transform)
-            add_bg_noise = AddBackgroundNoiseOnSTFT(bg_dataset)
-            train_feature_transform = transforms.Compose([ToMelSpectrogramFromSTFT(n_mels=32), DeleteSTFT(), ToTensor('mel_spectrogram', 'input')])
-            train_dataset = SPEECH(args.data_dir, dataset= 'train',
-                                    transform=transforms.Compose([LoadAudio(),
-                                            data_aug_transform,
-                                            add_bg_noise,
-                                            train_feature_transform]))
-            valid_feature_transform = transforms.Compose([ToMelSpectrogram(n_mels=32), ToTensor('mel_spectrogram', 'input')])
-            test_dataset = SPEECH(args.data_dir, dataset='test',
-                                    transform=transforms.Compose([LoadAudio(),
-                                            FixAudioLength(),
-                                            valid_feature_transform]))
-        elif args.data_set == 'common_voice':
-            from utils.voice_data_loader import SpectrogramDataset
-            train_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
-                                        manifest_filepath=args.train_manifest,
-                                        labels=model.labels,
-                                        normalize=True,
-                                        speed_volume_perturb=args.speed_volume_perturb,
-                                        spec_augment=args.spec_augment,
-                                        data_mapfile=args.data_mapfile)
-            test_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
-                                        manifest_filepath=args.test_manifest,
-                                        labels=model.labels,
-                                        normalize=True,
-                                        speed_volume_perturb=False,
-                                        spec_augment=False)
-        else:
-            print('DataSet must be {}!'.format(['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
-            sys.exit(-1)
+                else:
+                    logging.error("Unknown message types!")
 
-    return train_dataset, test_dataset
+                time.sleep(0.3)
+
+
+    def stop(self):
+        logging.info(f"Terminating (Executor {self.this_rank}) ...")
+
+        self.control_manager.shutdown()
+
+
+if __name__ == "__main__":
+    executor = Executor(args)
+    executor.run()
+
+

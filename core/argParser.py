@@ -87,8 +87,12 @@ parser.add_argument('--train_size_file', type=str, default='')
 parser.add_argument('--test_size_file', type=str, default='')
 parser.add_argument('--data_cache', type=str, default='')
 parser.add_argument('--backbone', type=str, default='./resnet50.pth')
-# for albert
 
+
+# for malicious
+parser.add_argument('--malicious_factor', type=int, default=1e15)
+
+# for albert
 parser.add_argument(
     "--line_by_line",
     action="store_true",

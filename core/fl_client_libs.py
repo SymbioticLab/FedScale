@@ -1,9 +1,6 @@
 # package for client
 from fllibs import *
 from torch.nn.utils.rnn import pad_sequence
-
-# logDir = os.path.join(args.log_path, 'logs', args.job_name, args.time_stamp, 'worker')
-# logFile = os.path.join(logDir, 'log_'+str(args.this_rank))
 import os
 
 logDir = os.path.join(os.environ['HOME'], "models", args.model, args.time_stamp, 'executor')
@@ -39,7 +36,6 @@ def get_ps_ip():
 
 def initiate_client_setting():
     init_logging()
-    #get_ps_ip()
 
 
 def collate(examples):
@@ -77,3 +73,5 @@ def voice_collate_fn(batch):
 
     return (inputs, targets, input_percentages, target_sizes), None
 
+# initiate the log path, and executor ips
+initiate_client_setting()

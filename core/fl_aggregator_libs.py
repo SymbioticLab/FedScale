@@ -1,11 +1,6 @@
 # package for aggregator
 from fllibs import *
 
-# logDir = os.path.join(args.log_path, 'logs', args.job_name, args.time_stamp, 'aggregator')
-# logFile = os.path.join(logDir, 'log')
-
-import os
-
 logDir = os.path.join(os.environ['HOME'], "models", args.model, args.time_stamp, 'aggregator')
 logFile = os.path.join(logDir, 'log')
 
@@ -40,4 +35,4 @@ def initiate_aggregator_setting():
     init_logging()
     #dump_ps_ip()
 
-
+initiate_aggregator_setting()

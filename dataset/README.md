@@ -25,6 +25,7 @@ CV tasks:
 | OpenImage     |   Image     |   13,771     |   1.3M        |   Classification, Object detection      |
 | Google Landmark|  Image     |   43,484     |   3.6M        |   Classification       |
 | Charades      |   Video     |    266       |   10K         |   Action recognition   |
+| VLOG          |   Video     |    4,900     |   9.6k        |   Video classification, Object detection |
 
 NLP tasks:
 

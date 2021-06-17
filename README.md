@@ -1,8 +1,14 @@
 
+## FedScale: Benchmarking Model and System Performance of Federated Learning ([Paper](https://arxiv.org/abs/2105.11367))
 
-## FedScale: Benchmarking Model and System Performance of Federated Learning
-
-This repository contains scripts and instructions of building FedScale, a diverse set of challenging and realistic benchmark datasets to facilitate scalable, comprehensive, and reproducible federated learning (FL) research. FedScale datasets are large-scale, encompassing a diverse range of important FL tasks, such as image classification, object detection, language modeling, speech recognition, and reinforcement learning. For each dataset, we provide a unified evaluation protocol using realistic data splits and evaluation metrics. To meet the pressing need for reproducing realistic FL at scale, we have also built an efficient evaluation platform, FedScale Automated Runtime (FAR), to simplify and standardize the process of FL experimental setup and model evaluation. Our evaluation platform provides flexible APIs to implement new FL algorithms and include new execution backends with minimal developer efforts.  
+This repository contains scripts and instructions of building FedScale, 
+a diverse set of challenging and realistic benchmark datasets to facilitate scalable, comprehensive, 
+and reproducible federated learning (FL) research. FedScale datasets are large-scale, encompassing a diverse range of important FL tasks, 
+such as image classification, object detection, language modeling, speech recognition, and reinforcement learning. 
+For each dataset, we provide a unified evaluation protocol using realistic data splits and evaluation metrics. 
+To meet the pressing need for reproducing realistic FL at scale, we have also built an efficient evaluation platform, 
+FedScale Automated Runtime (FAR), to simplify and standardize the process of FL experimental setup and model evaluation. 
+Our evaluation platform provides flexible APIs to implement new FL algorithms and include new execution backends with minimal developer efforts.  
 
 ***FedScale is open-source with permissive licenses and actively maintained, 
 and we welcome feedback and contributions from the community!***
@@ -48,6 +54,7 @@ CV tasks:
 | OpenImage     |   Image     |   13,771     |   1.3M        |   Classification, Object detection      |
 | Google Landmark|  Image     |   43,484     |   3.6M        |   Classification       |
 | Charades      |   Video     |    266       |   10K         |   Action recognition   |
+| VLOG          |   Video     |    4,900     |   9.6k        |   Video classification, Object detection |
 
 NLP tasks:
 
@@ -89,7 +96,8 @@ Please go to `./core` directory and follow the FAR [README](https://github.com/S
 Repo Root
 |---- dataset     # Realistic datasets in FedScale
 |---- core        # Experiment platform of FedScale
-|---- thirdparty  # Applications of FL benchmarking, for new plugins :)
+    |---- examples  # Examples of new plugins
+    |---- evals     # Backend of job submission
     
 ```
 
@@ -100,12 +108,12 @@ please consider to cite our paper if you use the code or data in your research p
 @inproceedings{fedscale-arxiv,
   title={FedScale: Benchmarking Model and System Performance of Federated Learning},
   author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Mosharaf Chowdhury},
-  booktitle={arxiv},
+  booktitle={arXiv:2105.11367},
   year={2021}
 }
 ```
 
-or 
+and  
 
 ```bibtex
 @inproceedings{oort-osdi21,
