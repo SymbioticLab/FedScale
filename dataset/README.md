@@ -7,7 +7,7 @@ To download the dataset, run (or download from [here](https://drive.google.com/d
 
 ```
 # Download all datasets from DropBox. Check download.sh -h for more details
-bash download.sh -A  # If fail, bash download_google.sh from Google Drive
+bash download.sh -option 
 ```
 
 ## Realistic FL Datasets
