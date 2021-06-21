@@ -57,7 +57,7 @@ open_images()
         wget -O ${DIR}/open_images.tar.gz https://fedscale.eecs.umich.edu/dataset/openImage.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/open_images.tar.gz
+        tar -xf ${DIR}/open_images.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/open_images.tar.gz
@@ -76,7 +76,7 @@ amazon_review()
         wget -O ${DIR}/amazon_review.tar.gz https://fedscale.eecs.umich.edu/dataset/amazon_review.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/amazon_review.tar.gz
+        tar -xf ${DIR}/amazon_review.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/amazon_review.tar.gz
@@ -95,7 +95,7 @@ charades()
         wget -O ${DIR}/charades.tar.gz https://fedscale.eecs.umich.edu/dataset/charades_v1.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/charades.tar.gz
+        tar -xf ${DIR}/charades.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/charades.tar.gz
@@ -114,7 +114,7 @@ europarl()
         wget -O ${DIR}/europarl.tar.gz https://fedscale.eecs.umich.edu/dataset/europarl.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/europarl.tar.gz
+        tar -xf ${DIR}/europarl.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/europarl.tar.gz
@@ -133,7 +133,7 @@ go()
         wget -O ${DIR}/go.tar.gz https://fedscale.eecs.umich.edu/dataset/go-dataset.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/go.tar.gz
+        tar -xf ${DIR}/go.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/go.tar.gz
@@ -152,7 +152,7 @@ inaturalist()
         wget -O ${DIR}/inaturalist.tar.gz https://fedscale.eecs.umich.edu/dataset/inaturalist.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/inaturalist.tar.gz
+        tar -xf ${DIR}/inaturalist.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/inaturalist.tar.gz
@@ -172,7 +172,7 @@ libriTTS()
         wget -O ${DIR}/libriTTS.tar.gz https://fedscale.eecs.umich.edu/dataset/libriTTS.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/libriTTS.tar.gz
+        tar -xf ${DIR}/libriTTS.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/libriTTS.tar.gz
@@ -191,7 +191,7 @@ open_images_detection()
         wget -O ${DIR}/open_images_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/open_images_detection.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/open_images_detection.tar.gz
+        tar -xf ${DIR}/open_images_detection.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/open_images_detection.tar.gz
@@ -210,7 +210,7 @@ reddit()
         wget -O ${DIR}/reddit.tar.gz https://fedscale.eecs.umich.edu/dataset/reddit.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/reddit.tar.gz
+        tar -xf ${DIR}/reddit.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/reddit.tar.gz
@@ -229,7 +229,7 @@ taobao()
         wget -O ${DIR}/taobao.tar.gz https://fedscale.eecs.umich.edu/dataset/taobao.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/taobao.tar.gz
+        tar -xf ${DIR}/taobao.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/taobao.tar.gz
@@ -248,7 +248,7 @@ waymo()
         wget -O ${DIR}/waymo.tar.gz https://fedscale.eecs.umich.edu/dataset/waymo.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/waymo.tar.gz
+        tar -xf ${DIR}/waymo.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/waymo.tar.gz
