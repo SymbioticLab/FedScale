@@ -24,3 +24,4 @@ quotas
 ./core/evals/scripts/*
 ./data/*
 ./scripts/logs/*
+data/
