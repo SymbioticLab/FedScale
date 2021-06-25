@@ -1,12 +1,12 @@
 # Configuration file of FAR training experiment
 
 # ========== Cluster configuration ========== 
-# ip address of the parameter server (need 1 GPU)
+# ip address of the parameter server (need 1 GPU process)
 ps_ip: 10.0.0.2
 
-# ip address of each worker:# of gpus on this worker
-# Note that if we collocate ps and worker, then we need to decrease this number of gpus by 1
-# E.g., master node has 4 GPUs, then 1 for the ps, and worker should be set to: worker:3
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
 worker_ips: 
     - 10.0.0.3:[5] # worker_ip: [(# processes on gpu) for gpu in available_gpus]
     - 10.0.0.4:[5]
