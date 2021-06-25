@@ -78,18 +78,14 @@ def process_cmd(yaml_file):
         running_vms.add(worker)
         print(f"Starting workers on {worker} ...")
 
-        for gpu_idx in range(gpu[0]):
-            if worker == ps_ip:
-                cuda_id = gpu_idx + 1
-            else:
-                cuda_id = gpu_idx
-                
-            worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} --cuda_device=cuda:{cuda_id} "
-            rank_id += 1
+        for cuda_id in range(len(gpu)):
+            for _  in range(gpu[cuda_id]):
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} --cuda_device=cuda:{cuda_id} "
+                rank_id += 1
 
-            with open(f"{job_name}_logging", 'a') as fout:
-                subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
-                                shell=True, stdout=fout, stderr=fout)
+                with open(f"{job_name}_logging", 'a') as fout:
+                    subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
+                                    shell=True, stdout=fout, stderr=fout)
 
     # dump the address of running workers
     current_path = os.path.dirname(os.path.abspath(__file__))
