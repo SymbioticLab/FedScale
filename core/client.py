@@ -19,7 +19,8 @@ class Client(object):
         model.train()
 
         trained_unique_samples = min(len(client_data.dataset), conf.local_steps * conf.batch_size)
-        global_model = [param.data.clone() for param in model.parameters()]
+        if conf.gradient_policy == 'prox':
+            global_model = [param.data.clone() for param in model.parameters()]
 
         if conf.task == "detection":
             lr = conf.learning_rate
