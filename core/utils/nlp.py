@@ -68,7 +68,6 @@ class TextDataset(Dataset):
             files = [os.path.join(file_path, x) for x in sorted(files)]
             
             start_time = time.time()
-                        start_time = time.time()
             for idx, file in enumerate(files):
                 try:
                     with open(file, encoding="utf-8", errors='ignore') as f:
