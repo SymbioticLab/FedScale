@@ -34,6 +34,7 @@ import torch
 import collections
 import csv
 from torch.utils.data import DataLoader, Dataset
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -65,19 +66,28 @@ class TextDataset(Dataset):
             files = [entry.name for entry in os.scandir(file_path) if '_cached_lm_' not in entry.name]
             # make sure files are ordered
             files = [os.path.join(file_path, x) for x in sorted(files)]
+            
+            start_time = time.time()
+                        start_time = time.time()
+            for idx, file in enumerate(files):
+                try:
+                    with open(file, encoding="utf-8", errors='ignore') as f:
+                        text = f.read()
 
-            for file in files:
-                with open(file, encoding="utf-8") as f:
-                    text = f.read()
+                    tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
+                    if len(tokenized_text) > 0:
+                        user_id += 1
 
-                tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
-                if len(tokenized_text) > 0:
-                    user_id += 1
+                    for i in range(0, len(tokenized_text) - block_size + 1, block_size):  # Truncate in block of block_size
+                        self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i : i + block_size]))
+                        self.client_mapping[user_id].append(len(self.examples)-1)
+                        self.sample_client.append(user_id)
+                except Exception as e:
+                    logging.error(f"fail due to {e}")
+                if idx % 10000 == 0:
+                    logging.info(f"{len(files)-idx} files left, {idx} files complete, remaining time {(time.time()-start_time)/(idx+1)*(len(files)-idx)}")
+                    gc.collect()
 
-                for i in range(0, len(tokenized_text) - block_size + 1, block_size):  # Truncate in block of block_size
-                    self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i : i + block_size]))
-                    self.client_mapping[user_id].append(len(self.examples)-1)
-                    self.sample_client.append(user_id)
             # Note that we are loosing the last truncated example here for the sake of simplicity (no padding)
             # If your dataset is small, first you should look for a bigger one :-) and second you
             # can change this behavior by adding (model specific) padding.
@@ -90,7 +100,7 @@ class TextDataset(Dataset):
             # dump the data_mapping_file
             results = [['client_id', 'sample_path', 'label_name', 'label_id']]
             for i in range(len(self.sample_client)):
-                result.append([self.sample_client[i], i, -1, -1])
+                results.append([self.sample_client[i], i, -1, -1])
 
             with open(os.path.join(file_path, '../client_data_mapping', 'result.csv'), 'w') as csvFile:
                 writer = csv.writer(csvFile)
