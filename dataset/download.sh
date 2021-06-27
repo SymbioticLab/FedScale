@@ -38,7 +38,7 @@ speech()
         wget -O ${DIR}/speech_commands/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
 
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/speech_commands/google_speech.tar.gz
+        tar -xf ${DIR}/speech_commands/google_speech.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
         rm -f ${DIR}/speech_commands/google_speech.tar.gz
