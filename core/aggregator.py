@@ -330,7 +330,7 @@ class Aggregator(object):
 
                 # update global model
                 for idx, param in enumerate(self.model.parameters()):
-                    self.param.data = last_model[idx] - Deltas[idx]/(hs+1e-10)
+                    param.data = last_model[idx] - Deltas[idx]/(hs+1e-10)
 
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
