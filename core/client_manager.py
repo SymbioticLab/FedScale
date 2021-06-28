@@ -15,8 +15,8 @@ class clientManager(object):
 
         self.ucbSampler = None 
 
-        if self.mode == 'kuiper':
-            from kuiper import create_training_selector
+        if self.mode == 'oort':
+            from oort import create_training_selector
             self.ucbSampler = create_training_selector(args=args)
             
         self.feasibleClients = []
@@ -43,7 +43,7 @@ class clientManager(object):
             self.feasibleClients.append(clientId)
             self.feasible_samples += size
 
-            if self.mode == "kuiper":
+            if self.mode == "oort":
                 feedbacks = {'reward':min(size, self.args.local_steps*self.args.batch_size),
                             'duration':duration,
                             }
@@ -59,7 +59,7 @@ class clientManager(object):
         return self.Clients[self.getUniqueId(0, clientId)]
 
     def registerDuration(self, clientId, batch_size, upload_epoch, upload_size, download_size):
-        if self.mode == "kuiper":
+        if self.mode == "oort":
             exe_cost = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
                     batch_size=batch_size, upload_epoch=upload_epoch,
                     upload_size=upload_size, download_size=download_size
@@ -78,7 +78,7 @@ class clientManager(object):
 
     def registerScore(self, clientId, reward, auxi=1.0, time_stamp=0, duration=1., success=True):
         # currently, we only use distance as reward
-        if self.mode == "kuiper":
+        if self.mode == "oort":
             feedbacks = {
                 'reward': reward,
                 'duration': duration,
@@ -177,7 +177,7 @@ class clientManager(object):
         pickled_clients = None
         clients_online_set = set(clients_online)
 
-        if self.mode == "kuiper" and self.count > 1:
+        if self.mode == "oort" and self.count > 1:
             pickled_clients = self.ucbSampler.select_participant(numOfClients, feasible_clients=clients_online_set)
         else:
             self.rng.shuffle(clients_online)
@@ -187,7 +187,7 @@ class clientManager(object):
         return pickled_clients
 
     def getAllMetrics(self):
-        if self.mode == "kuiper":
+        if self.mode == "oort":
             return self.ucbSampler.getAllMetrics()
         return {}
 
@@ -198,7 +198,7 @@ class clientManager(object):
         return self.ucbSampler.get_client_reward(clientId)
 
     def get_median_reward(self):
-        if self.mode == 'kuiper':
+        if self.mode == 'oort':
             return self.ucbSampler.get_median_reward()
         return 0.
 
