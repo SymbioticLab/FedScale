@@ -122,7 +122,7 @@ def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     dropLast = False if isTest else True
     num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
     if num_loaders == 0:
-        time_out == 0
+        time_out = 0
     else:
         time_out = 60
 
