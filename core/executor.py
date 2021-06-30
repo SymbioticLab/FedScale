@@ -291,7 +291,7 @@ class Executor(object):
     def stop(self):
         logging.info(f"Terminating (Executor {self.this_rank}) ...")
 
-        self.control_manager.shutdown()
+        #self.control_manager.shutdown()
 
 
 if __name__ == "__main__":
