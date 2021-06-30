@@ -452,6 +452,7 @@ class Aggregator(object):
                 elif event_msg == 'stop':
                     self.broadcast_msg(send_msg)
                     self.stop()
+                    break
 
                 elif event_msg == 'report_executor_info':
                     self.broadcast_msg(send_msg)
