@@ -27,3 +27,4 @@ dependencies:
     - PyYAML
     - h5py
     - gdown
+    - sentencepiece
