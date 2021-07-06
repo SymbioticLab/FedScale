@@ -326,7 +326,7 @@ class Aggregator(object):
                             Deltas[idx] += np.float_power(loss+1e-10, qfedq) * grads[idx]
 
                     # estimation of the local Lipchitz constant
-                    hs += (qfedq * np.float_power(loss+1e-10, (qfedq-1)) * torch.norm(grads, 2) + (1.0/learning_rate) * np.float_power(loss+1e-10, qfedq))
+                    hs += (qfedq * np.float_power(loss+1e-10, (qfedq-1)) * torch.sum(torch.stack([torch.square(grad).sum() for grad in grads])) + (1.0/learning_rate) * np.float_power(loss+1e-10, qfedq))
 
                 # update global model
                 for idx, param in enumerate(self.model.parameters()):
