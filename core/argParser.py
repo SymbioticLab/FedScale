@@ -92,6 +92,9 @@ parser.add_argument('--backbone', type=str, default='./resnet50.pth')
 # for malicious
 parser.add_argument('--malicious_factor', type=int, default=1e15)
 
+# for differential privacy
+parser.add_argument('--noise_factor', type=float, default=0.1)
+
 # for albert
 parser.add_argument(
     "--line_by_line",
@@ -178,5 +181,4 @@ for model_name in model_factor:
     if model_name in args.model:
         args.clock_factor = args.clock_factor * model_factor[model_name]
         break
-
 
