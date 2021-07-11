@@ -72,7 +72,7 @@ class Customized_Client(Client):
         delta_weight = []
         for param in model.parameters():
             delta_weight.append((param.data - last_model_params[len(delta_weight)])+\
-                            conf.noise_factor * torch.normal(mean=0, std=1, size=param.data.shape).to(device=device))
+                             torch.normal(mean=0, std=conf.noise_factor, size=param.data.shape).to(device=device))
 
         clip_grad_norm_(delta_weight, max_norm=3.)
 
@@ -98,3 +98,4 @@ class Customized_Client(Client):
         
         return results
 
+{"mode":"full","isActive":false}
