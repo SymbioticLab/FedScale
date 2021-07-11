@@ -68,11 +68,10 @@ class Customized_Client(Client):
                 break
 
         # Local differential privacy: https://arxiv.org/pdf/2009.03561.pdf
-        # Add noise, and then clip norm of delta weight
+        # Add noise; clip norm of delta weight
         delta_weight = []
         for param in model.parameters():
-            delta_weight.append((param.data - last_model_params[len(delta_weight)])+\
-                             torch.normal(mean=0, std=conf.noise_factor, size=param.data.shape).to(device=device))
+            delta_weight.append((param.data - last_model_params[len(delta_weight)]))
 
         clip_grad_norm_(delta_weight, max_norm=3.)
 
@@ -82,7 +81,8 @@ class Customized_Client(Client):
             param.data += delta_weight[idx]
             idx += 1
 
-        model_param = [param.data.cpu().numpy() for param in model.parameters()]
+        model_param = [param.data.cpu().numpy()+\
+            torch.normal(mean=0, std=conf.noise_factor, size=param.data.shape).cpu().numpy() for param in model.parameters()]
 
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
@@ -97,5 +97,3 @@ class Customized_Client(Client):
         results['wall_duration'] = 0
         
         return results
-
-{"mode":"full","isActive":false}
