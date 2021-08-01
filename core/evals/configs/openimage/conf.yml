@@ -46,8 +46,8 @@ job_conf:
     - job_name: openimage                   # Generate logs under this folder: log_path/job_name/time_stamp
     - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: openImg                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $HOME/FedScale/dataset/data/open_images    # Path of the dataset
-    - data_map_file: $HOME/FedScale/dataset/data/open_images/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
+    - data_dir: $HOME/FedScale/dataset/data/openImg    # Path of the dataset
+    - data_map_file: $HOME/FedScale/dataset/data/openImg/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
     - device_conf_file: $HOME/FedScale/dataset/data/device_info/client_device_capacity     # Path of the client trace
     - device_avail_file: $HOME/FedScale/dataset/data/device_info/client_behave_trace
     - model: shufflenet_v2_x2_0                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
