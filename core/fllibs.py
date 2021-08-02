@@ -58,6 +58,7 @@ elif args.task == 'voice':
 
 from client_manager import clientManager
 from utils.yogi import YoGi
+from optimizer import ServerOptimizer
 
 # shared functions of aggregator and clients
 # initiate for nlp
