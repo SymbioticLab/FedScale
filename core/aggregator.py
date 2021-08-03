@@ -58,12 +58,7 @@ class Aggregator(object):
         self.test_result_accumulator = []
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                         'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
-
-        self.gradient_controller = None
-        if self.args.gradient_policy == 'yogi':
-            from utils.yogi import YoGi
-            self.gradient_controller = YoGi(eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
-
+        
         # ======== Task specific ============
         self.imdb = None           # object detection
 
@@ -85,7 +80,7 @@ class Aggregator(object):
 
         self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
         self.init_data_communication()
-
+        self.optimizer = ServerOptimizer( self.args.gradient_policy, self.args, self.device  )
 
     def setup_seed(self, seed=1):
         torch.manual_seed(seed)
@@ -298,40 +293,8 @@ class Aggregator(object):
 
     def round_weight_handler(self, last_model, current_model):
         if self.epoch > 1:
-
-            if self.args.gradient_policy == 'yogi':
-                last_model = [x.to(device=self.device) for x in last_model]
-                current_model = [x.to(device=self.device) for x in current_model]
-
-                diff_weight = self.gradient_controller.update([pb-pa for pa, pb in zip(last_model, current_model)])
-
-                for idx, param in enumerate(self.model.parameters()):
-                    param.data = last_model[idx] + diff_weight[idx]
-
-            elif self.args.gradient_policy == 'qfedavg':
-
-                learning_rate, qfedq = self.args.learning_rate, self.args.qfed_q
-                Deltas, hs = None, 0.
-                last_model = [x.to(device=self.device) for x in last_model]
-
-                for result in self.client_training_results:
-                    # plug in the weight updates into the gradient
-                    grads = [(u - torch.from_numpy(v).to(device=self.device)) * 1.0 / learning_rate for u, v in zip(last_model, result['update_weight'])]
-                    loss = result['moving_loss']
-
-                    if Deltas is None:
-                        Deltas = [np.float_power(loss+1e-10, qfedq) * grad for grad in grads]
-                    else:
-                        for idx in range(len(Deltas)):
-                            Deltas[idx] += np.float_power(loss+1e-10, qfedq) * grads[idx]
-
-                    # estimation of the local Lipchitz constant
-                    hs += (qfedq * np.float_power(loss+1e-10, (qfedq-1)) * torch.sum(torch.stack([torch.square(grad).sum() for grad in grads])) + (1.0/learning_rate) * np.float_power(loss+1e-10, qfedq))
-
-                # update global model
-                for idx, param in enumerate(self.model.parameters()):
-                    param.data = last_model[idx] - Deltas[idx]/(hs+1e-10)
-
+            self.optimizer.update_round_gradient(last_model, current_model, self.model )
+            
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
         self.epoch += 1
