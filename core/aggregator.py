@@ -384,6 +384,9 @@ class Aggregator(object):
                     self.testing_history['perf'][self.epoch]['top_5'], self.testing_history['perf'][self.epoch]['loss'],
                     self.testing_history['perf'][self.epoch]['test_len']))
 
+            # Dump the testing result
+            with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
+                pickle.dump(self.testing_history, fout)
 
             self.event_queue.append('start_round')
 
