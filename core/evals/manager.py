@@ -84,6 +84,7 @@ def process_cmd(yaml_file):
                 rank_id += 1
 
                 with open(f"{job_name}_logging", 'a') as fout:
+                    time.sleep(2)
                     subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
                                     shell=True, stdout=fout, stderr=fout)
 
