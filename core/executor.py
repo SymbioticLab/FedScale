@@ -134,10 +134,6 @@ class Executor(object):
         executor_info = self.report_executor_info_handler()
         self.push_msg_to_server('report_executor_info', executor_info)
 
-    def start_event(self):
-        executor_info = self.report_executor_info_handler()
-        self.push_msg_to_server('report_executor_info', executor_info)
-
 
     def push_msg_to_server(self, event, results):
         self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
