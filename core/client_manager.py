@@ -114,8 +114,6 @@ class clientManager(object):
 
             init_id = max(0, min(int(math.floor(self.rng.random() * lenPossible)), lenPossible - 1))
 
-        return init_id
-
     def getUniqueId(self, hostId, clientId):
         return str(clientId)
         #return (str(hostId) + '_' + str(clientId))
