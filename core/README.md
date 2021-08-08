@@ -48,7 +48,7 @@ They are close to the settings used in our evaluations. Comments in our example 
 
 
 ***We are working on building the leaderboards for better visualization. So far, all logs will be dumped to ```log_path``` (specified in the config file) on each node. 
-```training_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. 
+```testing_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. 
 Meanwhile, the user can check ```/evals/[job_name]_logging``` to see whether the job is moving on.***
 
 

@@ -40,8 +40,8 @@ setup_commands:
 # Default parameters are specified in argParser.py, wherein more description of the parameter can be found
 
 job_conf: 
-    - log_path: $HOME/FedScale/core/evals # Path of log files
     - job_name: reddit                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: $HOME/FedScale/core/evals # Path of log files
     - task: nlp
     - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: blog                     # Dataset: openImg, google_speech, reddit
