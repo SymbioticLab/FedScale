@@ -3,8 +3,8 @@ from fllibs import *
 from torch.nn.utils.rnn import pad_sequence
 import os
 
-logDir = os.path.join(os.environ['HOME'], "models", args.model, args.time_stamp, 'executor')
-logFile = os.path.join(logDir, 'log_'+str(args.this_rank))
+logDir = os.path.join(args.log_path, "logs", args.job_name, args.time_stamp, 'executor')
+logFile = os.path.join(logDir, 'log')
 
 def init_logging():
     if not os.path.isdir(logDir):
@@ -75,3 +75,4 @@ def voice_collate_fn(batch):
 
 # initiate the log path, and executor ips
 initiate_client_setting()
+
