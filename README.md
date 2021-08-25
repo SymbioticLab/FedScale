@@ -11,7 +11,8 @@ FedScale Automated Runtime (FAR), to simplify and standardize the process of FL 
 Our evaluation platform provides flexible APIs to implement new FL algorithms and include new execution backends with minimal developer efforts.  
 
 ***FedScale is open-source with permissive licenses and actively maintained, 
-and we welcome feedback and contributions from the community!***
+and we welcome feedback and contributions from the community! 
+If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel.***
 
 ## Overview
 
