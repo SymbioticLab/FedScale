@@ -132,10 +132,10 @@ class Aggregator(object):
             1. Random client sampler
                 - it selects participants randomly in each round
                 - [Ref]: https://arxiv.org/abs/1902.01046
-            2. Kuiper sampler
-                - Kuiper prioritizes the use of those clients who have both data that offers the greatest utility
+            2. Oort sampler
+                - Oort prioritizes the use of those clients who have both data that offers the greatest utility
                   in improving model accuracy and the capability to run training quickly.
-                - [Ref]: https://arxiv.org/abs/2010.06081
+                - [Ref]: https://www.usenix.org/conference/osdi21/presentation/lai
         """
 
         # sample_mode: random or kuiper
