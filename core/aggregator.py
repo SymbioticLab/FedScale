@@ -132,10 +132,10 @@ class Aggregator(object):
             1. Random client sampler
                 - it selects participants randomly in each round
                 - [Ref]: https://arxiv.org/abs/1902.01046
-            2. Kuiper sampler
-                - Kuiper prioritizes the use of those clients who have both data that offers the greatest utility
+            2. Oort sampler
+                - Oort prioritizes the use of those clients who have both data that offers the greatest utility
                   in improving model accuracy and the capability to run training quickly.
-                - [Ref]: https://arxiv.org/abs/2010.06081
+                - [Ref]: https://www.usenix.org/conference/osdi21/presentation/lai
         """
 
         # sample_mode: random or kuiper
@@ -263,7 +263,8 @@ class Aggregator(object):
         # Format:
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
-        self.client_training_results.append(results)
+        if self.args.gradient_policy in ['qfedavg']:
+            self.client_training_results.append(results)
 
         # Feed metrics to client sampler
         self.stats_util_accumulator.append(results['utility'])

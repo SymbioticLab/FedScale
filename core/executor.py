@@ -38,16 +38,19 @@ class Executor(object):
         self.setup_seed(seed=self.this_rank)
 
         # set up device
-        if self.args.use_cuda and self.device == None:
-            for i in range(torch.cuda.device_count()):
-                try:
-                    self.device = torch.device('cuda:'+str(i))
-                    torch.cuda.set_device(i)
-                    print(torch.rand(1).to(device=self.device))
-                    logging.info(f'End up with cuda device ({self.device})')
-                    break
-                except Exception as e:
-                    assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
+        if self.args.use_cuda:
+            if self.device == None:
+                for i in range(torch.cuda.device_count()):
+                    try:
+                        self.device = torch.device('cuda:'+str(i))
+                        torch.cuda.set_device(i)
+                        print(torch.rand(1).to(device=self.device))
+                        logging.info(f'End up with cuda device ({self.device})')
+                        break
+                    except Exception as e:
+                        assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
+            else:
+                torch.cuda.set_device(self.device)
 
         self.init_control_communication(self.args.ps_ip, self.args.manager_port)
         self.init_data_communication()
@@ -129,10 +132,6 @@ class Executor(object):
         self.training_sets, self.testing_sets = self.init_data()
         self.start_event()
         self.event_monitor()
-
-    def start_event(self):
-        executor_info = self.report_executor_info_handler()
-        self.push_msg_to_server('report_executor_info', executor_info)
 
     def start_event(self):
         executor_info = self.report_executor_info_handler()
