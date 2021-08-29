@@ -149,7 +149,14 @@ def init_model():
         model.create_architecture()
         return model
     else:
-        model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
+        if args.model == "lr":
+            from utils.models import LogisticRegression
+            model = LogisticRegression(args.input_dim, outputClass[args.data_set])
+        elif args.model == 'svm':
+            from utils.models import LinearSVM
+            model = LinearSVM(args.input_dim, outputClass[args.data_set])
+        else:
+            model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 
     return model
 
