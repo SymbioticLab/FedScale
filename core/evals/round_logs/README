@@ -1,0 +1,3 @@
+This directory is used to store logs after each round
+
+It has the format ["client_id", "computation", "delay", "sampled_participants", "clients_to_run"]
