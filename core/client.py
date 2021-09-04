@@ -21,7 +21,8 @@ class Client(object):
         model.train()
 
         trained_unique_samples = min(len(client_data.dataset), conf.local_steps * conf.batch_size)
-        
+        global_model = None
+
         if conf.gradient_policy == 'prox':
             # could be move to optimizer
             global_model = [param.data.clone() for param in model.parameters()]
@@ -130,7 +131,7 @@ class Client(object):
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
                     if conf.task == 'nlp':
-                        loss_list = [loss.item()] #[loss.mean().data.item()]
+                        loss_list = [loss.mean().data.item()]
                     elif conf.task == "detection":
                         loss_list = [loss.tolist()]
                         loss = loss.mean()
