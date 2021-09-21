@@ -61,7 +61,7 @@ def process_cmd(yaml_file):
     learner_conf = '-'.join([str(_) for _ in list(range(1, total_gpu_processes+1))])
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
-    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --learner={learner_conf} "
+    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --learners={learner_conf} "
 
     with open(f"{job_name}_logging", 'wb') as fout:
         pass
@@ -80,7 +80,7 @@ def process_cmd(yaml_file):
 
         for cuda_id in range(len(gpu)):
             for _  in range(gpu[cuda_id]):
-                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} --cuda_device=cuda:{cuda_id} "
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learners={learner_conf} --cuda_device=cuda:{cuda_id} "
                 rank_id += 1
 
                 with open(f"{job_name}_logging", 'a') as fout:
