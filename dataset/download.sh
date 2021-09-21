@@ -28,6 +28,7 @@ Help()
    echo "-r     Download Reddit dataset (about 25G)"
    echo "-t     Download Taobao dataset (about 185M)"
    echo "-w     Download Waymo Motion dataset meta file (about 74M)"
+   echo "-f     Download FEMNIST dataset (about 327M)"    
 }
 
 speech()
@@ -259,7 +260,26 @@ waymo()
 fi
 }
 
-while getopts ":hsoacegildrtw" option; do
+femnist() 
+{
+    if [ ! -d "${DIR}/FEMNIST/client_data_mapping/" ]; 
+    then
+        echo "Downloading FEMNIST dataset(about 327M)..."   
+        wget -O ${DIR}/femnist.tar.gz https://fedscale.eecs.umich.edu/dataset/femnist.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/femnist.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/femnist.tar.gz
+
+        echo -e "${GREEN}FEMNIST dataset downloaded!${NC}"
+    else
+        echo -e "${RED}FEMNIST dataset already exists under ${DIR}/FEMNIST/!"
+fi
+}
+
+while getopts ":hsoacegildrtwf" option; do
    case $option in
       h ) # display Help
          Help
@@ -299,6 +319,9 @@ while getopts ":hsoacegildrtw" option; do
          ;;
       w )
          waymo
+         ;;
+      f )
+         femnist
          ;;         
       \? ) 
          echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}"
