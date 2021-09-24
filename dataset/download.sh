@@ -29,6 +29,8 @@ Help()
    echo "-t     Download Taobao dataset (about 185M)"
    echo "-w     Download Waymo Motion dataset meta file (about 74M)"
    echo "-f     Download FEMNIST dataset (about 327M)"    
+   echo "-so    Download StackOverflow dataset (about 13G)"
+   echo "-b     Download Blog dataset (about 833M)"
 }
 
 speech()
@@ -222,6 +224,44 @@ reddit()
 fi
 }
 
+blog() 
+{
+    if [ ! -d "${DIR}/blog/train/" ]; 
+    then
+        echo "Downloading blog dataset(about 800M)..."   
+        wget -O ${DIR}/blog.tar.gz https://fedscale.eecs.umich.edu/dataset/blog.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/blog.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/blog.tar.gz
+
+        echo -e "${GREEN}blog dataset downloaded!${NC}"
+    else
+        echo -e "${RED}blog dataset already exists under ${DIR}/blog/!"
+fi
+}
+
+stackoverflow() 
+{
+    if [ ! -d "${DIR}/stackoverflow/train/" ]; 
+    then
+        echo "Downloading stackoverflow dataset(about 800M)..."   
+        wget -O ${DIR}/stackoverflow.tar.gz https://fedscale.eecs.umich.edu/dataset/stackoverflow.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/stackoverflow.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/stackoverflow.tar.gz
+
+        echo -e "${GREEN}stackoverflow dataset downloaded!${NC}"
+    else
+        echo -e "${RED}stackoverflow dataset already exists under ${DIR}/stackoverflow/!"
+fi
+}
+
 taobao() 
 {
     if [ ! -d "${DIR}/taobao/client_data_mapping/" ]; 
@@ -322,7 +362,13 @@ while getopts ":hsoacegildrtwf" option; do
          ;;
       f )
          femnist
-         ;;         
+         ;;    
+      b )
+         blog
+         ;;   
+      so )
+         stackoverflow
+         ;;        
       \? ) 
          echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}"
          exit 1;;
