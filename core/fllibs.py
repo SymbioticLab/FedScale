@@ -55,7 +55,9 @@ elif args.task == 'detection':
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
 elif args.task == 'voice':
     from torch_baidu_ctc import CTCLoss
-
+elif args.task == 'rl':
+    import gym
+    from utils.dqn import *
 from client_manager import clientManager
 from utils.yogi import YoGi
 from optimizer import ServerOptimizer
@@ -148,6 +150,8 @@ def init_model():
         model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False,pretrained_model=args.backbone)
         model.create_architecture()
         return model
+    elif args.task == 'rl':
+        model = DQN(args).target_net
     else:
         model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 
@@ -172,6 +176,8 @@ def init_dataset():
             with open(args.data_cache, 'rb') as f:
                 train_dataset = pickle.load(f)
                 test_dataset = pickle.load(f)
+    elif args.task == "rl":
+        train_dataset = test_dataset = RLData(args)
     else:
 
         if args.data_set == 'Mnist':
