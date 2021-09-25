@@ -512,8 +512,10 @@ class LinearSVM(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(LinearSVM, self).__init__()
         self.fc = nn.Linear(input_dim, output_dim)
+        self.input_dim = input_dim
 
     def forward(self, x):
+        x = x.reshape(-1, self.input_dim)
         h = self.fc(x)
         return h
 
