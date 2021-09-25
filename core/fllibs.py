@@ -153,7 +153,14 @@ def init_model():
     elif args.task == 'rl':
         model = DQN(args).target_net
     else:
-        model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
+        if args.model == "lr":
+            from utils.models import LogisticRegression
+            model = LogisticRegression(args.input_dim, outputClass[args.data_set])
+        elif args.model == 'svm':
+            from utils.models import LinearSVM
+            model = LinearSVM(args.input_dim, outputClass[args.data_set])
+        else:
+            model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 
     return model
 
