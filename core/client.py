@@ -154,7 +154,7 @@ class Client(object):
                     optimizer.step()
 
                     # ========= Weight handler ========================
-                    self.optimizer. update_client_weight(conf.gradient_policy, model , global_model if global_model is not None else None  )
+                    self.optimizer.update_client_weight(conf, model, global_model if global_model is not None else None  )
                     
                     completed_steps += 1
 

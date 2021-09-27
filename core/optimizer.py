@@ -5,12 +5,13 @@ class ServerOptimizer(object):
         self.mode = mode
         self.args = args
         self.device = device
+
         if mode == 'yogi':
             from utils.yogi import YoGi
             self.gradient_controller = YoGi(eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
         
         
-    def update_round_gradient( self,last_model, current_model, target_model ):
+    def update_round_gradient(self, last_model, current_model, target_model):
         
         if self.mode == 'yogi':
         
@@ -53,8 +54,8 @@ class ClientOptimizer(object):
     def __init__(self, sample_seed=233): 
         pass
     
-    def update_client_weight(self , conf ,model, global_model = None):
-        if self.mode == 'prox':
+    def update_client_weight(self, conf, model, global_model = None):
+        if conf.gradient_policy == 'prox':
             for idx, param in enumerate(model.parameters()):
                 param.data += conf.learning_rate * conf.proxy_mu * (param.data - global_model[idx])
         
