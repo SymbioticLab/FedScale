@@ -191,13 +191,13 @@ open_images_detection()
     if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ]; 
     then
         echo "Downloading open_images_detection dataset(about 451M)..."   
-        wget -O ${DIR}/open_images_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/open_images_detection.tar.gz
+        wget -O ${DIR}/openimage_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/open_images_detection.tar.gz -C ${DIR}
+        tar -xf ${DIR}/openimage_detection.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
-        rm -f ${DIR}/open_images_detection.tar.gz
+        rm -f ${DIR}/openimage_detection.tar.gz
 
         echo -e "${GREEN}open_images_detection dataset downloaded!${NC}"
     else
