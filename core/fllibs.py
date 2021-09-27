@@ -215,8 +215,8 @@ def init_dataset():
             from utils.femnist import FEMNIST
 
             train_transform, test_transform = get_data_transform('mnist')
-            train_dataset = FEMNIST(args.data_dir, train=True, transform=train_transform)
-            test_dataset = FEMNIST(args.data_dir, train=False, transform=test_transform)
+            train_dataset = FEMNIST(args.data_dir, dataset='train', transform=train_transform)
+            test_dataset = FEMNIST(args.data_dir, dataset='test', transform=test_transform)
 
         elif args.data_set == 'openImg':
             from utils.openimage import OpenImage
