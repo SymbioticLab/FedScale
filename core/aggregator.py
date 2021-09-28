@@ -276,6 +276,10 @@ class Aggregator(object):
                 )
 
         device = self.device
+        """
+            [FedAvg] "Communication-Efficient Learning of Deep Networks from Decentralized Data". 
+            H. Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, Blaise Aguera y Arcas. AISTATS, 2017
+        """
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
         importance = 1./self.tasks_round

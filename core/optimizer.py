@@ -14,7 +14,11 @@ class ServerOptimizer(object):
     def update_round_gradient(self, last_model, current_model, target_model):
         
         if self.mode == 'yogi':
-        
+            """
+            "Adaptive Federated Optimizations", 
+            Sashank J. Reddi, Zachary Charles, Manzil Zaheer, Zachary Garrett, Keith Rush, Jakub Konecný, Sanjiv Kumar, H. Brendan McMahan,
+            ICLR 2021.
+            """
             last_model = [x.to(device=self.device) for x in last_model]
             current_model = [x.to(device=self.device) for x in current_model]
 
@@ -25,7 +29,9 @@ class ServerOptimizer(object):
 
             
         elif self.mode =='qfedavg':
-            
+            """
+            "Fair Resource Allocation in Federated Learning", Tian Li, Maziar Sanjabi, Ahmad Beirami, Virginia Smith, ICLR 2020.
+            """
             learning_rate, qfedq = self.args.learning_rate, self.args.qfed_q
             Deltas, hs = None, 0.
             last_model = [x.to(device=self.device) for x in last_model]
@@ -47,6 +53,10 @@ class ServerOptimizer(object):
             # update global model
             for idx, param in enumerate(target_model.parameters()):
                 param.data = last_model[idx] - Deltas[idx]/(hs+1e-10)
+
+        else:
+            # The default optimizer, FedAvg, has been applied in aggregator.py on the fly
+            pass
 
 
 class ClientOptimizer(object):
