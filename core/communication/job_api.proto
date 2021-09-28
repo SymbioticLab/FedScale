@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package fedscale;
+
+service JobService {
+    rpc UpdateModel (stream UpdateModelRequest) returns (UpdateModelResponse) {}
+    rpc Train (TrainRequest) returns (TrainRequest) {}
+    rpc Stop (StopRequest) returns (StopResponse) {}
+    rpc ReportExecutorInfo (ReportExecutorInfoRequest) returns (ReportExecutorInfoResponse) {}
+    rpc Test (TestRequest) returns (TestResponse) {}
+}
+
+message UpdateModelRequest {
+    bytes serialized_tensor = 1;  // TODO: Change it to TensorProto
+}
+
+message UpdateModelResponse {
+    string message = 1;
+}
+
+message TrainingConfig {
+    double learning_rate = 1;
+    TrainingTask task = 2;
+    enum TrainingTask {
+        NLP = 0;
+        VOICE = 1;    
+    }
+}
+
+message TrainRequest {
+    uint64 client_id = 1;
+    TrainingConfig config = 2;
+}
+
+message TrainResponse {}
+
+message StopRequest {}
+
+message StopResponse {}
+
+message ReportExecutorInfoRequest {}
+
+message ReportExecutorInfoResponse {
+    repeated int64 training_set_size = 1;
+}
+
+message TestRequest {
+    string message = 1;
+}
+
+message TestResponse {
+    string serialized_test_response = 1;
+}

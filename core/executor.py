@@ -3,7 +3,7 @@ from fl_client_libs import *
 from argparse import Namespace
 import gc
 from client import Client
-
+from rlclient import RLClient
 
 class Executor(object):
     """Each executor takes certain resource to run real training.
@@ -104,7 +104,8 @@ class Executor(object):
     def init_data(self):
         """Return the training and testing dataset"""
         train_dataset, test_dataset = init_dataset()
-
+        if self.task == "rl":
+            return train_dataset, test_dataset
         # load data partitioner (entire_train_data)
         logging.info("Data partitioner starts ...")
 
@@ -213,14 +214,18 @@ class Executor(object):
 
         conf.clientId, conf.device = clientId, self.device
         conf.tokenizer = tokenizer
+        if args.task == "rl":
+            client_data = self.training_sets
+            client = RLClient(conf)
+            train_res = client.train(client_data=client_data, model=client_model, conf=conf)
+        else:
+            client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
 
-        client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
+            client = self.get_client_trainer(conf)
+            train_res = client.train(client_data=client_data, model=client_model, conf=conf)
 
-        client = self.get_client_trainer(conf)
-        train_res = client.train(client_data=client_data, model=client_model, conf=conf)
-
-        # we need to get runtime variance for BN
-        self.model = client_model
+            # we need to get runtime variance for BN
+            self.model = client_model
         return train_res
 
 
@@ -228,18 +233,23 @@ class Executor(object):
         """Test model"""
         evalStart = time.time()
         device = self.device
-        data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
-
-        if self.task == 'voice':
-            criterion = CTCLoss(reduction='mean').to(device=device)
+        if self.task == 'rl':
+            client = RLClient(args)
+            test_res = client.test(args, self.this_rank, self.model, device=device)
+            _, _, _, testResults = test_res
         else:
-            criterion = torch.nn.CrossEntropyLoss().to(device=device)
+            data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
 
-        test_res = test_model(self.this_rank, self.model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
+            if self.task == 'voice':
+                criterion = CTCLoss(reduction='mean').to(device=device)
+            else:
+                criterion = torch.nn.CrossEntropyLoss().to(device=device)
 
-        test_loss, acc, acc_5, testResults = test_res
-        logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
-                    .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
+            test_res = test_model(self.this_rank, self.model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
+
+            test_loss, acc, acc_5, testResults = test_res
+            logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
+                        .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
         gc.collect()
 

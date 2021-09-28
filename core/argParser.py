@@ -129,6 +129,16 @@ parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon fo
 parser.add_argument("--vocab_token_size", type=int, default=10000, help="For vocab token size")
 parser.add_argument("--vocab_tag_size", type=int, default=500, help="For vocab tag size")
 
+# for rl example
+parser.add_argument("--epsilon", type=float, default=0.9, help="greedy policy")
+parser.add_argument("--gamma", type=float, default=0.9, help="reward discount")
+parser.add_argument("--memory_capacity", type=int, default=2000, help="memory capacity")
+parser.add_argument("--target_replace_iter", type=int, default=15, help="update frequency")
+parser.add_argument("--n_actions", type=int, default=2, help="action number")
+parser.add_argument("--n_states", type=int, default=4, help="state number")
+
+
+
 # for speech
 parser.add_argument("--num_classes", type=int, default=35, help="For number of classes in speech")
 
