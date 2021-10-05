@@ -4,6 +4,54 @@ from fl_aggregator_libs import *
 from random import Random
 from resource_manager import ResourceManager
 
+
+class _Executors(object):
+    """"Helps aggregator manage its grpc connection with executors."""
+
+    class _ExecutorContext(object):
+        def __init__(self, executorId):
+            self.id = executorId
+            self.address = None
+            self.channel = None
+            self.stub = None
+
+    def __init__(self, config):
+        self.executors = {}
+
+        for ip_numgpu in config.split(";"):
+            ip, numgpu = ip_numgpu.split(':')
+            for executorId in range(1, 1 + int(numgpu[1:-1])):
+                self.executors[executorId] = _Executors._ExecutorContext(executorId)
+                self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
+
+    def __len__(self):
+        return len(self.executors)
+
+    def __iter__(self):
+        return iter(self.executors)
+
+    def open_grpc_connection(self):
+        for executorId in self.executors:
+            logging.info('%%%%%%%%%% Opening grpc connection to ' + self.executors[executorId].address + ' %%%%%%%%%%')
+            channel = grpc.insecure_channel(
+                self.executors[executorId].address,
+                options=[
+                    ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+                    ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+                ]
+            )
+            self.executors[executorId].channel = channel
+            self.executors[executorId].stub = job_api_pb2_grpc.JobServiceStub(channel)
+
+    def close_grpc_connection(self):
+        for executorId in self.executors:
+            logging.info('%%%%%%%%%% Closing grpc connection with ' + executor_ip + ' %%%%%%%%%%')
+            self.executors[executorId].channel.close()
+
+    def get_stub(self, executorId):
+        return self.executors[executorId].stub
+
+
 class Aggregator(object):
     """This centralized aggregator collects training/testing feedbacks from executors"""
     def __init__(self, args):
@@ -11,8 +59,7 @@ class Aggregator(object):
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
-        self.executors = [int(v) for v in str(args.learners).split('-')]
-        self.num_executors = len(self.executors)
+        self.executors = _Executors(args.executor_configs)
 
         # ======== env information ========
         self.this_rank = 0
