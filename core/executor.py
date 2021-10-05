@@ -12,7 +12,7 @@ class Executor(object):
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
-        self.executors = [int(v) for v in str(args.learners).split('-')]
+        self.num_executors = args.num_executors
 
         # ======== env information ========
         self.this_rank = args.this_rank
@@ -71,7 +71,6 @@ class Executor(object):
 
         logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
 
-        #for executor_id in self.executors:
         BaseManager.register('get_server_event_que'+str(self.this_rank))
         BaseManager.register('get_client_event')
 
@@ -94,7 +93,7 @@ class Executor(object):
 
 
     def init_data_communication(self):
-        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
+        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=self.num_executors + 1)
 
 
     def init_model(self):
@@ -113,7 +112,7 @@ class Executor(object):
         training_sets.partition_data_helper(num_clients=self.args.total_worker, data_map_file=self.args.data_map_file)
 
         testing_sets = DataPartitioner(data=test_dataset, numOfClass=self.args.num_class, isTest=True)
-        testing_sets.partition_data_helper(num_clients=len(self.executors))
+        testing_sets.partition_data_helper(num_clients=self.num_executors)
 
         logging.info("Data partitioner completes ...")
 
