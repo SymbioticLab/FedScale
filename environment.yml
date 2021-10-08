@@ -28,3 +28,4 @@ dependencies:
     - h5py
     - gdown
     - sentencepiece
+    - grpcio

@@ -3,9 +3,18 @@
 from fl_aggregator_libs import *
 from random import Random
 from resource_manager import ResourceManager
+import grpc
+import job_api_pb2_grpc
+import job_api_pb2
+import io
+import torch
+import pickle
 
 
-class _Executors(object):
+MAX_MESSAGE_LENGTH = 10000000
+
+
+class ExecutorConnections(object):
     """"Helps aggregator manage its grpc connection with executors."""
 
     class _ExecutorContext(object):
@@ -21,7 +30,7 @@ class _Executors(object):
         for ip_numgpu in config.split(";"):
             ip, numgpu = ip_numgpu.split(':')
             for executorId in range(1, 1 + int(numgpu[1:-1])):
-                self.executors[executorId] = _Executors._ExecutorContext(executorId)
+                self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
                 self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
 
     def __len__(self):
@@ -45,7 +54,7 @@ class _Executors(object):
 
     def close_grpc_connection(self):
         for executorId in self.executors:
-            logging.info('%%%%%%%%%% Closing grpc connection with ' + executor_ip + ' %%%%%%%%%%')
+            logging.info(f'%%%%%%%%%% Closing grpc connection with {executorId} %%%%%%%%%%')
             self.executors[executorId].channel.close()
 
     def get_stub(self, executorId):
@@ -59,7 +68,7 @@ class Aggregator(object):
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
-        self.executors = _Executors(args.executor_configs)
+        self.executors = ExecutorConnections(args.executor_configs)
 
         # ======== env information ========
         self.this_rank = 0
@@ -208,7 +217,7 @@ class Aggregator(object):
         # In this simulation, we run data split on each worker, so collecting info from one executor is enough
         # Waiting for data information from executors, or timeout
 
-        if self.registered_executor_info == self.num_executors:
+        if self.registered_executor_info == len(self.executors):
 
             clientId = 1
 
@@ -269,36 +278,7 @@ class Aggregator(object):
 
         self.model_update_size = sys.getsizeof(pickle.dumps(self.model))/1024.0*8. # kbits
         self.client_profiles = self.load_client_profile(file_path=self.args.device_conf_file)
-        self.start_event()
         self.event_monitor()
-
-
-    def start_event(self):
-        #self.model_in_update = [param.data for idx, param in enumerate(self.model.parameters())]
-        #self.event_queue.append('report_executor_info')
-        pass
-
-    def broadcast_msg(self, msg):
-        for executorId in self.executors:
-            self.server_event_queue[executorId].put_nowait(msg)
-
-
-    def broadcast_models(self):
-        """Push the latest model to executors"""
-        # self.model = self.model.to(device='cpu')
-
-        # waiting_list = []
-        for param in self.model.parameters():
-            temp_tensor = param.data.to(device='cpu')
-            for executorId in self.executors:
-                dist.send(tensor=temp_tensor, dst=executorId)
-                # req = dist.isend(tensor=param.data, dst=executorId)
-                # waiting_list.append(req)
-
-        # for req in waiting_list:
-        #     req.wait()
-
-        # self.model = self.model.to(device=self.device)
 
 
     def select_participants(self, select_num_participants, overcommitment=1.3):
@@ -451,32 +431,56 @@ class Aggregator(object):
     def event_monitor(self):
         logging.info("Start monitoring events ...")
 
+        self.executors.open_grpc_connection()
+        for executorId in self.executors:
+            response = self.executors.get_stub(executorId).ReportExecutorInfo(
+                job_api_pb2.ReportExecutorInfoRequest())
+            self.executor_info_handler(executorId, {"size": response.training_set_size})
+
         while True:
             if len(self.event_queue) != 0:
                 event_msg = self.event_queue.popleft()
                 send_msg = {'event': event_msg}
 
                 if event_msg == 'update_model':
-                    self.broadcast_msg(send_msg)
-                    self.broadcast_models()
+                    serialized_tensors = {}
+                    for param in self.model.parameters():
+                        buffer = io.BytesIO()
+                        torch.save(param.data.to(device='cpu'), buffer)
+                        buffer.seek(0)
+                        serialized_tensors[param] = buffer.read()
+
+                    update_model_request = job_api_pb2.UpdateModelRequest()
+                    for executorId in self.executors:
+                        _ = self.executors.get_stub(executorId).UpdateModel(
+                            job_api_pb2.UpdateModelRequest(serialized_tensor=serialized_tensors[param])
+                                for param in self.model.parameters())
 
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
                         next_clientId = self.resource_manager.get_next_task()
+
                         if next_clientId is not None:
+                            # TODO: Remove sending train request via server_event_queue
                             config = self.get_client_conf(next_clientId)
                             self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': config})
 
+                            _ = self.executors.get_stub(executorId).Train(
+                                job_api_pb2.TrainRequest(
+                                    client_id=next_clientId,
+                                    serialized_train_config=pickle.dumps(config)))
+
                 elif event_msg == 'stop':
-                    self.broadcast_msg(send_msg)
+                    for executorId in self.executors:
+                        _ = self.executors.get_stub(executorId).Stop(job_api_pb2.StopRequest())
+
                     self.stop()
                     break
 
-                elif event_msg == 'report_executor_info':
-                    self.broadcast_msg(send_msg)
-
                 elif event_msg == 'test':
-                    self.broadcast_msg(send_msg)
+                    for executorId in self.executors:
+                        response = self.executors.get_stub(executorId).Test(job_api_pb2.TestRequest())
+                        self.testing_completion_handler(pickle.loads(response.serialized_test_response))
 
             elif not self.client_event_queue.empty():
 
@@ -504,17 +508,13 @@ class Aggregator(object):
                     if len(self.stats_util_accumulator) == self.tasks_round:
                         self.round_completion_handler()
 
-                elif event_msg == 'test':
-                    self.testing_completion_handler(results)
-
-                elif event_msg == 'report_executor_info':
-                    self.executor_info_handler(executorId, results)
-
                 else:
                     logging.error("Unknown message types!")
 
             # execute every 100 ms
             time.sleep(0.1)
+
+        self.executors.close_grpc_connection()
 
 
     def stop(self):

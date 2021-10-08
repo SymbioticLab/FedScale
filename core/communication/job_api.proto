@@ -1,3 +1,7 @@
+// GRPC definition for the communication between the aggregator and the executors.
+// After modifying this file, run
+// $ python -m grpc_tools.protoc -I../communication/ --python_out=.. --grpc_python_out=.. job_api.proto
+// from FedScale/core/evals to regenerate Python files.
 syntax = "proto3";
 
 package fedscale;
@@ -18,18 +22,9 @@ message UpdateModelResponse {
     string message = 1;
 }
 
-message TrainingConfig {
-    double learning_rate = 1;
-    TrainingTask task = 2;
-    enum TrainingTask {
-        NLP = 0;
-        VOICE = 1;    
-    }
-}
-
 message TrainRequest {
     uint64 client_id = 1;
-    TrainingConfig config = 2;
+    bytes serialized_train_config = 2;
 }
 
 message TrainResponse {}
@@ -49,5 +44,5 @@ message TestRequest {
 }
 
 message TestResponse {
-    string serialized_test_response = 1;
+    bytes serialized_test_response = 1;
 }
