@@ -3,7 +3,7 @@
 
 from fllibs import *
 
-class SeverOptimizer(object):
+class ServerOptimizer(object):
  
     def __init__(self, mode, args, device, sample_seed=233):
         

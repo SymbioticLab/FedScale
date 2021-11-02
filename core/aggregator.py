@@ -80,7 +80,7 @@ class Aggregator(object):
 
         self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
         self.init_data_communication()
-        self.optimizer = SeverOptimizer( self.args.gradient_policy, self.args, self.device  )
+        self.optimizer = ServerOptimizer( self.args.gradient_policy, self.args, self.device  )
 
     def setup_seed(self, seed=1):
         torch.manual_seed(seed)

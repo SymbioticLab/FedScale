@@ -282,9 +282,11 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
             elif args.task == 'text_clf':
                 (inputs, masks) = data
                 inputs, masks, target = Variable(inputs).to(device=device), Variable(masks).to(device=device), Variable(target).to(device=device)
-                loss, output = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
+                outputs = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
+        
+                loss = outputs.loss
+                output = outputs.logits
 
-                #loss = torch.mean(loss)
                 test_loss += loss.item()  # Variable.data
                 acc = accuracy(output, target, topk=(1, 2))
 
