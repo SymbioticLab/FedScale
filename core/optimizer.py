@@ -1,8 +1,4 @@
 
-
-
-from fllibs import *
-
 class ServerOptimizer(object):
  
     def __init__(self, mode, args, device, sample_seed=233):
@@ -10,15 +6,20 @@ class ServerOptimizer(object):
         self.mode = mode
         self.args = args
         self.device = device
+
         if mode == 'yogi':
             from utils.yogi import YoGi
             self.gradient_controller = YoGi(eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
         
         
-    def update_round_gradient( self,last_model, current_model, target_model ):
+    def update_round_gradient(self, last_model, current_model, target_model):
         
         if self.mode == 'yogi':
-        
+            """
+            "Adaptive Federated Optimizations", 
+            Sashank J. Reddi, Zachary Charles, Manzil Zaheer, Zachary Garrett, Keith Rush, Jakub Konecný, Sanjiv Kumar, H. Brendan McMahan,
+            ICLR 2021.
+            """
             last_model = [x.to(device=self.device) for x in last_model]
             current_model = [x.to(device=self.device) for x in current_model]
 
@@ -29,7 +30,9 @@ class ServerOptimizer(object):
 
             
         elif self.mode =='qfedavg':
-            
+            """
+            "Fair Resource Allocation in Federated Learning", Tian Li, Maziar Sanjabi, Ahmad Beirami, Virginia Smith, ICLR 2020.
+            """
             learning_rate, qfedq = self.args.learning_rate, self.args.qfed_q
             Deltas, hs = None, 0.
             last_model = [x.to(device=self.device) for x in last_model]
@@ -52,14 +55,18 @@ class ServerOptimizer(object):
             for idx, param in enumerate(target_model.parameters()):
                 param.data = last_model[idx] - Deltas[idx]/(hs+1e-10)
 
+        else:
+            # The default optimizer, FedAvg, has been applied in aggregator.py on the fly
+            pass
+
 
 class ClientOptimizer(object):
  
     def __init__(self, sample_seed=233): 
         pass
     
-    def update_client_weight(self , conf ,model, global_model = None):
-        if self.mode == 'prox':
+    def update_client_weight(self, conf, model, global_model = None):
+        if conf.gradient_policy == 'prox':
             for idx, param in enumerate(model.parameters()):
                 param.data += conf.learning_rate * conf.proxy_mu * (param.data - global_model[idx])
         

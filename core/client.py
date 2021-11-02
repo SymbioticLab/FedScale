@@ -21,7 +21,8 @@ class Client(object):
         model.train()
 
         trained_unique_samples = min(len(client_data.dataset), conf.local_steps * conf.batch_size)
-        
+        global_model = None
+
         if conf.gradient_policy == 'prox':
             # could be move to optimizer
             global_model = [param.data.clone() for param in model.parameters()]
@@ -138,8 +139,10 @@ class Client(object):
                         loss = criterion(output, target)
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
+
                     if conf.task == 'nlp' or  args.task == 'text_clf'  :
                         loss_list = [loss.item()] #[loss.mean().data.item()]
+
                     elif conf.task == "detection":
                         loss_list = [loss.tolist()]
                         loss = loss.mean()
@@ -162,7 +165,7 @@ class Client(object):
                     optimizer.step()
 
                     # ========= Weight handler ========================
-                    self.optimizer. update_client_weight(conf.gradient_policy, model , global_model if global_model is not None else None  )
+                    self.optimizer.update_client_weight(conf, model, global_model if global_model is not None else None  )
                     
                     completed_steps += 1
 

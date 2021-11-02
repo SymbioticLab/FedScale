@@ -9,7 +9,8 @@ parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
 parser.add_argument('--ps_port', type=str, default='29501')
 parser.add_argument('--manager_port', type=int, default='9005')
 parser.add_argument('--this_rank', type=int, default=1)
-parser.add_argument('--learners', type=str, default='1-2-3-4')
+parser.add_argument('--num_executors', type=int, default=4)
+parser.add_argument('--executor_configs', type=str, default='')  # seperated by ;
 parser.add_argument('--total_worker', type=int, default=0)
 parser.add_argument('--data_map_file', type=str, default=None)
 parser.add_argument('--use_cuda', type=bool, default=True)
@@ -52,7 +53,6 @@ parser.add_argument('--batch_size', type=int, default=30)
 parser.add_argument('--test_bsz', type=int, default=128)
 parser.add_argument('--backend', type=str, default="gloo")
 parser.add_argument('--upload_epoch', type=int, default=20)
-parser.add_argument('--test_interval', type=int, default=20)
 parser.add_argument('--learning_rate', type=float, default=5e-2)
 parser.add_argument('--min_learning_rate', type=float, default=5e-5)
 parser.add_argument('--input_dim', type=int, default=0)
@@ -63,7 +63,7 @@ parser.add_argument('--decay_epoch', type=float, default=10)
 parser.add_argument('--num_loaders', type=int, default=2)
 parser.add_argument('--eval_interval', type=int, default=5)
 parser.add_argument('--sample_seed', type=int, default=233) #123 #233
-parser.add_argument('--test_ratio', type=float, default=1.0)
+parser.add_argument('--test_ratio', type=float, default=0.05)
 parser.add_argument('--loss_decay', type=float, default=0.2)
 parser.add_argument('--exploration_min', type=float, default=0.3)
 parser.add_argument('--cut_off_util', type=float, default=0.05) # 95 percentile
@@ -128,6 +128,16 @@ parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon fo
 # for tag prediction
 parser.add_argument("--vocab_token_size", type=int, default=10000, help="For vocab token size")
 parser.add_argument("--vocab_tag_size", type=int, default=500, help="For vocab tag size")
+
+# for rl example
+parser.add_argument("--epsilon", type=float, default=0.9, help="greedy policy")
+parser.add_argument("--gamma", type=float, default=0.9, help="reward discount")
+parser.add_argument("--memory_capacity", type=int, default=2000, help="memory capacity")
+parser.add_argument("--target_replace_iter", type=int, default=15, help="update frequency")
+parser.add_argument("--n_actions", type=int, default=2, help="action number")
+parser.add_argument("--n_states", type=int, default=4, help="state number")
+
+
 
 # for speech
 parser.add_argument("--num_classes", type=int, default=35, help="For number of classes in speech")

@@ -20,6 +20,7 @@ def process_cmd(yaml_file):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
+    executor_configs = ";".join(yaml_conf['worker_ips'])
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
@@ -58,10 +59,9 @@ def process_cmd(yaml_file):
             log_path = os.path.join(job_conf[conf_name], 'log', job_name, time_stamp)
 
     total_gpu_processes =  sum([sum(x) for x in total_gpus])
-    learner_conf = '-'.join([str(_) for _ in list(range(1, total_gpu_processes+1))])
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
-    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --learner={learner_conf} "
+    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --num_executors={total_gpu_processes} --executor_configs={executor_configs} "
 
     with open(f"{job_name}_logging", 'wb') as fout:
         pass
@@ -80,10 +80,11 @@ def process_cmd(yaml_file):
 
         for cuda_id in range(len(gpu)):
             for _  in range(gpu[cuda_id]):
-                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} --cuda_device=cuda:{cuda_id} "
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --num_executors={total_gpu_processes} --cuda_device=cuda:{cuda_id} "
                 rank_id += 1
 
                 with open(f"{job_name}_logging", 'a') as fout:
+                    time.sleep(2)
                     subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
                                     shell=True, stdout=fout, stderr=fout)
 
