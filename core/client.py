@@ -99,7 +99,7 @@ class Client(object):
                         num_boxes.resize_(data[3].size()).copy_(data[3])
                     elif conf.task == 'speech':
                         data = torch.unsqueeze(data, 1).to(device=device)
-                    elif args.task == 'text_clf':
+                    elif conf.task == 'text_clf':
                         (data, masks) = data
                         data, masks = Variable(data).to(device=device), Variable(masks).to(device=device)
             
@@ -115,7 +115,7 @@ class Client(object):
                         outputs, output_sizes = model(data, input_sizes)
                         outputs = outputs.transpose(0, 1).float()  # TxNxH
                         loss = criterion(outputs, target, output_sizes, target_sizes)
-                    elif args.task == 'text_clf':
+                    elif conf.task == 'text_clf':
                         outputs = model(data , attention_mask=masks, labels=target)
                         loss = outputs.loss
                         output = outputs.logits
@@ -140,7 +140,7 @@ class Client(object):
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
 
-                    if conf.task == 'nlp' or  args.task == 'text_clf'  :
+                    if conf.task == 'nlp' or  conf.task == 'text_clf'  :
                         loss_list = [loss.item()] #[loss.mean().data.item()]
 
                     elif conf.task == "detection":

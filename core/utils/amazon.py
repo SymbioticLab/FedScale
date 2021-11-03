@@ -8,9 +8,9 @@ import pandas as pd
 class AmazonReview_loader(Dataset):
     def __init__(self, data_path, max_len, train=True, tokenizer=None ):
 
-        file = '/client_data_mapping/train.csv' if train else '/client_data_mapping/test.csv'
+        file = 'train.csv' if train else 'test.csv'
         
-        map_file = os.path.join(self.data_dir,  file)
+        map_file = os.path.join(data_path, 'client_data_mapping', file)
         
         self.df = pd.read_csv(map_file, delimiter=',')
         # A reset reindexes from 1 to len(df), the shuffled df frames are sparse.

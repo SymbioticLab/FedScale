@@ -11,7 +11,7 @@ import torch
 import pickle
 
 
-MAX_MESSAGE_LENGTH = 10000000
+MAX_MESSAGE_LENGTH = 50000000
 
 
 class ExecutorConnections(object):

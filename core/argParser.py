@@ -101,6 +101,7 @@ parser.add_argument(
     action="store_true",
     help="Whether distinct lines of text in the dataset are to be handled as distinct sequences.",
 )
+parser.add_argument('--clf_block_size', type=int, default=32)
 
 
 parser.add_argument(

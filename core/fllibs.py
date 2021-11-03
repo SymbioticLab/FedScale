@@ -31,9 +31,11 @@ if args.task == 'nlp' or args.task == 'text_clf':
     from transformers import (
         AdamW,
         AutoConfig,
+        AlbertTokenizer,
         AutoTokenizer,
         MobileBertForPreTraining,
     )
+    tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 elif args.task == 'speech':
     import numba
     from utils.speech import SPEECH
@@ -64,7 +66,7 @@ from optimizer import ServerOptimizer
 
 # shared functions of aggregator and clients
 # initiate for nlp
-tokenizer = None
+
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
 
@@ -78,7 +80,7 @@ def init_model():
 
     logging.info("Initializing the model ...")
 
-    if args.task == 'nlp' or args.task == 'text_clf':
+    if args.task == 'nlp':
         config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model_name+'-config.json'))
         model = AutoModelWithLMHead.from_config(config)
         tokenizer = AlbertTokenizer.from_pretrained(args.model_name, do_lower_case=True)
@@ -93,7 +95,6 @@ def init_model():
         config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
         config.num_labels = outputClass[args.data_set]
         from transformers import AlbertForSequenceClassification
-
         model = AlbertForSequenceClassification(config)
 
     elif args.task == 'tag-one-sample':
