@@ -26,14 +26,16 @@ from utils.utils_data import get_data_transform
 from utils.utils_model import test_model
 from utils.divide_data import select_dataset, DataPartitioner
 
-if args.task == 'nlp':
+if args.task == 'nlp' or args.task == 'text_clf':
     from utils.nlp import mask_tokens, load_and_cache_examples
     from transformers import (
         AdamW,
         AutoConfig,
+        AlbertTokenizer,
         AutoTokenizer,
         MobileBertForPreTraining,
     )
+    tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 elif args.task == 'speech':
     import numba
     from utils.speech import SPEECH
@@ -64,12 +66,12 @@ from optimizer import ServerOptimizer
 
 # shared functions of aggregator and clients
 # initiate for nlp
-tokenizer = None
+
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
 
 
-outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
+outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,'amazon':5,
                 'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist' : 1010
             }
 
@@ -93,7 +95,6 @@ def init_model():
         config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
         config.num_labels = outputClass[args.data_set]
         from transformers import AlbertForSequenceClassification
-
         model = AlbertForSequenceClassification(config)
 
     elif args.task == 'tag-one-sample':
@@ -234,6 +235,12 @@ def init_dataset():
 
             train_dataset = stackoverflow(args.data_dir, train=True)
             test_dataset = stackoverflow(args.data_dir, train=False)
+
+        elif args.data_set == 'amazon':
+            import utils.amazon as fl_loader
+
+            train_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size)
+            test_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size)
 
         elif args.data_set == 'yelp':
             import utils.dataloaders as fl_loader

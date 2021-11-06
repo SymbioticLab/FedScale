@@ -88,6 +88,7 @@ class Client(object):
                         temp_data = data_pair
                         target = temp_data[4]
                         data = temp_data[0:4]
+
                     else:
                         (data, target) = data_pair
 
@@ -98,6 +99,10 @@ class Client(object):
                         num_boxes.resize_(data[3].size()).copy_(data[3])
                     elif conf.task == 'speech':
                         data = torch.unsqueeze(data, 1).to(device=device)
+                    elif conf.task == 'text_clf':
+                        (data, masks) = data
+                        data, masks = Variable(data).to(device=device), Variable(masks).to(device=device)
+            
                     else:
                         data = Variable(data).to(device=device)
 
@@ -110,6 +115,10 @@ class Client(object):
                         outputs, output_sizes = model(data, input_sizes)
                         outputs = outputs.transpose(0, 1).float()  # TxNxH
                         loss = criterion(outputs, target, output_sizes, target_sizes)
+                    elif conf.task == 'text_clf':
+                        outputs = model(data , attention_mask=masks, labels=target)
+                        loss = outputs.loss
+                        output = outputs.logits
                     elif conf.task == "detection":
                         rois, cls_prob, bbox_pred, \
                         rpn_loss_cls, rpn_loss_box, \
@@ -130,8 +139,10 @@ class Client(object):
                         loss = criterion(output, target)
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
-                    if conf.task == 'nlp':
-                        loss_list = [loss.mean().data.item()]
+
+                    if conf.task == 'nlp' or  conf.task == 'text_clf'  :
+                        loss_list = [loss.item()] #[loss.mean().data.item()]
+
                     elif conf.task == "detection":
                         loss_list = [loss.tolist()]
                         loss = loss.mean()
