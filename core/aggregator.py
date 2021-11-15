@@ -27,9 +27,11 @@ class ExecutorConnections(object):
     def __init__(self, config):
         self.executors = {}
 
+        executorId = 0
         for ip_numgpu in config.split(";"):
             ip, numgpu = ip_numgpu.split(':')
-            for executorId in range(1, 1 + int(numgpu[1:-1])):
+            for _ in range(int(numgpu[1:-1])):
+                executorId += 1
                 self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
                 self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
 
