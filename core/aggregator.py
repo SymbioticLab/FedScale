@@ -172,8 +172,8 @@ class Aggregator(object):
 
 
     def init_data_communication(self):
-        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
-
+        #dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
+        pass
 
     def init_model(self):
         """Load model"""
@@ -432,12 +432,21 @@ class Aggregator(object):
 
     def event_monitor(self):
         logging.info("Start monitoring events ...")
+        start_time = time.time()
+        time.sleep(20)
 
-        self.executors.open_grpc_connection()
-        for executorId in self.executors:
-            response = self.executors.get_stub(executorId).ReportExecutorInfo(
-                job_api_pb2.ReportExecutorInfoRequest())
-            self.executor_info_handler(executorId, {"size": response.training_set_size})
+        while time.time() - start_time < 120:
+            try:
+                self.executors.open_grpc_connection()
+                for executorId in self.executors:
+                    response = self.executors.get_stub(executorId).ReportExecutorInfo(
+                        job_api_pb2.ReportExecutorInfoRequest())
+                    self.executor_info_handler(executorId, {"size": response.training_set_size})
+                break
+                
+            except:
+                self.executors.close_grpc_connection()
+                time.sleep(15)
 
         while True:
             if len(self.event_queue) != 0:

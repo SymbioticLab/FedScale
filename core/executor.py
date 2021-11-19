@@ -24,7 +24,6 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
         self.num_executors = args.num_executors
-
         # ======== env information ========
         self.this_rank = args.this_rank
 
@@ -111,7 +110,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
     def setup_communication(self):
         self.init_control_communication(self.args.ps_ip, self.args.manager_port)
-        self.init_data_communication()
+        #self.init_data_communication()
 
 
     def setup_seed(self, seed=1):
@@ -140,7 +139,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         port = '[::]:{}'.format(50000 + self.this_rank)
         self.grpc_server.add_insecure_port(port)
         self.grpc_server.start()
-        logging.info('Started GRPC server at {port}')
+        logging.info(f'Started GRPC server at {port}')
 
         BaseManager.register('get_server_event_que'+str(self.this_rank))
         BaseManager.register('get_client_event')
@@ -154,10 +153,11 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
                 is_connected = True
             except Exception as e:
                 time.sleep(numpy.random.rand(1)[0]*5+0.1)
+                logging.info(f"Retrying connection to {ps_ip}:{ps_port}")
                 pass
 
         assert is_connected, 'Failed to connect to the aggregator'
-
+        logging.info("Successfully connect to the aggregator")
 
         self.server_event_queue = eval('self.control_manager.get_server_event_que'+str(self.this_rank)+'()')
         self.client_event_queue = self.control_manager.get_client_event()
@@ -347,5 +347,4 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
-
 

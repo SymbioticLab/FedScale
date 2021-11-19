@@ -9,6 +9,13 @@ import numpy as np
 import collections
 import numpy
 
+# libs from FLBench
+from argParser import args
+from utils.utils_data import get_data_transform
+from utils.utils_model import test_model
+from utils.divide_data import select_dataset, DataPartitioner
+
+
 # PyTorch libs
 import torch
 from torch.multiprocessing import Process
@@ -20,12 +27,7 @@ from torchvision import datasets, transforms
 import torchvision.models as tormodels
 from torch.utils.data.sampler import WeightedRandomSampler
 
-# libs from FLBench
-from argParser import args
-from utils.utils_data import get_data_transform
-from utils.utils_model import test_model
-from utils.divide_data import select_dataset, DataPartitioner
-
+tokenizer = None
 if args.task == 'nlp' or args.task == 'text_clf':
     from utils.nlp import mask_tokens, load_and_cache_examples
     from transformers import (
