@@ -28,7 +28,7 @@ class ExecutorConnections(object):
         self.executors = {}
 
         executorId = 0
-        for ip_numgpu in config.split(";"):
+        for ip_numgpu in config.split(","):
             ip, numgpu = ip_numgpu.split(':')
             for _ in range(int(numgpu[1:-1])):
                 executorId += 1
