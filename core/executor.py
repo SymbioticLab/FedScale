@@ -237,9 +237,12 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
     def load_global_model(self):
         # load last global model
-        with open(self.temp_model_path, 'rb') as model_in:
-            model = pickle.load(model_in)
-        return model
+        try:
+            with open(self.temp_model_path, 'rb') as model_in:
+                model = pickle.load(model_in)
+                return model
+        except OSError as e:
+            return self.model
 
 
     def override_conf(self, config):
