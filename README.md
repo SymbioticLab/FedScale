@@ -107,8 +107,8 @@ please consider to cite our paper if you use the code or data in your research p
 
 ```bibtex
 @inproceedings{fedscale-arxiv,
-  title={FedScale: Benchmarking Model and System Performance of Federated Learning},
-  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Mosharaf Chowdhury},
+  title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
+  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
   booktitle={arXiv:2105.11367},
   year={2021}
 }
