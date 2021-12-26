@@ -103,7 +103,7 @@ Repo Root
 ```
 
 ## Notes
-please consider to cite our paper if you use the code or data in your research project.
+please consider to cite our papers if you use the code or data in your research project.
 
 ```bibtex
 @inproceedings{fedscale-arxiv,
@@ -126,6 +126,6 @@ and
 ```
 
 ## Contact
-Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xzhu0027@gmail.com) and Mosharaf Chowdhury from the University of Michigan.
+Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xfzhu@cs.washington.edu) and Mosharaf Chowdhury from the University of Michigan.
 
 
