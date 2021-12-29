@@ -23,7 +23,7 @@ If you have any questions or comments, please join our [Slack](https://join.slac
 * [Note](#acknowledgements)
 * [Contact](#contact)
 
-## Getting Started 
+## Getting Started
 
 Our ```install.sh``` will install the following automatically:
 
@@ -75,7 +75,8 @@ Misc Applications:
 
 | Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
 | -----------   | ----------- | -----------  |  ----------- |   ----------- |
-|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation |
+|Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction    |
+|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation         |
 |Go dataset     |   Text      |     150,333  |    4.9M       |   Reinforcement learning | 
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only.***
@@ -126,6 +127,6 @@ and
 ```
 
 ## Contact
-Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xfzhu@cs.washington.edu) and Mosharaf Chowdhury from the University of Michigan.
+Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xfzhu@cs.washington.edu), Harsha V. Madhyastha and Mosharaf Chowdhury from the University of Michigan.
 
 

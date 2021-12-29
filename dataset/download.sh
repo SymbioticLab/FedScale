@@ -10,8 +10,8 @@ DIR="./data"
 Help()
 {
    # Display Help
-   echo "We provide four datasets (open_images, stackoverflow, and speech)"
-   echo "to evalute the performance of Kuiper"
+   echo "FedScale provides a large suite of FL datasets "
+   echo "to evaluate today's FL performance"
    echo 
    echo "Syntax: ./download.sh [-g|h|v|V]"
    echo "options:"
@@ -27,9 +27,10 @@ Help()
    echo "-d     Download Open Images for detection (about 451M)"
    echo "-r     Download Reddit dataset (about 25G)"
    echo "-t     Download Taobao dataset (about 185M)"
+   echo "-x     Download Taxi Trajectory dataset (about 504M)"
    echo "-w     Download Waymo Motion dataset meta file (about 74M)"
    echo "-f     Download FEMNIST dataset (about 327M)"    
-   echo "-so    Download StackOverflow dataset (about 13G)"
+   echo "-o     Download StackOverflow dataset (about 13G)"
    echo "-b     Download Blog dataset (about 833M)"
 }
 
@@ -281,6 +282,25 @@ taobao()
 fi
 }
 
+taxi() 
+{
+    if [ ! -d "${DIR}/taxi_traj/client_data_mapping/" ]; 
+    then
+        echo "Downloading taxi prediction dataset(about 504M)..."   
+        wget -O ${DIR}/taxi_traj.tar.gz https://fedscale.eecs.umich.edu/dataset/taxi_traj.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/taxi_traj.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/taxi_traj.tar.gz
+
+        echo -e "${GREEN}taxi_traj dataset downloaded!${NC}"
+    else
+        echo -e "${RED}taxi_traj dataset already exists under ${DIR}/taxi_traj/!"
+fi
+}
+
 waymo() 
 {
     if [ ! -d "${DIR}/waymo/client_data_mapping/" ]; 
@@ -319,7 +339,7 @@ femnist()
 fi
 }
 
-while getopts ":hsoacegildrtwf" option; do
+while getopts ":hsoacegildrtwfxo" option; do
    case $option in
       h ) # display Help
          Help
@@ -357,6 +377,9 @@ while getopts ":hsoacegildrtwf" option; do
       t )
          taobao
          ;;
+      x )
+         taxi
+         ;;
       w )
          waymo
          ;;
@@ -366,7 +389,7 @@ while getopts ":hsoacegildrtwf" option; do
       b )
          blog
          ;;   
-      so )
+      o )
          stackoverflow
          ;;        
       \? ) 
