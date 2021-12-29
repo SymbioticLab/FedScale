@@ -45,7 +45,8 @@ Misc Applications:
 
 | Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
 | -----------   | ----------- | -----------  |  ----------- |   ----------- |
-|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation |
+|Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction    |
+|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation         |
 |Go dataset     |   Text      |     150,333  |    4.9M       |   Reinforcement learning | 
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only. ***
@@ -81,18 +82,18 @@ We use a large-scale real-world user behavior dataset from [FLASH](https://githu
 
 
 ## Notes
-please consider to cite our paper if you use the code or data in your research project.
+please consider to cite our papers if you use the code or data in your research project.
 
 ```bibtex
 @inproceedings{fedscale-arxiv,
-  title={FedScale: Benchmarking Model and System Performance of Federated Learning},
-  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Mosharaf Chowdhury},
-  booktitle={arxiv},
+  title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
+  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
+  booktitle={arXiv:2105.11367},
   year={2021}
 }
 ```
 
-or 
+and  
 
 ```bibtex
 @inproceedings{oort-osdi21,
@@ -104,6 +105,6 @@ or
 ```
 
 ## Contact
-Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xzhu0027@gmail.com) and Mosharaf Chowdhury from the University of Michigan.
+Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xfzhu@cs.washington.edu) and Mosharaf Chowdhury from the University of Michigan.
 
 
