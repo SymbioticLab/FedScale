@@ -56,6 +56,7 @@ CV tasks:
 | Google Landmark|  Image     |   43,484     |   3.6M        |   Classification       |
 | Charades      |   Video     |    266       |   10K         |   Action recognition   |
 | VLOG          |   Video     |    4,900     |   9.6k        |   Video classification, Object detection |
+| Waymo Motion  |   Video     |    496,358   |   32.5M       |   Motion prediction |
 
 NLP tasks:
 
@@ -76,6 +77,7 @@ Misc Applications:
 | Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
 | -----------   | ----------- | -----------  |  ----------- |   ----------- |
 |Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction    |
+|Puffer dataset |   Text      |     121,551  |    15.4M      |   Sequence Prediction    |
 |Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation         |
 |Go dataset     |   Text      |     150,333  |    4.9M       |   Reinforcement learning | 
 
