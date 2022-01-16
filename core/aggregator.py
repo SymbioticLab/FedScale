@@ -139,7 +139,7 @@ class Aggregator(object):
 
         self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
         self.init_data_communication()
-        self.optimizer = ServerOptimizer( self.args.gradient_policy, self.args, self.device  )
+        self.optimizer = ServerOptimizer(self.args.gradient_policy, self.args, self.device)
 
     def setup_seed(self, seed=1):
         torch.manual_seed(seed)
@@ -293,7 +293,7 @@ class Aggregator(object):
         # Format:
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
-        if self.args.gradient_policy in ['qfedavg']:
+        if self.args.gradient_policy in ['q-fedavg']:
             self.client_training_results.append(results)
 
         # Feed metrics to client sampler
@@ -328,7 +328,7 @@ class Aggregator(object):
 
     def round_weight_handler(self, last_model, current_model):
         if self.epoch > 1:
-            self.optimizer.update_round_gradient(last_model, current_model, self.model )
+            self.optimizer.update_round_gradient(last_model, current_model, self.model)
             
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
