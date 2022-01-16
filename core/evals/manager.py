@@ -20,7 +20,7 @@ def process_cmd(yaml_file):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
-    executor_configs = ",".join(yaml_conf['worker_ips'])
+    executor_configs = "=".join(yaml_conf['worker_ips'])
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
