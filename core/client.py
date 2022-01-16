@@ -52,7 +52,8 @@ class Client(object):
                     "weight_decay": 0.0,
                 },
             ]
-            optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=conf.learning_rate)
+            # Bert pre-training setup
+            optimizer = torch.optim.Adam(optimizer_grouped_parameters, lr=conf.learning_rate, weight_decay=1e-2)
         else:
             optimizer = torch.optim.SGD(model.parameters(), lr=conf.learning_rate, momentum=0.9, weight_decay=5e-4)
 
