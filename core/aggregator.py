@@ -30,10 +30,11 @@ class ExecutorConnections(object):
         executorId = 0
         for ip_numgpu in config.split("="):
             ip, numgpu = ip_numgpu.split(':')
-            for _ in range(int(numgpu[1:-1])):
-                executorId += 1
-                self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
-                self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
+            for numexe in numgpu.strip()[1:-1].split(','):
+                for _ in range(int(numexe.strip())):
+                    executorId += 1
+                    self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
+                    self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
 
     def __len__(self):
         return len(self.executors)
@@ -435,7 +436,7 @@ class Aggregator(object):
         start_time = time.time()
         time.sleep(20)
 
-        while time.time() - start_time < 120:
+        while time.time() - start_time < 600:
             try:
                 self.executors.open_grpc_connection()
                 for executorId in self.executors:
@@ -446,7 +447,8 @@ class Aggregator(object):
                 
             except:
                 self.executors.close_grpc_connection()
-                time.sleep(15)
+                logging.warning("Have not received executor information. This may due to slow data loading (e.g., Reddit)")
+                time.sleep(30)
 
         while True:
             if len(self.event_queue) != 0:
@@ -536,4 +538,3 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-

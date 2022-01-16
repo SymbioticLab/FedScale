@@ -36,6 +36,7 @@ if args.task == 'nlp' or args.task == 'text_clf':
         AlbertTokenizer,
         AutoTokenizer,
         MobileBertForPreTraining,
+        AutoModelWithLMHead
     )
     tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 elif args.task == 'speech':
@@ -83,9 +84,9 @@ def init_model():
     logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
-        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model_name+'-config.json'))
+        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model+'-config.json'))
         model = AutoModelWithLMHead.from_config(config)
-        tokenizer = AlbertTokenizer.from_pretrained(args.model_name, do_lower_case=True)
+        tokenizer = AlbertTokenizer.from_pretrained(args.model, do_lower_case=True)
 
         # model_name = 'google/mobilebert-uncased'
         # config = AutoConfig.from_pretrained(model_name)
