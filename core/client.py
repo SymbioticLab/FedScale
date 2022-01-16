@@ -140,7 +140,7 @@ class Client(object):
 
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
 
-                    if conf.task == 'nlp' or  conf.task == 'text_clf'  :
+                    if conf.task == 'nlp' or conf.task == 'text_clf':
                         loss_list = [loss.item()] #[loss.mean().data.item()]
 
                     elif conf.task == "detection":
@@ -150,8 +150,8 @@ class Client(object):
                         loss_list = loss.tolist()
                         loss = loss.mean()
 
-                    temp_loss = sum([l**2 for l in loss_list])/float(len(loss_list))
-
+                    temp_loss = sum(loss_list)/float(len(loss_list))
+                    loss_squre = sum([l**2 for l in loss_list])/float(len(loss_list))
                     # only measure the loss of the first epoch
                     if completed_steps < len(client_data):
                         if epoch_train_loss == 1e-4:
@@ -179,7 +179,7 @@ class Client(object):
         model_param = [param.data.cpu().numpy() for param in model.parameters()]
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
-        results['utility'] = math.sqrt(epoch_train_loss)*float(trained_unique_samples)
+        results['utility'] = math.sqrt(loss_squre)*float(trained_unique_samples)
 
         if error_type is None:
             logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
