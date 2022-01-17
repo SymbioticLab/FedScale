@@ -13,15 +13,15 @@ class YoGi():
     def update(self, gradients):
         update_gradients = []
         for idx, gradient in enumerate(gradients):
-            
+            gradient_square = gradient**2
             if len(self.v_t) <= idx:
-                gradient_square = gradient**2
+                #gradient_square = gradient**2
                 self.v_t.append(gradient_square)
                 self.delta_t.append(gradient)
             else:
                 # yogi
                 self.delta_t[idx] = self.beta * self.delta_t[idx] + (1.-self.beta) * gradient
-                gradient_square = self.delta_t[idx]**2
+                #gradient_square = self.delta_t[idx]**2
                 self.v_t[idx] = self.v_t[idx] - (1.-self.beta2) * gradient_square * torch.sign(self.v_t[idx] - gradient_square)
                 yogi_learning_rate = self.eta /(torch.sqrt(self.v_t[idx]) + self.tau)
 

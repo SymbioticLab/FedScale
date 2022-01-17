@@ -30,11 +30,12 @@ class clientManager(object):
         if args.device_avail_file is not None:
             with open(args.device_avail_file, 'rb') as fin:
                 self.user_trace = pickle.load(fin)
+            self.user_trace_keys = list(self.user_trace.keys())
 
     def registerClient(self, hostId, clientId, size, speed, duration=1):
 
         uniqueId = self.getUniqueId(hostId, clientId)
-        user_trace = None if self.user_trace is None else self.user_trace[int(clientId)]
+        user_trace = None if self.user_trace is None else self.user_trace[self.user_trace_keys[int(clientId)%len(self.user_trace)]]
 
         self.Clients[uniqueId] = Client(hostId, clientId, speed, user_trace)
 
@@ -48,6 +49,8 @@ class clientManager(object):
                             'duration':duration,
                             }
                 self.ucbSampler.register_client(clientId, feedbacks=feedbacks)
+        else:
+            del self.Clients[uniqueId]
 
     def getAllClients(self):
         return self.feasibleClients
@@ -199,5 +202,4 @@ class clientManager(object):
         if self.mode == 'oort':
             return self.ucbSampler.get_median_reward()
         return 0.
-
 

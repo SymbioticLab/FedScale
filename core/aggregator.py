@@ -113,7 +113,7 @@ class Aggregator(object):
         self.client_training_results = []
 
         # number of registered executors
-        self.registered_executor_info = 0
+        self.registered_executor_info = set()
         self.test_result_accumulator = []
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                         'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
@@ -214,25 +214,24 @@ class Aggregator(object):
 
     def executor_info_handler(self, executorId, info):
 
-        self.registered_executor_info += 1
-
+        self.registered_executor_info.add(executorId)
+        logging.info(f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
         # have collected all executors
         # In this simulation, we run data split on each worker, so collecting info from one executor is enough
         # Waiting for data information from executors, or timeout
 
-        if self.registered_executor_info == len(self.executors):
+        if len(self.registered_executor_info) == len(self.executors):
 
             clientId = 1
+            logging.info(f"Loading {len(info['size'])} client traces ...")
 
-            for index, _size in enumerate(info['size']):
+            for _size in info['size']:
                 # since the worker rankId starts from 1, we also configure the initial dataId as 1
                 mapped_id = clientId%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
                 systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
-
                 self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
                 self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
                     upload_epoch=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
-
                 clientId += 1
 
             logging.info("Info of all feasible clients {}".format(self.client_manager.getDataInfo()))
@@ -445,10 +444,12 @@ class Aggregator(object):
                     self.executor_info_handler(executorId, {"size": response.training_set_size})
                 break
                 
-            except:
+            except Exception as e:
                 self.executors.close_grpc_connection()
-                logging.warning("Have not received executor information. This may due to slow data loading (e.g., Reddit)")
+                logging.warning(f"{e}: Have not received executor information. This may due to slow data loading (e.g., Reddit)")
                 time.sleep(30)
+
+        logging.info("Have received all executor information")
 
         while True:
             if len(self.event_queue) != 0:
