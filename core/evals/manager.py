@@ -20,7 +20,7 @@ def process_cmd(yaml_file):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
-    executor_configs = ",".join(yaml_conf['worker_ips'])
+    executor_configs = "=".join(yaml_conf['worker_ips'])
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
@@ -95,7 +95,7 @@ def process_cmd(yaml_file):
         job_meta = {'user':submit_user, 'vms': running_vms}
         pickle.dump(job_meta, fout)
 
-    print(f"Submitted job, please check your logs ({log_path}) for status")
+    print(f"Submitted job, please check your logs $HOME/{job_conf['model']}/{time_stamp} for status")
 
 def terminate(job_name):
 
@@ -123,4 +123,5 @@ elif sys.argv[1] == 'stop':
     terminate(sys.argv[2])
 else:
     print("Unknown cmds ...")
+
 

@@ -28,12 +28,13 @@ class ExecutorConnections(object):
         self.executors = {}
 
         executorId = 0
-        for ip_numgpu in config.split(","):
+        for ip_numgpu in config.split("="):
             ip, numgpu = ip_numgpu.split(':')
-            for _ in range(int(numgpu[1:-1])):
-                executorId += 1
-                self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
-                self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
+            for numexe in numgpu.strip()[1:-1].split(','):
+                for _ in range(int(numexe.strip())):
+                    executorId += 1
+                    self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
+                    self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
 
     def __len__(self):
         return len(self.executors)
@@ -112,7 +113,7 @@ class Aggregator(object):
         self.client_training_results = []
 
         # number of registered executors
-        self.registered_executor_info = 0
+        self.registered_executor_info = set()
         self.test_result_accumulator = []
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                         'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
@@ -138,7 +139,7 @@ class Aggregator(object):
 
         self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
         self.init_data_communication()
-        self.optimizer = ServerOptimizer( self.args.gradient_policy, self.args, self.device  )
+        self.optimizer = ServerOptimizer(self.args.gradient_policy, self.args, self.device)
 
     def setup_seed(self, seed=1):
         torch.manual_seed(seed)
@@ -213,25 +214,24 @@ class Aggregator(object):
 
     def executor_info_handler(self, executorId, info):
 
-        self.registered_executor_info += 1
-
+        self.registered_executor_info.add(executorId)
+        logging.info(f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
         # have collected all executors
         # In this simulation, we run data split on each worker, so collecting info from one executor is enough
         # Waiting for data information from executors, or timeout
 
-        if self.registered_executor_info == len(self.executors):
+        if len(self.registered_executor_info) == len(self.executors):
 
             clientId = 1
+            logging.info(f"Loading {len(info['size'])} client traces ...")
 
-            for index, _size in enumerate(info['size']):
+            for _size in info['size']:
                 # since the worker rankId starts from 1, we also configure the initial dataId as 1
                 mapped_id = clientId%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
                 systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
-
                 self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
                 self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
                     upload_epoch=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
-
                 clientId += 1
 
             logging.info("Info of all feasible clients {}".format(self.client_manager.getDataInfo()))
@@ -292,7 +292,7 @@ class Aggregator(object):
         # Format:
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': epoch_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
-        if self.args.gradient_policy in ['qfedavg']:
+        if self.args.gradient_policy in ['q-fedavg']:
             self.client_training_results.append(results)
 
         # Feed metrics to client sampler
@@ -327,7 +327,7 @@ class Aggregator(object):
 
     def round_weight_handler(self, last_model, current_model):
         if self.epoch > 1:
-            self.optimizer.update_round_gradient(last_model, current_model, self.model )
+            self.optimizer.update_round_gradient(last_model, current_model, self.model)
             
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
@@ -435,7 +435,7 @@ class Aggregator(object):
         start_time = time.time()
         time.sleep(20)
 
-        while time.time() - start_time < 120:
+        while time.time() - start_time < 600:
             try:
                 self.executors.open_grpc_connection()
                 for executorId in self.executors:
@@ -444,9 +444,12 @@ class Aggregator(object):
                     self.executor_info_handler(executorId, {"size": response.training_set_size})
                 break
                 
-            except:
+            except Exception as e:
                 self.executors.close_grpc_connection()
-                time.sleep(15)
+                logging.warning(f"{e}: Have not received executor information. This may due to slow data loading (e.g., Reddit)")
+                time.sleep(30)
+
+        logging.info("Have received all executor information")
 
         while True:
             if len(self.event_queue) != 0:
@@ -536,4 +539,3 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-
