@@ -435,7 +435,7 @@ class Aggregator(object):
         start_time = time.time()
         time.sleep(20)
 
-        while time.time() - start_time < 600:
+        while time.time() - start_time < 2000:
             try:
                 self.executors.open_grpc_connection()
                 for executorId in self.executors:
