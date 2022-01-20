@@ -44,6 +44,7 @@ parser.add_argument('--round_penalty', type=float, default=2.0)
 parser.add_argument('--clip_bound', type=float, default=0.9)
 parser.add_argument('--blacklist_rounds', type=int, default=-1)
 parser.add_argument('--blacklist_max_len', type=float, default=0.3)
+parser.add_argument('--embedding_file', type=str, default = 'glove.840B.300d.txt')
 
 
 # The configuration of different hyper-parameters for training

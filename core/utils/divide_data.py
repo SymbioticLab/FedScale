@@ -75,7 +75,7 @@ class DataPartitioner(object):
         # Partition data given mapping
         self.partitions = [[] for _ in range(len(unique_clientIds))]
 
-        for idx in range(len(self.data.data)):
+        for idx in range(sample_id):
             self.partitions[clientId_maps[idx]].append(idx)
 
 

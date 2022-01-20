@@ -235,112 +235,117 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                 return 0, mean_ap, mean_ap, {'top_1':mean_ap, 'top_5':mean_ap, 'test_loss': 0, 'test_len':num_images}
 
         for data, target in test_data:
-            if args.task == 'nlp':
-
-                data, target = mask_tokens(data, tokenizer, args, device=device)# if args.mlm else (data, data)
-                data, target = Variable(data).to(device=device), Variable(target).to(device=device)
-
-                outputs = model(data, labels=target)# if args.mlm else model(data, labels=target)
-
-                loss = outputs[0]
-                #criterion(outputs[1].view(-1, 30000), target.view(-1))
-                test_loss += loss.data.item()
-                perplexity_loss += loss.data.item()
-
-                acc = accuracy(outputs[1].reshape(-1, outputs[1].shape[2]), target.reshape(-1), topk=(1, 5))
-
-                correct += acc[0].item()
-                top_5 += acc[1].item()
-
-            elif args.task == 'tag':
-                data, target = Variable(data).to(device=device), Variable(target).to(device=device)
-                output = model(data)
-                loss = criterion(output, target)
-
-                # we have to scan the sample one by one
-                for idx, sample in enumerate(output):
-                    target_index = torch.nonzero(target[idx]).flatten().cpu().numpy().tolist()
-                    maxk = len(target_index)
-                    preds += [sample.topk(maxk)[1].cpu().numpy().tolist()]
-                    targets_list += [target_index]
-
-                test_loss += loss.data.item()
-
-            elif args.task == 'speech':
-                data, target = Variable(data).to(device=device), Variable(target).to(device=device)
-                data = torch.unsqueeze(data, 1)
-
-                output = model(data)
-                loss = criterion(output, target)
-
-                test_loss += loss.data.item()  # Variable.data
-                acc = accuracy(output, target, topk=(1, 5))
-
-                correct += acc[0].item()
-                top_5 += acc[1].item()
-
-            elif args.task == 'text_clf':
-                (inputs, masks) = data
-                inputs, masks, target = Variable(inputs).to(device=device), Variable(masks).to(device=device), Variable(target).to(device=device)
-                outputs = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
-        
-                loss = outputs.loss
-                output = outputs.logits
-
-                test_loss += loss.item()  # Variable.data
-                acc = accuracy(output, target, topk=(1, 2))
-
-                correct += acc[0].item()
-                top_5 += acc[1].item()
-
-            elif args.task == 'voice':
-                (inputs, target, input_percentages, target_sizes) = data
-
-                input_sizes = input_percentages.mul_(int(inputs.size(3))).int()
-                inputs = Variable(inputs).to(device=device)
-
-                # unflatten targets
-                split_targets = []
-                offset = 0
-                for size in target_sizes:
-                    split_targets.append(target[offset:offset + size])
-                    offset += size
-
-                out, output_sizes = model(inputs, input_sizes)
-
-                decoded_output, _ = decoder.decode(out, output_sizes)
-                target_strings = decoder.convert_to_strings(split_targets)
-
-                for x in range(len(target_strings)):
-                    transcript, reference = decoded_output[x][0], target_strings[x][0]
-                    wer_inst = decoder.wer(transcript, reference)
-                    cer_inst = decoder.cer(transcript, reference)
-                    total_wer += wer_inst
-                    total_cer += cer_inst
-                    num_tokens += len(reference.split())
-                    num_chars += len(reference.replace(' ', ''))
-
-                outputs = out.transpose(0, 1)
-                outputs = outputs.float()
-                loss = criterion(outputs, target, output_sizes, target_sizes)
-                test_loss += loss.data.item()
-            else:
-                data, target = Variable(data).to(device=device), Variable(target).to(device=device)
-
-                output = model(data)
-                loss = criterion(output, target)
-
-                test_loss += loss.data.item()  # Variable.data
-                acc = accuracy(output, target, topk=(1, 5))
-
-                correct += acc[0].item()
-                top_5 += acc[1].item()
-
+            try:
+                if args.task == 'nlp':
+    
+                    data, target = mask_tokens(data, tokenizer, args, device=device)# if args.mlm else (data, data)
+                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
+    
+                    outputs = model(data, labels=target)# if args.mlm else model(data, labels=target)
+    
+                    loss = outputs[0]
+                    #criterion(outputs[1].view(-1, 30000), target.view(-1))
+                    test_loss += loss.data.item()
+                    perplexity_loss += loss.data.item()
+    
+                    acc = accuracy(outputs[1].reshape(-1, outputs[1].shape[2]), target.reshape(-1), topk=(1, 5))
+    
+                    correct += acc[0].item()
+                    top_5 += acc[1].item()
+    
+                elif args.task == 'tag':
+                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
+                    output = model(data)
+                    loss = criterion(output, target)
+    
+                    # we have to scan the sample one by one
+                    for idx, sample in enumerate(output):
+                        target_index = torch.nonzero(target[idx]).flatten().cpu().numpy().tolist()
+                        maxk = len(target_index)
+                        preds += [sample.topk(maxk)[1].cpu().numpy().tolist()]
+                        targets_list += [target_index]
+    
+                    test_loss += loss.data.item()
+    
+                elif args.task == 'speech':
+                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
+                    data = torch.unsqueeze(data, 1)
+    
+                    output = model(data)
+                    loss = criterion(output, target)
+    
+                    test_loss += loss.data.item()  # Variable.data
+                    acc = accuracy(output, target, topk=(1, 5))
+    
+                    correct += acc[0].item()
+                    top_5 += acc[1].item()
+    
+                elif args.task == 'text_clf' and args.model == 'albert-base-v2':
+                    (inputs, masks) = data
+                    inputs, masks, target = Variable(inputs).to(device=device), Variable(masks).to(device=device), Variable(target).to(device=device)
+                    outputs = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
+            
+                    loss = outputs.loss
+                    output = outputs.logits
+    
+                    test_loss += loss.item()  # Variable.data
+                    acc = accuracy(output, target, topk=(1, 2))
+    
+                    correct += acc[0].item()
+                    top_5 += acc[1].item()
+    
+                elif args.task == 'voice':
+                    (inputs, target, input_percentages, target_sizes) = data
+    
+                    input_sizes = input_percentages.mul_(int(inputs.size(3))).int()
+                    inputs = Variable(inputs).to(device=device)
+    
+                    # unflatten targets
+                    split_targets = []
+                    offset = 0
+                    for size in target_sizes:
+                        split_targets.append(target[offset:offset + size])
+                        offset += size
+    
+                    out, output_sizes = model(inputs, input_sizes)
+    
+                    decoded_output, _ = decoder.decode(out, output_sizes)
+                    target_strings = decoder.convert_to_strings(split_targets)
+    
+                    for x in range(len(target_strings)):
+                        transcript, reference = decoded_output[x][0], target_strings[x][0]
+                        wer_inst = decoder.wer(transcript, reference)
+                        cer_inst = decoder.cer(transcript, reference)
+                        total_wer += wer_inst
+                        total_cer += cer_inst
+                        num_tokens += len(reference.split())
+                        num_chars += len(reference.replace(' ', ''))
+    
+                    outputs = out.transpose(0, 1)
+                    outputs = outputs.float()
+                    loss = criterion(outputs, target, output_sizes, target_sizes)
+                    test_loss += loss.data.item()
+                else:
+                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
+    
+                    output = model(data)
+                    loss = criterion(output, target)
+    
+                    test_loss += loss.data.item()  # Variable.data
+                    acc = accuracy(output, target, topk=(1, 5))
+    
+                    correct += acc[0].item()
+                    top_5 += acc[1].item()
+            
+            except Exception as ex:
+                logging.info(f"Testing of failed as {ex}")
+                break
             test_len += len(target)
 
     if args.task == 'voice':
         correct,  top_5, test_len = float(total_wer), float(total_cer), float(num_tokens)
-
+    
+    test_len = max(test_len, 1)
     # loss function averages over batch size
     test_loss /= len(test_data)
     perplexity_loss /= len(test_data)
