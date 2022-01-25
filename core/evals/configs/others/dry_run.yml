@@ -1,0 +1,47 @@
+# Configuration file of FAR training experiment
+
+# ========== Cluster configuration ========== 
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: 10.0.0.1
+
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
+worker_ips: 
+    - 10.0.0.1:[2] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes. 
+
+exp_path: $HOME/FedScale/core
+
+# Entry function of executor and aggregator under $exp_path
+executor_entry: ./examples/dry_run/customized_executor.py
+
+aggregator_entry: aggregator.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate fedscale
+
+# ========== Additional job configuration ========== 
+# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+
+job_conf: 
+    - job_name: dryrun                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: $HOME/FedScale/core/evals # Path of log files
+    - total_worker: 4                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
+    - data_dir: $HOME/FedScale/dataset/data/    # Path of the dataset
+    - model: shufflenet_v2_x2_0                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2# - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
+    - eval_interval: 1000                     # How many rounds to run a testing on the testing set
+    - epochs: 200                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 0                       # Remove clients w/ less than 21 samples
+    - num_loaders: 2
+    - local_steps: 20
+    - learning_rate: 0.001
+    - batch_size: 32
+    - test_bsz: 32
+    - use_cuda: False
+

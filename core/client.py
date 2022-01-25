@@ -26,7 +26,7 @@ class Client(object):
         if conf.gradient_policy == 'fed-prox':
             # could be move to optimizer
             global_model = [param.data.clone() for param in model.parameters()]
-        
+
         if conf.task == "detection":
             lr = conf.learning_rate
             params = []
@@ -40,7 +40,7 @@ class Client(object):
             optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
 
         elif conf.task == 'nlp':
-            
+
             no_decay = ["bias", "LayerNorm.weight"]
             optimizer_grouped_parameters = [
                 {
@@ -109,7 +109,7 @@ class Client(object):
                     elif conf.task == 'text_clf' and  conf.model == 'albert-base-v2':
                         (data, masks) = data
                         data, masks = Variable(data).to(device=device), Variable(masks).to(device=device)
-            
+
                     else:
                         data = Variable(data).to(device=device)
     
@@ -173,7 +173,7 @@ class Client(object):
     
                     # ========= Weight handler ========================
                     self.optimizer.update_client_weight(conf, model, global_model if global_model is not None else None  )
-                    
+
                     completed_steps += 1
     
                     if completed_steps == conf.local_steps:
