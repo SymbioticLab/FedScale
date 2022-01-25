@@ -74,17 +74,17 @@ class Client(object):
             im_info = Variable(torch.FloatTensor(1).cuda())
             num_boxes = Variable(torch.LongTensor(1).cuda())
             gt_boxes = Variable(torch.FloatTensor(1).cuda())
-            
+
         # TODO: One may hope to run fixed number of epochs, instead of iterations
         while completed_steps < conf.local_steps:
             try:
-    
+
                 if len(client_data) == 0:
                     logging.info(f"Error : data size = 0")
                     break
-    
+
                 for data_pair in client_data:
-    
+
                     if conf.task == 'nlp':
                         (data, _) = data_pair
                         data, target = mask_tokens(data, tokenizer, conf, device=device)
@@ -95,10 +95,10 @@ class Client(object):
                         temp_data = data_pair
                         target = temp_data[4]
                         data = temp_data[0:4]
-    
+
                     else:
                         (data, target) = data_pair
-    
+
                     if conf.task == "detection":
                         im_data.resize_(data[0].size()).copy_(data[0])
                         im_info.resize_(data[1].size()).copy_(data[1])
@@ -112,9 +112,9 @@ class Client(object):
 
                     else:
                         data = Variable(data).to(device=device)
-    
+
                     target = Variable(target).to(device=device)
-    
+
                     if conf.task == 'nlp':
                         outputs = model(data, labels=target)
                         loss = outputs[0]
@@ -131,10 +131,10 @@ class Client(object):
                         rpn_loss_cls, rpn_loss_box, \
                         RCNN_loss_cls, RCNN_loss_bbox, \
                         rois_label = model(im_data, im_info, gt_boxes, num_boxes)
-    
+
                         loss = rpn_loss_cls + rpn_loss_box \
                                 + RCNN_loss_cls + RCNN_loss_bbox
-    
+
                         loss_rpn_cls = rpn_loss_cls.item()
                         loss_rpn_box = rpn_loss_box.item()
                         loss_rcnn_cls = RCNN_loss_cls.item()
@@ -144,19 +144,19 @@ class Client(object):
                     else:
                         output = model(data)
                         loss = criterion(output, target)
-    
+
                     # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
-    
+
                     if conf.task == 'nlp' or ( conf.task == 'text_clf' and  conf.model == 'albert-base-v2'):
                         loss_list = [loss.item()] #[loss.mean().data.item()]
-    
+
                     elif conf.task == "detection":
                         loss_list = [loss.tolist()]
                         loss = loss.mean()
                     else:
                         loss_list = loss.tolist()
                         loss = loss.mean()
-    
+
                     temp_loss = sum(loss_list)/float(len(loss_list))
                     loss_squre = sum([l**2 for l in loss_list])/float(len(loss_list))
                     # only measure the loss of the first epoch
@@ -165,25 +165,25 @@ class Client(object):
                             epoch_train_loss = temp_loss
                         else:
                             epoch_train_loss = (1. - conf.loss_decay) * epoch_train_loss + conf.loss_decay * temp_loss
-    
+
                     # ========= Define the backward loss ==============
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-    
+
                     # ========= Weight handler ========================
                     self.optimizer.update_client_weight(conf, model, global_model if global_model is not None else None  )
 
                     completed_steps += 1
-    
+
                     if completed_steps == conf.local_steps:
                         break
-            
+
             except Exception as ex:
                 error_type = ex
                 break
-            
-        model_param = [param.data.cpu().numpy() for param in model.parameters()]
+
+        model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
         results['utility'] = math.sqrt(loss_squre)*float(trained_unique_samples)

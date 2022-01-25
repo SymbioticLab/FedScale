@@ -2,14 +2,14 @@ import torch
 import logging
 import math
 from torch.autograd import Variable
-import numpy as np 
+import numpy as np
 
 import sys, os
 from clip_norm import clip_grad_norm_
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 
 from client import Client
-    
+
 class Customized_Client(Client):
     """Basic client component in Federated Learning"""
 
@@ -92,7 +92,7 @@ class Customized_Client(Client):
             param.data += delta_weight[idx]
             idx += 1
 
-        model_param = [param.data.cpu().numpy() for param in model.parameters()]
+        model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
 
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
@@ -105,6 +105,6 @@ class Customized_Client(Client):
 
         results['update_weight'] = model_param
         results['wall_duration'] = 0
-        
+
         return results
 
