@@ -13,7 +13,6 @@ import pickle
 
 MAX_MESSAGE_LENGTH = 50000000
 
-
 class ExecutorConnections(object):
     """"Helps aggregator manage its grpc connection with executors."""
 
@@ -23,9 +22,10 @@ class ExecutorConnections(object):
             self.address = None
             self.channel = None
             self.stub = None
-
-    def __init__(self, config):
+            
+    def __init__(self, config, base_port=50000):
         self.executors = {}
+        self.base_port = base_port
 
         executorId = 0
         for ip_numgpu in config.split("="):
@@ -34,7 +34,7 @@ class ExecutorConnections(object):
                 for _ in range(int(numexe.strip())):
                     executorId += 1
                     self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
-                    self.executors[executorId].address = '{}:{}'.format(ip, 50000 + executorId)
+                    self.executors[executorId].address = '{}:{}'.format(ip, self.base_port + executorId)
 
     def __len__(self):
         return len(self.executors)
@@ -71,7 +71,7 @@ class Aggregator(object):
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
-        self.executors = ExecutorConnections(args.executor_configs)
+        self.executors = ExecutorConnections(args.executor_configs, args.base_port)
 
         # ======== env information ========
         self.this_rank = 0
@@ -539,3 +539,4 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
+

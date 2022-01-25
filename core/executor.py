@@ -136,7 +136,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             ],
         )
         job_api_pb2_grpc.add_JobServiceServicer_to_server(self, self.grpc_server)
-        port = '[::]:{}'.format(50000 + self.this_rank)
+        port = '[::]:{}'.format(self.args.base_port + self.this_rank)
         self.grpc_server.add_insecure_port(port)
         self.grpc_server.start()
         logging.info(f'Started GRPC server at {port}')
