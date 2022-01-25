@@ -315,11 +315,11 @@ class Aggregator(object):
         if len(self.model_in_update) == 0:
             self.model_in_update = [True]
 
-            for idx, param in enumerate(self.model.parameters()):
-                param.data = torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance
-        else:
-            for idx, param in enumerate(self.model.parameters()):
-                param.data += torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance
+            for idx, param in enumerate(self.model.state_dict().values()):
+                param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
+        else: 
+            for idx, param in enumerate(self.model.state_dict().values()):
+                param.data +=(torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
 
 
     def save_last_param(self):
@@ -457,18 +457,19 @@ class Aggregator(object):
                 send_msg = {'event': event_msg}
 
                 if event_msg == 'update_model':
-                    serialized_tensors = {}
-                    for param in self.model.parameters():
+                    serialized_tensors = []
+                    # TODO: do serialization in parallel
+                    for param in self.model.state_dict().values():
                         buffer = io.BytesIO()
                         torch.save(param.data.to(device='cpu'), buffer)
                         buffer.seek(0)
-                        serialized_tensors[param] = buffer.read()
+                        serialized_tensors.append(buffer.read())
 
                     update_model_request = job_api_pb2.UpdateModelRequest()
                     for executorId in self.executors:
                         _ = self.executors.get_stub(executorId).UpdateModel(
-                            job_api_pb2.UpdateModelRequest(serialized_tensor=serialized_tensors[param])
-                                for param in self.model.parameters())
+                            job_api_pb2.UpdateModelRequest(serialized_tensor=param)
+                                for param in serialized_tensors)
 
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
@@ -539,4 +540,3 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-

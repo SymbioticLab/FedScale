@@ -220,7 +220,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
     def update_model_handler(self, request_iterator):
         """Update the model copy on this executor"""
-        for param, request in zip(self.model.parameters(), request_iterator):
+        for param, request in zip(self.model.state_dict().values(), request_iterator):
             buffer = io.BytesIO(request.serialized_tensor)
             buffer.seek(0)
             param.data = torch.load(buffer).to(device=self.device)
@@ -263,6 +263,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         """Train model given client ids"""
 
         # load last global model
+        s_time = time.time()
         client_model = self.load_global_model()
 
         conf.clientId, conf.device = clientId, self.device
@@ -277,7 +278,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             client = self.get_client_trainer(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
 
-            # we need to get runtime variance for BN
+            # [Deprecated] we need to get runtime variance for BN, override by state_dict from the coordinator
             self.model = client_model
         return train_res
 
@@ -347,4 +348,3 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
-
