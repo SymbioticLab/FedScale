@@ -9,6 +9,7 @@ import job_api_pb2
 import io
 import torch
 import pickle
+from torch.utils.tensorboard import SummaryWriter
 
 
 MAX_MESSAGE_LENGTH = 50000000
@@ -117,7 +118,9 @@ class Aggregator(object):
         self.test_result_accumulator = []
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                         'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
-        
+
+        self.log_writer = SummaryWriter(log_dir=logDir)
+
         # ======== Task specific ============
         self.imdb = None           # object detection
 
@@ -269,8 +272,9 @@ class Aggregator(object):
 
         dummy_clients = [sampledClientsReal[k] for k in sortedWorkersByCompletion[num_clients_to_collect:]]
         round_duration = completionTimes[top_k_index[-1]]
+        completionTimes.sort()
 
-        return clients_to_run, dummy_clients, completed_client_clock, round_duration
+        return clients_to_run, dummy_clients, completed_client_clock, round_duration, completionTimes[:num_clients_to_collect]
 
 
     def run(self):
@@ -325,10 +329,12 @@ class Aggregator(object):
     def save_last_param(self):
         self.last_global_model = [param.data.clone() for param in self.model.parameters()]
 
+
     def round_weight_handler(self, last_model, current_model):
         if self.epoch > 1:
             self.optimizer.update_round_gradient(last_model, current_model, self.model)
             
+
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
         self.epoch += 1
@@ -343,17 +349,27 @@ class Aggregator(object):
         # assign avg reward to explored, but not ran workers
         for clientId in self.round_stragglers:
             self.client_manager.registerScore(clientId, avgUtilLastEpoch,
-                                    time_stamp=self.epoch,
-                                    duration=self.virtual_client_clock[clientId]['computation']+self.virtual_client_clock[clientId]['communication'],
-                                    success=False)
+                    time_stamp=self.epoch,
+                    duration=self.virtual_client_clock[clientId]['computation']+self.virtual_client_clock[clientId]['communication'],
+                    success=False)
 
         avg_loss = sum(self.loss_accumulator)/max(1, len(self.loss_accumulator))
         logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, Epoch: {self.epoch}, Planned participants: " + \
             f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
 
+        # dump round completion information to tensorboard
+        if len(self.loss_accumulator):
+            self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.epoch)
+
+            self.log_writer.add_scalar('FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock/60.)
+            self.log_writer.add_scalar('FAR/round_duration (min)', self.round_duration/60., self.epoch)
+            self.log_writer.add_histogram('FAR/client_duration (min)', self.flatten_client_duration, self.epoch)
+
         # update select participants
-        self.sampled_participants = self.select_participants(select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
-        clientsToRun, round_stragglers, virtual_client_clock, round_duration = self.tictak_client_tasks(self.sampled_participants, self.args.total_worker)
+        self.sampled_participants = self.select_participants(
+                        select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
+        clientsToRun, round_stragglers, virtual_client_clock, round_duration, flatten_client_duration = self.tictak_client_tasks(
+                        self.sampled_participants, self.args.total_worker)
 
         logging.info(f"Selected participants to run: {clientsToRun}:\n{virtual_client_clock}")
 
@@ -364,6 +380,7 @@ class Aggregator(object):
         self.save_last_param()
         self.round_stragglers = round_stragglers
         self.virtual_client_clock = virtual_client_clock
+        self.flatten_client_duration = numpy.array(flatten_client_duration)
         self.round_duration = round_duration
         self.model_in_update = []
         self.test_result_accumulator = []
@@ -421,6 +438,14 @@ class Aggregator(object):
             # Dump the testing result
             with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
+
+            if len(self.loss_accumulator):
+                self.log_writer.add_scalar('Test/round_to_loss', self.testing_history['perf'][self.epoch]['loss'], self.epoch)
+                self.log_writer.add_scalar('Test/round_to_accuracy', self.testing_history['perf'][self.epoch]['top_1'], self.epoch)
+                self.log_writer.add_scalar('FAR/time_to_test_loss (min)', self.testing_history['perf'][self.epoch]['loss'], 
+                                            self.global_virtual_clock/60.)
+                self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.epoch]['top_1'], 
+                                            self.global_virtual_clock/60.)
 
             self.event_queue.append('start_round')
 
@@ -540,3 +565,4 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
+
