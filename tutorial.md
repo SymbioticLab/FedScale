@@ -74,6 +74,4 @@ cd core/evals
 cat job_name_logging |grep 'Training loss'
 cat job_name_logging |grep 'FL Testing'
 ```
-We are going to launch our Tensorboard to enable more efficient visualization for your job.
- 
- 
+You can also use [Tensorboard](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md#experiment-dashboard) to better visualize the progress.
