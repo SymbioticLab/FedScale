@@ -45,49 +45,6 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
         super(Executor, self).__init__()
 
-
-    def UpdateModel(self, request_iterator, context):
-        """A GRPC functionfor JobService invoked by UpdateModel request.
-        """
-        logging.info('Received GRPC UpdateModel request')
-        self.update_model_handler(request_iterator)
-        return job_api_pb2.UpdateModelResponse()
-
-
-    def Train(self, request, context):
-        """A GRPC function for JobService invoked by Train request.
-        """
-        logging.info('Received GRPC Train request')
-        return job_api_pb2.TrainResponse()
-
-
-    def Stop(self, request, context):
-        """A GRPC functionfor JobService invoked by Stop request.
-        """
-        logging.info('Received GRPC Stop request')
-        self.received_stop_request = True
-        return job_api_pb2.StopResponse()
-
-
-    def ReportExecutorInfo(self, request, context):
-        """A GRPC function for JobService invoked by ReportExecutorInfo request.
-
-        This is called only once when the training starts.
-        """
-        logging.info('Received GRPC ReportExecutorInfo request')
-        response = job_api_pb2.ReportExecutorInfoResponse()
-        response.training_set_size.extend(self.training_sets.getSize()['size'])
-        return response
-
-
-    def Test(self, request, context):
-        """A GRPC function for JobService invoked by Test request.
-        """
-        logging.info('Received GRPC Test request')
-        test_res = self.testing_handler(args=self.args)
-        return job_api_pb2.TestResponse(serialized_test_response=pickle.dumps(test_res))
-
-
     def setup_env(self):
         logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
 
@@ -204,6 +161,53 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.setup_communication()
         self.event_monitor()
 
+    def UpdateModel(self, request_iterator, context):
+        """A GRPC functionfor JobService invoked by UpdateModel request.
+        """
+        logging.info('Received GRPC UpdateModel request')
+        self.update_model_handler(request_iterator)
+        return job_api_pb2.UpdateModelResponse()
+
+
+    def Train(self, request, context):
+        """A GRPC function for JobService invoked by Train request.
+        """
+        logging.info(f'Received GRPC Train request')
+        clientId = request.client_id
+        train_config = pickle.loads(request.serialized_train_config)
+        if 'model' in train_config and train_config['model'] is not None:
+            self.model = train_config['model']
+
+        return job_api_pb2.TrainResponse()
+
+
+    def Stop(self, request, context):
+        """A GRPC functionfor JobService invoked by Stop request.
+        """
+        logging.info('Received GRPC Stop request')
+        self.received_stop_request = True
+        return job_api_pb2.StopResponse()
+
+
+    def ReportExecutorInfo(self, request, context):
+        """A GRPC function for JobService invoked by ReportExecutorInfo request.
+
+        This is called only once when the training starts.
+        """
+        logging.info('Received GRPC ReportExecutorInfo request')
+        response = job_api_pb2.ReportExecutorInfoResponse()
+        response.training_set_size.extend(self.training_sets.getSize()['size'])
+        return response
+
+
+    def Test(self, request, context):
+        """A GRPC function for JobService invoked by Test request.
+        """
+        logging.info('Received GRPC Test request')
+        test_res = self.testing_handler(args=self.args)
+        response = {'executorId': self.this_rank, 'results': test_res}
+        return job_api_pb2.TestResponse(serialized_test_response=pickle.dumps(response))
+
 
     def push_msg_to_server(self, event, results):
         self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
@@ -220,10 +224,11 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
     def update_model_handler(self, request_iterator):
         """Update the model copy on this executor"""
-        for param, request in zip(self.model.state_dict().values(), request_iterator):
+        for request in request_iterator:
             buffer = io.BytesIO(request.serialized_tensor)
             buffer.seek(0)
-            param.data = torch.load(buffer).to(device=self.device)
+            self.model = torch.load(buffer).to(device=self.device)
+            break
 
         self.epoch += 1
         if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
