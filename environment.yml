@@ -30,5 +30,5 @@ dependencies:
     - h5py
     - gdown
     - sentencepiece
-    - grpcio
+    - grpcio==1.40.0
     - gym

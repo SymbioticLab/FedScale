@@ -21,7 +21,7 @@ If you have any questions or comments, please join our [Slack](https://join.slac
 * [Realistic FL Datasets](#realistic-fl-datasets)
 * [Run Experiments with FAR](#run-experiments-with-far)
 * [Repo Structure](#repo-structure)
-* [Note](#acknowledgements)
+* [Notes](#notes)
 * [Contact](#contact)
 
 ## Getting Started
@@ -134,6 +134,5 @@ and
 ```
 
 ## Contact
-Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xfzhu@cs.washington.edu), Harsha V. Madhyastha and Mosharaf Chowdhury from the University of Michigan.
-
+If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel, or email us (fedscale@googlegroups.com). 
 

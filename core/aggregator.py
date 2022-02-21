@@ -3,66 +3,16 @@
 from fl_aggregator_libs import *
 from random import Random
 from resource_manager import ResourceManager
-import grpc
+from communication.channelcontext import ExecutorConnections
+from response import BasicResponse
+
 import job_api_pb2_grpc
 import job_api_pb2
+import grpc
 import io
 import torch
 import pickle
 from torch.utils.tensorboard import SummaryWriter
-
-
-MAX_MESSAGE_LENGTH = 50000000
-
-class ExecutorConnections(object):
-    """"Helps aggregator manage its grpc connection with executors."""
-
-    class _ExecutorContext(object):
-        def __init__(self, executorId):
-            self.id = executorId
-            self.address = None
-            self.channel = None
-            self.stub = None
-            
-    def __init__(self, config, base_port=50000):
-        self.executors = {}
-        self.base_port = base_port
-
-        executorId = 0
-        for ip_numgpu in config.split("="):
-            ip, numgpu = ip_numgpu.split(':')
-            for numexe in numgpu.strip()[1:-1].split(','):
-                for _ in range(int(numexe.strip())):
-                    executorId += 1
-                    self.executors[executorId] = ExecutorConnections._ExecutorContext(executorId)
-                    self.executors[executorId].address = '{}:{}'.format(ip, self.base_port + executorId)
-
-    def __len__(self):
-        return len(self.executors)
-
-    def __iter__(self):
-        return iter(self.executors)
-
-    def open_grpc_connection(self):
-        for executorId in self.executors:
-            logging.info('%%%%%%%%%% Opening grpc connection to ' + self.executors[executorId].address + ' %%%%%%%%%%')
-            channel = grpc.insecure_channel(
-                self.executors[executorId].address,
-                options=[
-                    ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                    ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-                ]
-            )
-            self.executors[executorId].channel = channel
-            self.executors[executorId].stub = job_api_pb2_grpc.JobServiceStub(channel)
-
-    def close_grpc_connection(self):
-        for executorId in self.executors:
-            logging.info(f'%%%%%%%%%% Closing grpc connection with {executorId} %%%%%%%%%%')
-            self.executors[executorId].channel.close()
-
-    def get_stub(self, executorId):
-        return self.executors[executorId].stub
 
 
 class Aggregator(object):
@@ -72,7 +22,6 @@ class Aggregator(object):
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
-        self.executors = ExecutorConnections(args.executor_configs, args.base_port)
 
         # ======== env information ========
         self.this_rank = 0
@@ -85,15 +34,15 @@ class Aggregator(object):
         self.model = None
 
         # list of parameters in model.parameters()
-        self.model_in_update = []
+        self.model_in_update = 0
         self.last_global_model = []
 
         # ======== channels ========
-        self.server_event_queue = {}
-        self.client_event_queue = Queue()
-        self.control_manager = None
+        self.executors = None 
+
         # event queue of its own functions
         self.event_queue = collections.deque()
+        self.client_result_queue = []
 
         # ======== runtime information ========
         self.tasks_round = 0
@@ -140,7 +89,7 @@ class Aggregator(object):
                 except Exception as e:
                     assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
 
-        self.init_control_communication(self.args.ps_ip, self.args.manager_port, self.executors)
+        self.init_control_communication()
         self.init_data_communication()
         self.optimizer = ServerOptimizer(self.args.gradient_policy, self.args, self.device)
 
@@ -152,31 +101,16 @@ class Aggregator(object):
         torch.backends.cudnn.deterministic = True
 
 
-    def init_control_communication(self, ps_ip, ps_port, executors):
+    def init_control_communication(self):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
-        logging.info(f"Start to initiate {ps_ip}:{ps_port} for control plane communication ...")
-
-        dummy_que = {executorId:Queue() for executorId in executors}
-        # create multiple queue for each aggregator_executor pair
-        for executorId in executors:
-            BaseManager.register('get_server_event_que'+str(executorId), callable=lambda: dummy_que[executorId])
-
-        dummy_client_que = Queue()
-        BaseManager.register('get_client_event', callable=lambda: dummy_client_que)
-
-        self.control_manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
-        self.control_manager.start()
-
-        #self.server_event_queue = torch.multiprocessing.Manager().dict()
-        for executorId in self.executors:
-            self.server_event_queue[executorId] = eval('self.control_manager.get_server_event_que'+str(executorId)+'()')
-
-        self.client_event_queue = self.control_manager.get_client_event()
+        logging.info(f"Initiating control plane communication ...")
+        self.executors = ExecutorConnections(self.args.executor_configs, self.args.base_port)
 
 
     def init_data_communication(self):
-        #dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=len(self.executors) + 1)
+        """For jumbo traffics (e.g., training results).
+        """
         pass
 
     def init_model(self):
@@ -304,26 +238,26 @@ class Aggregator(object):
         self.loss_accumulator.append(results['moving_loss'])
 
         self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
-                    time_stamp=self.epoch,
-                    duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
-                )
+            time_stamp=self.epoch,
+            duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
+        )
 
         device = self.device
         """
-            [FedAvg] "Communication-Efficient Learning of Deep Networks from Decentralized Data". 
+            [FedAvg] "Communication-Efficient Learning of Deep Networks from Decentralized Data".
             H. Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, Blaise Aguera y Arcas. AISTATS, 2017
         """
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
         importance = 1./self.tasks_round
-        if len(self.model_in_update) == 0:
-            self.model_in_update = [True]
+        if self.model_in_update == 0:
+            self.model_in_update += 1
 
             for idx, param in enumerate(self.model.state_dict().values()):
                 param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
-        else: 
+        else:
             for idx, param in enumerate(self.model.state_dict().values()):
-                param.data +=(torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
+                param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
 
 
     def save_last_param(self):
@@ -333,7 +267,7 @@ class Aggregator(object):
     def round_weight_handler(self, last_model, current_model):
         if self.epoch > 1:
             self.optimizer.update_round_gradient(last_model, current_model, self.model)
-            
+
 
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
@@ -382,7 +316,7 @@ class Aggregator(object):
         self.virtual_client_clock = virtual_client_clock
         self.flatten_client_duration = numpy.array(flatten_client_duration)
         self.round_duration = round_duration
-        self.model_in_update = []
+        self.model_in_update = 0
         self.test_result_accumulator = []
         self.stats_util_accumulator = []
         self.client_training_results = []
@@ -397,7 +331,13 @@ class Aggregator(object):
             self.event_queue.append('start_round')
 
 
-    def testing_completion_handler(self, results):
+    def testing_completion_handler(self, responses):
+        """Each executor will handle a subset of testing dataset
+        """
+        response = pickle.loads(responses.result().serialized_test_response)
+        executorId, results = response['executorId'], response['results']
+
+        # List append is thread-safe
         self.test_result_accumulator.append(results)
 
         # Have collected all testing results
@@ -442,18 +382,58 @@ class Aggregator(object):
             if len(self.loss_accumulator):
                 self.log_writer.add_scalar('Test/round_to_loss', self.testing_history['perf'][self.epoch]['loss'], self.epoch)
                 self.log_writer.add_scalar('Test/round_to_accuracy', self.testing_history['perf'][self.epoch]['top_1'], self.epoch)
-                self.log_writer.add_scalar('FAR/time_to_test_loss (min)', self.testing_history['perf'][self.epoch]['loss'], 
+                self.log_writer.add_scalar('FAR/time_to_test_loss (min)', self.testing_history['perf'][self.epoch]['loss'],
                                             self.global_virtual_clock/60.)
-                self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.epoch]['top_1'], 
+                self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.epoch]['top_1'],
                                             self.global_virtual_clock/60.)
 
             self.event_queue.append('start_round')
+
 
     def get_client_conf(self, clientId):
         # learning rate scheduler
         conf = {}
         conf['learning_rate'] = self.args.learning_rate
+        conf['model'] = None
         return conf
+
+    def create_client_task(self, executorId):
+        """Issue a new client training task to the executor"""
+
+        next_clientId = self.resource_manager.get_next_task()
+
+        if next_clientId is not None:
+            config = self.get_client_conf(next_clientId)
+
+            future_response = self.executors.get_stub(executorId).Train.future(
+                job_api_pb2.TrainRequest(client_id=next_clientId, serialized_train_config=pickle.dumps(config)))
+
+            future_response.add_done_callback(self.task_completion_handler)
+
+
+    def fetch_completion_handler(self, responses):
+        training_result = pickle.loads(responses.result().serialized_fetch_response)
+        self.client_result_queue.append(training_result)
+
+
+    def task_completion_handler(self, responses):
+        """Handler for training completion on each executor"""
+
+        response = pickle.loads(responses.result().serialized_train_response)
+        executorId, results = response.executorId, response.status
+
+        # Schedule a new task first to pipeline computation and communication
+        self.create_client_task(executorId)
+
+        # Fetch model updates
+        if results is False:
+            logging.error(f"Executor {executorId} fails to run client {response.clientId}, due to {response.error}")
+
+        fetch_response = self.executors.get_stub(executorId).Fetch.future(
+                                job_api_pb2.FetchRequest(client_id=response.clientId))
+
+        fetch_response.add_done_callback(self.fetch_completion_handler)
+
 
     def event_monitor(self):
         logging.info("Start monitoring events ...")
@@ -468,7 +448,7 @@ class Aggregator(object):
                         job_api_pb2.ReportExecutorInfoRequest())
                     self.executor_info_handler(executorId, {"size": response.training_set_size})
                 break
-                
+
             except Exception as e:
                 self.executors.close_grpc_connection()
                 logging.warning(f"{e}: Have not received executor information. This may due to slow data loading (e.g., Reddit)")
@@ -479,80 +459,42 @@ class Aggregator(object):
         while True:
             if len(self.event_queue) != 0:
                 event_msg = self.event_queue.popleft()
-                send_msg = {'event': event_msg}
 
                 if event_msg == 'update_model':
-                    serialized_tensors = []
-                    # TODO: do serialization in parallel
-                    for param in self.model.state_dict().values():
-                        buffer = io.BytesIO()
-                        torch.save(param.data.to(device='cpu'), buffer)
-                        buffer.seek(0)
-                        serialized_tensors.append(buffer.read())
-
+                    serialized_data = pickle.dumps(self.model.to(device='cpu'))
                     update_model_request = job_api_pb2.UpdateModelRequest()
+
+                    future_context = []
                     for executorId in self.executors:
-                        _ = self.executors.get_stub(executorId).UpdateModel(
-                            job_api_pb2.UpdateModelRequest(serialized_tensor=param)
-                                for param in serialized_tensors)
+                        future_context.append(self.executors.get_stub(executorId).UpdateModel.future(
+                            job_api_pb2.UpdateModelRequest(serialized_tensor=serialized_data)))
+
+                    for context in future_context:
+                        _ = context.result()
 
                 elif event_msg == 'start_round':
                     for executorId in self.executors:
-                        next_clientId = self.resource_manager.get_next_task()
-
-                        if next_clientId is not None:
-                            # TODO: Remove sending train request via server_event_queue
-                            config = self.get_client_conf(next_clientId)
-                            self.server_event_queue[executorId].put({'event': 'train', 'clientId':next_clientId, 'conf': config})
-
-                            _ = self.executors.get_stub(executorId).Train(
-                                job_api_pb2.TrainRequest(
-                                    client_id=next_clientId,
-                                    serialized_train_config=pickle.dumps(config)))
+                        self.create_client_task(executorId)
 
                 elif event_msg == 'stop':
                     for executorId in self.executors:
-                        _ = self.executors.get_stub(executorId).Stop(job_api_pb2.StopRequest())
+                        _ = self.executors.get_stub(executorId).Stop.future(job_api_pb2.StopRequest())
 
                     self.stop()
                     break
 
                 elif event_msg == 'test':
                     for executorId in self.executors:
-                        response = self.executors.get_stub(executorId).Test(job_api_pb2.TestRequest())
-                        self.testing_completion_handler(pickle.loads(response.serialized_test_response))
+                        future_response = self.executors.get_stub(executorId).Test.future(job_api_pb2.TestRequest())
+                        future_response.add_done_callback(self.testing_completion_handler)
 
-            elif not self.client_event_queue.empty():
-
-                event_dict = self.client_event_queue.get()
-                event_msg, executorId, results = event_dict['event'], event_dict['executorId'], event_dict['return']
-
-                if event_msg != 'train_nowait':
-                    logging.info(f"Round {self.epoch}: Receive (Event:{event_msg.upper()}) from (Executor:{executorId})")
-
-                # collect training returns from the executor
-                if event_msg == 'train_nowait':
-                    # pop a new client to run
-                    next_clientId = self.resource_manager.get_next_task()
-
-                    if next_clientId is not None:
-                        config = self.get_client_conf(next_clientId)
-                        runtime_profile = {'event': 'train', 'clientId':next_clientId, 'conf': config}
-                        self.server_event_queue[executorId].put(runtime_profile)
-
-
-                elif event_msg == 'train':
-                    # push training results
-                    self.client_completion_handler(results)
-
-                    if len(self.stats_util_accumulator) == self.tasks_round:
+            elif len(self.client_result_queue) > 0:
+                self.client_completion_handler(self.client_result_queue.pop(0))
+                if len(self.stats_util_accumulator) == self.tasks_round:
                         self.round_completion_handler()
-
-                else:
-                    logging.error("Unknown message types!")
-
-            # execute every 100 ms
-            time.sleep(0.1)
+            else:
+                # execute every 100 ms
+                time.sleep(0.1)
 
         self.executors.close_grpc_connection()
 
@@ -565,4 +507,3 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-
