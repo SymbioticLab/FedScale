@@ -5,6 +5,8 @@ import gc
 from client import Client
 from rlclient import RLClient
 from concurrent import futures
+from response import BasicResponse
+
 import grpc
 import job_api_pb2_grpc
 import job_api_pb2
@@ -32,8 +34,6 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
         # ======== channels ========
-        self.server_event_queue = self.client_event_queue = None
-        self.control_manager = None
         self.grpc_server = None
 
         # ======== runtime information ========
@@ -42,6 +42,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.epoch = 0
         self.start_run_time = time.time()
         self.received_stop_request = False
+        self.client_task_result = {}
 
         super(Executor, self).__init__()
 
@@ -66,8 +67,8 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
                 torch.cuda.set_device(self.device)
 
     def setup_communication(self):
-        self.init_control_communication(self.args.ps_ip, self.args.manager_port)
-        #self.init_data_communication()
+        self.init_control_communication()
+        self.init_data_communication()
 
 
     def setup_seed(self, seed=1):
@@ -79,14 +80,14 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         torch.backends.cudnn.deterministic = True
 
 
-    def init_control_communication(self, ps_ip, ps_port):
-        # Create communication channel between aggregator and worker
-        # This channel serves control messages
+    def init_control_communication(self):
+        """Create communication channel between coordinator and executor.
+        This channel serves control messages."""
 
-        logging.info(f"Start to connect to {ps_ip}:{ps_port} for control plane communication ...")
+        logging.info(f"Connecting to Coordinator ({args.ps_ip}) for control plane communication ...")
 
         self.grpc_server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=30),
+            futures.ThreadPoolExecutor(max_workers=10),
             options=[
                 ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
                 ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
@@ -96,32 +97,13 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         port = '[::]:{}'.format(self.args.base_port + self.this_rank)
         self.grpc_server.add_insecure_port(port)
         self.grpc_server.start()
-        logging.info(f'Started GRPC server at {port}')
-
-        BaseManager.register('get_server_event_que'+str(self.this_rank))
-        BaseManager.register('get_client_event')
-
-        self.control_manager = BaseManager(address=(ps_ip, ps_port), authkey=b'FLPerf')
-        start_time, is_connected = time.time(), False
-
-        while time.time() - start_time < 15 and not is_connected:
-            try:
-                self.control_manager.connect()
-                is_connected = True
-            except Exception as e:
-                time.sleep(numpy.random.rand(1)[0]*5+0.1)
-                logging.info(f"Retrying connection to {ps_ip}:{ps_port}")
-                pass
-
-        assert is_connected, 'Failed to connect to the aggregator'
-        logging.info("Successfully connect to the aggregator")
-
-        self.server_event_queue = eval('self.control_manager.get_server_event_que'+str(self.this_rank)+'()')
-        self.client_event_queue = self.control_manager.get_client_event()
+        logging.info(f'Started GRPC server at {port} for control plane')
 
 
     def init_data_communication(self):
-        dist.init_process_group(self.args.backend, rank=self.this_rank, world_size=self.num_executors + 1)
+        """In charge of jumbo data traffics (e.g., fetch training result)
+        """
+        pass
 
 
     def init_model(self):
@@ -161,12 +143,22 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.setup_communication()
         self.event_monitor()
 
-    def UpdateModel(self, request_iterator, context):
+    def UpdateModel(self, request, context):
         """A GRPC functionfor JobService invoked by UpdateModel request.
         """
         logging.info('Received GRPC UpdateModel request')
-        self.update_model_handler(request_iterator)
+        self.update_model_handler(request)
         return job_api_pb2.UpdateModelResponse()
+
+
+    def Fetch(self, request, context):
+        """A GRPC function for fetching training result for client
+        """
+        clientId = request.client_id
+        serialized_fetch_response = pickle.dumps(self.client_task_result.get(clientId, None))
+        del self.client_task_result[clientId]
+
+        return job_api_pb2.FetchResponse(serialized_fetch_response=serialized_fetch_response)
 
 
     def Train(self, request, context):
@@ -175,10 +167,17 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         logging.info(f'Received GRPC Train request')
         clientId = request.client_id
         train_config = pickle.loads(request.serialized_train_config)
-        if 'model' in train_config and train_config['model'] is not None:
-            self.model = train_config['model']
 
-        return job_api_pb2.TrainResponse()
+        model = None
+        if 'model' in train_config and train_config['model'] is not None:
+            model = train_config['model']
+
+        client_conf = self.override_conf(train_config)
+        train_res = self.training_handler(clientId=clientId, conf=client_conf, model=model)
+        self.client_task_result[clientId] = train_res
+
+        return job_api_pb2.TrainResponse(serialized_train_response=
+                pickle.dumps(BasicResponse(executorId=self.this_rank, clientId=clientId, status=True)))
 
 
     def Stop(self, request, context):
@@ -209,26 +208,17 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         return job_api_pb2.TestResponse(serialized_test_response=pickle.dumps(response))
 
 
-    def push_msg_to_server(self, event, results):
-        self.client_event_queue.put({'return': results, 'event': event, 'executorId': self.this_rank})
-
-
-    def push_msg_to_server_asyn(self, event, results):
-        self.client_event_queue.put_nowait({'return': results, 'event': event, 'executorId': self.this_rank})
-
-
     def report_executor_info_handler(self):
         """Return the statistics of training dataset"""
         return self.training_sets.getSize()
 
 
-    def update_model_handler(self, request_iterator):
+    def update_model_handler(self, request):
         """Update the model copy on this executor"""
-        for request in request_iterator:
-            buffer = io.BytesIO(request.serialized_tensor)
-            buffer.seek(0)
-            self.model = torch.load(buffer).to(device=self.device)
-            break
+        temp_model = pickle.loads(request.serialized_tensor)
+        for p, tp in zip(self.model.state_dict().values(), temp_model.state_dict().values()):
+            p.data = tp.to(device=self.device)
+        del temp_model
 
         self.epoch += 1
         if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
@@ -264,12 +254,12 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         return Client(conf)
 
 
-    def training_handler(self, clientId, conf):
+    def training_handler(self, clientId, conf, model=None):
         """Train model given client ids"""
 
         # load last global model
         s_time = time.time()
-        client_model = self.load_global_model()
+        client_model = self.load_global_model() if model is None else model
 
         conf.clientId, conf.device = clientId, self.device
         conf.tokenizer = tokenizer
@@ -325,31 +315,10 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
                 self.grpc_server.stop(0)
                 break
 
-            if not self.server_event_queue.empty():
-                event_dict = self.server_event_queue.get()
-                event_msg = event_dict['event']
-
-                logging.info(f"Executor {self.this_rank}: Received (Event:{event_msg.upper()}) from aggregator")
-
-                # initiate each training round
-                if event_msg == 'train':
-                    clientId, client_conf = event_dict['clientId'], self.override_conf(event_dict['conf'])
-
-                    train_res = self.training_handler(clientId=clientId, conf=client_conf)
-                    self.push_msg_to_server('train_nowait', None)
-                    # model updates may be time-consuming, thus we apply asyn push for better communication-computation overlaps
-                    self.push_msg_to_server_asyn(event_msg, train_res)
-
-                else:
-                    logging.error("Unknown message types!")
-
-            time.sleep(0.3)
-
-
-    def stop(self):
-        logging.info(f"Terminating (Executor {self.this_rank}) ...")
+            time.sleep(1)
 
 
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
+

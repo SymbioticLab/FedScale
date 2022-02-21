@@ -14,7 +14,7 @@ class JobServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.UpdateModel = channel.stream_unary(
+        self.UpdateModel = channel.unary_unary(
                 '/fedscale.JobService/UpdateModel',
                 request_serializer=job__api__pb2.UpdateModelRequest.SerializeToString,
                 response_deserializer=job__api__pb2.UpdateModelResponse.FromString,
@@ -22,7 +22,12 @@ class JobServiceStub(object):
         self.Train = channel.unary_unary(
                 '/fedscale.JobService/Train',
                 request_serializer=job__api__pb2.TrainRequest.SerializeToString,
-                response_deserializer=job__api__pb2.TrainRequest.FromString,
+                response_deserializer=job__api__pb2.TrainResponse.FromString,
+                )
+        self.Fetch = channel.unary_unary(
+                '/fedscale.JobService/Fetch',
+                request_serializer=job__api__pb2.FetchRequest.SerializeToString,
+                response_deserializer=job__api__pb2.FetchResponse.FromString,
                 )
         self.Stop = channel.unary_unary(
                 '/fedscale.JobService/Stop',
@@ -44,13 +49,19 @@ class JobServiceStub(object):
 class JobServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def UpdateModel(self, request_iterator, context):
+    def UpdateModel(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def Train(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Fetch(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -77,7 +88,7 @@ class JobServiceServicer(object):
 
 def add_JobServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'UpdateModel': grpc.stream_unary_rpc_method_handler(
+            'UpdateModel': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateModel,
                     request_deserializer=job__api__pb2.UpdateModelRequest.FromString,
                     response_serializer=job__api__pb2.UpdateModelResponse.SerializeToString,
@@ -85,7 +96,12 @@ def add_JobServiceServicer_to_server(servicer, server):
             'Train': grpc.unary_unary_rpc_method_handler(
                     servicer.Train,
                     request_deserializer=job__api__pb2.TrainRequest.FromString,
-                    response_serializer=job__api__pb2.TrainRequest.SerializeToString,
+                    response_serializer=job__api__pb2.TrainResponse.SerializeToString,
+            ),
+            'Fetch': grpc.unary_unary_rpc_method_handler(
+                    servicer.Fetch,
+                    request_deserializer=job__api__pb2.FetchRequest.FromString,
+                    response_serializer=job__api__pb2.FetchResponse.SerializeToString,
             ),
             'Stop': grpc.unary_unary_rpc_method_handler(
                     servicer.Stop,
@@ -113,7 +129,7 @@ class JobService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def UpdateModel(request_iterator,
+    def UpdateModel(request,
             target,
             options=(),
             channel_credentials=None,
@@ -123,7 +139,7 @@ class JobService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_unary(request_iterator, target, '/fedscale.JobService/UpdateModel',
+        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/UpdateModel',
             job__api__pb2.UpdateModelRequest.SerializeToString,
             job__api__pb2.UpdateModelResponse.FromString,
             options, channel_credentials,
@@ -142,7 +158,24 @@ class JobService(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/Train',
             job__api__pb2.TrainRequest.SerializeToString,
-            job__api__pb2.TrainRequest.FromString,
+            job__api__pb2.TrainResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Fetch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/Fetch',
+            job__api__pb2.FetchRequest.SerializeToString,
+            job__api__pb2.FetchResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
