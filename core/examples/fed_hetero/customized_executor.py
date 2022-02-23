@@ -1,9 +1,9 @@
-from executor import Executor
+import sys, os
 from customized_client import Customized_Client
 from customerized_fllibs import init_model
-import torch
-import pickle
-import time 
+
+sys.path.insert(1, os.path.join(sys.path[0], '../../'))
+from executor import Executor
 
 class Customized_Executor(Executor):
 
