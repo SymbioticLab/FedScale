@@ -42,7 +42,7 @@ class Customized_Client(Client):
                             if param_idxi is None:
                                 param_idxi = torch.arange(input_size, device=v.device)
                             input_idx_i = param_idxi
-                            scaler_rate = self.model_rate / conf.global_model_rate
+                            scaler_rate = self.model_rate
                             local_output_size = int(np.ceil(output_size * scaler_rate))
                             output_idx_i = torch.arange(output_size, device=v.device)[:local_output_size]
                             param_idxi = output_idx_i
