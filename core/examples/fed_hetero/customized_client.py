@@ -6,9 +6,9 @@ import numpy as np
 from torch.autograd import Variable
 from collections import OrderedDict
 import sys, os
-from client import Client
 from customized_fllibs import Metric
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
+from client import Client
 
 class Customized_Client(Client):
     """Basic client component in Federated Learning"""

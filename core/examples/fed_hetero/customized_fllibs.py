@@ -1,10 +1,10 @@
 import sys, os, logging
 from resnet_fedhet import resnet18
-from argParser import args
 import torch
 import torch.nn.functional as F
 import numpy as np
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
+from argParser import args
 
 def init_model():
     global tokenizer

@@ -1,6 +1,9 @@
-from fl_aggregator_libs import *
+import customized_fllibs
+
+import sys, os
+sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from aggregator import Aggregator
-from customized_fllibs import init_model
+from fl_aggregator_libs import *
 
 
 class Customized_Aggregator(Aggregator):
@@ -10,7 +13,7 @@ class Customized_Aggregator(Aggregator):
 
     def init_model(self):
         # return super().init_model()
-        return init_model()
+        return customized_fllibs.init_model()
 
     
     def client_completion_handler(self, results):
@@ -120,3 +123,7 @@ class Customized_Aggregator(Aggregator):
         else:
             self.event_queue.append('update_model')
             self.event_queue.append('start_round')
+            
+if __name__ == "__main__":
+    aggregator = Customized_Aggregator(args)
+    aggregator.run()

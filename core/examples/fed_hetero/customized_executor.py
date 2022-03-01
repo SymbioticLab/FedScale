@@ -4,6 +4,7 @@ from customized_fllibs import init_model
 
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from executor import Executor
+from argParser import args
 
 class Customized_Executor(Executor):
 
@@ -16,3 +17,7 @@ class Customized_Executor(Executor):
     def init_model(self):
         """Return the model architecture used in training"""
         return init_model()
+
+if __name__ == "__main__":
+    executor = Customized_Executor(args)
+    executor.run()
