@@ -90,15 +90,8 @@ class Customized_Client(Client):
         self.param_idx = param_idx
         return local_model
 
-    def get_label_split(self, client_data):
-        label = torch.tensor(client_data.target)
-        label_split = {}
-        label_split = torch.unique(label).tolist()
-        return label_split
-
     def train(self, client_data, model, conf):
         # consider only detection task
-        label_split = self.get_label_split(client_data)
         clientId = conf.clientId
         logging.ingo(f"Start to split model (CLIENT: {clientId}) ...")
         model = self.split_model(model, conf)
@@ -107,38 +100,52 @@ class Customized_Client(Client):
         metric = Metric()
         model = model.to(device=device)
         model.train()
+        trained_unique_samples = min(len(client_data.dataset), conf.local_steps * conf.batch_size)
         optimizer =  torch.optim.SGD(model.parameters(), lr=conf.learning_rate, momentum=0.9, weight_decay=5e-4)# make_optimizer(model, lr)
+        criterion = torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
+        epoch_train_loss = 1e-4
+        error_type = None
+        completed_steps = 0
+        loss_squre = 0
         completed_steps = 0
         while completed_steps < conf.local_steps:
             try:
                 if len(client_data) == 0:
                     logging.info(f"Error : data size = 0")
                     break
-                for i, input in enumerate(client_data):
-                    # input = collate(input)
-                    for k in input:
-                        input[k] = torch.stack(input[k], 0)
-                    input_size = input['img'].size(0)
-                    input['label_split'] = torch.tensor(label_split)
-                    input = input.to(device=device)
+                for data_pair in client_data:
+                    (data, target) = data_pair
+                    data = Variable(data).to(device=device)
+                    target = Variable(target).to(device=device)
+                    output = model(data)
+                    loss = criterion(output, target)
+                    loss_list = loss.tolist()
+                    loss = loss.mean()
+                    temp_loss = sum(loss_list)/float(len(loss_list))
+                    loss_squre = sum([l**2 for l in loss_list])/float(len(loss_list))
+                    if completed_steps < len(client_data):
+                        if epoch_train_loss == 1e-4:
+                            epoch_train_loss = temp_loss
+                        else:
+                            epoch_train_loss = (1. - conf.loss_decay) * epoch_train_loss + conf.loss_decay * temp_loss
                     optimizer.zero_grad()
-                    output = model(input)
-                    output['loss'].backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                    loss.backward()
                     optimizer.step()
-                    evaluation = metric.evaluate('Loss', input, output)
-                    completed_steps = completed_steps + 1
+                    completed_steps += 1
+                    if completed_steps == conf.local_steps:
+                        break
+
             except Exception as ex:
                 error_type = ex
                 break
         self.local_parameters = model.state_dict()
         model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
-        results = {'clientId':clientId, 'moving_loss': evaluation,
+        results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
-        results['utility'] = 0 # disable square_loss
+        results['utility'] = math.sqrt(loss_squre)*float(trained_unique_samples)
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {evaluation}")
+            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
         else:
             logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
 
@@ -146,6 +153,5 @@ class Customized_Client(Client):
         results['wall_duration'] = 0
         results['param_idx'] = self.param_idx
         results['model_rate'] = self.model_rate
-        results['label_split'] = label_split
         results['local_parameters'] = self.local_parameters
         return results
