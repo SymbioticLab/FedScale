@@ -152,9 +152,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, input):
-        output = {}
-        x = input['img']
-        out = self.conv1(x)
+        out = self.conv1(input)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
@@ -163,13 +161,7 @@ class ResNet(nn.Module):
         out = F.adaptive_avg_pool2d(out, 1)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
-        if 'label_split' in input and cfg['mask']:
-            label_mask = torch.zeros(cfg['classes_size'], device=out.device)
-            label_mask[input['label_split']] = 1
-            out = out.masked_fill(label_mask == 0, 0)
-        output['score'] = out
-        output['loss'] = F.cross_entropy(output['score'], input['label'])
-        return output
+        return out
 
 
 def resnet18(model_rate=1, track=False):
