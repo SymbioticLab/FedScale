@@ -8,6 +8,7 @@ from collections import OrderedDict
 import sys, os
 from customized_fllibs import Metric
 import config
+from resnet_fedhet import resnet18
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from client import Client
 
@@ -86,7 +87,7 @@ class Customized_Client(Client):
                     local_parameters[k] = copy.deepcopy(v[param_idx[k]])
             else:
                 local_parameters[k] = copy.deepcopy(v)
-        local_model = copy.deepcopy(global_model)
+        local_model = resnet18(model_rate=self.model_rate)
         local_model.load_state_dict(local_parameters)
         self.param_idx = param_idx
         return local_model
