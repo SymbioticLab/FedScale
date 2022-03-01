@@ -7,6 +7,7 @@ from torch.autograd import Variable
 from collections import OrderedDict
 import sys, os
 from customized_fllibs import Metric
+import config
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from client import Client
 
@@ -19,18 +20,18 @@ class Customized_Client(Client):
         self.param_idx = None
         self.local_parameters = None
 
-    def make_model_rate(self, conf):
+    def make_model_rate(self):
         """get the model scaling rate"""
-        if conf.model_split_mode == 'dynamic':
-            self.model_rate = np.random.choice(conf.shrinkage)
-        elif conf.model_split_mode == 'fix':
+        if config.cfg['model_split_mode'] == 'dynamic':
+            self.model_rate = np.random.choice(config.cfg['shrinkage'])
+        elif config.cfg['model_split_mode'] == 'fix':
             pass
         return
 
 
-    def split_model(self, global_model, conf):
+    def split_model(self, global_model):
         """split global model into a sub local model"""
-        self.make_model_rate(conf)
+        self.make_model_rate()
         global_parameters = global_model.state_dict()
         local_parameters = OrderedDict()
         param_idx = OrderedDict()
@@ -93,8 +94,8 @@ class Customized_Client(Client):
     def train(self, client_data, model, conf):
         # consider only detection task
         clientId = conf.clientId
-        logging.ingo(f"Start to split model (CLIENT: {clientId}) ...")
-        model = self.split_model(model, conf)
+        logging.info(f"Start to split model (CLIENT: {clientId}) ...")
+        model = self.split_model(model)
         logging.info(f"Start to train (CLIENT: {clientId}) ...")
         device = conf.device
         metric = Metric()
