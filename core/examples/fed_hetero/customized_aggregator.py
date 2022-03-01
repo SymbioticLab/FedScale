@@ -31,16 +31,14 @@ class Customized_Aggregator(Aggregator):
             tmp_v = v.new_zeros(v.size(), dtype=torch.float32)
             for m in range(len(self.client_training_results)):
                 param_idx = self.client_training_results[m]['param_idx']
-                label_split = self.client_training_results[m]['label_split']
                 local_parameters = self.client_training_results[m]['local_parameters']
                 if 'weight' in parameter_type or 'bias' in parameter_type:
                     if parameter_type == 'weight':
                         if v.dim() > 1:
                             if 'linear' in k:
                                 param_idx[k] = list(param_idx[k])
-                                param_idx[k][0] = param_idx[k][0][label_split]
-                                tmp_v[torch.meshgrid(param_idx[k])] += local_parameters[k][label_split]
-                                count[k][torch.meshgrid(param_idx[m][k])] += 1
+                                tmp_v[torch.meshgrid(param_idx[k])] += local_parameters[k]
+                                count[k][torch.meshgrid(param_idx[k])] += 1
                             else:
                                 tmp_v[torch.meshgrid(param_idx[k])] += local_parameters[k]
                                 count[k][torch.meshgrid(param_idx[k])] += 1
@@ -49,8 +47,8 @@ class Customized_Aggregator(Aggregator):
                             count[k][param_idx[k]] += 1
                     else:
                         if 'linear' in k:
-                            param_idx[k] = param_idx[k][label_split]
-                            tmp_v[param_idx[k]] += local_parameters[k][label_split]
+                            param_idx[k] = param_idx[k]
+                            tmp_v[param_idx[k]] += local_parameters[k]
                             count[k][param_idx[k]] += 1
                         else:
                             tmp_v[param_idx[k]] += local_parameters[k]
