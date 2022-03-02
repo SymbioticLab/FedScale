@@ -151,9 +151,7 @@ class Customized_Client(Client):
         else:
             logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
 
-        results['update_weight'] = model_param
         results['wall_duration'] = 0
-        results['param_idx'] = self.param_idx
         results['model_rate'] = self.model_rate
         results['local_parameters'] = self.local_parameters
         return results
