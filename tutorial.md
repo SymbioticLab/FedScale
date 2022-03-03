@@ -47,13 +47,11 @@ head train.csv
 
 Let's understand how client-level heterogeneity looks like in the OpenImg dataset.
 We select and show few images in *people* label from different clients.
-
-![N|Solid](https://github.com/SymbioticLab/FedScale/tree/master/figures/client1.png)
-
+ 
+![](./figures/client1.png)
 > Some images of *people* label from client 1.
-
-![N|Solid](https://github.com/SymbioticLab/FedScale/tree/master/figures/client10.png)
-
+ 
+![](./figures/client10.png)
 > Some images of *people* label from client 2.
 
 
