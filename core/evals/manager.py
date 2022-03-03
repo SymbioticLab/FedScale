@@ -12,7 +12,7 @@ def load_yaml_conf(yaml_file):
         data = yaml.load(fin, Loader=yaml.FullLoader)
     return data
 
-def process_cmd(yaml_file):
+def process_cmd(yaml_file,local = False):
 
     yaml_conf = load_yaml_conf(yaml_file)
 
@@ -68,8 +68,11 @@ def process_cmd(yaml_file):
 
     print(f"Starting aggregator on {ps_ip}...")
     with open(f"{job_name}_logging", 'a') as fout:
-        subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
-                        shell=True, stdout=fout, stderr=fout)
+        if local:
+            subprocess.Popen(f'{ps_cmd}',shell=True, stdout=fout, stderr=fout)
+        else:
+            subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
+                            shell=True, stdout=fout, stderr=fout)
 
     time.sleep(3)
     # =========== Submit job to each worker ============
@@ -85,8 +88,12 @@ def process_cmd(yaml_file):
 
                 with open(f"{job_name}_logging", 'a') as fout:
                     time.sleep(2)
-                    subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
-                                    shell=True, stdout=fout, stderr=fout)
+                    if local:
+                        subprocess.Popen(f'{worker_cmd}',
+                                         shell=True, stdout=fout, stderr=fout)
+                    else:
+                        subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
+                                        shell=True, stdout=fout, stderr=fout)
 
     # dump the address of running workers
     current_path = os.path.dirname(os.path.abspath(__file__))
@@ -117,8 +124,8 @@ def terminate(job_name):
 
         # _ = os.system(f"ssh {job_meta['user']}{vm_ip} 'python {current_path}/shutdown.py {job_name}'")
 
-if sys.argv[1] == 'submit':
-    process_cmd(sys.argv[2])
+if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
+    process_cmd(sys.argv[2], False if sys.argv[1] =='submit' else True)
 elif sys.argv[1] == 'stop':
     terminate(sys.argv[2])
 else:
