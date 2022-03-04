@@ -215,15 +215,8 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
     def update_model_handler(self, request):
         """Update the model copy on this executor"""
-        temp_model = pickle.loads(request.serialized_tensor)
-        for p, tp in zip(self.model.state_dict().values(), temp_model.state_dict().values()):
-            p.data = tp.to(device=self.device)
-        del temp_model
-
+        self.model = pickle.loads(request.serialized_tensor)
         self.epoch += 1
-        if self.epoch % self.args.dump_epoch == 0 and self.this_rank == 1:
-            with open(self.temp_model_path+'_'+str(self.epoch), 'wb') as model_out:
-                pickle.dump(self.model, model_out)
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
@@ -273,8 +266,6 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             client = self.get_client_trainer(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
 
-            # [Deprecated] we need to get runtime variance for BN, override by state_dict from the coordinator
-            self.model = client_model
         return train_res
 
 
@@ -282,9 +273,10 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         """Test model"""
         evalStart = time.time()
         device = self.device
+        model = self.load_global_model()
         if self.task == 'rl':
             client = RLClient(args)
-            test_res = client.test(args, self.this_rank, self.model, device=device)
+            test_res = client.test(args, self.this_rank, model, device=device)
             _, _, _, testResults = test_res
         else:
             data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
@@ -294,7 +286,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             else:
                 criterion = torch.nn.CrossEntropyLoss().to(device=device)
 
-            test_res = test_model(self.this_rank, self.model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
+            test_res = test_model(self.this_rank, model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
 
             test_loss, acc, acc_5, testResults = test_res
             logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
@@ -321,4 +313,5 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
+
 
