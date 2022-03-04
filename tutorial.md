@@ -85,7 +85,7 @@ cd core/evals/
 python manager.py submit evals/configs/openimage/conf.yml
 ```
  
- ### Test on your local machine
+ ### Test on your local machine by submitting config
  
 It is much easy and convenient to first test your code without a GPU cluster. 
 First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `evals/configs/openimage/conf.yml` to indicate you are training without using GPU.
@@ -96,6 +96,9 @@ Set `ps_ip` and `worker_ips` to be `10.0.0.1` and `10.0.0.1:[x]` by default, whe
 cd core/evals/
 python manager.py start evals/configs/openimage/conf.yml
 ```
+### Test on your local machine with jupyter notebook
+We also provide jupyter notebook [examples](./core/examples/notebook/), which run your code locally 
+
  
 ## Monitor your training progress
  
