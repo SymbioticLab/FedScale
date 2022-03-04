@@ -3,12 +3,7 @@ import warnings
 from PIL import Image
 import os
 import os.path
-import numpy as np
-import torch
-import codecs
-import string
-import time
-import pickle
+import csv
 
 class FEMNIST():
     """
@@ -26,8 +21,6 @@ class FEMNIST():
             target and transforms it.
     """
 
-    training_file = 'train'
-    test_file = 'test'
     classes = []
 
     @property
@@ -50,16 +43,16 @@ class FEMNIST():
         warnings.warn("test_data has been renamed data")
         return self.data
 
-    def __init__(self, root, train=True, transform=None, target_transform=None, imgview=False):
+    def __init__(self, root, dataset='train', transform=None, target_transform=None, imgview=False):
         
-        self.train = train  # training set or test set
+        self.data_file = dataset # 'train', 'test', 'validation'
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
-
+        self.path = os.path.join(self.processed_folder, self.data_file)
 
         # load data and targets
-        self.raw_data, self.data, self.targets = self.load_file(self.root)
+        self.data, self.targets = self.load_file(self.path)
         #self.mapping = {idx:file for idx, file in enumerate(raw_data)}
 
         self.imgview = imgview
@@ -73,11 +66,15 @@ class FEMNIST():
             tuple: (image, target) where target is index of the target class.
         """
 
-        img_path, target = self.raw_data[index], self.targets[index]
+        imgName, target = self.data[index], int(self.targets[index])
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
-        img = Image.open(os.path.join(self.root, img_path))
+        img = Image.open(os.path.join(self.root, imgName))
+        
+        # avoid channel error
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
 
         if self.transform is not None:
             img = self.transform(img)
@@ -85,7 +82,6 @@ class FEMNIST():
         if self.target_transform is not None:
             target = self.target_transform(target)
 
-        print(img.shape, target)
         return img, target
 
     def __len__(self):
@@ -99,26 +95,27 @@ class FEMNIST():
     def processed_folder(self):
         return self.root
 
-    @property
-    def class_to_idx(self):
-        return {_class: i for i, _class in enumerate(self.classes)}
+    def _check_exists(self):
+        return (os.path.exists(os.path.join(self.processed_folder,
+                                            self.data_file)))
 
+    def load_meta_data(self, path):
+        datas, labels = [], []
+
+        with open(path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count != 0:
+                    datas.append(row[1])
+                    labels.append(int(row[-1]))
+                line_count += 1
+
+        return datas, labels
 
     def load_file(self, path):
-        if self.train:
-            with open(os.path.join(path, 'train_img_to_path'), 'rb') as f:
-                rawImg = pickle.load(f)
-                rawPath = pickle.load(f)
 
-            with open(os.path.join(path, 'train_img_to_target'), 'rb') as f:
-                rawTags = pickle.load(f)
-        else:
-            with open(os.path.join(path, 'test_img_to_path'), 'rb') as f:
-                rawImg = pickle.load(f)
-                rawPath = pickle.load(f)
+        # load meta file to get labels
+        datas, labels = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
 
-            with open(os.path.join(path, 'test_img_to_target'), 'rb') as f:
-                rawTags = pickle.load(f)
-
-        return rawImg, rawPath, rawTags
-
+        return datas, labels

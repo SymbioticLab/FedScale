@@ -11,18 +11,20 @@ FedScale Automated Runtime (FAR), to simplify and standardize the process of FL 
 Our evaluation platform provides flexible APIs to implement new FL algorithms and include new execution backends with minimal developer efforts.  
 
 ***FedScale is open-source with permissive licenses and actively maintained, 
-and we welcome feedback and contributions from the community!***
+and we welcome feedback and contributions from the community! 
+If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel.***
 
 ## Overview
 
 * [Getting Started](#getting-started)
+* [Tutorial](#tutorial)
 * [Realistic FL Datasets](#realistic-fl-datasets)
 * [Run Experiments with FAR](#run-experiments-with-far)
 * [Repo Structure](#repo-structure)
-* [Note](#acknowledgements)
+* [Notes](#notes)
 * [Contact](#contact)
 
-## Getting Started 
+## Getting Started
 
 Our ```install.sh``` will install the following automatically:
 
@@ -38,6 +40,10 @@ git clone https://github.com/SymbioticLab/FedScale
 cd FedScale
 source install.sh 
 ```
+
+## Tutorial
+
+We provide a [guide](https://github.com/SymbioticLab/FedScale/blob/master/tutorial.md) to start your FL experiment over the OpenImg dataset.
 
 ## Realistic FL Datasets
 
@@ -55,6 +61,7 @@ CV tasks:
 | Google Landmark|  Image     |   43,484     |   3.6M        |   Classification       |
 | Charades      |   Video     |    266       |   10K         |   Action recognition   |
 | VLOG          |   Video     |    4,900     |   9.6k        |   Video classification, Object detection |
+| Waymo Motion  |   Video     |    496,358   |   32.5M       |   Motion prediction |
 
 NLP tasks:
 
@@ -74,7 +81,9 @@ Misc Applications:
 
 | Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
 | -----------   | ----------- | -----------  |  ----------- |   ----------- |
-|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation |
+|Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction    |
+|Puffer dataset |   Text      |     121,551  |    15.4M      |   Sequence Prediction    |
+|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation         |
 |Go dataset     |   Text      |     150,333  |    4.9M       |   Reinforcement learning | 
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only.***
@@ -102,12 +111,12 @@ Repo Root
 ```
 
 ## Notes
-please consider to cite our paper if you use the code or data in your research project.
+please consider to cite our papers if you use the code or data in your research project.
 
 ```bibtex
 @inproceedings{fedscale-arxiv,
-  title={FedScale: Benchmarking Model and System Performance of Federated Learning},
-  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Mosharaf Chowdhury},
+  title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
+  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
   booktitle={arXiv:2105.11367},
   year={2021}
 }
@@ -125,6 +134,5 @@ and
 ```
 
 ## Contact
-Fan Lai (fanlai@umich.edu), Yinwei Dai (dywsjtu@umich.edu), Xiangfeng Zhu (xzhu0027@gmail.com) and Mosharaf Chowdhury from the University of Michigan.
-
+If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel, or email us (fedscale@googlegroups.com). 
 

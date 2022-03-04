@@ -1,0 +1,64 @@
+# Configuration file of FAR training experiment
+
+# ========== Cluster configuration ========== 
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: 10.0.0.1
+
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
+worker_ips: 
+    - 10.0.0.2:[4] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes. 
+    - 10.0.0.3:[4] 
+    - 10.0.0.4:[4]
+    - 10.0.0.5:[4]
+    - 10.0.0.6:[4]
+    - 10.0.0.7:[4]
+    - 10.0.0.8:[4]
+    - 10.0.0.9:[4]
+    - 10.0.0.10:[4]
+    - 10.0.0.11:[4]
+    - 10.0.0.12:[4]
+    - 10.0.0.13:[4]
+    - 10.0.0.14:[4]
+
+exp_path: $HOME/FedScale/core
+
+# Entry function of executor and aggregator under $exp_path
+executor_entry: executor.py
+
+aggregator_entry: aggregator.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate fedscale
+    - export NCCL_SOCKET_IFNAME='enp94s0f0'         # Run "ifconfig" to ensure the right NIC for nccl if you have multiple NICs
+
+# ========== Additional job configuration ========== 
+# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+
+job_conf: 
+    - job_name: rl                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: $HOME/FedScale/core/evals # Path of log files
+    - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - device_conf_file: $HOME/FedScale/dataset/data/device_info/client_device_capacity     # Path of the client trace
+    - device_avail_file: $HOME/FedScale/dataset/data/device_info/client_behave_trace
+    - model: dqn                           # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
+    - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
+    - eval_interval: 50                     # How many rounds to run a testing on the testing set
+    - epochs: 1000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 21                       # Remove clients w/ less than 21 samples
+    - num_loaders: 2
+    - yogi_eta: 3e-3 
+    - yogi_tau: 1e-8
+    - local_steps: 20
+    - learning_rate: 0.05
+    - batch_size: 20
+    - malicious_factor: 4
+    - task: rl
+
+

@@ -32,7 +32,7 @@ i.e., if the number of participants in each round is K, then we would better use
 
 ***Please assure that these paths are consistent across all nodes so that the simulator can find the right path.***
 
-- ***Master Node***: Make sure that the master node (parameter server) has access to other worker nodes via ```ssh```. 
+- ***Coordinator***: Make sure that the coodinator (master node) has access to other worker nodes via ```ssh```. 
 
 - ***All Nodes***: Follow [this](https://github.com/SymbioticLab/FedScale#getting-started) to install all necessary libs, and then download the datasets following [this](https://github.com/SymbioticLab/FedScale/blob/master/dataset/README.md).
 
@@ -46,10 +46,12 @@ They are close to the settings used in our evaluations. Comments in our example 
 
 - ```python manager.py stop [job_name]``` will terminate the running ```job_name``` (specified in yml) on the used nodes. 
 
+### Experiment Dashboard
 
-***We are working on building the leaderboards for better visualization. So far, all logs will be dumped to ```log_path``` (specified in the config file) on each node. 
-```testing_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. 
-Meanwhile, the user can check ```/evals/[job_name]_logging``` to see whether the job is moving on.***
+We have integrated Tensorboad for the visualization of experiment results. To track the experiment with ```[log_path]``` (e.g., ```./FedScale/core/evals/logs/cifar10/0209_141336```), please try ```tensorboard --logdir=[log_path] --bind_all```, and all the results will be available at: ```http://[ip_of_coordinator]:6006/```.
 
+Meanwhile, all logs are dumped to ```log_path``` (specified in the config file) on each node. 
+```testing_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. The user can also check ```/evals/[job_name]_logging``` to see whether the job is moving on.
 
+***We are working on the leaderboards to release all benchmarking results.***
 

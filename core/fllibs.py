@@ -9,6 +9,13 @@ import numpy as np
 import collections
 import numpy
 
+# libs from FLBench
+from argParser import args
+from utils.utils_data import get_data_transform
+from utils.utils_model import test_model
+from utils.divide_data import select_dataset, DataPartitioner
+
+
 # PyTorch libs
 import torch
 from torch.multiprocessing import Process
@@ -20,20 +27,18 @@ from torchvision import datasets, transforms
 import torchvision.models as tormodels
 from torch.utils.data.sampler import WeightedRandomSampler
 
-# libs from FLBench
-from argParser import args
-from utils.utils_data import get_data_transform
-from utils.utils_model import test_model
-from utils.divide_data import select_dataset, DataPartitioner
-
-if args.task == 'nlp':
+tokenizer = None
+if args.task == 'nlp' or args.task == 'text_clf':
     from utils.nlp import mask_tokens, load_and_cache_examples
     from transformers import (
         AdamW,
         AutoConfig,
+        AlbertTokenizer,
         AutoTokenizer,
         MobileBertForPreTraining,
+        AutoModelWithLMHead
     )
+    tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 elif args.task == 'speech':
     import numba
     from utils.speech import SPEECH
@@ -55,19 +60,21 @@ elif args.task == 'detection':
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
 elif args.task == 'voice':
     from torch_baidu_ctc import CTCLoss
-
+elif args.task == 'rl':
+    import gym
+    from utils.dqn import *
 from client_manager import clientManager
 from utils.yogi import YoGi
 from optimizer import ServerOptimizer
 
 # shared functions of aggregator and clients
 # initiate for nlp
-tokenizer = None
+
 os.environ['MASTER_ADDR'] = args.ps_ip
 os.environ['MASTER_PORT'] = args.ps_port
 
 
-outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
+outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,'amazon':5,
                 'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist' : 1010
             }
 
@@ -77,9 +84,9 @@ def init_model():
     logging.info("Initializing the model ...")
 
     if args.task == 'nlp':
-        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model_name+'-config.json'))
+        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, args.model+'-config.json'))
         model = AutoModelWithLMHead.from_config(config)
-        tokenizer = AlbertTokenizer.from_pretrained(args.model_name, do_lower_case=True)
+        tokenizer = AlbertTokenizer.from_pretrained(args.model, do_lower_case=True)
 
         # model_name = 'google/mobilebert-uncased'
         # config = AutoConfig.from_pretrained(model_name)
@@ -88,12 +95,18 @@ def init_model():
         # model = AutoModelWithLMHead.from_config(config)
 
     elif args.task == 'text_clf':
-        config = AutoConfig.from_pretrained(os.path.join(args.data_dir, 'albert-base-v2-config.json'))
-        config.num_labels = outputClass[args.data_set]
-        from transformers import AlbertForSequenceClassification
 
-        model = AlbertForSequenceClassification(config)
-
+        if args.model == 'albert':
+            from transformers import AlbertForSequenceClassification
+            from transformers import AutoConfig
+            config = AutoConfig.from_pretrained(os.path.join(args.log_path, 'albert-small-config.json'))
+            config.num_labels = outputClass[args.data_set]
+            model = AlbertForSequenceClassification(config) 
+        elif args.model == 'lr': 
+            from utils.models import  LogisticRegression
+            model = LogisticRegression(300, outputClass[args.data_set])
+            
+            
     elif args.task == 'tag-one-sample':
         # Load LR model for tag prediction
         model = LogisticRegression(args.vocab_token_size, args.vocab_tag_size)
@@ -148,6 +161,8 @@ def init_model():
         model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False,pretrained_model=args.backbone)
         model.create_architecture()
         return model
+    elif args.task == 'rl':
+        model = DQN(args).target_net
     else:
         if args.model == "lr":
             from utils.models import LogisticRegression
@@ -179,6 +194,8 @@ def init_dataset():
             with open(args.data_cache, 'rb') as f:
                 train_dataset = pickle.load(f)
                 test_dataset = pickle.load(f)
+    elif args.task == "rl":
+        train_dataset = test_dataset = RLData(args)
     else:
 
         if args.data_set == 'Mnist':
@@ -209,8 +226,8 @@ def init_dataset():
             from utils.femnist import FEMNIST
 
             train_transform, test_transform = get_data_transform('mnist')
-            train_dataset = FEMNIST(args.data_dir, train=True, transform=train_transform)
-            test_dataset = FEMNIST(args.data_dir, train=False, transform=test_transform)
+            train_dataset = FEMNIST(args.data_dir, dataset='train', transform=train_transform)
+            test_dataset = FEMNIST(args.data_dir, dataset='test', transform=test_transform)
 
         elif args.data_set == 'openImg':
             from utils.openimage import OpenImage
@@ -229,6 +246,17 @@ def init_dataset():
             train_dataset = stackoverflow(args.data_dir, train=True)
             test_dataset = stackoverflow(args.data_dir, train=False)
 
+        elif args.data_set == 'amazon':
+            if args.model == 'albert':
+                import utils.amazon as fl_loader
+                train_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size  )
+                test_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size )
+            
+            elif args.model == 'lr': 
+                import utils.word2vec as fl_loader
+                train_dataset = fl_loader.AmazonReview_word2vec(args.data_dir, args.embedding_file, train=True)
+                test_dataset = fl_loader.AmazonReview_word2vec( args.data_dir, args.embedding_file, train=False)
+        
         elif args.data_set == 'yelp':
             import utils.dataloaders as fl_loader
 

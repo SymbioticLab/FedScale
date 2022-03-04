@@ -12,7 +12,7 @@ def load_yaml_conf(yaml_file):
         data = yaml.load(fin, Loader=yaml.FullLoader)
     return data
 
-def process_cmd(yaml_file):
+def process_cmd(yaml_file,local = False):
 
     yaml_conf = load_yaml_conf(yaml_file)
 
@@ -20,6 +20,7 @@ def process_cmd(yaml_file):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
+    executor_configs = "=".join(yaml_conf['worker_ips'])
     for ip_gpu in yaml_conf['worker_ips']:
         ip, gpu_list = ip_gpu.strip().split(':')
         worker_ips.append(ip)
@@ -33,8 +34,9 @@ def process_cmd(yaml_file):
 
     job_conf = {'time_stamp':time_stamp,
                 'ps_ip':ps_ip,
-                'ps_port':random.randint(1000, 60000),
-                'manager_port':random.randint(1000, 60000)
+                'ps_port':random.randint(1000, 50000),
+                'manager_port':random.randint(1000, 50000),
+                'base_port': random.randint(8000, 50000),
                 }
 
     for conf in yaml_conf['job_conf']:
@@ -58,18 +60,20 @@ def process_cmd(yaml_file):
             log_path = os.path.join(job_conf[conf_name], 'log', job_name, time_stamp)
 
     total_gpu_processes =  sum([sum(x) for x in total_gpus])
-    learner_conf = '-'.join([str(_) for _ in list(range(1, total_gpu_processes+1))])
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
-    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --learner={learner_conf} "
+    ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --num_executors={total_gpu_processes} --executor_configs={executor_configs} "
 
     with open(f"{job_name}_logging", 'wb') as fout:
         pass
 
     print(f"Starting aggregator on {ps_ip}...")
     with open(f"{job_name}_logging", 'a') as fout:
-        subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
-                        shell=True, stdout=fout, stderr=fout)
+        if local:
+            subprocess.Popen(f'{ps_cmd}',shell=True, stdout=fout, stderr=fout)
+        else:
+            subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
+                            shell=True, stdout=fout, stderr=fout)
 
     time.sleep(3)
     # =========== Submit job to each worker ============
@@ -80,13 +84,17 @@ def process_cmd(yaml_file):
 
         for cuda_id in range(len(gpu)):
             for _  in range(gpu[cuda_id]):
-                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --learner={learner_conf} --cuda_device=cuda:{cuda_id} "
+                worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --num_executors={total_gpu_processes} --cuda_device=cuda:{cuda_id} "
                 rank_id += 1
 
                 with open(f"{job_name}_logging", 'a') as fout:
                     time.sleep(2)
-                    subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
-                                    shell=True, stdout=fout, stderr=fout)
+                    if local:
+                        subprocess.Popen(f'{worker_cmd}',
+                                         shell=True, stdout=fout, stderr=fout)
+                    else:
+                        subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
+                                        shell=True, stdout=fout, stderr=fout)
 
     # dump the address of running workers
     current_path = os.path.dirname(os.path.abspath(__file__))
@@ -95,7 +103,7 @@ def process_cmd(yaml_file):
         job_meta = {'user':submit_user, 'vms': running_vms}
         pickle.dump(job_meta, fout)
 
-    print(f"Submitted job, please check your logs ({log_path}) for status")
+    print(f"Submitted job, please check your logs $HOME/{job_conf['model']}/{time_stamp} for status")
 
 def terminate(job_name):
 
@@ -117,10 +125,11 @@ def terminate(job_name):
 
         # _ = os.system(f"ssh {job_meta['user']}{vm_ip} 'python {current_path}/shutdown.py {job_name}'")
 
-if sys.argv[1] == 'submit':
-    process_cmd(sys.argv[2])
+if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
+    process_cmd(sys.argv[2], False if sys.argv[1] =='submit' else True)
 elif sys.argv[1] == 'stop':
     terminate(sys.argv[2])
 else:
     print("Unknown cmds ...")
+
 

@@ -9,11 +9,13 @@ parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
 parser.add_argument('--ps_port', type=str, default='29501')
 parser.add_argument('--manager_port', type=int, default='9005')
 parser.add_argument('--this_rank', type=int, default=1)
-parser.add_argument('--learners', type=str, default='1-2-3-4')
+parser.add_argument('--num_executors', type=int, default=4)
+parser.add_argument('--executor_configs', type=str, default='')  # seperated by ;
 parser.add_argument('--total_worker', type=int, default=0)
 parser.add_argument('--data_map_file', type=str, default=None)
-parser.add_argument('--use_cuda', type=bool, default=True)
+parser.add_argument('--use_cuda', type=str, default='True')
 parser.add_argument('--cuda_device', type=str, default=None)
+parser.add_argument('--base_port', type=int, default=10001)
 parser.add_argument('--time_stamp', type=str, default='logs')
 parser.add_argument('--task', type=str, default='cv')
 parser.add_argument('--pacer_delta', type=float, default=5)
@@ -43,6 +45,7 @@ parser.add_argument('--round_penalty', type=float, default=2.0)
 parser.add_argument('--clip_bound', type=float, default=0.9)
 parser.add_argument('--blacklist_rounds', type=int, default=-1)
 parser.add_argument('--blacklist_max_len', type=float, default=0.3)
+parser.add_argument('--embedding_file', type=str, default = 'glove.840B.300d.txt')
 
 
 # The configuration of different hyper-parameters for training
@@ -52,7 +55,6 @@ parser.add_argument('--batch_size', type=int, default=30)
 parser.add_argument('--test_bsz', type=int, default=128)
 parser.add_argument('--backend', type=str, default="gloo")
 parser.add_argument('--upload_epoch', type=int, default=20)
-parser.add_argument('--test_interval', type=int, default=20)
 parser.add_argument('--learning_rate', type=float, default=5e-2)
 parser.add_argument('--min_learning_rate', type=float, default=5e-5)
 parser.add_argument('--input_dim', type=int, default=0)
@@ -101,6 +103,7 @@ parser.add_argument(
     action="store_true",
     help="Whether distinct lines of text in the dataset are to be handled as distinct sequences.",
 )
+parser.add_argument('--clf_block_size', type=int, default=32)
 
 
 parser.add_argument(
@@ -128,6 +131,16 @@ parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon fo
 # for tag prediction
 parser.add_argument("--vocab_token_size", type=int, default=10000, help="For vocab token size")
 parser.add_argument("--vocab_tag_size", type=int, default=500, help="For vocab tag size")
+
+# for rl example
+parser.add_argument("--epsilon", type=float, default=0.9, help="greedy policy")
+parser.add_argument("--gamma", type=float, default=0.9, help="reward discount")
+parser.add_argument("--memory_capacity", type=int, default=2000, help="memory capacity")
+parser.add_argument("--target_replace_iter", type=int, default=15, help="update frequency")
+parser.add_argument("--n_actions", type=int, default=2, help="action number")
+parser.add_argument("--n_states", type=int, default=4, help="state number")
+
+
 
 # for speech
 parser.add_argument("--num_classes", type=int, default=35, help="For number of classes in speech")
@@ -163,7 +176,7 @@ parser.add_argument('--no-bidirectional', dest='bidirectional', action='store_fa
                     help='Turn off bi-directional RNNs, introduces lookahead convolution')
 
 args = parser.parse_args()
-
+args.use_cuda = eval(args.use_cuda)
 
 
 datasetCategories = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,

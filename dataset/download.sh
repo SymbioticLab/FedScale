@@ -10,8 +10,8 @@ DIR="./data"
 Help()
 {
    # Display Help
-   echo "We provide four datasets (open_images, stackoverflow, and speech)"
-   echo "to evalute the performance of Kuiper"
+   echo "FedScale provides a large suite of FL datasets "
+   echo "to evaluate today's FL performance"
    echo 
    echo "Syntax: ./download.sh [-g|h|v|V]"
    echo "options:"
@@ -27,7 +27,11 @@ Help()
    echo "-d     Download Open Images for detection (about 451M)"
    echo "-r     Download Reddit dataset (about 25G)"
    echo "-t     Download Taobao dataset (about 185M)"
+   echo "-x     Download Taxi Trajectory dataset (about 504M)"
    echo "-w     Download Waymo Motion dataset meta file (about 74M)"
+   echo "-f     Download FEMNIST dataset (about 327M)"    
+   echo "-o     Download StackOverflow dataset (about 13G)"
+   echo "-b     Download Blog dataset (about 833M)"
 }
 
 speech()
@@ -188,13 +192,13 @@ open_images_detection()
     if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ]; 
     then
         echo "Downloading open_images_detection dataset(about 451M)..."   
-        wget -O ${DIR}/open_images_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/open_images_detection.tar.gz
+        wget -O ${DIR}/openimage_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz
         
         echo "Dataset downloaded, now decompressing..." 
-        tar -xf ${DIR}/open_images_detection.tar.gz -C ${DIR}
+        tar -xf ${DIR}/openimage_detection.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
-        rm -f ${DIR}/open_images_detection.tar.gz
+        rm -f ${DIR}/openimage_detection.tar.gz
 
         echo -e "${GREEN}open_images_detection dataset downloaded!${NC}"
     else
@@ -221,6 +225,44 @@ reddit()
 fi
 }
 
+blog() 
+{
+    if [ ! -d "${DIR}/blog/train/" ]; 
+    then
+        echo "Downloading blog dataset(about 800M)..."   
+        wget -O ${DIR}/blog.tar.gz https://fedscale.eecs.umich.edu/dataset/blog.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/blog.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/blog.tar.gz
+
+        echo -e "${GREEN}blog dataset downloaded!${NC}"
+    else
+        echo -e "${RED}blog dataset already exists under ${DIR}/blog/!"
+fi
+}
+
+stackoverflow() 
+{
+    if [ ! -d "${DIR}/stackoverflow/train/" ]; 
+    then
+        echo "Downloading stackoverflow dataset(about 800M)..."   
+        wget -O ${DIR}/stackoverflow.tar.gz https://fedscale.eecs.umich.edu/dataset/stackoverflow.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/stackoverflow.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/stackoverflow.tar.gz
+
+        echo -e "${GREEN}stackoverflow dataset downloaded!${NC}"
+    else
+        echo -e "${RED}stackoverflow dataset already exists under ${DIR}/stackoverflow/!"
+fi
+}
+
 taobao() 
 {
     if [ ! -d "${DIR}/taobao/client_data_mapping/" ]; 
@@ -237,6 +279,25 @@ taobao()
         echo -e "${GREEN}taobao dataset downloaded!${NC}"
     else
         echo -e "${RED}taobao dataset already exists under ${DIR}/taobao/!"
+fi
+}
+
+taxi() 
+{
+    if [ ! -d "${DIR}/taxi_traj/client_data_mapping/" ]; 
+    then
+        echo "Downloading taxi prediction dataset(about 504M)..."   
+        wget -O ${DIR}/taxi_traj.tar.gz https://fedscale.eecs.umich.edu/dataset/taxi_traj.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/taxi_traj.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/taxi_traj.tar.gz
+
+        echo -e "${GREEN}taxi_traj dataset downloaded!${NC}"
+    else
+        echo -e "${RED}taxi_traj dataset already exists under ${DIR}/taxi_traj/!"
 fi
 }
 
@@ -259,7 +320,26 @@ waymo()
 fi
 }
 
-while getopts ":hsoacegildrtw" option; do
+femnist() 
+{
+    if [ ! -d "${DIR}/FEMNIST/client_data_mapping/" ]; 
+    then
+        echo "Downloading FEMNIST dataset(about 327M)..."   
+        wget -O ${DIR}/femnist.tar.gz https://fedscale.eecs.umich.edu/dataset/femnist.tar.gz
+        
+        echo "Dataset downloaded, now decompressing..." 
+        tar -xf ${DIR}/femnist.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/femnist.tar.gz
+
+        echo -e "${GREEN}FEMNIST dataset downloaded!${NC}"
+    else
+        echo -e "${RED}FEMNIST dataset already exists under ${DIR}/FEMNIST/!"
+fi
+}
+
+while getopts ":hsoacegildrtwfxo" option; do
    case $option in
       h ) # display Help
          Help
@@ -297,9 +377,21 @@ while getopts ":hsoacegildrtw" option; do
       t )
          taobao
          ;;
+      x )
+         taxi
+         ;;
       w )
          waymo
-         ;;         
+         ;;
+      f )
+         femnist
+         ;;    
+      b )
+         blog
+         ;;   
+      o )
+         stackoverflow
+         ;;        
       \? ) 
          echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}"
          exit 1;;
