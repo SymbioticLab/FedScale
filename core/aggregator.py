@@ -249,16 +249,20 @@ class Aggregator(object):
         """
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
-        importance = 1./self.tasks_round
+        # importance = 1./self.tasks_round
+
         if self.model_in_update == 0:
             self.model_in_update += 1
 
             for idx, param in enumerate(self.model.state_dict().values()):
-                param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
+                param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device))#.to(dtype=param.data.dtype)
         else:
             for idx, param in enumerate(self.model.state_dict().values()):
-                param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device)*importance).to(dtype=param.data.dtype)
+                param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device))#.to(dtype=param.data.dtype)
 
+        if self.model_in_update == self.tasks_round:
+            for idx, param in enumerate(self.model.state_dict().values()):
+                param.data = (torch.from_numpy(results['update_weight'][idx]/float(self.tasks_round)).to(device=device)).to(dtype=param.data.dtype)
 
     def save_last_param(self):
         self.last_global_model = [param.data.clone() for param in self.model.parameters()]
@@ -502,8 +506,8 @@ class Aggregator(object):
     def stop(self):
         logging.info(f"Terminating the aggregator ...")
         time.sleep(5)
-        self.control_manager.shutdown()
 
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
+
