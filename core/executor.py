@@ -215,11 +215,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 
     def update_model_handler(self, request):
         """Update the model copy on this executor"""
-        temp_model = pickle.loads(request.serialized_tensor)
-        for p, tp in zip(self.model.state_dict().values(), temp_model.state_dict().values()):
-            p.data = torch.clone(tp.data).to(device=self.device)
-        del temp_model
-
+        self.model = pickle.loads(request.serialized_tensor)
         self.epoch += 1
 
         # Dump latest model to disk
@@ -270,8 +266,6 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             client = self.get_client_trainer(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
 
-            # [Deprecated] we need to get runtime variance for BN, override by state_dict from the coordinator
-            self.model = client_model
         return train_res
 
 
@@ -319,4 +313,5 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
+
 
