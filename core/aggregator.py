@@ -13,7 +13,7 @@ import io
 import torch
 import pickle
 from torch.utils.tensorboard import SummaryWriter
-
+import threading
 
 class Aggregator(object):
     """This centralized aggregator collects training/testing feedbacks from executors"""
@@ -35,10 +35,12 @@ class Aggregator(object):
 
         # list of parameters in model.parameters()
         self.model_in_update = 0
+        self.update_lock = threading.Lock()
         self.last_global_model = []
+        self.model_state_dict = None
 
         # ======== channels ========
-        self.executors = None 
+        self.executors = None
 
         # event queue of its own functions
         self.event_queue = collections.deque()
@@ -251,18 +253,27 @@ class Aggregator(object):
         # Importance of each update is 1/#_of_participants
         # importance = 1./self.tasks_round
 
-        if self.model_in_update == 0:
-            self.model_in_update += 1
+        self.update_lock.acquire()
 
-            for idx, param in enumerate(self.model.state_dict().values()):
-                param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device))#.to(dtype=param.data.dtype)
+        # ================== Aggregate weights ======================
+
+        self.model_in_update += 1
+
+        if self.model_in_update == 1:
+            self.model_state_dict = self.model.state_dict()
+            for idx, param in enumerate(self.model_state_dict.values()):
+                param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device))
         else:
-            for idx, param in enumerate(self.model.state_dict().values()):
-                param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device))#.to(dtype=param.data.dtype)
+            for idx, param in enumerate(self.model_state_dict.values()):
+               param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device))
 
         if self.model_in_update == self.tasks_round:
-            for idx, param in enumerate(self.model.state_dict().values()):
-                param.data = (torch.from_numpy(results['update_weight'][idx]/float(self.tasks_round)).to(device=device)).to(dtype=param.data.dtype)
+            for idx, param in enumerate(self.model_state_dict.values()):
+                param.data = (param.data/float(self.tasks_round)).to(dtype=param.data.dtype)
+
+            self.model.load_state_dict(self.model_state_dict)
+
+        self.update_lock.release()
 
     def save_last_param(self):
         self.last_global_model = [param.data.clone() for param in self.model.parameters()]
@@ -466,7 +477,6 @@ class Aggregator(object):
 
                 if event_msg == 'update_model':
                     serialized_data = pickle.dumps(self.model.to(device='cpu'))
-                    update_model_request = job_api_pb2.UpdateModelRequest()
 
                     future_context = []
                     for executorId in self.executors:
