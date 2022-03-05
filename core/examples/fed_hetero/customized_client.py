@@ -17,7 +17,7 @@ class Customized_Client(Client):
     def __init__(self, conf):
         super().__init__(conf)
         # TODO: link system profile to here
-        self.model_rate = 1
+        self.model_rate = None
         self.param_idx = None
         self.local_parameters = None
 
@@ -26,13 +26,15 @@ class Customized_Client(Client):
         if config.cfg['model_split_mode'] == 'dynamic':
             self.model_rate = np.random.choice(config.cfg['shrinkage'])
         elif config.cfg['model_split_mode'] == 'fix':
-            pass
+            # self.model_rate = 1
+            if self.clientId % 10 <= 3:
+                self.model_rate = 1
+            else:
+                self.model_rate = 0.5
         return
-
 
     def split_model(self, global_model):
         """split global model into a sub local model"""
-        self.make_model_rate()
         global_parameters = global_model.state_dict()
         local_parameters = OrderedDict()
         param_idx = OrderedDict()
@@ -87,23 +89,23 @@ class Customized_Client(Client):
                     local_parameters[k] = copy.deepcopy(v[param_idx[k]])
             else:
                 local_parameters[k] = copy.deepcopy(v)
-        local_model = resnet18(model_rate=self.model_rate)
-        local_model.load_state_dict(local_parameters)
-        self.param_idx = param_idx
-        return local_model
+        self.local_parameters = local_parameters
 
     def train(self, client_data, model, conf):
         # consider only detection task
-        clientId = conf.clientId
-        logging.info(f"Start to split model (CLIENT: {clientId}) ...")
-        model = self.split_model(model)
-        logging.info(f"Start to train (CLIENT: {clientId}) ...")
+        self.clientId = conf.clientId
+        self.make_model_rate()
+        logging.info(f"Start to split model (CLIENT: {self.clientId}, MODEL RATE: {self.model_rate}) ...")
+        self.split_model(model)
+        self.local_model = resnet18(model_rate=self.model_rate)
+        self.local_model.load_state_dict(self.local_parameters)
+        logging.info(f"Start to train (CLIENT: {self.clientId}) ...")
         device = conf.device
-        metric = Metric()
-        model = model.to(device=device)
-        model.train()
+        # self.local_model = model
+        self.local_model = self.local_model.to(device=device)
+        self.local_model.train(True)
         trained_unique_samples = min(len(client_data.dataset), conf.local_steps * conf.batch_size)
-        optimizer =  torch.optim.SGD(model.parameters(), lr=conf.learning_rate, momentum=0.9, weight_decay=5e-4)# make_optimizer(model, lr)
+        optimizer =  torch.optim.SGD(self.local_model.parameters(), lr=conf.learning_rate, momentum=0.9, weight_decay=5e-4)# make_optimizer(model, lr)
         criterion = torch.nn.CrossEntropyLoss(reduction='none').to(device=device)
         epoch_train_loss = 1e-4
         error_type = None
@@ -119,7 +121,7 @@ class Customized_Client(Client):
                     (data, target) = data_pair
                     data = Variable(data).to(device=device)
                     target = Variable(target).to(device=device)
-                    output = model(data)
+                    output = self.local_model(data)
                     loss = criterion(output, target)
                     loss_list = loss.tolist()
                     loss = loss.mean()
@@ -132,6 +134,7 @@ class Customized_Client(Client):
                             epoch_train_loss = (1. - conf.loss_decay) * epoch_train_loss + conf.loss_decay * temp_loss
                     optimizer.zero_grad()
                     loss.backward()
+                    torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
                     completed_steps += 1
                     if completed_steps == conf.local_steps:
@@ -140,18 +143,17 @@ class Customized_Client(Client):
             except Exception as ex:
                 error_type = ex
                 break
-        self.local_parameters = model.state_dict()
-        model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
-        results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
+        results = {'clientId':self.clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
         results['utility'] = math.sqrt(loss_squre)*float(trained_unique_samples)
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
+            logging.info(f"Training of (CLIENT: {self.clientId}) completes, {results}")
         else:
-            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {self.clientId}) failed as {error_type}")
 
         results['wall_duration'] = 0
         results['model_rate'] = self.model_rate
         results['local_parameters'] = self.local_parameters
-        return results
+        model = self.local_model
+        return results, self.local_model
