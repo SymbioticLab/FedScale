@@ -97,7 +97,7 @@ cd core/evals/
 python manager.py start evals/configs/openimage/conf.yml
 ```
 ### Test on your local machine with jupyter notebook
-We also provide jupyter notebook [examples](./core/examples/notebook/), which run your code locally 
+We also provide jupyter notebook [examples](./core/examples/notebook/) to run your code locally. You can first start running [server](./core/examples/notebook/fedscale_demo_server.ipynb), and then run the [client](./core/examples/notebook/fedscale_demo_client.ipynb)
 
  
 ## Monitor your training progress

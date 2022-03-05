@@ -106,7 +106,7 @@ class Aggregator(object):
     def init_control_communication(self):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
-        logging.info(f"Initiating control plane communication ... {self.args.executor_configs}")
+        logging.info(f"Initiating control plane communication ...")
         self.executors = ExecutorConnections(self.args.executor_configs, self.args.base_port)
 
 
@@ -520,4 +520,3 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-
