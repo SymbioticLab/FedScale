@@ -119,7 +119,9 @@ class Customized_Aggregator(Aggregator):
             self.args.learning_rate = max(self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
 
         # [Customized] handle the global update w/ current and last
-        self.combine_models()
+        if len(self.client_training_results) == self.tasks_round:
+            logging.info(f"combining models")
+            self.combine_models()
 
         avgUtilLastEpoch = sum(self.stats_util_accumulator)/max(1, len(self.stats_util_accumulator))
         # assign avg reward to explored, but not ran workers
