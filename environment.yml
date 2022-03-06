@@ -32,3 +32,4 @@ dependencies:
     - sentencepiece
     - grpcio==1.40.0
     - gym
+    - jupyter

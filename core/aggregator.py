@@ -520,4 +520,3 @@ class Aggregator(object):
 if __name__ == "__main__":
     aggregator = Aggregator(args)
     aggregator.run()
-
