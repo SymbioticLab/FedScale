@@ -13,7 +13,7 @@ parser.add_argument('--num_executors', type=int, default=1)
 parser.add_argument('--executor_configs', type=str, default="127.0.0.1:[1]")  # seperated by ;
 parser.add_argument('--total_worker', type=int, default=4)
 parser.add_argument('--data_map_file', type=str, default=None)
-parser.add_argument('--use_cuda', type=str, default='False')
+parser.add_argument('--use_cuda', type=str, default='True')
 parser.add_argument('--cuda_device', type=str, default=None)
 parser.add_argument('--base_port', type=int, default=10001)
 parser.add_argument('--time_stamp', type=str, default='logs')
