@@ -15,10 +15,14 @@ class clientManager(object):
 
         self.ucbSampler = None 
 
-        if self.mode == 'oort':
-            from oort import create_training_selector
-            self.ucbSampler = create_training_selector(args=args)
-            
+        if self.mode == 'oort': 
+            import sys,os
+            current = os.path.dirname(os.path.realpath(__file__))
+            parent = os.path.dirname(current)
+            sys.path.append(parent)
+            from thirdparty.oort.oort import create_training_selector
+            #sys.path.append(current) 
+            self.ucbSampler =  create_training_selector(args=args)
         self.feasibleClients = []
         self.rng = Random()
         self.rng.seed(sample_seed)
@@ -62,7 +66,7 @@ class clientManager(object):
         return self.Clients[self.getUniqueId(0, clientId)]
 
     def registerDuration(self, clientId, batch_size, upload_epoch, upload_size, download_size):
-        if self.mode == "oort":
+        if self.mode == "oort" and  self.getUniqueId(0, clientId) in self.Clients:
             exe_cost = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
                     batch_size=batch_size, upload_epoch=upload_epoch,
                     upload_size=upload_size, download_size=download_size
@@ -70,6 +74,7 @@ class clientManager(object):
             self.ucbSampler.update_duration(clientId, exe_cost['computation']+exe_cost['communication'])
 
     def getCompletionTime(self, clientId, batch_size, upload_epoch, upload_size, download_size):
+        
         return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
                 batch_size=batch_size, upload_epoch=upload_epoch,
                 upload_size=upload_size, download_size=download_size
