@@ -154,6 +154,5 @@ class Customized_Client(Client):
 
         results['wall_duration'] = 0
         results['model_rate'] = self.model_rate
-        results['local_parameters'] = self.local_parameters
-        model = self.local_model
+        results['local_parameters'] = self.local_model.state_dict()
         return results, self.local_model
