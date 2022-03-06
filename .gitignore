@@ -25,3 +25,4 @@ quotas
 ./data/*
 ./scripts/logs/*
 data/
+.DS_Store

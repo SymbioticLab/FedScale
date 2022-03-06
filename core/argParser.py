@@ -1,17 +1,17 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--job_name', type=str, default='kuiper_job')
-parser.add_argument('--log_path', type=str, default='../', help="default path is ../log")
+parser.add_argument('--job_name', type=str, default='demo_job')
+parser.add_argument('--log_path', type=str, default='./', help="default path is ../log")
 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
 parser.add_argument('--ps_port', type=str, default='29501')
 parser.add_argument('--manager_port', type=int, default='9005')
 parser.add_argument('--this_rank', type=int, default=1)
-parser.add_argument('--num_executors', type=int, default=4)
-parser.add_argument('--executor_configs', type=str, default='')  # seperated by ;
-parser.add_argument('--total_worker', type=int, default=0)
+parser.add_argument('--num_executors', type=int, default=1)
+parser.add_argument('--executor_configs', type=str, default="127.0.0.1:[1]")  # seperated by ;
+parser.add_argument('--total_worker', type=int, default=4)
 parser.add_argument('--data_map_file', type=str, default=None)
 parser.add_argument('--use_cuda', type=str, default='True')
 parser.add_argument('--cuda_device', type=str, default=None)
@@ -49,7 +49,7 @@ parser.add_argument('--embedding_file', type=str, default = 'glove.840B.300d.txt
 
 
 # The configuration of different hyper-parameters for training
-parser.add_argument('--epochs', type=int, default=1000)
+parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--local_steps', type=int, default=20)
 parser.add_argument('--batch_size', type=int, default=30)
 parser.add_argument('--test_bsz', type=int, default=128)
@@ -178,7 +178,7 @@ parser.add_argument('--noise-max', default=0.5,
 parser.add_argument('--no-bidirectional', dest='bidirectional', action='store_false', default=True,
                     help='Turn off bi-directional RNNs, introduces lookahead convolution')
 
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 args.use_cuda = eval(args.use_cuda)
 
 
