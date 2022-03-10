@@ -140,6 +140,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
     total_cer, total_wer, num_tokens, num_chars = 0, 0, 0, 0
 
+    model = model.to(device=device) # load by pickle
     model.eval()
     targets_list = []
     preds = []
