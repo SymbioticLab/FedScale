@@ -77,6 +77,7 @@ class Client(object):
 
         # TODO: One may hope to run fixed number of epochs, instead of iterations
         while completed_steps < conf.local_steps:
+            
             try:
                 for data_pair in client_data:
 
