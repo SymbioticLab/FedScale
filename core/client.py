@@ -78,11 +78,6 @@ class Client(object):
         # TODO: One may hope to run fixed number of epochs, instead of iterations
         while completed_steps < conf.local_steps:
             
-            if len(client_data) == 0:
-                logging.info(f"Error : data size = 0")
-                # fix for femnist: client with no data
-                break
-
             try:
                 for data_pair in client_data:
 
