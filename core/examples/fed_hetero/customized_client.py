@@ -112,7 +112,7 @@ class Customized_Client(Client):
         completed_steps = 0
         loss_squre = 0
         completed_steps = 0
-        while completed_steps < conf.local_steps:
+        while completed_steps < config.cfg['local_epochs']:
             try:
                 if len(client_data) == 0:
                     logging.info(f"Error : data size = 0")
@@ -136,9 +136,8 @@ class Customized_Client(Client):
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
-                    completed_steps += 1
-                    if completed_steps == conf.local_steps:
-                        break
+                logging.info(f"{completed_steps} completed, loss square: {loss_squre}")
+                completed_steps += 1
 
             except Exception as ex:
                 error_type = ex

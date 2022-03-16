@@ -1,6 +1,6 @@
 num: 5
 shrinkage: [1, 0.5, 0.25, 0.125, 0.0625]
-model_split_mode: 'dynamic'
+model_split_mode: 'fix'
 
 # for resnet
 norm: 'bn'
@@ -10,3 +10,4 @@ data_shape: [3, 32, 32] # for cifar10
 classes_size: 10 # for cifar10 
 global_model_rate: 1
 resnet_hidden_size: [64, 128, 256, 512]
+local_epochs: 5
