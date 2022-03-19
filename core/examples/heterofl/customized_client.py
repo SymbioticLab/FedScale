@@ -1,6 +1,6 @@
 import config
 import sys, os
-from resnet_fedhet import resnet18
+from resnet_heterofl import resnet18
 from customized_fllibs import split_model
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from client import Client
@@ -70,8 +70,11 @@ class Customized_Client(Client):
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
-                logging.info(f"Client {self.clientId} complets local epoch: {completed_steps}, loss square: {loss_squre}")
-                completed_steps += 1
+                    completed_steps += 1
+                    if completed_steps == config.cfg['local_epochs']:
+                        break
+                # logging.info(f"Client {self.clientId} complets local epoch: {completed_steps}, loss square: {loss_squre}")
+                # completed_steps += 1
 
             except Exception as ex:
                 error_type = ex
