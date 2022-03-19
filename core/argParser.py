@@ -97,9 +97,6 @@ parser.add_argument('--malicious_factor', type=int, default=1e15)
 # for differential privacy
 parser.add_argument('--noise_factor', type=float, default=0.1)
 
-# for fed-hetero
-parser.add_argument('--submodels_config', type=str, default="./examples/fed_hetero/config.json", help="config of the submodels")
-
 # for albert
 parser.add_argument(
     "--line_by_line",
