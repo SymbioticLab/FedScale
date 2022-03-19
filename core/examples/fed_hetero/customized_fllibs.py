@@ -3,6 +3,8 @@ from resnet_fedhet import resnet18
 import torch
 import torch.nn.functional as F
 import numpy as np
+import copy
+from collections import OrderedDict
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from argParser import args
 
@@ -14,55 +16,76 @@ def init_model():
         model = resnet18()
     
     return model
+    
 
-def recur(fn, input, *args):
-    if isinstance(input, torch.Tensor) or isinstance(input, np.ndarray):
-        output = fn(input, *args)
-    elif isinstance(input, list):
-        output = []
-        for i in range(len(input)):
-            output.append(recur(fn, input[i], *args))
-    elif isinstance(input, tuple):
-        output = []
-        for i in range(len(input)):
-            output.append(recur(fn, input[i], *args))
-        output = tuple(output)
-    elif isinstance(input, dict):
-        output = {}
-        for key in input:
-            output[key] = recur(fn, input[key], *args)
-    else:
-        raise ValueError('Not valid input type')
-    return output
+def make_param_idx(model, model_rate):
+    """
+    "HeteroFL: Computation and Communication Efficient Federated Learning for Heterogeneous Clients"
+    Enmao Diao, Jie Ding, Vahid Tarokh,
+    ICLR 2021
+    """
+    param_idxi = None
+    param_idx = OrderedDict()
+    for k, v in model.state_dict().items():
+        parameter_type = k.split('.')[-1]
+        if 'weight' in parameter_type or 'bias' in parameter_type:
+            if parameter_type == 'weight':
+                if v.dim() > 1:
+                    input_size = v.size(1)
+                    output_size = v.size(0)
+                    if 'conv1' in k or 'conv2' in k:
+                        if param_idxi is None:
+                            param_idxi = torch.arange(input_size, device=v.device)
+                        input_idx_i = param_idxi
+                        scaler_rate = model_rate
+                        local_output_size = int(np.ceil(output_size * scaler_rate))
+                        output_idx_i = torch.arange(output_size, device=v.device)[:local_output_size]
+                        param_idxi = output_idx_i
+                    elif 'shortcut' in k:
+                        input_idx_i = param_idx[k.replace('shortcut', 'conv1')][1]
+                        output_idx_i = param_idxi
+                    elif 'linear' in k:
+                        input_idx_i = param_idxi
+                        output_idx_i = torch.arange(output_size, device=v.device)
+                    else:
+                        raise ValueError('Not valid k')
+                    param_idx[k] = (output_idx_i, input_idx_i)
+                else:
+                    input_idx_i = param_idxi
+                    param_idx[k] = input_idx_i
+            else:
+                input_size = v.size(0)
+                if 'linear' in k:
+                    input_idx_i = torch.arange(input_size, device=v.device)
+                    param_idx[k] = input_idx_i
+                else:
+                    input_idx_i = param_idxi
+                    param_idx[k] = input_idx_i
+        else:
+            pass
+    return param_idx
 
-def Accuracy(output, target, topk=1):
-    with torch.no_grad():
-        batch_size = target.size(0)
-        pred_k = output.topk(topk, 1, True, True)[1]
-        correct_k = pred_k.eq(target.view(-1, 1).expand_as(pred_k)).float().sum()
-        acc = (correct_k * (100.0 / batch_size)).item()
-    return acc
 
-def Perplexity(output, target):
-    with torch.no_grad():
-        ce = F.cross_entropy(output, target)
-        perplexity = torch.exp(ce).item()
-    return perplexity
+def split_model(global_model, model_rate):
+    """
+    "HeteroFL: Computation and Communication Efficient Federated Learning for Heterogeneous Clients"
+    Enmao Diao, Jie Ding, Vahid Tarokh,
+    ICLR 2021
+    """
+    param_idx = make_param_idx(global_model, model_rate)
+    local_parameters = OrderedDict()
+    # split global model into a sub local model
+    for k, v in global_model.state_dict().items():
+        parameter_type = k.split('.')[-1]
+        if 'weight' in parameter_type or 'bias' in parameter_type:
+            if 'weight' in parameter_type:
+                if v.dim() > 1:
+                    local_parameters[k] = copy.deepcopy(v[torch.meshgrid(param_idx[k])])
+                else:
+                    local_parameters[k] = copy.deepcopy(v[param_idx[k]])
+            else:
+                local_parameters[k] = copy.deepcopy(v[param_idx[k]])
+        else:
+            local_parameters[k] = copy.deepcopy(v)
+    return local_parameters
 
-class Metric(object):
-    def __init__(self):
-        self.metric = {'Loss': (lambda input, output: output['loss'].item()),
-                       'Local-Loss': (lambda input, output: output['loss'].item()),
-                       'Global-Loss': (lambda input, output: output['loss'].item()),
-                       'Accuracy': (lambda input, output: recur(Accuracy, output['score'], input['label'])),
-                       'Local-Accuracy': (lambda input, output: recur(Accuracy, output['score'], input['label'])),
-                       'Global-Accuracy': (lambda input, output: recur(Accuracy, output['score'], input['label'])),
-                       'Perplexity': (lambda input, output: recur(Perplexity, output['score'], input['label'])),
-                       'Local-Perplexity': (lambda input, output: recur(Perplexity, output['score'], input['label'])),
-                       'Global-Perplexity': (lambda input, output: recur(Perplexity, output['score'], input['label']))}
-
-    def evaluate(self, metric_names, input, output):
-        evaluation = {}
-        for metric_name in metric_names:
-            evaluation[metric_name] = self.metric[metric_name](input, output)
-        return evaluation

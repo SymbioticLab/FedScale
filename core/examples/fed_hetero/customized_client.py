@@ -1,22 +1,14 @@
-import logging
-import torch
-import math
-import copy
-import numpy as np
-from torch.autograd import Variable
-from collections import OrderedDict
-import sys, os
-from customized_fllibs import Metric
 import config
+import sys, os
 from resnet_fedhet import resnet18
+from customized_fllibs import split_model
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from client import Client
-
+from fllibs import Variable, os, math, torch, logging, np
+ 
 class Customized_Client(Client):
-    """Basic client component in Federated Learning"""
     def __init__(self, conf):
         super().__init__(conf)
-        # TODO: link system profile to here
         self.model_rate = None
         self.param_idx = None
         self.local_parameters = None
@@ -26,82 +18,22 @@ class Customized_Client(Client):
         if config.cfg['model_split_mode'] == 'dynamic':
             self.model_rate = np.random.choice(config.cfg['shrinkage'])
         elif config.cfg['model_split_mode'] == 'fix':
-            # self.model_rate = 1
-            if self.clientId % 10 <= 3:
-                self.model_rate = 1
-            else:
-                self.model_rate = 0.5
+            for i in range(len(config.cfg['model_rate'])):
+                if self.clientId % sum(config.cfg['proportion_of_model']) < \
+                    sum(config.cfg['proportion_of_model'][:i+1]):
+                    self.model_rate = config.cfg['model_rate'][i]
+                    break
         return
 
-    def split_model(self, global_model):
-        """split global model into a sub local model"""
-        global_parameters = global_model.state_dict()
-        local_parameters = OrderedDict()
-        param_idx = OrderedDict()
-        param_idxi = None
-        # resnet
-        for k, v in global_parameters.items():
-            parameter_type = k.split('.')[-1]
-            if 'weight' in parameter_type or 'bias' in parameter_type:
-                if parameter_type == 'weight':
-                    if v.dim() > 1:
-                        input_size = v.size(1)
-                        output_size = v.size(0)
-                        if 'conv1' in k or 'conv2' in k:
-                            if param_idxi is None:
-                                param_idxi = torch.arange(input_size, device=v.device)
-                            input_idx_i = param_idxi
-                            scaler_rate = self.model_rate
-                            local_output_size = int(np.ceil(output_size * scaler_rate))
-                            output_idx_i = torch.arange(output_size, device=v.device)[:local_output_size]
-                            param_idxi = output_idx_i
-                        elif 'shortcut' in k:
-                            input_idx_i = param_idx[k.replace('shortcut', 'conv1')][1]
-                            output_idx_i = param_idxi
-                        elif 'linear' in k:
-                            input_idx_i = param_idxi
-                            output_idx_i = torch.arange(output_size, device=v.device)
-                        else:
-                            raise ValueError('Not valid k')
-                        param_idx[k] = (output_idx_i, input_idx_i)
-                    else:
-                        input_idx_i = param_idxi
-                        param_idx[k] = input_idx_i
-                else:
-                    input_size = v.size(0)
-                    if 'linear' in k:
-                        input_idx_i = torch.arange(input_size, device=v.device)
-                        param_idx[k] = input_idx_i
-                    else:
-                        input_idx_i = param_idxi
-                        param_idx[k] = input_idx_i
-            else:
-                pass
-        for k, v in global_parameters.items():
-            parameter_type = k.split('.')[-1]
-            if 'weight' in parameter_type or 'bias' in parameter_type:
-                if 'weight' in parameter_type:
-                    if v.dim() > 1:
-                        local_parameters[k] = copy.deepcopy(v[torch.meshgrid(param_idx[k])])
-                    else:
-                        local_parameters[k] = copy.deepcopy(v[param_idx[k]])
-                else:
-                    local_parameters[k] = copy.deepcopy(v[param_idx[k]])
-            else:
-                local_parameters[k] = copy.deepcopy(v)
-        self.local_parameters = local_parameters
-
     def train(self, client_data, model, conf):
-        # consider only detection task
         self.clientId = conf.clientId
         self.make_model_rate()
         logging.info(f"Start to split model (CLIENT: {self.clientId}, MODEL RATE: {self.model_rate}) ...")
-        self.split_model(model)
+        self.local_parameters = split_model(model, self.model_rate)
         self.local_model = resnet18(model_rate=self.model_rate)
         self.local_model.load_state_dict(self.local_parameters)
         logging.info(f"Start to train (CLIENT: {self.clientId}) ...")
         device = conf.device
-        # self.local_model = model
         self.local_model = self.local_model.to(device=device)
         self.local_model.train(True)
         trained_unique_samples = min(len(client_data.dataset), conf.local_steps * conf.batch_size)
@@ -136,7 +68,7 @@ class Customized_Client(Client):
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
-                logging.info(f"{completed_steps} completed, loss square: {loss_squre}")
+                logging.info(f"Client {self.clientId} complets local epoch: {completed_steps}, loss square: {loss_squre}")
                 completed_steps += 1
 
             except Exception as ex:
@@ -154,4 +86,4 @@ class Customized_Client(Client):
         results['wall_duration'] = 0
         results['model_rate'] = self.model_rate
         results['local_parameters'] = self.local_model.state_dict()
-        return results, self.local_model
+        return results

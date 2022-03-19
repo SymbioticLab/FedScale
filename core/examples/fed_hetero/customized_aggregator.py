@@ -1,6 +1,5 @@
-from sklearn import model_selection
 import customized_fllibs
-
+from customized_fllibs import make_param_idx
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 from aggregator import Aggregator
@@ -13,10 +12,10 @@ class Customized_Aggregator(Aggregator):
         super().__init__(args)
         self.param_idx = {}
 
-    def init_model(self):
-        # return super().init_model()
-        return customized_fllibs.init_model()
 
+    def init_model(self):
+        return customized_fllibs.init_model()
+        
 
     def client_completion_handler(self, results):
         self.client_training_results.append(results)
@@ -26,11 +25,8 @@ class Customized_Aggregator(Aggregator):
             time_stamp=self.epoch,
             duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
         )
-        device = self.device
 
         self.update_lock.acquire()
-
-        # ================== Aggregate weights ======================
         self.model_in_update += 1
         
         if self.model_in_update == self.tasks_round:
@@ -38,55 +34,20 @@ class Customized_Aggregator(Aggregator):
 
         self.update_lock.release()
 
+
     def get_param_idx(self, model_rate):
-        if model_rate in self.param_idx.keys():
-            return self.param_idx[model_rate]
-        else:
-            param_idxi = None
-            param_idx = OrderedDict()
-            for k, v in self.model.state_dict().items():
-                parameter_type = k.split('.')[-1]
-                if 'weight' in parameter_type or 'bias' in parameter_type:
-                    if parameter_type == 'weight':
-                        if v.dim() > 1:
-                            input_size = v.size(1)
-                            output_size = v.size(0)
-                            if 'conv1' in k or 'conv2' in k:
-                                if param_idxi is None:
-                                    param_idxi = torch.arange(input_size, device=v.device)
-                                input_idx_i = param_idxi
-                                scaler_rate = model_rate
-                                local_output_size = int(np.ceil(output_size * scaler_rate))
-                                output_idx_i = torch.arange(output_size, device=v.device)[:local_output_size]
-                                param_idxi = output_idx_i
-                            elif 'shortcut' in k:
-                                input_idx_i = param_idx[k.replace('shortcut', 'conv1')][1]
-                                output_idx_i = param_idxi
-                            elif 'linear' in k:
-                                input_idx_i = param_idxi
-                                output_idx_i = torch.arange(output_size, device=v.device)
-                            else:
-                                raise ValueError('Not valid k')
-                            param_idx[k] = (output_idx_i, input_idx_i)
-                        else:
-                            input_idx_i = param_idxi
-                            param_idx[k] = input_idx_i
-                    else:
-                        input_size = v.size(0)
-                        if 'linear' in k:
-                            input_idx_i = torch.arange(input_size, device=v.device)
-                            param_idx[k] = input_idx_i
-                        else:
-                            input_idx_i = param_idxi
-                            param_idx[k] = input_idx_i
-                else:
-                    pass
-            self.param_idx[model_rate] = param_idx
-            return param_idx
+        if model_rate not in self.param_idx.keys():
+            self.param_idx[model_rate] = make_param_idx(self.model, model_rate)
+        return self.param_idx[model_rate]
 
     def combine_models(self):
-        logging.info("COMBINING MODEL")
+        """
+        "HeteroFL: Computation and Communication Efficient Federated Learning for Heterogeneous Clients"
+        Enmao Diao, Jie Ding, Vahid Tarokh,
+        ICLR 2021
+        """
         count = OrderedDict()
+        # combine sub-models into global model
         for k, v in self.model.state_dict().items():
             parameter_type = k.split('.')[-1]
             count[k] = v.new_zeros(v.size(), dtype=torch.float32)

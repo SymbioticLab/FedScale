@@ -1,8 +1,13 @@
 import numpy as np
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from config import cfg
+
+"""
+Reference
+PreActivated ResNet:
+https://github.com/dem123456789/HeteroFL-Computation-and-Communication-Efficient-Federated-Learning-for-Heterogeneous-Clients/blob/master/src/models/resnet.py 
+"""
 
 def init_param(m):
     if isinstance(m, (nn.BatchNorm2d, nn.InstanceNorm2d)):
