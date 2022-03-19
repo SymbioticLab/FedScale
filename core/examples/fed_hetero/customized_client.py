@@ -12,6 +12,7 @@ class Customized_Client(Client):
         self.model_rate = None
         self.param_idx = None
         self.local_parameters = None
+        
 
     def make_model_rate(self):
         """get the model scaling rate"""
@@ -24,6 +25,7 @@ class Customized_Client(Client):
                     self.model_rate = config.cfg['model_rate'][i]
                     break
         return
+
 
     def train(self, client_data, model, conf):
         self.clientId = conf.clientId
