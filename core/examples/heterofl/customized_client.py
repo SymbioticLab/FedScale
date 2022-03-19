@@ -70,11 +70,8 @@ class Customized_Client(Client):
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
-                    completed_steps += 1
-                    if completed_steps == config.cfg['local_epochs']:
-                        break
-                # logging.info(f"Client {self.clientId} complets local epoch: {completed_steps}, loss square: {loss_squre}")
-                # completed_steps += 1
+                logging.info(f"Client {self.clientId} complets local epoch: {completed_steps}, loss square: {loss_squre}")
+                completed_steps += 1
 
             except Exception as ex:
                 error_type = ex
