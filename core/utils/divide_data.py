@@ -5,7 +5,7 @@ import numpy as np
 import logging
 import time
 import random, csv
-from argParser import args
+#from argParser import args
 
 
 class Partition(object):
@@ -26,7 +26,7 @@ class Partition(object):
 class DataPartitioner(object):
     """Partition data by trace or random"""
 
-    def __init__(self, data, numOfClass=0, seed=10, isTest=False):
+    def __init__(self, data, args, numOfClass=0, seed=10, isTest=False):
         self.partitions = []
         self.rng = Random()
         self.rng.seed(seed)
@@ -120,7 +120,7 @@ def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     """Load data given client Id"""
     partition = partition.use(rank - 1, isTest)
     dropLast = False if isTest else True
-    num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
+    num_loaders = min(int(len(partition)/self.args.batch_size/2), self.args.num_loaders)
     if num_loaders == 0:
         time_out = 0
     else:
