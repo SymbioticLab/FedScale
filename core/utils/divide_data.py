@@ -5,6 +5,7 @@ import numpy as np
 import logging
 import time
 import random, csv
+from collections import defaultdict
 #from argParser import args
 
 
@@ -40,12 +41,19 @@ class DataPartitioner(object):
         self.data_len = len(self.data)
         self.task = args.task
         self.numOfLabels = numOfClass
+        self.client_label_cnt = defaultdict(set)
 
     def getNumOfLabels(self):
         return self.numOfLabels
 
     def getDataLen(self):
         return self.data_len
+
+    def getClientLen(self):
+        return len(self.partitions)
+
+    def getClientLabel(self):
+        return [len(self.client_label_cnt[i]) for i in range( self.getClientLen())]
 
     def trace_partition(self, data_map_file):
         """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category, category_id>"""
@@ -70,6 +78,7 @@ class DataPartitioner(object):
                         unique_clientIds[client_id] = len(unique_clientIds)
 
                     clientId_maps[sample_id] = unique_clientIds[client_id]
+                    self.client_label_cnt[unique_clientIds[client_id]].add(row[-1])
                     sample_id += 1
 
         # Partition data given mapping
