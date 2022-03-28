@@ -5,7 +5,8 @@ import numpy as np
 import logging
 import time
 import random, csv
-from argParser import args
+from collections import defaultdict
+#from argParser import args
 
 
 class Partition(object):
@@ -26,7 +27,7 @@ class Partition(object):
 class DataPartitioner(object):
     """Partition data by trace or random"""
 
-    def __init__(self, data, numOfClass=0, seed=10, isTest=False):
+    def __init__(self, data, args, numOfClass=0, seed=10, isTest=False):
         self.partitions = []
         self.rng = Random()
         self.rng.seed(seed)
@@ -40,12 +41,19 @@ class DataPartitioner(object):
         self.data_len = len(self.data)
         self.task = args.task
         self.numOfLabels = numOfClass
+        self.client_label_cnt = defaultdict(set)
 
     def getNumOfLabels(self):
         return self.numOfLabels
 
     def getDataLen(self):
         return self.data_len
+
+    def getClientLen(self):
+        return len(self.partitions)
+
+    def getClientLabel(self):
+        return [len(self.client_label_cnt[i]) for i in range( self.getClientLen())]
 
     def trace_partition(self, data_map_file):
         """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category, category_id>"""
@@ -70,6 +78,7 @@ class DataPartitioner(object):
                         unique_clientIds[client_id] = len(unique_clientIds)
 
                     clientId_maps[sample_id] = unique_clientIds[client_id]
+                    self.client_label_cnt[unique_clientIds[client_id]].add(row[-1])
                     sample_id += 1
 
         # Partition data given mapping
@@ -120,7 +129,7 @@ def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
     """Load data given client Id"""
     partition = partition.use(rank - 1, isTest)
     dropLast = False if isTest else True
-    num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
+    num_loaders = min(int(len(partition)/self.args.batch_size/2), self.args.num_loaders)
     if num_loaders == 0:
         time_out = 0
     else:

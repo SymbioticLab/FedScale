@@ -49,7 +49,9 @@ We provide a [guide](https://github.com/SymbioticLab/FedScale/blob/master/tutori
 
 ***We are adding more datasets! Please feel free to contribute!***
 
-We provide real-world datasets for the federated learning community, and plan to release much more soon! Each is associated with its training, validation and testing dataset. A summary of statistics for training datasets can be found in Table, and you can refer to each folder for more details. Due to the super large scale of datasets, we are uploading these data and carefully validating their implementations to FAR. So we are actively making each dataset available for FAR experiments. 
+We provide real-world datasets for the federated learning community, and plan to release much more soon! Each is associated with its training, validation and testing dataset. 
+A summary of statistics for training datasets can be found in Table, and you use the [example code](https://github.com/SymbioticLab/FedScale/blob/master/dataset/Femnist_stats.ipynb) to investigate your target dataset. 
+Due to the super large scale of datasets, we are uploading these data and carefully validating their implementations to FAR. So we are actively making each dataset available for FAR experiments. 
 
 CV tasks:
 
