@@ -133,3 +133,213 @@ Files already downloaded and verified
 (03-31) 17:01:29 INFO     [executor.py:166] Received GRPC Train request
 (03-31) 17:01:29 INFO     [client.py:17] Start to train (CLIENT: 3) ...
 (03-31) 17:01:29 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:01:33 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.2914176170923564, 'trained_size': 640, 'success': True, 'utility': 1483.9772369524187}
+(03-31) 17:01:34 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.3070724058047922, 'trained_size': 640, 'success': True, 'utility': 1496.4578585811864}
+(03-31) 17:01:34 INFO     [aggregator.py:307] Wall clock: 1699055 s, Epoch: 6, Planned participants: 4, Succeed participants: 4, Training loss: 2.325799976564722
+(03-31) 17:01:34 INFO     [client_manager.py:169] Wall clock time: 1699055, 4 clients online, 0 clients offline
+(03-31) 17:01:34 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:01:34 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:01:34 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:01:34 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:34 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:34 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:01:34 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:01:39 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.3297117307875905, 'trained_size': 640, 'success': True, 'utility': 1487.3860790962253}
+(03-31) 17:01:39 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:39 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.3019834980373446, 'trained_size': 640, 'success': True, 'utility': 1510.7309138070411}
+(03-31) 17:01:39 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:39 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:01:39 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:01:43 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.3334477141239796, 'trained_size': 640, 'success': True, 'utility': 1545.5275450731515}
+(03-31) 17:01:43 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.2768659654529677, 'trained_size': 640, 'success': True, 'utility': 1552.2412590413146}
+(03-31) 17:01:43 INFO     [aggregator.py:307] Wall clock: 2038866 s, Epoch: 7, Planned participants: 4, Succeed participants: 4, Training loss: 2.3232503516540137
+(03-31) 17:01:43 INFO     [client_manager.py:169] Wall clock time: 2038866, 4 clients online, 0 clients offline
+(03-31) 17:01:43 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:01:44 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:01:44 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:01:44 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:44 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:44 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:01:44 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:01:48 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.283907981718503, 'trained_size': 640, 'success': True, 'utility': 1495.023197746427}
+(03-31) 17:01:48 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:48 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.3035299783681724, 'trained_size': 640, 'success': True, 'utility': 1449.4323784407225}
+(03-31) 17:01:48 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:48 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:01:48 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:01:53 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.2497677563564915, 'trained_size': 640, 'success': True, 'utility': 1519.1969541581193}
+(03-31) 17:01:53 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.2936984128465685, 'trained_size': 640, 'success': True, 'utility': 1587.36626696559}
+(03-31) 17:01:53 INFO     [aggregator.py:307] Wall clock: 2378678 s, Epoch: 8, Planned participants: 4, Succeed participants: 4, Training loss: 2.3174611631780735
+(03-31) 17:01:53 INFO     [client_manager.py:169] Wall clock time: 2378678, 4 clients online, 0 clients offline
+(03-31) 17:01:53 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:01:54 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:01:54 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:01:54 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:54 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:54 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:01:54 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:01:58 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.3009804237022844, 'trained_size': 640, 'success': True, 'utility': 1632.5032692593788}
+(03-31) 17:01:58 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:58 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.200177453785395, 'trained_size': 640, 'success': True, 'utility': 1458.831582424152}
+(03-31) 17:01:58 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:01:58 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:01:58 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:02:03 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.27487727568208, 'trained_size': 640, 'success': True, 'utility': 1425.4723454640553}
+(03-31) 17:02:03 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.2901239321942906, 'trained_size': 640, 'success': True, 'utility': 1614.8246478221363}
+(03-31) 17:02:03 INFO     [aggregator.py:307] Wall clock: 2718489 s, Epoch: 9, Planned participants: 4, Succeed participants: 4, Training loss: 2.3110959891984413
+(03-31) 17:02:03 INFO     [client_manager.py:169] Wall clock time: 2718489, 4 clients online, 0 clients offline
+(03-31) 17:02:03 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:02:03 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:03 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:03 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:03 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:03 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:02:04 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:02:08 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.2426226080097096, 'trained_size': 640, 'success': True, 'utility': 1410.689482484894}
+(03-31) 17:02:08 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.2081185046903262, 'trained_size': 640, 'success': True, 'utility': 1402.0962478147007}
+(03-31) 17:02:08 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:08 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:08 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:02:08 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:02:12 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.2926104212216334, 'trained_size': 640, 'success': True, 'utility': 1621.6485225919084}
+(03-31) 17:02:13 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.2490219676443477, 'trained_size': 640, 'success': True, 'utility': 1566.378244354662}
+(03-31) 17:02:13 INFO     [aggregator.py:307] Wall clock: 3058300 s, Epoch: 10, Planned participants: 4, Succeed participants: 4, Training loss: 2.304095698775449
+(03-31) 17:02:13 INFO     [client_manager.py:169] Wall clock time: 3058300, 4 clients online, 0 clients offline
+(03-31) 17:02:13 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:02:13 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:13 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:13 INFO     [executor.py:204] Received GRPC Test request
+(03-31) 17:02:13 INFO     [executor.py:204] Received GRPC Test request
+(03-31) 17:02:23 INFO     [utils_model.py:368] Rank 1: Test set: Average loss: 2.2691, Top-1 Accuracy: 713.0/5000 (0.1426), Top-5 Accuracy: 0.6078
+(03-31) 17:02:23 INFO     [executor.py:292] After aggregation epoch 10, CumulTime 126.8196, eval_time 10.0943, test_loss 2.2691, test_accuracy 14.26%, test_5_accuracy 60.78% 
+
+(03-31) 17:02:23 INFO     [utils_model.py:368] Rank 2: Test set: Average loss: 2.2514, Top-1 Accuracy: 800.0/5000 (0.16), Top-5 Accuracy: 0.6216
+(03-31) 17:02:23 INFO     [executor.py:292] After aggregation epoch 10, CumulTime 124.8652, eval_time 10.1061, test_loss 2.2514, test_accuracy 16.00%, test_5_accuracy 62.16% 
+
+(03-31) 17:02:23 INFO     [aggregator.py:391] FL Testing in epoch: 10, virtual_clock: 3058299.68625, top_1: 15.13 %, top_5: 61.47 %, test loss: 2.2602, test len: 10000
+(03-31) 17:02:23 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:23 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:23 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:02:23 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:02:28 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.254103914033707, 'trained_size': 640, 'success': True, 'utility': 1508.493252213542}
+(03-31) 17:02:28 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:28 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.2590959104295187, 'trained_size': 640, 'success': True, 'utility': 1528.6285361749103}
+(03-31) 17:02:28 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:02:28 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:28 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:02:32 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.2352845416173968, 'trained_size': 640, 'success': True, 'utility': 1481.3870802227927}
+(03-31) 17:02:33 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.2646087022715236, 'trained_size': 640, 'success': True, 'utility': 1551.285879502727}
+(03-31) 17:02:33 INFO     [aggregator.py:307] Wall clock: 3398111 s, Epoch: 11, Planned participants: 4, Succeed participants: 4, Training loss: 2.2990134556067074
+(03-31) 17:02:33 INFO     [client_manager.py:169] Wall clock time: 3398111, 4 clients online, 0 clients offline
+(03-31) 17:02:33 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:02:33 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:33 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:33 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:33 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:33 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:02:33 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:02:38 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.209747647375085, 'trained_size': 640, 'success': True, 'utility': 1465.1235791140482}
+(03-31) 17:02:38 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:38 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.21049350535409, 'trained_size': 640, 'success': True, 'utility': 1405.8768095893217}
+(03-31) 17:02:38 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:38 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:02:38 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:02:42 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.2857146073238632, 'trained_size': 640, 'success': True, 'utility': 1577.4930202363973}
+(03-31) 17:02:42 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.258987540781815, 'trained_size': 640, 'success': True, 'utility': 1442.150945256954}
+(03-31) 17:02:43 INFO     [aggregator.py:307] Wall clock: 3737922 s, Epoch: 12, Planned participants: 4, Succeed participants: 4, Training loss: 2.2937609437523445
+(03-31) 17:02:43 INFO     [client_manager.py:169] Wall clock time: 3737922, 4 clients online, 0 clients offline
+(03-31) 17:02:43 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:02:43 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:43 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:43 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:43 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:43 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:02:43 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:02:47 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.2135100878431784, 'trained_size': 640, 'success': True, 'utility': 1407.231370073732}
+(03-31) 17:02:47 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:47 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.194054417691737, 'trained_size': 640, 'success': True, 'utility': 1422.0818942135086}
+(03-31) 17:02:47 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:47 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:02:48 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:02:52 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.210987373040763, 'trained_size': 640, 'success': True, 'utility': 1516.8917892637728}
+(03-31) 17:02:52 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.246241304681279, 'trained_size': 640, 'success': True, 'utility': 1597.0571105877325}
+(03-31) 17:02:52 INFO     [aggregator.py:307] Wall clock: 4077733 s, Epoch: 13, Planned participants: 4, Succeed participants: 4, Training loss: 2.2872973897575024
+(03-31) 17:02:52 INFO     [client_manager.py:169] Wall clock time: 4077733, 4 clients online, 0 clients offline
+(03-31) 17:02:52 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:02:53 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:53 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:02:53 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:53 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:53 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:02:53 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:02:57 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.191351214220658, 'trained_size': 640, 'success': True, 'utility': 1474.7265018019739}
+(03-31) 17:02:57 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:57 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.1759881308189164, 'trained_size': 640, 'success': True, 'utility': 1525.3460729341202}
+(03-31) 17:02:57 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:02:57 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:02:57 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:03:02 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.2197465380559946, 'trained_size': 640, 'success': True, 'utility': 1515.6123661315373}
+(03-31) 17:03:02 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.2385612542977222, 'trained_size': 640, 'success': True, 'utility': 1603.596259819195}
+(03-31) 17:03:02 INFO     [aggregator.py:307] Wall clock: 4417544 s, Epoch: 14, Planned participants: 4, Succeed participants: 4, Training loss: 2.2810754201106427
+(03-31) 17:03:02 INFO     [client_manager.py:169] Wall clock time: 4417544, 4 clients online, 0 clients offline
+(03-31) 17:03:02 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:03:03 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:03:03 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:03:03 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:03 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:03 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:03:03 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:03:07 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.1440478399492555, 'trained_size': 640, 'success': True, 'utility': 1353.9760721404198}
+(03-31) 17:03:07 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:07 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.2264757477690234, 'trained_size': 640, 'success': True, 'utility': 1522.7639019662709}
+(03-31) 17:03:07 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:07 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:03:07 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:03:12 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.155645607441092, 'trained_size': 640, 'success': True, 'utility': 1427.0543892415433}
+(03-31) 17:03:12 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.137970205678907, 'trained_size': 640, 'success': True, 'utility': 1423.1765519990163}
+(03-31) 17:03:12 INFO     [aggregator.py:307] Wall clock: 4757355 s, Epoch: 15, Planned participants: 4, Succeed participants: 4, Training loss: 2.27285823654628
+(03-31) 17:03:12 INFO     [client_manager.py:169] Wall clock time: 4757355, 4 clients online, 0 clients offline
+(03-31) 17:03:12 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:03:12 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:03:12 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:03:12 INFO     [executor.py:204] Received GRPC Test request
+(03-31) 17:03:12 INFO     [executor.py:204] Received GRPC Test request
+(03-31) 17:03:22 INFO     [utils_model.py:368] Rank 1: Test set: Average loss: 2.1434, Top-1 Accuracy: 998.0/5000 (0.1996), Top-5 Accuracy: 0.7124
+(03-31) 17:03:22 INFO     [executor.py:292] After aggregation epoch 15, CumulTime 185.657, eval_time 9.6235, test_loss 2.1434, test_accuracy 19.96%, test_5_accuracy 71.24% 
+
+(03-31) 17:03:22 INFO     [utils_model.py:368] Rank 2: Test set: Average loss: 2.144, Top-1 Accuracy: 1024.0/5000 (0.2048), Top-5 Accuracy: 0.703
+(03-31) 17:03:22 INFO     [executor.py:292] After aggregation epoch 15, CumulTime 183.7368, eval_time 9.6689, test_loss 2.144, test_accuracy 20.48%, test_5_accuracy 70.30% 
+
+(03-31) 17:03:22 INFO     [aggregator.py:391] FL Testing in epoch: 15, virtual_clock: 4757355.0675, top_1: 20.22 %, top_5: 70.77 %, test loss: 2.1437, test len: 10000
+(03-31) 17:03:22 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:22 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:22 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:03:22 INFO     [client.py:17] Start to train (CLIENT: 2) ...
+(03-31) 17:03:27 INFO     [client.py:188] Training of (CLIENT: 2) completes, {'clientId': 2, 'moving_loss': 2.1808799908097605, 'trained_size': 640, 'success': True, 'utility': 1472.4085391994151}
+(03-31) 17:03:27 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:27 INFO     [client.py:188] Training of (CLIENT: 1) completes, {'clientId': 1, 'moving_loss': 2.2162474112758805, 'trained_size': 640, 'success': True, 'utility': 1511.9225026750803}
+(03-31) 17:03:27 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:27 INFO     [client.py:17] Start to train (CLIENT: 3) ...
+(03-31) 17:03:27 INFO     [client.py:17] Start to train (CLIENT: 4) ...
+(03-31) 17:03:31 INFO     [client.py:188] Training of (CLIENT: 3) completes, {'clientId': 3, 'moving_loss': 2.0993861723138902, 'trained_size': 640, 'success': True, 'utility': 1356.890263026759}
+(03-31) 17:03:32 INFO     [client.py:188] Training of (CLIENT: 4) completes, {'clientId': 4, 'moving_loss': 2.119411790033864, 'trained_size': 640, 'success': True, 'utility': 1365.6661555655037}
+(03-31) 17:03:32 INFO     [aggregator.py:307] Wall clock: 5097166 s, Epoch: 16, Planned participants: 4, Succeed participants: 4, Training loss: 2.264933110183752
+(03-31) 17:03:32 INFO     [client_manager.py:169] Wall clock time: 5097166, 4 clients online, 0 clients offline
+(03-31) 17:03:32 INFO     [aggregator.py:323] Selected participants to run: [1, 2, 3, 4]:
+{1: {'computation': 1.92, 'communication': 339809.15625}, 2: {'computation': 1.92, 'communication': 339809.15625}, 3: {'computation': 1.92, 'communication': 339809.15625}, 4: {'computation': 1.92, 'communication': 339809.15625}}
+(03-31) 17:03:32 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:03:32 INFO     [executor.py:148] Received GRPC UpdateModel request
+(03-31) 17:03:32 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:32 INFO     [executor.py:166] Received GRPC Train request
+(03-31) 17:03:32 INFO     [client.py:17] Start to train (CLIENT: 1) ...
+(03-31) 17:03:32 INFO     [client.py:17] Start to train (CLIENT: 2) ...
