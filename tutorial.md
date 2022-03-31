@@ -58,20 +58,20 @@ We select and show few images in *people* label from different clients.
 ## Create your experiment profile
  
 
-Go to `./core/evals/configs/openimage/` directory and modify/create your **[configuration file](https://github.com/SymbioticLab/FedScale/blob/master/core/evals/configs/openimage/conf.yml)** to submit your job.
+Go to `./evals/configs/openimage/` directory and modify/create your **[configuration file](./evals/configs/openimage/conf.yml)** to submit your job.
 
 Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need .
  
 ## Submit your FL job
 
-Go to `./core/evals/` and use [manager.py](https://github.com/SymbioticLab/FedScale/blob/master/core/evals/manager.py)
+Go to `./evals/` and use [manager.py](./evals/manager.py)
 to submit your FL job.
 `manager.py` will automatically launch the `aggregator.py` and `executor.py` to start the FL simulation.
 You can either choose to evaluate your large-scale FL experiment over a GPU cluster or test your code on your local machine.
  
 ### Evaluate on a GPU cluster
 
-Once you have followed the **[instructions](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md)** to set up your experiment cluster, you will be able to submit your FL job to the cluster!
+Once you have followed the **[instructions](./fedscale/core/README.md)** to set up your experiment cluster, you will be able to submit your FL job to the cluster!
  
 Change `ps_ip` and `worker_ips` to the host name of your nodes in the configuration file by `cat \etc\hosts`.
 For example, set `10.0.0.2:[4,4]` as one of the `worker_ips`
@@ -97,7 +97,7 @@ cd core/evals/
 python manager.py start evals/configs/openimage/conf.yml
 ```
 ### Test on your local machine with jupyter notebook
-We also provide jupyter notebook [examples](./core/examples/notebook/) to run your code locally. You can first start running [server](./core/examples/notebook/fedscale_demo_server.ipynb), and then run the [client](./core/examples/notebook/fedscale_demo_client.ipynb)
+We also provide jupyter notebook [examples](./examples/notebook/) to run your code locally. You can first start running [server](./examples/notebook/fedscale_demo_server.ipynb), and then run the [client](./examples/notebook/fedscale_demo_client.ipynb)
 
  
 ## Monitor your training progress
@@ -108,4 +108,4 @@ cd core/evals
 cat job_name_logging |grep 'Training loss'
 cat job_name_logging |grep 'FL Testing'
 ```
-You can also use [Tensorboard](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md#experiment-dashboard) to better visualize the progress.
+You can also use [Tensorboard](./fedscale/core/README.md#experiment-dashboard) to better visualize the progress.
