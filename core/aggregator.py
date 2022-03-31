@@ -107,7 +107,7 @@ class Aggregator(object):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
         logging.info(f"Initiating control plane communication ...")
-        self.executors = ExecutorConnections(self.args.executor_configs, self.args.base_port)
+        self.executors = ExecutorConnections(self.args.executor_configs, self.args.base_port, self.args.max_message_length)
 
 
     def init_data_communication(self):

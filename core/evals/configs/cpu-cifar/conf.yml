@@ -25,6 +25,8 @@ auth:
 setup_commands:
     - source $HOME/anaconda3/bin/activate fedscale
 
+max_message_length: 50000000 # bytes
+
 # ========== Additional job configuration ========== 
 # Default parameters are specified in argParser.py, wherein more description of the parameter can be found
 
