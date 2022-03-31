@@ -21,8 +21,9 @@ server*.lsf
 vms
 jobinfo
 quotas
-./core/evals/scripts/*
+.fedscale/core/evals/scripts/*
 ./data/*
 ./scripts/logs/*
 data/
 .DS_Store
+*.egg-info

@@ -98,7 +98,7 @@ FedScale Automated Runtime (FAR), an automated and easily-deployable evaluation 
 
 <img src="figures/faroverview.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
 
-Please go to `./core` directory and follow the FAR [README](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md) to set up FL training scripts.
+Please go to `.fedscale/core` directory and follow the FAR [README](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md) to set up FL training scripts.
 
 
 ## Repo Structure
@@ -106,9 +106,10 @@ Please go to `./core` directory and follow the FAR [README](https://github.com/S
 ```
 Repo Root
 |---- dataset     # Realistic datasets in FedScale
-|---- core        # Experiment platform of FedScale
-    |---- examples  # Examples of new plugins
-    |---- evals     # Backend of job submission
+|---- fedscale    # fedscale source code
+  |---- core      # Experiment platform of FedScale
+|---- examples    # Examples of new plugins
+|---- evals       # Backend of job submission
     
 ```
 
