@@ -5,7 +5,6 @@ import job_api_pb2
 
 class ExecutorConnections(object):
     """"Helps aggregator manage its grpc connection with executors."""
-    MAX_MESSAGE_LENGTH = 50000000
 
     class _ExecutorContext(object):
         def __init__(self, executorId):
@@ -14,7 +13,8 @@ class ExecutorConnections(object):
             self.channel = None
             self.stub = None
 
-    def __init__(self, config, base_port=50000):
+    def __init__(self, config, base_port=50000, max_message_length=50000000):
+        self.MAX_MESSAGE_LENGTH = max_message_length
         self.executors = {}
         self.base_port = base_port
 
