@@ -9,8 +9,10 @@ import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
 import logging
-from argParser import args
-from utils.nlp import mask_tokens
+
+# libs from fedscale
+from fedscale.core.argParser import args
+from fedscale.core.utils.nlp import mask_tokens
 
 if args.task == "detection":
     import os

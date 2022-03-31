@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import job_api_pb2 as job__api__pb2
+import fedscale.core.job_api_pb2 as job__api__pb2
 
 
 class JobServiceStub(object):

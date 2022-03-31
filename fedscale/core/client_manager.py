@@ -1,8 +1,9 @@
-from helper.client import Client
 import math
 from random import Random
 import pickle
 import logging
+
+from fedscale.core.helper.client import Client
 
 class clientManager(object):
 

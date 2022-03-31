@@ -1,7 +1,7 @@
 import logging
 import grpc
-import job_api_pb2_grpc
-import job_api_pb2
+import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
+import fedscale.core.job_api_pb2 as job_api_pb2
 
 class ExecutorConnections(object):
     """"Helps aggregator manage its grpc connection with executors."""

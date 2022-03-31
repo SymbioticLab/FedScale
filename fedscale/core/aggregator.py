@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from fl_aggregator_libs import *
+from fedscale.core.fl_aggregator_libs import *
 from random import Random
-from resource_manager import ResourceManager
-from communication.channelcontext import ExecutorConnections
-from response import BasicResponse
+from fedscale.core.resource_manager import ResourceManager
+from fedscale.core.communication.channelcontext import ExecutorConnections
+from fedscale.core.response import BasicResponse
 
-import job_api_pb2_grpc
-import job_api_pb2
+import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
+import fedscale.core.job_api_pb2 as job_api_pb2
 import grpc
 import io
 import torch
