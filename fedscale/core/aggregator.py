@@ -3,7 +3,7 @@
 from fedscale.core.fl_aggregator_libs import *
 from random import Random
 from fedscale.core.resource_manager import ResourceManager
-from fedscale.core.communication.channelcontext import ExecutorConnections
+from fedscale.core.communication.channel_context import ExecutorConnections
 from fedscale.core.response import BasicResponse
 
 import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
