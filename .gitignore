@@ -27,4 +27,4 @@ quotas
 data/
 .DS_Store
 *.egg-info
-./evals
+./evals/*
