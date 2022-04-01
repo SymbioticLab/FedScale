@@ -30,7 +30,7 @@ setup_commands:
 
 job_conf: 
     - job_name: cifar                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/fedscale/core/evals # Path of log files
+    - log_path: $HOME/FedScale/fedscale/logs # Path of log files
     - total_worker: 4                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $HOME/FedScale/dataset/data/    # Path of the dataset

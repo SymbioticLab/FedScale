@@ -12,7 +12,7 @@ server*.lsf
 blog_data_dist.txt
 SampleResults
 MultiRs*
-logs
+logs/
 openImg_size.txt
 openImgFull_size.txt
 pymp*
@@ -27,4 +27,3 @@ quotas
 data/
 .DS_Store
 *.egg-info
-./evals/*
