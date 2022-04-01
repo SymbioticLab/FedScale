@@ -11,7 +11,7 @@ import numpy as np
 import logging
 
 # libs from fedscale
-from fedscale.core.argParser import args
+from fedscale.core.arg_parser import args
 from fedscale.core.utils.nlp import mask_tokens
 
 if args.task == "detection":

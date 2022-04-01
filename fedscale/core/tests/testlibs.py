@@ -25,7 +25,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 from torch_baidu_ctc import CTCLoss
 
 # libs from FLBench
-from argParser import args
+from arg_parser import args
 from utils.divide_data import partition_dataset, select_dataset, DataPartitioner
 #from utils.models import *
 from utils.utils_data import get_data_transform

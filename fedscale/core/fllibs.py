@@ -10,7 +10,7 @@ import collections
 import numpy
 
 # libs from fedscale
-from fedscale.core.argParser import args
+from fedscale.core.arg_parser import args
 from fedscale.core.utils.utils_data import get_data_transform
 from fedscale.core.utils.utils_model import test_model
 from fedscale.core.utils.divide_data import select_dataset, DataPartitioner
