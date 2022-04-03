@@ -26,8 +26,6 @@ parser.add_argument('--exploration_decay', type=float, default=0.98)
 parser.add_argument('--sample_window', type=float, default=5.0)
 parser.add_argument('--device_avail_file', type=str, default=None)
 parser.add_argument('--clock_factor', type=float, default=1.0, help="Refactor the clock time given the profile")
-parser.add_argument('--max_message_length', type=int, default=50000000)
-
 
 # The configuration of model and dataset
 parser.add_argument('--data_dir', type=str, default='~/cifar10/')
@@ -195,3 +193,4 @@ for model_name in model_factor:
     if model_name in args.model:
         args.clock_factor = args.clock_factor * model_factor[model_name]
         break
+

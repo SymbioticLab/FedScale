@@ -1,5 +1,5 @@
 # package for client
-from fllibs import *
+from fedscale.core.fllibs import *
 from torch.nn.utils.rnn import pad_sequence
 import os
 

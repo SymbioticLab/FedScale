@@ -125,11 +125,11 @@ class DataPartitioner(object):
         return {'size': [len(partition) for partition in self.partitions]}
 
 
-def select_dataset(rank, partition, batch_size, isTest=False, collate_fn=None):
+def select_dataset(rank, partition, batch_size, args, isTest=False, collate_fn=None):
     """Load data given client Id"""
     partition = partition.use(rank - 1, isTest)
     dropLast = False if isTest else True
-    num_loaders = min(int(len(partition)/self.args.batch_size/2), self.args.num_loaders)
+    num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
     if num_loaders == 0:
         time_out = 0
     else:

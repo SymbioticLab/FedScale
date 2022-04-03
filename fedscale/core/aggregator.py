@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from fl_aggregator_libs import *
+from fedscale.core.fl_aggregator_libs import *
 from random import Random
-from resource_manager import ResourceManager
-from communication.channelcontext import ExecutorConnections
-from response import BasicResponse
+from fedscale.core.resource_manager import ResourceManager
+from fedscale.core.communication.channel_context import ExecutorConnections
+from fedscale.core.response import BasicResponse
 
-import job_api_pb2_grpc
-import job_api_pb2
+import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
+import fedscale.core.job_api_pb2 as job_api_pb2
 import grpc
 import io
 import torch
@@ -107,7 +107,7 @@ class Aggregator(object):
         # Create communication channel between aggregator and worker
         # This channel serves control messages
         logging.info(f"Initiating control plane communication ...")
-        self.executors = ExecutorConnections(self.args.executor_configs, self.args.base_port, self.args.max_message_length)
+        self.executors = ExecutorConnections(self.args.executor_configs, self.args.base_port)
 
 
     def init_data_communication(self):

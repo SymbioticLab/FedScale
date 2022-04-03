@@ -17,9 +17,6 @@ def process_cmd(yaml_file,local = False):
     yaml_conf = load_yaml_conf(yaml_file)
 
     ps_ip = yaml_conf['ps_ip']
-    max_message_length = 50000000
-    if 'max_message_length' in yaml_conf:
-        max_message_length = yaml_conf['max_message_length']
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
@@ -40,7 +37,6 @@ def process_cmd(yaml_file,local = False):
                 'ps_port':random.randint(1000, 50000),
                 'manager_port':random.randint(1000, 50000),
                 'base_port': random.randint(8000, 50000),
-                'max_message_length': max_message_length,
                 }
 
     for conf in yaml_conf['job_conf']:
@@ -135,4 +131,5 @@ elif sys.argv[1] == 'stop':
     terminate(sys.argv[2])
 else:
     print("Unknown cmds ...")
+
 

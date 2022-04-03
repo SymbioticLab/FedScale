@@ -1,9 +1,9 @@
 import torch
 import logging
 import math
-from utils.nlp import mask_tokens
+from fedscale.core.utils.nlp import mask_tokens
 from torch.autograd import Variable
-from optimizer import ClientOptimizer
+from fedscale.core.optimizer import ClientOptimizer
 
 class Client(object):
     """Basic client component in Federated Learning"""

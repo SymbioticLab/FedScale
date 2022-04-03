@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from fl_client_libs import *
+from fedscale.core.fl_client_libs import *
 from argparse import Namespace
 import gc
-from client import Client
-from rlclient import RLClient
+from fedscale.core.client import Client
+from fedscale.core.rlclient import RLClient
 from concurrent import futures
-from response import BasicResponse
+from fedscale.core.response import BasicResponse
 
 import grpc
-import job_api_pb2_grpc
-import job_api_pb2
+import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
+import fedscale.core.job_api_pb2 as job_api_pb2
 import io
 import torch
 import pickle
@@ -260,7 +260,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             client = RLClient(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
         else:
-            client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, collate_fn=self.collate_fn)
+            client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, args = self.args, collate_fn=self.collate_fn)
 
             client = self.get_client_trainer(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
@@ -278,7 +278,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             test_res = client.test(args, self.this_rank, model, device=device)
             _, _, _, testResults = test_res
         else:
-            data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, isTest=True, collate_fn=self.collate_fn)
+            data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, args = self.args, isTest=True, collate_fn=self.collate_fn)
 
             if self.task == 'voice':
                 criterion = CTCLoss(reduction='mean').to(device=device)

@@ -1,10 +1,11 @@
 import logging
 import grpc
-import job_api_pb2_grpc
-import job_api_pb2
+import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
+import fedscale.core.job_api_pb2 as job_api_pb2
 
 class ExecutorConnections(object):
     """"Helps aggregator manage its grpc connection with executors."""
+    MAX_MESSAGE_LENGTH = 50000000
 
     class _ExecutorContext(object):
         def __init__(self, executorId):
@@ -13,8 +14,7 @@ class ExecutorConnections(object):
             self.channel = None
             self.stub = None
 
-    def __init__(self, config, base_port=50000, max_message_length=50000000):
-        self.MAX_MESSAGE_LENGTH = max_message_length
+    def __init__(self, config, base_port=50000):
         self.executors = {}
         self.base_port = base_port
 
@@ -53,3 +53,5 @@ class ExecutorConnections(object):
 
     def get_stub(self, executorId):
         return self.executors[executorId].stub
+
+

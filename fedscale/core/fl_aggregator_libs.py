@@ -1,5 +1,5 @@
 # package for aggregator
-from fllibs import *
+from fedscale.core.fllibs import *
 
 logDir = os.path.join(args.log_path, "logs", args.job_name, args.time_stamp, 'aggregator')
 logFile = os.path.join(logDir, 'log')

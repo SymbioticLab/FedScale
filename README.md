@@ -43,14 +43,14 @@ source install.sh
 
 ## Tutorial
 
-We provide a [guide](https://github.com/SymbioticLab/FedScale/blob/master/tutorial.md) to start your FL experiment over the OpenImg dataset.
+We provide a [guide](./tutorial.md) to start your FL experiment over the OpenImg dataset.
 
 ## Realistic FL Datasets
 
 ***We are adding more datasets! Please feel free to contribute!***
 
 We provide real-world datasets for the federated learning community, and plan to release much more soon! Each is associated with its training, validation and testing dataset. 
-A summary of statistics for training datasets can be found in Table, and you use the [example code](https://github.com/SymbioticLab/FedScale/blob/master/dataset/Femnist_stats.ipynb) to investigate your target dataset. 
+A summary of statistics for training datasets can be found in Table, and you use the [example code](./dataset/Femnist_stats.ipynb) to investigate your target dataset. 
 Due to the super large scale of datasets, we are uploading these data and carefully validating their implementations to FAR. So we are actively making each dataset available for FAR experiments. 
 
 CV tasks:
@@ -90,7 +90,7 @@ Misc Applications:
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only.***
 
-Please go to `./dataset` directory and follow the dataset [README](https://github.com/SymbioticLab/FedScale/blob/master/dataset/README.md) for more details.
+Please go to `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
 
 ## Run Experiments with FAR
 FedScale Automated Runtime (FAR), an automated and easily-deployable evaluation platform, to simplify and standardize the FL experimental setup and model evaluation under a practical setting. FAR is based on our [Oort project](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
@@ -98,7 +98,7 @@ FedScale Automated Runtime (FAR), an automated and easily-deployable evaluation 
 
 <img src="figures/faroverview.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
 
-Please go to `./core` directory and follow the FAR [README](https://github.com/SymbioticLab/FedScale/blob/master/core/README.md) to set up FL training scripts.
+Please go to `.fedscale/core` directory and follow the FAR [README](./fedscale/core/README.md) to set up FL training scripts.
 
 
 ## Repo Structure
@@ -106,9 +106,10 @@ Please go to `./core` directory and follow the FAR [README](https://github.com/S
 ```
 Repo Root
 |---- dataset     # Realistic datasets in FedScale
-|---- core        # Experiment platform of FedScale
-    |---- examples  # Examples of new plugins
-    |---- evals     # Backend of job submission
+|---- fedscale    # fedscale source code
+  |---- core      # Experiment platform of FedScale
+|---- examples    # Examples of new plugins
+|---- evals       # Backend of job submission
     
 ```
 
