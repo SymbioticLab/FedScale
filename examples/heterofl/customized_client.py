@@ -2,7 +2,7 @@ import config
 import sys, os
 from resnet_heterofl import resnet18
 from customized_fllibs import split_model
-sys.path.insert(1, os.path.join(sys.path[0], '../../'))
+sys.path.insert(1, os.path.join(sys.path[0], '../../fedscale/core'))
 from client import Client
 from fllibs import Variable, os, math, torch, logging, np
  
@@ -58,7 +58,7 @@ class Customized_Client(Client):
                     output = self.local_model(data)
                     loss = criterion(output, target)
                     loss_list = loss.tolist()
-                    loss = loss.mean()
+                    # loss = loss.mean()
                     temp_loss = sum(loss_list)/float(len(loss_list))
                     loss_squre = sum([l**2 for l in loss_list])/float(len(loss_list))
                     if completed_steps < len(client_data):
@@ -70,7 +70,7 @@ class Customized_Client(Client):
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
-                logging.info(f"Client {self.clientId} complets local epoch: {completed_steps}, loss square: {loss_squre}")
+                logging.info(f"Client {self.clientId} completes local epoch: {completed_steps}, loss square: {loss_squre}")
                 completed_steps += 1
 
             except Exception as ex:

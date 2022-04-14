@@ -1,7 +1,7 @@
 import customized_fllibs
 from customized_fllibs import make_param_idx
 import sys, os
-sys.path.insert(1, os.path.join(sys.path[0], '../../'))
+sys.path.insert(1, os.path.join(sys.path[0], '../../fedscale/core'))
 from aggregator import Aggregator
 from fl_aggregator_libs import *
 
