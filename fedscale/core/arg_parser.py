@@ -95,6 +95,10 @@ parser.add_argument('--malicious_factor', type=int, default=1e15)
 
 # for differential privacy
 parser.add_argument('--noise_factor', type=float, default=0.1)
+parser.add_argument('--clip_threshold', type=float, default=3.0)
+parser.add_argument('--target_delta', type=float, default=0.0001)
+
+
 
 # for albert
 parser.add_argument(

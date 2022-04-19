@@ -39,6 +39,7 @@ Run the following commands to install FedScale.
 git clone https://github.com/SymbioticLab/FedScale
 cd FedScale
 source install.sh 
+pip install -e .
 ```
 
 ## Tutorial
