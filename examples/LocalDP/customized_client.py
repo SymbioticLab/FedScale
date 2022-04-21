@@ -5,16 +5,23 @@ from torch.autograd import Variable
 import numpy as np
 
 import sys, os
-from clip_norm import clip_grad_norm_
+
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 
+from opacus import PrivacyEngine
+from opacus.validators import ModuleValidator
+
 from fedscale.core.client import Client
+from fedscale.core.optimizer import ClientOptimizer
 
 class Customized_Client(Client):
     """
     Basic client component in Federated Learning
     Local differential privacy
     """
+    def __init__(self, conf):
+        self.optimizer = ClientOptimizer()
+        self.privacy_engine = PrivacyEngine()
 
     def train(self, client_data, model, conf):
         clientId = conf.clientId
@@ -23,8 +30,6 @@ class Customized_Client(Client):
         device = conf.device
 
         last_model_params = [p.data.clone() for p in model.parameters()]
-        model = model.to(device=device)
-        model.train()
 
         trained_unique_samples = min(len(client_data.dataset), conf.local_steps* conf.batch_size)
 
@@ -35,6 +40,18 @@ class Customized_Client(Client):
 
         error_type = None
         completed_steps = 0
+
+        if not ModuleValidator.is_valid(model):
+            model = ModuleValidator.fix(model)
+
+        model, optimizer, client_data = self.privacy_engine.make_private(module = model,
+                                                                optimizer = optimizer,
+                                                                data_loader = client_data,
+                                                                noise_multiplier = conf.noise_factor,
+                                                                max_grad_norm =conf.clip_threshold )
+
+        model = model.to(device=device)
+        model.train()
 
         # TODO: One may hope to run fixed number of epochs, instead of iterations
         while completed_steps < conf.local_steps:
@@ -75,18 +92,16 @@ class Customized_Client(Client):
         for param in model.parameters():
             delta_weight.append((param.data - last_model_params[len(delta_weight)]))
 
-        clip_grad_norm_(delta_weight, max_norm=conf.clip_threshold)
-
         # recover model weights
         idx = 0
         for param in model.parameters():
             param.data += delta_weight[idx]
             idx += 1
-        sigma = conf.noise_factor * conf.clip_threshold
-        model_param = [param.data.cpu().numpy()+\
-            torch.normal(mean=0, std=sigma, size=param.data.shape).cpu().numpy() for param in model.state_dict().values()]
 
-        results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
+        model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
+
+        eps = self.privacy_engine.get_epsilon(delta=conf.target_delta)
+        results = {'clientId':clientId, 'moving_loss': epoch_train_loss, 'localDP_eps': eps,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
         results['utility'] = math.sqrt(epoch_train_loss)*float(trained_unique_samples)
 

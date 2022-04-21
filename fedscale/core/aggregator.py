@@ -265,7 +265,7 @@ class Aggregator(object):
                 param.data = (torch.from_numpy(results['update_weight'][idx]).to(device=device))
         else:
             for idx, param in enumerate(self.model_state_dict.values()):
-               param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device))
+                param.data += (torch.from_numpy(results['update_weight'][idx]).to(device=device))
 
         if self.model_in_update == self.tasks_round:
             for idx, param in enumerate(self.model_state_dict.values()):
