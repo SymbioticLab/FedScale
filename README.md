@@ -44,7 +44,11 @@ pip install -e .
 
 ## Tutorial
 
-We provide a [guide](./tutorial.md) to start your FL experiment over the OpenImg dataset.
+We provide several tutorials for you to get start with:
+1. A [guide](./tutorial.md) to deploy your FL experiment.
+2. A [guide](./dataset/Femnist_stats.ipynb) to learn about our FL datasets.
+3. A [guide](./examples/tutorial/FLAlgorithm.md) to implement your own FL algorithms.
+
 
 ## Realistic FL Datasets
 

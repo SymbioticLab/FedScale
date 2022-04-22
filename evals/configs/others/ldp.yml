@@ -34,7 +34,7 @@ job_conf:
     - log_path: $HOME/FedScale/core/evals # Path of log files
     - total_worker: 10
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: /users/JIACHEN/FedScale/dataset/data/femnist  # Path of the dataset
+    - data_dir: $HOME/FedScale/dataset/data/femnist  # Path of the dataset
 #    - device_avail_file: /users/JIACHEN/FLPerf-Cluster/client_datamap/client_behave_trace
     - sample_mode: random                                  # Client selection: random, kuiper, random by default
     - model: resnet18                            # Models: shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
@@ -51,3 +51,6 @@ job_conf:
     - batch_size: 25
     - test_bsz: 5
     - use_cuda: False
+    - noise_factor: 0.1
+    - clip_threshold: 2.0
+
