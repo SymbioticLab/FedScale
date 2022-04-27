@@ -11,3 +11,4 @@ classes_size: 10 # for cifar10
 global_model_rate: 1
 resnet_hidden_size: [64, 128, 256, 512]
 local_epochs: 5
+participation_rate: 0.1

@@ -1,4 +1,5 @@
 import customized_fllibs
+import config
 from customized_fllibs import make_param_idx
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], '../../fedscale/core'))
@@ -15,7 +16,37 @@ class Customized_Aggregator(Aggregator):
 
     def init_model(self):
         return customized_fllibs.init_model()
-        
+
+    def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
+        sampledClientsReal = []
+        completionTimes = []
+        completed_client_clock = {}
+        # 1. remove dummy clients that are not available to the end of training
+        for client_to_run in sampled_clients:
+            client_cfg = self.client_conf.get(client_to_run, self.args)
+
+            exe_cost = self.client_manager.getCompletionTime(client_to_run,
+                                    batch_size=client_cfg.batch_size, upload_epoch=client_cfg.local_steps,
+                                    upload_size=self.model_update_size, download_size=self.model_update_size)
+
+            roundDuration = exe_cost['computation'] + exe_cost['communication']
+            # if the client is not active by the time of collection, we consider it is lost in this round
+            if self.client_manager.isClientActive(client_to_run, roundDuration + self.global_virtual_clock):
+                sampledClientsReal.append(client_to_run)
+                completionTimes.append(roundDuration)
+                completed_client_clock[client_to_run] = exe_cost
+
+        num_clients_to_collect = min(int(num_clients_to_collect * config.cfg['participation_rate']), len(completionTimes))
+        # 2. get the top-k completions to remove stragglers
+        sortedWorkersByCompletion = sorted(range(len(completionTimes)), key=lambda k:completionTimes[k])
+        top_k_index = random.sample(sortedWorkersByCompletion, k=num_clients_to_collect)
+        clients_to_run = [sampledClientsReal[k] for k in top_k_index]
+
+        dummy_clients = [sampledClientsReal[k] for k in sortedWorkersByCompletion[num_clients_to_collect:]]
+        round_duration = completionTimes[top_k_index[-1]]
+        completionTimes.sort()
+
+        return clients_to_run, [], completed_client_clock, round_duration, completionTimes[:num_clients_to_collect]
 
     def client_completion_handler(self, results):
         self.client_training_results.append(results)

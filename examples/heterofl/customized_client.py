@@ -58,7 +58,7 @@ class Customized_Client(Client):
                     output = self.local_model(data)
                     loss = criterion(output, target)
                     loss_list = loss.tolist()
-                    # loss = loss.mean()
+                    loss = loss.mean()
                     temp_loss = sum(loss_list)/float(len(loss_list))
                     loss_squre = sum([l**2 for l in loss_list])/float(len(loss_list))
                     if completed_steps < len(client_data):
