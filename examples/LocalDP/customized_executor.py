@@ -3,10 +3,12 @@
 import sys, os
 from customized_client import Customized_Client
 
+from opacus.validators import ModuleValidator
+
 sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 
 from fedscale.core.executor import Executor
-from fedscale.core.fl_client_libs import args
+from fedscale.core.fl_client_libs import *
 
 """In this example, we only need to change the Client Component we need to import"""
 
@@ -19,6 +21,15 @@ class Customized_Executor(Executor):
 
     def get_client_trainer(self, conf):
         return Customized_Client(conf)
+
+    def init_model(self):
+        """Return the model architecture used in training"""
+        model = init_model()
+        if not ModuleValidator.is_valid(model):
+            model = ModuleValidator.fix(model)
+
+        return model
+
 
 if __name__ == "__main__":
     executor = Customized_Executor(args)
