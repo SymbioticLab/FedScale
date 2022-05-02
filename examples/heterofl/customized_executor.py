@@ -1,9 +1,8 @@
 import sys, os
 from customized_client import Customized_Client
 from customized_fllibs import init_model
-sys.path.insert(1, os.path.join(sys.path[0], '../../'))
-from executor import Executor
-from argParser import args
+from fedscale.core.executor import Executor
+from fedscale.core.arg_parser import args
 
 class Customized_Executor(Executor):
 

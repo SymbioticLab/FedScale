@@ -5,8 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import copy
 from collections import OrderedDict
-sys.path.insert(1, os.path.join(sys.path[0], '../../'))
-from argParser import args
+from fedscale.core.arg_parser import args
 
 def init_model():
     global tokenizer
