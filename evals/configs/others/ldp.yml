@@ -31,7 +31,7 @@ setup_commands:
 
 job_conf:
     - job_name: ldp                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/core/evals # Path of log files
+    - log_path: $HOME/FedScale/evals # Path of log files
     - total_worker: 10
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $HOME/FedScale/dataset/data/femnist  # Path of the dataset
