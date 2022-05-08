@@ -22,7 +22,7 @@ worker_ips:
     - 10.0.0.13:[4]
     - 10.0.0.14:[4]
 
-exp_path: $HOME/FedScale/core
+exp_path: $HOME/FedScale/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: executor.py
@@ -43,7 +43,7 @@ setup_commands:
 
 job_conf: 
     - job_name: openimage                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/core/evals # Path of log files
+    - log_path: $HOME/FedScale/evals # Path of log files
     - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: openImg                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $HOME/FedScale/dataset/data/openImg    # Path of the dataset
