@@ -1,39 +1,18 @@
 
-## FedScale: Benchmarking Model and System Performance of Federated Learning ([Paper](https://arxiv.org/abs/2105.11367))
+# FedScale
 
-This repository contains scripts and instructions of building FedScale, 
-a diverse set of challenging and realistic benchmark datasets to facilitate scalable, comprehensive, 
-and reproducible federated learning (FL) research. FedScale datasets are large-scale, encompassing a diverse range of important FL tasks, 
-such as image classification, object detection, language modeling, speech recognition, and reinforcement learning. 
-For each dataset, we provide a unified evaluation protocol using realistic data splits and evaluation metrics. 
-To meet the pressing need for reproducing realistic FL at scale, we have also built an efficient evaluation platform, 
-FedScale Automated Runtime (FAR), to simplify and standardize the process of FL experimental setup and model evaluation. 
-Our evaluation platform provides flexible APIs to implement new FL algorithms and include new execution backends with minimal developer efforts.  
+FedScale is a scalable and extensible open-source federated learning (FL) engine. 
+It provides high-level APIs to implement FL algorithms, deploy them at scale across diverse hardware and software backends, and evaluate them at scale.
+FedScale also includes the largest FL benchmark that contains FL tasks ranging from image classification and object detection to language modeling and speech recognition. 
+Moreover, it includes datasets to faithfully emulate FL training environments where FL will realistically be deployed.
 
-***FedScale is open-source with permissive licenses and actively maintained, 
-and we welcome feedback and contributions from the community! 
-If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel.***
-
-## Overview
-
-* [Getting Started](#getting-started)
-* [Tutorial](#tutorial)
-* [Realistic FL Datasets](#realistic-fl-datasets)
-* [Run Experiments with FAR](#run-experiments-with-far)
-* [Repo Structure](#repo-structure)
-* [Notes](#notes)
-* [Contact](#contact)
+[http://fedscale.ai](http://fedscale.ai)
 
 ## Getting Started
 
-Our ```install.sh``` will install the following automatically:
+### Installation
 
-* Anaconda Package Manager
-* CUDA 10.2
-
-Note: if you prefer different versions of conda and CUDA, please check  comments in `install.sh` for details.
-
-Run the following commands to install FedScale. 
+FedScale can be installed using the following commands.
 
 ```
 git clone https://github.com/SymbioticLab/FedScale
@@ -42,84 +21,51 @@ source install.sh
 pip install -e .
 ```
 
-## Tutorial
+This will install the following automatically:
 
-We provide several tutorials for you to get start with:
-1. A [guide](./tutorial.md) to deploy your FL experiment.
-2. A [guide](./dataset/Femnist_stats.ipynb) to learn about our FL datasets.
-3. A [guide](./examples/tutorial/FLAlgorithm.md) to implement your own FL algorithms.
+* Anaconda Package Manager
+* CUDA 10.2
 
+If you prefer different versions of conda and CUDA, please check comments in `install.sh` for details.
 
-## Realistic FL Datasets
+### Tutorials
 
-***We are adding more datasets! Please feel free to contribute!***
+You can start by following one of the following introductory tutorials:
 
-We provide real-world datasets for the federated learning community, and plan to release much more soon! Each is associated with its training, validation and testing dataset. 
-A summary of statistics for training datasets can be found in Table, and you use the [example code](./dataset/Femnist_stats.ipynb) to investigate your target dataset. 
-Due to the super large scale of datasets, we are uploading these data and carefully validating their implementations to FAR. So we are actively making each dataset available for FAR experiments. 
-
-CV tasks:
-
-| Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
-| -----------   | ----------- | -----------  |  ----------- |    ----------- |
-| iNature       |   Image     |   2,295      |   193K        |   Classification |
-| FMNIST        |   Image     |   3,400      |   640K        |   Classification  |    
-| OpenImage     |   Image     |   13,771     |   1.3M        |   Classification, Object detection      |
-| Google Landmark|  Image     |   43,484     |   3.6M        |   Classification       |
-| Charades      |   Video     |    266       |   10K         |   Action recognition   |
-| VLOG          |   Video     |    4,900     |   9.6k        |   Video classification, Object detection |
-| Waymo Motion  |   Video     |    496,358   |   32.5M       |   Motion prediction |
-
-NLP tasks:
-
-| Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
-| -----------   | ----------- | -----------  |  ----------- |   ----------- |
-| Europarl      |   Text      |   27,835     |   1.2M        |   Text translation  |
-| Blog Corpus   |   Text      |   19,320     |   137M        |   Word prediction      |
-| Stackoverflow |   Text      |   342,477    |   135M        |  Word prediction, classification |
-| Reddit        |   Text      |  1,660,820   |   351M        |  Word prediction   |
-| Amazon Review |   Text      | 1,822,925    |   166M        | Classification, Word prediction |
-|  CoQA         |   Text      |     7,189    |   114K        |  Question Answering |
-|LibriTTS       |   Text      |     2,456    |    37K        |   Text to speech    |
-|Google Speech  |   Audio     |     2,618    |   105K        |   Speech recognition |
-|Common Voice   |   Audio     |     12,976   |    1.1M       |   Speech recognition |
-
-Misc Applications:
-
-| Dataset       | Data Type   |# of Clients  | # of Samples   | Example Task | 
-| -----------   | ----------- | -----------  |  ----------- |   ----------- |
-|Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction    |
-|Puffer dataset |   Text      |     121,551  |    15.4M      |   Sequence Prediction    |
-|Taobao         |   Text      |     182,806  |    0.9M       |   Recommendation         |
-|Go dataset     |   Text      |     150,333  |    4.9M       |   Reinforcement learning | 
-
-***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only.***
-
-Please go to `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
-
-## Run Experiments with FAR
-FedScale Automated Runtime (FAR), an automated and easily-deployable evaluation platform, to simplify and standardize the FL experimental setup and model evaluation under a practical setting. FAR is based on our [Oort project](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
+1. [Deploying your FL experiment](./tutorial.md)
+2. [Exploring FedScale datasets](./dataset/Femnist_stats.ipynb)
+3. [Implementing an FL algorithms](./examples/tutorial/FLAlgorithm.md)
 
 
-<img src="figures/faroverview.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
+## FedScale Datasets
 
-Please go to `.fedscale/core` directory and follow the FAR [README](./fedscale/core/README.md) to set up FL training scripts.
+***We are adding more datasets! Please contribute!***
+
+FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellanious tasks. 
+Each one is associated with its training, validation, and testing datasets. 
+Please go to the `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
+
+## FedScale Runtime
+FedScale Runtime is an scalable and extensible deployment as well as evaluation platform to simplify and standardize FL experimental setup and model evaluation. 
+It evolved from our prior system, Oort [Oort project](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
+
+Please go to `./core` directory and follow the FAR [README](./fedscale/core/README.md) to set up FL training scripts.
 
 
 ## Repo Structure
 
 ```
 Repo Root
-|---- dataset     # Realistic datasets in FedScale
-|---- fedscale    # fedscale source code
+|---- dataset     # FedScale benchmarking datasets
+|---- fedscale    # FedScale source code
   |---- core      # Experiment platform of FedScale
 |---- examples    # Examples of new plugins
-|---- evals       # Backend of job submission
+|---- evals       # Backend for FL job submission
     
 ```
 
-## Notes
-please consider to cite our papers if you use the code or data in your research project.
+## References
+Please read and/or cite as appropriate to use FedScale code or data or learn more about FedScale.
 
 ```bibtex
 @inproceedings{fedscale-arxiv,
@@ -141,6 +87,8 @@ and
 }
 ```
 
-## Contact
-If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel, or email us (fedscale@googlegroups.com). 
+## Contributions and Communication
+Please submit [issues](https://github.com/SymbioticLab/FedScale/issues) or [pull requests](https://github.com/SymbioticLab/FedScale/pulls) as you find bugs or improve FedScale.
+
+If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel, or email us ([fedscale@googlegroups.com](mailto:fedscale@googlegroups.com)). 
 
