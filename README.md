@@ -68,11 +68,11 @@ Repo Root
 Please read and/or cite as appropriate to use FedScale code or data or learn more about FedScale.
 
 ```bibtex
-@inproceedings{fedscale-arxiv,
+@inproceedings{fedscale-icml,
   title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
-  author={Fan Lai and Yinwei Dai and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
-  booktitle={arXiv:2105.11367},
-  year={2021}
+  author={Fan Lai and Yinwei Dai and Sanjay S. Singapuram and Jiachen Liu and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
+  booktitle={ICML},
+  year={2022}
 }
 ```
 
