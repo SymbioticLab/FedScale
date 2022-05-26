@@ -100,12 +100,12 @@ def init_model():
             from transformers import AutoConfig
             config = AutoConfig.from_pretrained(os.path.join(args.log_path, 'albert-small-config.json'))
             config.num_labels = outputClass[args.data_set]
-            model = AlbertForSequenceClassification(config) 
-        elif args.model == 'lr': 
+            model = AlbertForSequenceClassification(config)
+        elif args.model == 'lr':
             from fedscale.core.utils.models import  LogisticRegression
             model = LogisticRegression(300, outputClass[args.data_set])
-            
-            
+
+
     elif args.task == 'tag-one-sample':
         # Load LR model for tag prediction
         model = LogisticRegression(args.vocab_token_size, args.vocab_tag_size)
@@ -170,9 +170,7 @@ def init_model():
             from fedscale.core.utils.models import LinearSVM
             model = LinearSVM(args.input_dim, outputClass[args.data_set])
         else:
-            from pytorchcv.model_provider import get_model as ptcv_get_model
-            model = ptcv_get_model(args.model)
-            #model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
+            model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 
     return model
 
@@ -252,12 +250,12 @@ def init_dataset():
                 import fedscale.core.utils.amazon as fl_loader
                 train_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size  )
                 test_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size )
-            
-            elif args.model == 'lr': 
+
+            elif args.model == 'lr':
                 import fedscale.core.utils.word2vec as fl_loader
                 train_dataset = fl_loader.AmazonReview_word2vec(args.data_dir, args.embedding_file, train=True)
                 test_dataset = fl_loader.AmazonReview_word2vec( args.data_dir, args.embedding_file, train=False)
-        
+
         elif args.data_set == 'yelp':
             import fedscale.core.utils.dataloaders as fl_loader
 
