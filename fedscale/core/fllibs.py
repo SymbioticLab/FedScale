@@ -170,7 +170,9 @@ def init_model():
             from fedscale.core.utils.models import LinearSVM
             model = LinearSVM(args.input_dim, outputClass[args.data_set])
         else:
-            model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
+            from pytorchcv.model_provider import get_model as ptcv_get_model
+            model = ptcv_get_model(args.model)
+            #model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
 
     return model
 

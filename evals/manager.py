@@ -34,9 +34,6 @@ def process_cmd(yaml_file,local = False):
 
     job_conf = {'time_stamp':time_stamp,
                 'ps_ip':ps_ip,
-                'ps_port':random.randint(1000, 50000),
-                'manager_port':random.randint(1000, 50000),
-                'base_port': random.randint(8000, 50000),
                 }
 
     for conf in yaml_conf['job_conf']:

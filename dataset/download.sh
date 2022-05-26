@@ -12,7 +12,7 @@ Help()
    # Display Help
    echo "FedScale provides a large suite of FL datasets "
    echo "to evaluate today's FL performance"
-   echo 
+   echo
    echo "Syntax: ./download.sh [-g|h|v|V]"
    echo "options:"
    echo "-h     Print this Help."
@@ -29,19 +29,19 @@ Help()
    echo "-t     Download Taobao dataset (about 185M)"
    echo "-x     Download Taxi Trajectory dataset (about 504M)"
    echo "-w     Download Waymo Motion dataset meta file (about 74M)"
-   echo "-f     Download FEMNIST dataset (about 327M)"    
-   echo "-o     Download StackOverflow dataset (about 13G)"
+   echo "-f     Download FEMNIST dataset (about 327M)"
+   echo "-v     Download StackOverflow dataset (about 13G)"
    echo "-b     Download Blog dataset (about 833M)"
 }
 
 speech()
 {
-    if [ ! -d "${DIR}/speech_commands/train/" ]; 
+    if [ ! -d "${DIR}/speech_commands/train/" ];
     then
         echo "Downloading Speech Commands dataset(about 2.4GB)..."
         wget -O ${DIR}/speech_commands/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
 
-        echo "Dataset downloaded, now decompressing..." 
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/speech_commands/google_speech.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -53,14 +53,14 @@ speech()
 fi
 }
 
-open_images() 
+open_images()
 {
-    if [ ! -d "${DIR}/open_images/train/" ]; 
+    if [ ! -d "${DIR}/open_images/train/" ];
     then
-        echo "Downloading Open Images dataset(about 66GB)..."   
+        echo "Downloading Open Images dataset(about 66GB)..."
         wget -O ${DIR}/open_images.tar.gz https://fedscale.eecs.umich.edu/dataset/openImage.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/open_images.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -72,14 +72,14 @@ open_images()
 fi
 }
 
-amazon_review() 
+amazon_review()
 {
-    if [ ! -d "${DIR}/amazon_review/train/" ]; 
+    if [ ! -d "${DIR}/amazon_review/train/" ];
     then
-        echo "Downloading Amazon Review dataset(about 11GB)..."   
+        echo "Downloading Amazon Review dataset(about 11GB)..."
         wget -O ${DIR}/amazon_review.tar.gz https://fedscale.eecs.umich.edu/dataset/amazon_review.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/amazon_review.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -91,14 +91,14 @@ amazon_review()
 fi
 }
 
-charades() 
+charades()
 {
-    if [ ! -d "${DIR}/charades/train/" ]; 
+    if [ ! -d "${DIR}/charades/train/" ];
     then
-        echo "Downloading Charades dataset(about 15GB)..."   
+        echo "Downloading Charades dataset(about 15GB)..."
         wget -O ${DIR}/charades.tar.gz https://fedscale.eecs.umich.edu/dataset/charades_v1.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/charades.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -110,14 +110,14 @@ charades()
 fi
 }
 
-europarl() 
+europarl()
 {
-    if [ ! -d "${DIR}/europarl/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/europarl/client_data_mapping/" ];
     then
-        echo "Downloading europarl dataset(about 458M)..."   
+        echo "Downloading europarl dataset(about 458M)..."
         wget -O ${DIR}/europarl.tar.gz https://fedscale.eecs.umich.edu/dataset/europarl.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/europarl.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -129,14 +129,14 @@ europarl()
 fi
 }
 
-go() 
+go()
 {
-    if [ ! -d "${DIR}/go/train/" ]; 
+    if [ ! -d "${DIR}/go/train/" ];
     then
-        echo "Downloading go dataset(about 1.7G)..."   
+        echo "Downloading go dataset(about 1.7G)..."
         wget -O ${DIR}/go.tar.gz https://fedscale.eecs.umich.edu/dataset/go-dataset.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/go.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -148,14 +148,14 @@ go()
 fi
 }
 
-inaturalist() 
+inaturalist()
 {
-    if [ ! -d "${DIR}/inaturalist/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/inaturalist/client_data_mapping/" ];
     then
-        echo "Downloading inaturalist dataset ..."   
+        echo "Downloading inaturalist dataset ..."
         wget -O ${DIR}/inaturalist.tar.gz https://fedscale.eecs.umich.edu/dataset/inaturalist.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/inaturalist.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -168,14 +168,14 @@ fi
 }
 
 
-libriTTS() 
+libriTTS()
 {
-    if [ ! -d "${DIR}/libriTTS/train/" ]; 
+    if [ ! -d "${DIR}/libriTTS/train/" ];
     then
-        echo "Downloading libriTTS dataset(about 78G)..."   
+        echo "Downloading libriTTS dataset(about 78G)..."
         wget -O ${DIR}/libriTTS.tar.gz https://fedscale.eecs.umich.edu/dataset/libriTTS.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/libriTTS.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -187,14 +187,14 @@ libriTTS()
 fi
 }
 
-open_images_detection() 
+open_images_detection()
 {
-    if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ];
     then
-        echo "Downloading open_images_detection dataset(about 451M)..."   
+        echo "Downloading open_images_detection dataset(about 451M)..."
         wget -O ${DIR}/openimage_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/openimage_detection.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -206,14 +206,14 @@ open_images_detection()
 fi
 }
 
-reddit() 
+reddit()
 {
-    if [ ! -d "${DIR}/reddit/train/" ]; 
+    if [ ! -d "${DIR}/reddit/train/" ];
     then
-        echo "Downloading reddit dataset(about 25G)..."   
+        echo "Downloading reddit dataset(about 25G)..."
         wget -O ${DIR}/reddit.tar.gz https://fedscale.eecs.umich.edu/dataset/reddit.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/reddit.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -225,14 +225,14 @@ reddit()
 fi
 }
 
-blog() 
+blog()
 {
-    if [ ! -d "${DIR}/blog/train/" ]; 
+    if [ ! -d "${DIR}/blog/train/" ];
     then
-        echo "Downloading blog dataset(about 800M)..."   
+        echo "Downloading blog dataset(about 800M)..."
         wget -O ${DIR}/blog.tar.gz https://fedscale.eecs.umich.edu/dataset/blog.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/blog.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -244,14 +244,14 @@ blog()
 fi
 }
 
-stackoverflow() 
+stackoverflow()
 {
-    if [ ! -d "${DIR}/stackoverflow/train/" ]; 
+    if [ ! -d "${DIR}/stackoverflow/train/" ];
     then
-        echo "Downloading stackoverflow dataset(about 800M)..."   
+        echo "Downloading stackoverflow dataset(about 800M)..."
         wget -O ${DIR}/stackoverflow.tar.gz https://fedscale.eecs.umich.edu/dataset/stackoverflow.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/stackoverflow.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -263,14 +263,14 @@ stackoverflow()
 fi
 }
 
-taobao() 
+taobao()
 {
-    if [ ! -d "${DIR}/taobao/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/taobao/client_data_mapping/" ];
     then
-        echo "Downloading taobao dataset(about 185M)..."   
+        echo "Downloading taobao dataset(about 185M)..."
         wget -O ${DIR}/taobao.tar.gz https://fedscale.eecs.umich.edu/dataset/taobao.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/taobao.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -282,14 +282,14 @@ taobao()
 fi
 }
 
-taxi() 
+taxi()
 {
-    if [ ! -d "${DIR}/taxi_traj/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/taxi_traj/client_data_mapping/" ];
     then
-        echo "Downloading taxi prediction dataset(about 504M)..."   
+        echo "Downloading taxi prediction dataset(about 504M)..."
         wget -O ${DIR}/taxi_traj.tar.gz https://fedscale.eecs.umich.edu/dataset/taxi_traj.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/taxi_traj.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -301,14 +301,14 @@ taxi()
 fi
 }
 
-waymo() 
+waymo()
 {
-    if [ ! -d "${DIR}/waymo/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/waymo/client_data_mapping/" ];
     then
-        echo "Downloading waymo dataset(about 74M)..."   
+        echo "Downloading waymo dataset(about 74M)..."
         wget -O ${DIR}/waymo.tar.gz https://fedscale.eecs.umich.edu/dataset/waymo.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/waymo.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -320,14 +320,14 @@ waymo()
 fi
 }
 
-femnist() 
+femnist()
 {
-    if [ ! -d "${DIR}/FEMNIST/client_data_mapping/" ]; 
+    if [ ! -d "${DIR}/FEMNIST/client_data_mapping/" ];
     then
-        echo "Downloading FEMNIST dataset(about 327M)..."   
+        echo "Downloading FEMNIST dataset(about 327M)..."
         wget -O ${DIR}/femnist.tar.gz https://fedscale.eecs.umich.edu/dataset/femnist.tar.gz
-        
-        echo "Dataset downloaded, now decompressing..." 
+
+        echo "Dataset downloaded, now decompressing..."
         tar -xf ${DIR}/femnist.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
@@ -339,20 +339,20 @@ femnist()
 fi
 }
 
-while getopts ":hsoacegildrtwfxo" option; do
+while getopts ":hvsoacegildrtwfxob" option; do
    case $option in
       h ) # display Help
          Help
          exit;;
       o )
-         open_images   
-         ;;    
+         open_images
+         ;;
       s )
-         speech   
-         ;;   
+         speech
+         ;;
       a )
-         amazon_review   
-         ;;           
+         amazon_review
+         ;;
       c )
          charades
          ;;
@@ -385,19 +385,19 @@ while getopts ":hsoacegildrtwfxo" option; do
          ;;
       f )
          femnist
-         ;;    
+         ;;
       b )
          blog
-         ;;   
-      o )
+         ;;
+      v )
          stackoverflow
-         ;;        
-      \? ) 
+         ;;
+      \? )
          echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}"
          exit 1;;
    esac
 done
 
-if [ $OPTIND -eq 1 ]; then 
-    echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}"; 
+if [ $OPTIND -eq 1 ]; then
+    echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}";
 fi
