@@ -17,14 +17,12 @@ FedScale can be installed using the following commands.
 ```
 git clone https://github.com/SymbioticLab/FedScale
 cd FedScale
-source install.sh 
+source install.sh  
 pip install -e .
 ```
 
-This will install the following automatically:
-
-* Anaconda Package Manager
-* CUDA 10.2
+This will install the `Anaconda` if it doesn't exist.
+If you want to use GPU and install `CUDA 10.2`, add the flag `--cuda` after `install.sh`to specify ( `source install.sh --cuda ` ).
 
 If you prefer different versions of conda and CUDA, please check comments in `install.sh` for details.
 
