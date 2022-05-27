@@ -10,21 +10,40 @@ Moreover, it includes datasets to faithfully emulate FL training environments wh
 
 ## Getting Started
 
-### Installation
-
-FedScale can be installed using the following commands.
-
 ```
 git clone https://github.com/SymbioticLab/FedScale
 cd FedScale
+```
+### Installation
+
+**Option 1: One-click installation on Linux** 
+
+```
 source install.sh  
 pip install -e .
 ```
-
-This will install the `Anaconda` if it doesn't exist.
 If you want to use GPU and install `CUDA 10.2`, add the flag `--cuda` after `install.sh`to specify ( `source install.sh --cuda ` ).
-
 If you prefer different versions of conda and CUDA, please check comments in `install.sh` for details.
+
+
+**Option 2: Customized Installation**
+
+Step 1: Install [Anaconda](https://www.anaconda.com/products/distribution#download-section) environment. 
+
+step 2: Install FedSacle dependencies:
+
+```
+# create conda env
+export FEDSCALE_HOME=$PWD
+conda init bash
+. ~/.bashrc
+conda env create -f environment.yml # Install dependencies
+conda activate fedscale
+```
+
+step 3 (optional):
+If you want to compile with CUDA support, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above.
+
 
 ### Tutorials
 
