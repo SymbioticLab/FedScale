@@ -14,4 +14,4 @@ DUMMY_EVENT = 'dummy_event'
 UPLOAD_MODEL = 'upload_model'
 
 # PLACEHOLD
-DUMMY_RESPONSE = None
+DUMMY_RESPONSE = 'N'
