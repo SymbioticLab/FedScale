@@ -18,6 +18,7 @@ isPackageNotInstalled conda
 
 
 # create conda env
+export FEDSCALE_HOME=$PWD
 conda init bash
 . ~/.bashrc
 conda env create -f environment.yml # Install dependencies
