@@ -2,63 +2,45 @@
   
 # Tutorial
  
-This tutorial will show you how to set up and start a FL experiment over OpenImg dataset using Fedscale.
+This tutorial will show you how to set up and start a FL experiment over Femnist dataset using Fedscale.
  
 ## Environment
 
-Run the following commands to install FedScale.
-
-```
-git clone https://github.com/SymbioticLab/FedScale
-cd FedScale
-source install.sh
-```
- 
-Please make sure you have enter the correct environment through 
+Check the [instructions](./README.md) to set up your environment.
+Please make sure you have entered the correct environment through 
 ```bash
-# bash
 conda activate fedscale
 ```
 
- 
-## Download OpenImg dataset
-To download the OpenImg dataset, go to `./dataset`:
- 
+## Download Femnist dataset
+To download the Femnist dataset, go to `./dataset`:
+
 ```
 cd dataset/
-bash download.sh -o
+bash download.sh -f
 ```
 
 ### Exploring the data
-Under `data/openImg/client_data_mapping`, there is a list of `csv` files that map every image with its label to an owner. 
-There are 13,771 unique clients who contain 1.3M samples in total in the OpenImg dataset.
+Under `data/femnist/client_data_mapping`, there is a list of `csv` files that map every image with its label to an owner. 
+There are 3,400 unique clients who contain 1.3M samples in total in the Femnist dataset.
 
 ```
-cd data/openImg/client_data_mapping
+cd data/femnist/client_data_mapping
 head train.csv
 ```
-| client_id | sample_path | label_name | label_id |
-| ------ | ------ | ------ | ------ |
-| 0 | 1ea021de60b3cd89___m_09j2d.jpg | _m_09j2d | 1 |
-| 0 | cae40be4017c90fd___m_09j2d.jpg | _m_09j2d | 1 |
-| 0 | fd30ab5d0338b876___m_09j2d.jpg | _m_09j2d | 1 |
- 
-### Exploring heterogeneity
+| client_id | sample_path              | label_name | label_id |
+|-----------|--------------------------|------------|----------|
+| 980       | ...../u0388_26_00004.png | 44         | 6        |
+| 980       | ...../u0388_26_00002.png | 58         | 38       |
+| 980       | ...../u0388_26_00001.png | 4c         | 40       | 
 
-Let's understand how client-level heterogeneity looks like in the OpenImg dataset.
-We select and show few images in *people* label from different clients.
- 
-![](./figures/client1.png)
-> Some images of *people* label from client 1.
- 
-![](./figures/client10.png)
-> Some images of *people* label from client 2.
+
+Explore and understand the characteristics of [Femnist datasets](./dataset/Femnist_stats.ipynb).
 
 
 ## Create your experiment profile
- 
+Go to `./evals/configs/femnist/` directory and modify/create your **[configuration file](./evals/configs/femnist/conf.yml)** to submit your job.
 
-Go to `./evals/configs/openimage/` directory and modify/create your **[configuration file](./evals/configs/openimage/conf.yml)** to submit your job.
 
 Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need .
  
@@ -82,23 +64,25 @@ Also make sure you have synchronized the code across all the nodes.
  
 ```
 cd core/evals/
-python manager.py submit evals/configs/openimage/conf.yml
+python manager.py submit evals/configs/femnist/conf.yml
 ```
  
  ### Test on your local machine by submitting config
  
 It is much easy and convenient to first test your code without a GPU cluster. 
-First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `evals/configs/openimage/conf.yml` to indicate you are training without using GPU.
+First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `evals/configs/femnist/conf.yml` to indicate you are training without using GPU.
 
 Set `ps_ip` and `worker_ips` to be `10.0.0.1` and `10.0.0.1:[x]` by default, where x represent how many executors you want to run on your local machine.
 
 ```
 cd core/evals/
-python manager.py start evals/configs/openimage/conf.yml
+python manager.py start evals/configs/femnist/conf.yml
 ```
-### Test on your local machine with jupyter notebook
-We also provide jupyter notebook [examples](./examples/notebook/) to run your code locally. You can first start running [server](./examples/notebook/fedscale_demo_server.ipynb), and then run the [client](./examples/notebook/fedscale_demo_client.ipynb)
 
+### Test on your local machine with jupyter notebook
+We also provide jupyter notebook [examples](./examples/notebook/) to run your code locally.
+You can first start running [server](./examples/notebook/fedscale_demo_server.ipynb), 
+and then run the [client](./examples/notebook/fedscale_demo_client.ipynb)
  
 ## Monitor your training progress
  
