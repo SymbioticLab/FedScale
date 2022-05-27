@@ -30,7 +30,7 @@ If you prefer different versions of conda and CUDA, please check comments in `in
 
 Step 1: Install [Anaconda](https://www.anaconda.com/products/distribution#download-section) environment. 
 
-step 2: Install FedSacle dependencies:
+Step 2: Install FedScale dependencies
 
 ```
 # create conda env
@@ -41,7 +41,8 @@ conda env create -f environment.yml # Install dependencies
 conda activate fedscale
 ```
 
-step 3 (optional):
+Step 3: Install CUDA (optional)
+
 If you want to compile with CUDA support, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above.
 
 
