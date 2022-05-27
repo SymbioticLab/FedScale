@@ -149,7 +149,7 @@ class Executor(object):
         client_conf = self.override_conf(train_config)
         train_res = self.training_handler(clientId=client_id, conf=client_conf, model=model)
 
-        # Report execution completion meta information 
+        # Report execution completion meta information
         response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(job_api_pb2.CompleteRequest(
             client_id = str(client_id), executor_id = self.executor_id,
             event = events.CLIENT_TRAIN, status = True, msg = None,
@@ -165,7 +165,7 @@ class Executor(object):
         test_res = self.testing_handler(args=self.args)
         test_res = {'executorId': self.this_rank, 'results': test_res}
 
-        # Report execution completion information 
+        # Report execution completion information
         response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(job_api_pb2.CompleteRequest(
             client_id = self.executor_id, executor_id = self.executor_id,
             event = events.MODEL_TEST, status = True, msg = None,
@@ -298,10 +298,11 @@ class Executor(object):
                 if current_event == events.CLIENT_TRAIN:
                     train_config = self.deserialize_response(request.meta)
                     train_model = self.deserialize_response(request.data)
-                    train_config['model'] =  train_model
+                    train_config['model'] = train_model
+                    train_config['client_id'] = int(train_config['client_id'])
                     client_id, train_res = self.Train(train_config)
 
-                    # Upload model updates 
+                    # Upload model updates
                     _ = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION.future(
                         job_api_pb2.CompleteRequest(client_id = str(client_id), executor_id = self.executor_id,
                         event = events.UPLOAD_MODEL, status = True, msg = None,

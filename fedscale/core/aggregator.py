@@ -47,15 +47,15 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.grpc_server = None
 
         # ======== Event Queue =======
-        self.individual_client_events = {}    # Unicast 
+        self.individual_client_events = {}    # Unicast
         self.sever_events_queue = collections.deque()
         self.broadcast_events_queue = collections.deque() # Broadcast
 
         # ======== runtime information ========
         self.tasks_round = 0
-        # NOTE: sampled_participants = sampled_executors in deployment, 
+        # NOTE: sampled_participants = sampled_executors in deployment,
         # because every participant is an executor. However, in simulation mode,
-        # executors is the physical machines (VMs), thus: 
+        # executors is the physical machines (VMs), thus:
         # |sampled_executors| << |sampled_participants| as an VM may run multiple participants
         self.sampled_participants = []
         self.sampled_executors = []
@@ -203,7 +203,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 mapped_id = num_of_clients%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
                 systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
 
-                clientId = str(num_of_clients) if self.experiment_mode == events.SIMULATION_MODE else executorId
+                clientId = num_of_clients if self.experiment_mode == events.SIMULATION_MODE else executorId
                 self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
                 self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
                     upload_step=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
@@ -217,7 +217,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
         if self.experiment_mode == events.SIMULATION_MODE:
-            # NOTE: We try to remove dummy events as much as possible in simulations, 
+            # NOTE: We try to remove dummy events as much as possible in simulations,
             # by removing the stragglers/offline clients in overcommitment"""
             sampledClientsReal = []
             completionTimes = []
@@ -282,7 +282,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.stats_util_accumulator.append(results['utility'])
         self.loss_accumulator.append(results['moving_loss'])
 
-        self.client_manager.registerScore(results['clientId'], results['utility'], 
+        self.client_manager.registerScore(results['clientId'], results['utility'],
             auxi=math.sqrt(results['moving_loss']),
             time_stamp=self.round,
             duration=self.virtual_client_clock[results['clientId']]['computation']+
@@ -302,7 +302,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # ================== Aggregate weights ======================
 
         self.model_in_update += 1
-        logging.info(f"====self.model_weights keys {self.model_weights.keys()}, update_weight_keys: {results['update_weight'].keys()}")
         if self.model_in_update == 1:
             for p in results['update_weight']:
                 temp_list = results['update_weight'][p]
@@ -499,13 +498,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         next_clientId = self.resource_manager.get_next_task(executorId)
         train_config = None
         # NOTE: model = None then the executor will load the global model broadcasted in UPDATE_MODEL
-        model = None 
+        model = None
         if next_clientId != None:
             config = self.get_client_conf(next_clientId)
             train_config = {'client_id': next_clientId, 'task_config': config}
         return train_config, model
 
-    
+
     def get_test_config(self, client_id):
         """FL model testing on clients"""
 
@@ -514,7 +513,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
     def get_global_model(self):
         """Get global model that would be used by all FL clients (in default FL)"""
         return self.model
-    
+
     def get_shutdown_config(self, client_id):
         return {'client_id': client_id}
 
@@ -526,31 +525,30 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
     def CLIENT_REGISTER(self, request, context):
         """FL Client register to the aggregator"""
 
-        # NOTE: client_id = executor_id in deployment, 
+        # NOTE: client_id = executor_id in deployment,
         # while multiple client_id uses the same executor_id (VMs) in simulations
         executor_id = request.executor_id
         executor_info = self.deserialize_response(request.executor_info)
         if executor_id not in self.individual_client_events:
-            logging.info(f"Detect new client: {executor_id}, executor info: {executor_info}")
+            #logging.info(f"Detect new client: {executor_id}, executor info: {executor_info}")
             self.individual_client_events[executor_id] = collections.deque()
         else:
             logging.info(f"Previous client: {executor_id} resumes connecting")
 
         # We can customize whether to admit the clients here
         self.executor_info_handler(executor_id, executor_info)
-        
+
         return job_api_pb2.ServerResponse(event=events.DUMMY_EVENT,
                 meta=None, data=None)
 
 
     def CLIENT_PING(self, request, context):
         """Handle client requests"""
-        
-        # NOTE: client_id = executor_id in deployment, 
+
+        # NOTE: client_id = executor_id in deployment,
         # while multiple client_id may use the same executor_id (VMs) in simulations
         executor_id, client_id = request.executor_id, request.client_id
         response_data = response_msg = events.DUMMY_RESPONSE
-        logging.info(f"Receive ping request from CLIENT ({executor_id}), {self.individual_client_events[executor_id]}")
 
         if len(self.individual_client_events[executor_id]) == 0:
             # send dummy response
@@ -587,7 +585,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         meta_result, data_result = request.meta_result, request.data_result
 
         if event == events.CLIENT_TRAIN:
-            # Training results may be uploaded in CLIENT_EXECUTE_RESULT request later, 
+            # Training results may be uploaded in CLIENT_EXECUTE_RESULT request later,
             # so we need to specify whether to ask client to do so (in case of straggler/timeout in real FL).
             if execution_status is False:
                 logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
@@ -616,7 +614,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
                 elif current_event == events.START_ROUND:
                     self.dispatch_client_events(events.CLIENT_TRAIN)
-                
+
                 elif current_event == events.SHUT_DOWN:
                     self.dispatch_client_events(events.SHUT_DOWN)
                     break
@@ -635,7 +633,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
                 else:
                     logging.error(f"Event {current_event} is not defined")
-                
+
             else:
                 # execute every 100 ms
                 time.sleep(0.1)
