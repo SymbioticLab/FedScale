@@ -1,4 +1,5 @@
 #!/bin/bash
+export FEDSCALE_HOME=$PWD
 
 # un-comment to install anaconda
 
@@ -18,7 +19,6 @@ isPackageNotInstalled conda
 
 
 # create conda env
-export FEDSCALE_HOME=$PWD
 conda init bash
 . ~/.bashrc
 conda env create -f environment.yml # Install dependencies
