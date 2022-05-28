@@ -65,7 +65,7 @@ Please go to the `./dataset` directory and follow the dataset [README](./dataset
 
 ## FedScale Runtime
 FedScale Runtime is an scalable and extensible deployment as well as evaluation platform to simplify and standardize FL experimental setup and model evaluation. 
-It evolved from our prior system, Oort [Oort project](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
+It evolved from our prior system, [Oort](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
 
 Please go to `./core` directory and follow the [README](./fedscale/core/README.md) to set up FL training scripts.
 
