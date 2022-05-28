@@ -10,40 +10,40 @@ Moreover, it includes datasets to faithfully emulate FL training environments wh
 
 ## Getting Started
 
-```
-git clone https://github.com/SymbioticLab/FedScale
-cd FedScale
-```
-### Installation
+### Installing From Source
+FedScale requires Python 3.7 or better. 
+We use [Anaconda](https://www.anaconda.com/products/distribution#download-section) environments to manage its dependencies.
 
-**Option 1: One-click installation on Linux** 
+Once you have Anaconda installed, here are the instructions assuming that the current directory is where you have cloned FedScale to.
+
+```
+export FEDSCALE_HOME=$PWD
+
+conda init bash
+. ~/.bash_profile
+conda env create -f environment.yml
+conda activate fedscale
+```
+
+Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above if you want to use FedScale with GPU support.
+
+**Quick installation on Linux** 
+
+You can simply run `install.sh` without CUDA.
 
 ```
 source install.sh  
 pip install -e .
 ```
-If you want to use GPU and install `CUDA 10.2`, add the flag `--cuda` after `install.sh`to specify ( `source install.sh --cuda ` ).
-If you prefer different versions of conda and CUDA, please check comments in `install.sh` for details.
 
-
-**Option 2: Customized Installation**
-
-Step 1: Install [Anaconda](https://www.anaconda.com/products/distribution#download-section) environment. 
-
-Step 2: Install FedScale dependencies
+You can add `--cuda` if you want CUDA 10.2.
 
 ```
-# create conda env
-export FEDSCALE_HOME=$PWD
-conda init bash
-. ~/.bashrc
-conda env create -f environment.yml # Install dependencies
-conda activate fedscale
+source install.sh --cuda
+pip install -e .
 ```
 
-Step 3: Install CUDA (optional)
-
-If you want to compile with CUDA support, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above.
+Update `install.sh` if you prefer different versions of conda and/or CUDA.
 
 
 ### Tutorials
