@@ -195,6 +195,10 @@ open_images_detection()
 {
     if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ];
     then
+
+        echo "Install dependence"
+        conda install h5py
+
         echo "Downloading open_images_detection dataset(about 451M)..."
         wget -O ${DIR}/openimage_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz
 
@@ -252,6 +256,9 @@ stackoverflow()
 {
     if [ ! -d "${DIR}/stackoverflow/train/" ];
     then
+        echo "Install dependence"
+        conda install h5py
+
         echo "Downloading stackoverflow dataset(about 800M)..."
         wget -O ${DIR}/stackoverflow.tar.gz https://fedscale.eecs.umich.edu/dataset/stackoverflow.tar.gz
 
