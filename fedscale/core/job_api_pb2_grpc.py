@@ -14,72 +14,39 @@ class JobServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.UpdateModel = channel.unary_unary(
-                '/fedscale.JobService/UpdateModel',
-                request_serializer=job__api__pb2.UpdateModelRequest.SerializeToString,
-                response_deserializer=job__api__pb2.UpdateModelResponse.FromString,
+        self.CLIENT_REGISTER = channel.unary_unary(
+                '/fedscale.JobService/CLIENT_REGISTER',
+                request_serializer=job__api__pb2.RegisterRequest.SerializeToString,
+                response_deserializer=job__api__pb2.ServerResponse.FromString,
                 )
-        self.Train = channel.unary_unary(
-                '/fedscale.JobService/Train',
-                request_serializer=job__api__pb2.TrainRequest.SerializeToString,
-                response_deserializer=job__api__pb2.TrainResponse.FromString,
+        self.CLIENT_PING = channel.unary_unary(
+                '/fedscale.JobService/CLIENT_PING',
+                request_serializer=job__api__pb2.PingRequest.SerializeToString,
+                response_deserializer=job__api__pb2.ServerResponse.FromString,
                 )
-        self.Fetch = channel.unary_unary(
-                '/fedscale.JobService/Fetch',
-                request_serializer=job__api__pb2.FetchRequest.SerializeToString,
-                response_deserializer=job__api__pb2.FetchResponse.FromString,
-                )
-        self.Stop = channel.unary_unary(
-                '/fedscale.JobService/Stop',
-                request_serializer=job__api__pb2.StopRequest.SerializeToString,
-                response_deserializer=job__api__pb2.StopResponse.FromString,
-                )
-        self.ReportExecutorInfo = channel.unary_unary(
-                '/fedscale.JobService/ReportExecutorInfo',
-                request_serializer=job__api__pb2.ReportExecutorInfoRequest.SerializeToString,
-                response_deserializer=job__api__pb2.ReportExecutorInfoResponse.FromString,
-                )
-        self.Test = channel.unary_unary(
-                '/fedscale.JobService/Test',
-                request_serializer=job__api__pb2.TestRequest.SerializeToString,
-                response_deserializer=job__api__pb2.TestResponse.FromString,
+        self.CLIENT_EXECUTE_COMPLETION = channel.unary_unary(
+                '/fedscale.JobService/CLIENT_EXECUTE_COMPLETION',
+                request_serializer=job__api__pb2.CompleteRequest.SerializeToString,
+                response_deserializer=job__api__pb2.ServerResponse.FromString,
                 )
 
 
 class JobServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def UpdateModel(self, request, context):
+    def CLIENT_REGISTER(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def Train(self, request, context):
+    def CLIENT_PING(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def Fetch(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def Stop(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ReportExecutorInfo(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def Test(self, request, context):
+    def CLIENT_EXECUTE_COMPLETION(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -88,35 +55,20 @@ class JobServiceServicer(object):
 
 def add_JobServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'UpdateModel': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateModel,
-                    request_deserializer=job__api__pb2.UpdateModelRequest.FromString,
-                    response_serializer=job__api__pb2.UpdateModelResponse.SerializeToString,
+            'CLIENT_REGISTER': grpc.unary_unary_rpc_method_handler(
+                    servicer.CLIENT_REGISTER,
+                    request_deserializer=job__api__pb2.RegisterRequest.FromString,
+                    response_serializer=job__api__pb2.ServerResponse.SerializeToString,
             ),
-            'Train': grpc.unary_unary_rpc_method_handler(
-                    servicer.Train,
-                    request_deserializer=job__api__pb2.TrainRequest.FromString,
-                    response_serializer=job__api__pb2.TrainResponse.SerializeToString,
+            'CLIENT_PING': grpc.unary_unary_rpc_method_handler(
+                    servicer.CLIENT_PING,
+                    request_deserializer=job__api__pb2.PingRequest.FromString,
+                    response_serializer=job__api__pb2.ServerResponse.SerializeToString,
             ),
-            'Fetch': grpc.unary_unary_rpc_method_handler(
-                    servicer.Fetch,
-                    request_deserializer=job__api__pb2.FetchRequest.FromString,
-                    response_serializer=job__api__pb2.FetchResponse.SerializeToString,
-            ),
-            'Stop': grpc.unary_unary_rpc_method_handler(
-                    servicer.Stop,
-                    request_deserializer=job__api__pb2.StopRequest.FromString,
-                    response_serializer=job__api__pb2.StopResponse.SerializeToString,
-            ),
-            'ReportExecutorInfo': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReportExecutorInfo,
-                    request_deserializer=job__api__pb2.ReportExecutorInfoRequest.FromString,
-                    response_serializer=job__api__pb2.ReportExecutorInfoResponse.SerializeToString,
-            ),
-            'Test': grpc.unary_unary_rpc_method_handler(
-                    servicer.Test,
-                    request_deserializer=job__api__pb2.TestRequest.FromString,
-                    response_serializer=job__api__pb2.TestResponse.SerializeToString,
+            'CLIENT_EXECUTE_COMPLETION': grpc.unary_unary_rpc_method_handler(
+                    servicer.CLIENT_EXECUTE_COMPLETION,
+                    request_deserializer=job__api__pb2.CompleteRequest.FromString,
+                    response_serializer=job__api__pb2.ServerResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,7 +81,7 @@ class JobService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def UpdateModel(request,
+    def CLIENT_REGISTER(request,
             target,
             options=(),
             channel_credentials=None,
@@ -139,14 +91,14 @@ class JobService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/UpdateModel',
-            job__api__pb2.UpdateModelRequest.SerializeToString,
-            job__api__pb2.UpdateModelResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/CLIENT_REGISTER',
+            job__api__pb2.RegisterRequest.SerializeToString,
+            job__api__pb2.ServerResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def Train(request,
+    def CLIENT_PING(request,
             target,
             options=(),
             channel_credentials=None,
@@ -156,14 +108,14 @@ class JobService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/Train',
-            job__api__pb2.TrainRequest.SerializeToString,
-            job__api__pb2.TrainResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/CLIENT_PING',
+            job__api__pb2.PingRequest.SerializeToString,
+            job__api__pb2.ServerResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def Fetch(request,
+    def CLIENT_EXECUTE_COMPLETION(request,
             target,
             options=(),
             channel_credentials=None,
@@ -173,59 +125,8 @@ class JobService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/Fetch',
-            job__api__pb2.FetchRequest.SerializeToString,
-            job__api__pb2.FetchResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def Stop(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/Stop',
-            job__api__pb2.StopRequest.SerializeToString,
-            job__api__pb2.StopResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ReportExecutorInfo(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/ReportExecutorInfo',
-            job__api__pb2.ReportExecutorInfoRequest.SerializeToString,
-            job__api__pb2.ReportExecutorInfoResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def Test(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/Test',
-            job__api__pb2.TestRequest.SerializeToString,
-            job__api__pb2.TestResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/fedscale.JobService/CLIENT_EXECUTE_COMPLETION',
+            job__api__pb2.CompleteRequest.SerializeToString,
+            job__api__pb2.ServerResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

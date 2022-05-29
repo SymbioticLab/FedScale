@@ -141,7 +141,7 @@ class Client(object):
                         output = model(data)
                         loss = criterion(output, target)
 
-                    # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
+                    # ======== collect training feedback for other decision components [e.g., oort selector] ======
 
                     if conf.task == 'nlp' or ( conf.task == 'text_clf' and  conf.model == 'albert-base-v2'):
                         loss_list = [loss.item()] #[loss.mean().data.item()]
@@ -178,8 +178,9 @@ class Client(object):
             except Exception as ex:
                 error_type = ex
                 break
-
-        model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
+        
+        state_dicts = model.state_dict()
+        model_param = {p:state_dicts[p].data.cpu().numpy() for p in state_dicts}
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
         results['utility'] = math.sqrt(loss_squre)*float(trained_unique_samples)

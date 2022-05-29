@@ -66,18 +66,18 @@ class clientManager(object):
     def getClient(self, clientId):
         return self.Clients[self.getUniqueId(0, clientId)]
 
-    def registerDuration(self, clientId, batch_size, upload_epoch, upload_size, download_size):
-        if self.mode == "oort" and  self.getUniqueId(0, clientId) in self.Clients:
+    def registerDuration(self, clientId, batch_size, upload_step, upload_size, download_size):
+        if self.mode == "oort" and self.getUniqueId(0, clientId) in self.Clients:
             exe_cost = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-                    batch_size=batch_size, upload_epoch=upload_epoch,
+                    batch_size=batch_size, upload_step=upload_step,
                     upload_size=upload_size, download_size=download_size
             )
             self.ucbSampler.update_duration(clientId, exe_cost['computation']+exe_cost['communication'])
 
-    def getCompletionTime(self, clientId, batch_size, upload_epoch, upload_size, download_size):
+    def getCompletionTime(self, clientId, batch_size, upload_step, upload_size, download_size):
         
         return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-                batch_size=batch_size, upload_epoch=upload_epoch,
+                batch_size=batch_size, upload_step=upload_step,
                 upload_size=upload_size, download_size=download_size
             )
 

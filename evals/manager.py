@@ -28,15 +28,12 @@ def process_cmd(yaml_file,local = False):
 
     time_stamp = datetime.datetime.fromtimestamp(time.time()).strftime('%m%d_%H%M%S')
     running_vms = set()
-    job_name = 'kuiper_job'
+    job_name = 'fedscale_job'
     log_path = './logs'
     submit_user = f"{yaml_conf['auth']['ssh_user']}@" if len(yaml_conf['auth']['ssh_user']) else ""
 
     job_conf = {'time_stamp':time_stamp,
                 'ps_ip':ps_ip,
-                'ps_port':random.randint(1000, 50000),
-                'manager_port':random.randint(1000, 50000),
-                'base_port': random.randint(8000, 50000),
                 }
 
     for conf in yaml_conf['job_conf']:

@@ -2,9 +2,8 @@ import config
 import sys, os
 from resnet_heterofl import resnet18
 from customized_fllibs import split_model
-sys.path.insert(1, os.path.join(sys.path[0], '../../fedscale/core'))
-from client import Client
-from fllibs import Variable, os, math, torch, logging, np
+from fedscale.core.client import Client
+from fedscale.core.fllibs import Variable, os, math, torch, logging, np
  
 class Customized_Client(Client):
     def __init__(self, conf):

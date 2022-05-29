@@ -1,4 +1,5 @@
 import argparse
+from fedscale.core import events
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--job_name', type=str, default='demo_job')
@@ -7,23 +8,17 @@ parser.add_argument('--log_path', type=str, default='./', help="default path is 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
 parser.add_argument('--ps_port', type=str, default='29501')
-parser.add_argument('--manager_port', type=int, default='9005')
 parser.add_argument('--this_rank', type=int, default=1)
+parser.add_argument('--connection_timeout', type=int, default=60)
+parser.add_argument('--experiment_mode', type=str, default=events.SIMULATION_MODE)
 parser.add_argument('--num_executors', type=int, default=1)
 parser.add_argument('--executor_configs', type=str, default="127.0.0.1:[1]")  # seperated by ;
 parser.add_argument('--total_worker', type=int, default=4)
 parser.add_argument('--data_map_file', type=str, default=None)
 parser.add_argument('--use_cuda', type=str, default='True')
 parser.add_argument('--cuda_device', type=str, default=None)
-parser.add_argument('--base_port', type=int, default=10001)
 parser.add_argument('--time_stamp', type=str, default='logs')
 parser.add_argument('--task', type=str, default='cv')
-parser.add_argument('--pacer_delta', type=float, default=5)
-parser.add_argument('--pacer_step', type=int, default=20)
-parser.add_argument('--exploration_alpha', type=float, default=0.3)
-parser.add_argument('--exploration_factor', type=float, default=0.9)
-parser.add_argument('--exploration_decay', type=float, default=0.98)
-parser.add_argument('--sample_window', type=float, default=5.0)
 parser.add_argument('--device_avail_file', type=str, default=None)
 parser.add_argument('--clock_factor', type=float, default=1.0, help="Refactor the clock time given the profile")
 
@@ -48,19 +43,19 @@ parser.add_argument('--embedding_file', type=str, default = 'glove.840B.300d.txt
 
 
 # The configuration of different hyper-parameters for training
-parser.add_argument('--epochs', type=int, default=50)
+parser.add_argument('--rounds', type=int, default=50)
 parser.add_argument('--local_steps', type=int, default=20)
 parser.add_argument('--batch_size', type=int, default=30)
 parser.add_argument('--test_bsz', type=int, default=128)
 parser.add_argument('--backend', type=str, default="gloo")
-parser.add_argument('--upload_epoch', type=int, default=20)
+parser.add_argument('--upload_step', type=int, default=20)
 parser.add_argument('--learning_rate', type=float, default=5e-2)
 parser.add_argument('--min_learning_rate', type=float, default=5e-5)
 parser.add_argument('--input_dim', type=int, default=0)
 parser.add_argument('--output_dim', type=int, default=0)
 parser.add_argument('--dump_epoch', type=int, default=1e10)
 parser.add_argument('--decay_factor', type=float, default=0.98)
-parser.add_argument('--decay_epoch', type=float, default=10)
+parser.add_argument('--decay_round', type=float, default=10)
 parser.add_argument('--num_loaders', type=int, default=2)
 parser.add_argument('--eval_interval', type=int, default=5)
 parser.add_argument('--sample_seed', type=int, default=233) #123 #233
@@ -98,7 +93,13 @@ parser.add_argument('--noise_factor', type=float, default=0.1)
 parser.add_argument('--clip_threshold', type=float, default=3.0)
 parser.add_argument('--target_delta', type=float, default=0.0001)
 
-
+# for Oort
+parser.add_argument('--pacer_delta', type=float, default=5)
+parser.add_argument('--pacer_step', type=int, default=20)
+parser.add_argument('--exploration_alpha', type=float, default=0.3)
+parser.add_argument('--exploration_factor', type=float, default=0.9)
+parser.add_argument('--exploration_decay', type=float, default=0.98)
+parser.add_argument('--sample_window', type=float, default=5.0)
 
 # for albert
 parser.add_argument(
@@ -192,7 +193,7 @@ model_factor = {'shufflenet': 0.0644/0.0554,
     'resnet': 0.135/0.0554,
 }
 
-args.num_class = datasetCategories[args.data_set] if args.data_set in datasetCategories else 10
+args.num_class = datasetCategories.get(args.data_set, 10)
 for model_name in model_factor:
     if model_name in args.model:
         args.clock_factor = args.clock_factor * model_factor[model_name]

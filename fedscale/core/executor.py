@@ -2,23 +2,18 @@
 from fedscale.core.fl_client_libs import *
 from argparse import Namespace
 import gc
-from fedscale.core.client import Client
-from fedscale.core.rlclient import RLClient
-from concurrent import futures
-from fedscale.core.response import BasicResponse
-
-import grpc
-import fedscale.core.job_api_pb2_grpc as job_api_pb2_grpc
-import fedscale.core.job_api_pb2 as job_api_pb2
-import io
+import collections
 import torch
 import pickle
 
+from fedscale.core.client import Client
+from fedscale.core.rlclient import RLClient
+from fedscale.core import events
+from fedscale.core.communication.channel_context import ClientConnections
+import fedscale.core.job_api_pb2 as job_api_pb2
 
-MAX_MESSAGE_LENGTH = 50000000
 
-
-class Executor(job_api_pb2_grpc.JobServiceServicer):
+class Executor(object):
     """Each executor takes certain resource to run real training.
        Each run simulates the execution of an individual client"""
     def __init__(self, args):
@@ -28,21 +23,22 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.num_executors = args.num_executors
         # ======== env information ========
         self.this_rank = args.this_rank
+        self.executor_id = str(self.this_rank)
 
         # ======== model and data ========
         self.model = self.training_sets = self.test_dataset = None
         self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
         # ======== channels ========
-        self.grpc_server = None
+        self.aggregator_communicator = ClientConnections(args.ps_ip, args.ps_port)
 
         # ======== runtime information ========
         self.collate_fn = None
         self.task = args.task
-        self.epoch = 0
+        self.round = 0
         self.start_run_time = time.time()
         self.received_stop_request = False
-        self.client_task_result = {}
+        self.event_queue = collections.deque()
 
         super(Executor, self).__init__()
 
@@ -83,21 +79,7 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
     def init_control_communication(self):
         """Create communication channel between coordinator and executor.
         This channel serves control messages."""
-
-        logging.info(f"Connecting to Coordinator ({args.ps_ip}) for control plane communication ...")
-
-        self.grpc_server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=10),
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ],
-        )
-        job_api_pb2_grpc.add_JobServiceServicer_to_server(self, self.grpc_server)
-        port = '[::]:{}'.format(self.args.base_port + self.this_rank)
-        self.grpc_server.add_insecure_port(port)
-        self.grpc_server.start()
-        logging.info(f'Started GRPC server at {port} for control plane')
+        self.aggregator_communicator.connect_to_server()
 
 
     def init_data_communication(self):
@@ -142,69 +124,61 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         self.setup_communication()
         self.event_monitor()
 
-    def UpdateModel(self, request, context):
-        """A GRPC functionfor JobService invoked by UpdateModel request.
-        """
-        logging.info('Received GRPC UpdateModel request')
-        self.update_model_handler(request)
-        return job_api_pb2.UpdateModelResponse()
+    def dispatch_worker_events(self, request):
+        """Add new events to worker queues"""
+        self.event_queue.append(request)
 
+    def deserialize_response(self, responses):
+        return pickle.loads(responses)
 
-    def Fetch(self, request, context):
-        """A GRPC function for fetching training result for client
-        """
-        clientId = request.client_id
-        serialized_fetch_response = pickle.dumps(self.client_task_result.get(clientId, None))
-        del self.client_task_result[clientId]
+    def serialize_response(self, responses):
+        return pickle.dumps(responses)
 
-        return job_api_pb2.FetchResponse(serialized_fetch_response=serialized_fetch_response)
+    def UpdateModel(self, config):
+        """Receive the broadcasted global model for current round"""
+        self.update_model_handler(model=config)
 
-
-    def Train(self, request, context):
-        """A GRPC function for JobService invoked by Train request.
-        """
-        logging.info(f'Received GRPC Train request')
-        clientId = request.client_id
-        train_config = pickle.loads(request.serialized_train_config)
+    def Train(self, config):
+        """Load train config and data to start training on client """
+        client_id, train_config = config['client_id'], config['task_config']
 
         model = None
         if 'model' in train_config and train_config['model'] is not None:
             model = train_config['model']
 
         client_conf = self.override_conf(train_config)
-        train_res = self.training_handler(clientId=clientId, conf=client_conf, model=model)
-        self.client_task_result[clientId] = train_res
+        train_res = self.training_handler(clientId=client_id, conf=client_conf, model=model)
 
-        return job_api_pb2.TrainResponse(serialized_train_response=
-                pickle.dumps(BasicResponse(executorId=self.this_rank, clientId=clientId, status=True)))
+        # Report execution completion meta information
+        response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(job_api_pb2.CompleteRequest(
+            client_id = str(client_id), executor_id = self.executor_id,
+            event = events.CLIENT_TRAIN, status = True, msg = None,
+            meta_result = None, data_result = None
+        ))
+        self.dispatch_worker_events(response)
 
+        return client_id, train_res
 
-    def Stop(self, request, context):
-        """A GRPC functionfor JobService invoked by Stop request.
-        """
-        logging.info('Received GRPC Stop request')
-        self.received_stop_request = True
-        return job_api_pb2.StopResponse()
+    def Test(self, config):
+        """Model Testing. By default, we test the accuracy on all data of clients in the test group"""
 
-
-    def ReportExecutorInfo(self, request, context):
-        """A GRPC function for JobService invoked by ReportExecutorInfo request.
-
-        This is called only once when the training starts.
-        """
-        logging.info('Received GRPC ReportExecutorInfo request')
-        response = job_api_pb2.ReportExecutorInfoResponse()
-        response.training_set_size.extend(self.training_sets.getSize()['size'])
-        return response
-
-
-    def Test(self, request, context):
-        """A GRPC function for JobService invoked by Test request.
-        """
-        logging.info('Received GRPC Test request')
         test_res = self.testing_handler(args=self.args)
-        response = {'executorId': self.this_rank, 'results': test_res}
-        return job_api_pb2.TestResponse(serialized_test_response=pickle.dumps(response))
+        test_res = {'executorId': self.this_rank, 'results': test_res}
+
+        # Report execution completion information
+        response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(job_api_pb2.CompleteRequest(
+            client_id = self.executor_id, executor_id = self.executor_id,
+            event = events.MODEL_TEST, status = True, msg = None,
+            meta_result = None, data_result = self.serialize_response(test_res)
+        ))
+        self.dispatch_worker_events(response)
+
+
+    def Stop(self):
+        """Stop the current executor"""
+
+        self.aggregator_communicator.close_sever_connection()
+        self.received_stop_request = True
 
 
     def report_executor_info_handler(self):
@@ -212,10 +186,10 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         return self.training_sets.getSize()
 
 
-    def update_model_handler(self, request):
+    def update_model_handler(self, model):
         """Update the model copy on this executor"""
-        self.model = pickle.loads(request.serialized_tensor)
-        self.epoch += 1
+        self.model = model
+        self.round += 1
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
@@ -250,7 +224,6 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
         """Train model given client ids"""
 
         # load last global model
-        s_time = time.time()
         client_model = self.load_global_model() if model is None else model
 
         conf.clientId, conf.device = clientId, self.device
@@ -288,25 +261,69 @@ class Executor(job_api_pb2_grpc.JobServiceServicer):
             test_res = test_model(self.this_rank, model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
 
             test_loss, acc, acc_5, testResults = test_res
-            logging.info("After aggregation epoch {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
-                        .format(self.epoch, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
+            logging.info("After aggregation round {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
+                        .format(self.round, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
         gc.collect()
 
         return testResults
 
+    def client_register(self):
+        """Register the executor information to the aggregator"""
+        response = self.aggregator_communicator.stub.CLIENT_REGISTER(job_api_pb2.RegisterRequest(
+            client_id = self.executor_id,
+            executor_id = self.executor_id,
+            executor_info = self.serialize_response(self.report_executor_info_handler())
+        ))
+        self.dispatch_worker_events(response)
+
+    def client_ping(self):
+        """Ping the aggregator for new task"""
+        response = self.aggregator_communicator.stub.CLIENT_PING(job_api_pb2.PingRequest(
+            client_id = self.executor_id,
+            executor_id = self.executor_id
+        ))
+        self.dispatch_worker_events(response)
 
     def event_monitor(self):
         """Activate event handler once receiving new message"""
         logging.info("Start monitoring events ...")
+        self.client_register()
 
-        while True:
-            if self.received_stop_request:
-                logging.info(f"Terminating (Executor {self.this_rank}) ...")
-                self.grpc_server.stop(0)
-                break
+        while self.received_stop_request == False:
+            if len(self.event_queue) > 0:
+                request = self.event_queue.popleft()
+                current_event = request.event
 
-            time.sleep(1)
+                if current_event == events.CLIENT_TRAIN:
+                    train_config = self.deserialize_response(request.meta)
+                    train_model = self.deserialize_response(request.data)
+                    train_config['model'] = train_model
+                    train_config['client_id'] = int(train_config['client_id'])
+                    client_id, train_res = self.Train(train_config)
+
+                    # Upload model updates
+                    _ = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION.future(
+                        job_api_pb2.CompleteRequest(client_id = str(client_id), executor_id = self.executor_id,
+                        event = events.UPLOAD_MODEL, status = True, msg = None,
+                        meta_result = None, data_result = self.serialize_response(train_res)
+                    ))
+
+                elif current_event == events.MODEL_TEST:
+                    self.Test(self.deserialize_response(request.meta))
+
+                elif current_event == events.UPDATE_MODEL:
+                    broadcast_config = self.deserialize_response(request.data)
+                    self.UpdateModel(broadcast_config)
+
+                elif current_event == events.SHUT_DOWN:
+                    self.Stop()
+
+                elif current_event == events.DUMMY_EVENT:
+                    pass
+            else:
+                time.sleep(1)
+                self.client_ping()
 
 
 if __name__ == "__main__":

@@ -32,14 +32,14 @@ class Client(object):
 
         return False
 
-    def getCompletionTime(self, batch_size, upload_epoch, upload_size, download_size, augmentation_factor=3.0):
+    def getCompletionTime(self, batch_size, upload_step, upload_size, download_size, augmentation_factor=3.0):
         """
            Computation latency: compute_speed is the inference latency of models (ms/sample). As reproted in many papers, 
                                 backward-pass takes around 2x the latency, so we multiple it by 3x;
            Communication latency: communication latency = (pull + push)_update_size/bandwidth;
         """
-        #return (3.0 * batch_size * upload_epoch/float(self.compute_speed) + model_size/float(self.bandwidth))
-        return {'computation':augmentation_factor * batch_size * upload_epoch*float(self.compute_speed)/1000., \
+        #return (3.0 * batch_size * num_steps/float(self.compute_speed) + model_size/float(self.bandwidth))
+        return {'computation':augmentation_factor * batch_size * upload_step*float(self.compute_speed)/1000., \
                 'communication': (upload_size+download_size)/float(self.bandwidth)}
         # return (augmentation_factor * batch_size * upload_epoch*float(self.compute_speed)/1000. + \
         #         (upload_size+download_size)/float(self.bandwidth))
