@@ -171,7 +171,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 - [Ref]: https://www.usenix.org/conference/osdi21/presentation/lai
         """
 
-        # sample_mode: random or kuiper
+        # sample_mode: random or oort
         client_manager = clientManager(args.sample_mode, args=args)
 
         return client_manager

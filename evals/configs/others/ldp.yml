@@ -36,7 +36,7 @@ job_conf:
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $HOME/FedScale/dataset/data/femnist  # Path of the dataset
 #    - device_avail_file: /users/JIACHEN/FLPerf-Cluster/client_datamap/client_behave_trace
-    - sample_mode: random                                  # Client selection: random, kuiper, random by default
+    - sample_mode: random                                  # Client selection: random, oort, random by default
     - model: resnet18                            # Models: shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: fedavg                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 10                     # How many rounds to run a testing on the testing set
