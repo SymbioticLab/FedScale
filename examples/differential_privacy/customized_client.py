@@ -83,8 +83,9 @@ class Customized_Client(Client):
             param.data += delta_weight[idx]
             idx += 1
         sigma = conf.noise_factor * conf.clip_threshold
-        model_param = [param.data.cpu().numpy()+\
-            torch.normal(mean=0, std=sigma, size=param.data.shape).cpu().numpy() for param in model.state_dict().values()]
+        state_dicts = model.state_dict()
+        model_param = {p:state_dicts[p].data.cpu().numpy()+\
+            torch.normal(mean=0, std=sigma, size=state_dicts[p].data.shape).cpu().numpy() for p in state_dicts}
 
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}

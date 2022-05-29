@@ -5,9 +5,8 @@ from torch.autograd import Variable
 import numpy as np
 
 import sys, os
-sys.path.insert(1, os.path.join(sys.path[0], '../../'))
 
-from client import Client
+from fedscale.core.client import Client
 
 class Customized_Client(Client):
     """Basic client component in Federated Learning"""
@@ -58,7 +57,8 @@ class Customized_Client(Client):
             if completed_steps == conf.local_steps:
                 break
 
-        model_param = [param.data.cpu().numpy() for param in model.state_dict().values()]
+        state_dicts = model.state_dict()
+        model_param = {p:state_dicts[p].data.cpu().numpy() for p in state_dicts}
 
         results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}

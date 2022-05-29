@@ -12,12 +12,12 @@ worker_ips:
     - 10.0.0.2:[4] 
     - 10.0.0.3:[4]
 
-exp_path: $HOME/FedScale/fedscale/core
+exp_path: $HOME/FedScale/examples/heterofl
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: ../../examples/heterofl/customized_executor.py
+executor_entry: customized_executor.py
 
-aggregator_entry: ../../examples/heterofl/customized_aggregator.py
+aggregator_entry: customized_aggregator.py
 
 auth:
     ssh_user: ""
@@ -33,7 +33,7 @@ setup_commands:
 job_conf: 
     - job_name: heterofl                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $HOME/FedScale/evals # Path of log files
-    - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - total_worker: 10                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $HOME/FedScale/dataset/data/    # Path of the dataset
     - model: resnet_heterofl                      # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2# - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
