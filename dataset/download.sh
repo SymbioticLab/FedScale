@@ -38,6 +38,10 @@ speech()
 {
     if [ ! -d "${DIR}/speech_commands/train/" ];
     then
+        echo "Install dependence"
+        conda install -y numba=0.49.1
+        conda install librosa=0.7.2
+
         echo "Downloading Speech Commands dataset(about 2.4GB)..."
         wget -O ${DIR}/speech_commands/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
 

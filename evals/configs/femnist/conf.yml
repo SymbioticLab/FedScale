@@ -9,9 +9,8 @@ ps_ip: 10.0.0.1
 # E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
 worker_ips: 
     - 10.0.0.1:[2]
-    - 10.0.0.2:[2]
 
-exp_path: $HOME/FedScale/fedscale/core
+exp_path: $FEDSCALE_HOME/FedScale/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: executor.py
@@ -24,20 +23,20 @@ auth:
 
 # cmd to run before we can indeed run FAR (in order)
 setup_commands:
-    - source $HOME/anaconda3/bin/activate fedscale
+    - source $FEDSCALE_HOME/anaconda3/bin/activate fedscale
 
 # ========== Additional job configuration ========== 
 # Default parameters are specified in argParser.py, wherein more description of the parameter can be found
 
 job_conf: 
     - job_name: femnist                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/evals # Path of log files
+    - log_path: $FEDSCALE_HOME/FedScale/evals # Path of log files
     - total_worker: 20                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $HOME/FedScale/dataset/data/femnist    # Path of the dataset
-    - data_map_file: $HOME/FedScale/dataset/data/femnist/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
-    - device_conf_file: $HOME/FedScale/dataset/data/device_info/client_device_capacity     # Path of the client trace
-    - device_avail_file: $HOME/FedScale/dataset/data/device_info/client_behave_trace
+    - data_dir: $FEDSCALE_HOME/FedScale/dataset/data/femnist    # Path of the dataset
+    - data_map_file: $FEDSCALE_HOME/FedScale/dataset/data/femnist/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
+    - device_conf_file: $FEDSCALE_HOME/FedScale/dataset/data/device_info/client_device_capacity     # Path of the client trace
+    - device_avail_file: $FEDSCALE_HOME/FedScale/dataset/data/device_info/client_behave_trace
     - model: shufflenet_v2_x2_0                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 30                     # How many rounds to run a testing on the testing set
