@@ -23,6 +23,7 @@ conda init bash
 . ~/.bash_profile
 conda env create -f environment.yml
 conda activate fedscale
+pip install -e .
 ```
 
 Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above if you want to use FedScale with GPU support.

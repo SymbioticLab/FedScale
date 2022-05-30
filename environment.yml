@@ -7,14 +7,14 @@ channels:
   - gurobi
 dependencies:
   - python=3.7
-  - sox=14.4.2=h27f72bc_1013
+#  - sox=14.4.2=h27f72bc_1013
   - gurobi=9.1.0
   - tensorboard
   - pip=20.0.2
   - pip:
     - torch_optimizer
     - torch
-    - torch_baidu_ctc==0.3.0
+#    - torch_baidu_ctc==0.3.0
     - torchvision  
     - transformers
     - scipy==1.4.1
