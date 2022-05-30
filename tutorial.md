@@ -2,7 +2,7 @@
   
 # Tutorial
  
-This tutorial will show you how to set up and start a FL experiment over FEMNIST with ShuffleNet dataset using Fedscale.
+This tutorial will show you how to set up and start a FL experiment to train ShuffleNet on the FEMNIST dataset using Fedscale.
  
 ## Preliminary
 
@@ -33,10 +33,9 @@ You can either choose to evaluate your large-scale FL experiment over a GPU clus
 It is more convenient to first test your code without a GPU cluster. 
 First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `evals/configs/femnist/conf.yml` to indicate you are training without using GPU.
 
-Set `ps_ip` and `worker_ips` to be `10.0.0.1` and `10.0.0.1:[x]` by default, where x represent how many executors you want to run on your local machine.
-
+Set `ps_ip` and `worker_ips` to be `localhost` and `localhost:[x]` by default, where x represent how many executors you want to run on your local machine.
+Go to `./evals/` and run the following command to start your FL job:
 ```
-cd core/evals/
 python manager.py start configs/femnist/conf.yml
 ```
 
@@ -57,9 +56,9 @@ means launching `4 executors` on each of the first two GPUs on `10.0.0.2` to tra
 
 Make sure the node you submit the job has access to the computation nodes.
 Also make sure you have synchronized the code across all the nodes.
- 
+Go to `./evals/` and run the following command to start your FL job:
+
 ```
-cd evals/
 python manager.py submit configs/femnist/conf.yml
 ```
 

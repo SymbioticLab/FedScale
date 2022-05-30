@@ -38,7 +38,7 @@ speech()
 {
     if [ ! -d "${DIR}/speech_commands/train/" ];
     then
-        echo "Install dependence"
+        echo "Install dependencies"
         conda install -y numba=0.49.1
         conda install librosa=0.7.2
 
@@ -196,7 +196,7 @@ open_images_detection()
     if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ];
     then
 
-        echo "Install dependence"
+        echo "Install dependencies"
         conda install h5py
 
         echo "Downloading open_images_detection dataset(about 451M)..."
@@ -256,7 +256,7 @@ stackoverflow()
 {
     if [ ! -d "${DIR}/stackoverflow/train/" ];
     then
-        echo "Install dependence"
+        echo "Install dependencies"
         conda install h5py
 
         echo "Downloading stackoverflow dataset(about 800M)..."
