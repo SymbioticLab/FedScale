@@ -1,20 +1,20 @@
 #!/bin/bash
 export FEDSCALE_HOME=$PWD
 
-# un-comment to install anaconda
 
 isPackageNotInstalled() {
-    $1 --version &> /dev/null
-    if [ $? -eq 0 ]; then
+  $1 --version &> /dev/null
+  if [ $? -eq 0 ]; then
     echo "$1: Already installed"
-    else 
+  else 
     install_dir=$HOME/anaconda3
     wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
     bash Anaconda3-2020.11-Linux-x86_64.sh -b -p  $install_dir
     export PATH=$install_dir/bin:$PATH    
-    fi
+  fi
 }
 
+# un-comment to install anaconda
 isPackageNotInstalled conda
 
 
@@ -23,7 +23,6 @@ conda init bash
 . ~/.bashrc
 conda env create -f environment.yml # Install dependencies
 conda activate fedscale
-
 
 
 if [ "$1" == "--cuda" ]; then
