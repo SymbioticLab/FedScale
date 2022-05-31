@@ -10,7 +10,7 @@ ps_ip: 10.0.0.1
 worker_ips: 
     - 10.0.0.1:[2] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes. 
 
-exp_path: $HOME/FedScale/fedscale/core
+exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: executor.py 
@@ -30,10 +30,10 @@ setup_commands:
 
 job_conf: 
     - job_name: cifar                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/evals # Path of log files
+    - log_path: $FEDSCALE_HOME/evals # Path of log files
     - total_worker: 4                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $HOME/FedScale/dataset/data/    # Path of the dataset
+    - data_dir: $FEDSCALE_HOME/dataset/data/    # Path of the dataset
     - model: shufflenet_v2_x2_0                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2# - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 5                     # How many rounds to run a testing on the testing set
     - rounds: 600                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds

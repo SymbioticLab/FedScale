@@ -1,5 +1,5 @@
 #!/bin/bash
-# export FEDSCALE_HOME=$PWD
+export FEDSCALE_HOME=$PWD
 
 
 isPackageNotInstalled() {
