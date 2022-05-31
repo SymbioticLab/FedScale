@@ -16,13 +16,12 @@ We use [Anaconda](https://www.anaconda.com/products/distribution#download-sectio
 
 Once you have Anaconda installed, here are the instructions assuming that the current directory is where you have cloned FedScale to.
 
-```
-export FEDSCALE_HOME=$PWD
-
+```export FEDSCALE_HOME=$PWD
 conda init bash
 . ~/.bash_profile
 conda env create -f environment.yml
 conda activate fedscale
+pip install -e .
 ```
 
 Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above if you want to use FedScale with GPU support.
