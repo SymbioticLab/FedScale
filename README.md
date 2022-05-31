@@ -13,10 +13,13 @@ Moreover, it provides datasets to faithfully emulate FL training environments wh
 ### Installing From Source
 FedScale requires Python 3.7 or better. 
 We use [Anaconda](https://www.anaconda.com/products/distribution#download-section) environments to manage its dependencies.
+FedScale also requires `FEDSCALE_HOME` environment variable set to the path of the FedScale installation directory.
 
 Once you have Anaconda installed, here are the instructions assuming that the current directory is where you have cloned FedScale to.
 
-```export FEDSCALE_HOME=$PWD
+```
+export FEDSCALE_HOME=$PWD
+
 conda init bash
 . ~/.bash_profile
 conda env create -f environment.yml
