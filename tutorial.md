@@ -2,14 +2,14 @@
   
 # Tutorial
  
-This tutorial will show you how to set up and start a FL experiment to train ShuffleNet on the FEMNIST dataset using Fedscale.
+This tutorial will show you how to set up and start an FL experiment to train ShuffleNet on the FEMNIST dataset using Fedscale.
  
 ## Preliminary
 
 Check the [instructions](./README.md) to set up your environment
  and [instructions](./dataset/README.md) to download the FEMNIST dataset.
 
-Please make sure you are using the correct environment:
+Please make sure you are using the correct environment.
 ```bash
 conda activate fedscale
 ```
@@ -18,20 +18,20 @@ conda activate fedscale
 Go to `./evals/configs/femnist/` directory and modify/create your **[configuration file](./evals/configs/femnist/conf.yml)** to submit your job.
 
 
-Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need .
+Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need.
  
 ## Submit Your FL Job
 
 Go to `./evals/` and use [manager.py](./evals/manager.py)
 to submit your FL job.
-`manager.py` will automatically launch the `aggregator.py` and `executor.py` to start the FL simulation.
+`manager.py` will automatically launch the `aggregator.py` and `executor.py` to start the FL evaluation.
 You can either choose to evaluate your large-scale FL experiment over a GPU cluster or test your code on your local machine.
  
  
 ### Test on Your Local Machine by Submitting Config
  
 It is more convenient to first test your code without a GPU cluster. 
-First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `evals/configs/femnist/conf.yml` to indicate you are training without using GPU.
+First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `evals/configs/femnist/conf.yml` if you are training without using any GPU.
 
 Set `ps_ip` and `worker_ips` to be `localhost` and `localhost:[x]` by default, where x represent how many executors you want to run on your local machine.
 Go to `./evals/` and run the following command to start your FL job:
