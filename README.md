@@ -18,7 +18,7 @@ FedScale also requires `FEDSCALE_HOME` environment variable set to the path of t
 Once you have Anaconda installed, here are the instructions.
 
 ```
-# use ~/.bashrc if you are using Linux, use ~/.bash_profile if you are on MacOS
+# use ~/.bashrc for Linux, and ~/.bash_profile for MacOS
 git clone https://github.com/SymbioticLab/FedScale.git
 cd FedScale
 echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
