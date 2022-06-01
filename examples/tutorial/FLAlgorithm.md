@@ -1,6 +1,6 @@
 
 
-# Building your own FL algorithm with FedScale
+# Building Your Own FL Algorithm with FedScale
 
 This tutorial will show you how to implement your own FL algorithm, such as optimization or client selection algorithms, using FedScale.
 
