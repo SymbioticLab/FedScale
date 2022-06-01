@@ -2,7 +2,7 @@
   
 # Tutorial
  
-This tutorial will show you how to set up and start an FL experiment to train ShuffleNet on the FEMNIST dataset using Fedscale.
+This tutorial will show you how to set up and start an FL experiment to train ShuffleNet on the FEMNIST dataset using FedScale.
  
 ## Preliminary
 

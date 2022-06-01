@@ -61,7 +61,7 @@ Now that you have FedScale installed, you can start exploring FedScale following
 
 ***We are adding more datasets! Please contribute!***
 
-FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellanious tasks. 
+FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellaneous tasks. 
 Each one is associated with its training, validation, and testing datasets. 
 Please go to the `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
 
