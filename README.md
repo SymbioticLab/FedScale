@@ -15,11 +15,13 @@ FedScale requires Python 3.7 or better.
 We use [Anaconda](https://www.anaconda.com/products/distribution#download-section) environments to manage its dependencies.
 FedScale also requires `FEDSCALE_HOME` environment variable set to the path of the FedScale installation directory.
 
-Once you have Anaconda installed, here are the instructions assuming that the current directory is where you have cloned FedScale to.
+Once you have Anaconda installed, here are the instructions.
 
 ```
-export FEDSCALE_HOME=$PWD
-
+git clone https://github.com/SymbioticLab/FedScale.git
+cd FedScale
+echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
+. ~/.bashrc
 conda init bash
 . ~/.bash_profile
 conda env create -f environment.yml

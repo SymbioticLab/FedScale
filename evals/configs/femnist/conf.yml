@@ -2,13 +2,13 @@
 
 # ========== Cluster configuration ========== 
 # ip address of the parameter server (need 1 GPU process)
-ps_ip: localhost
+ps_ip: 0.0.0.0
 
 # ip address of each worker:# of available gpus process on each gpu in this node
 # Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
 # E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
 worker_ips: 
-    - localhost:[2]
+    - 0.0.0.0
 
 exp_path: $FEDSCALE_HOME/fedscale/core
 

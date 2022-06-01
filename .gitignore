@@ -22,9 +22,9 @@ vms
 jobinfo
 quotas
 ./evals/scripts/*
-./data/*
+
 ./scripts/logs/*
-data/
+
 .DS_Store
 *.egg-info
 *logging
