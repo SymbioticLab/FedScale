@@ -13,6 +13,7 @@ Moreover, it provides datasets to faithfully emulate FL training environments wh
 ### Installing From Source
 FedScale requires Python 3.7 or better. 
 We use [Anaconda](https://www.anaconda.com/products/distribution#download-section) environments to manage its dependencies.
+FedScale also requires `FEDSCALE_HOME` environment variable set to the path of the FedScale installation directory.
 
 Once you have Anaconda installed, here are the instructions assuming that the current directory is where you have cloned FedScale to.
 
@@ -23,6 +24,7 @@ conda init bash
 . ~/.bash_profile
 conda env create -f environment.yml
 conda activate fedscale
+pip install -e .
 ```
 
 Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above if you want to use FedScale with GPU support.
@@ -59,7 +61,7 @@ Now that you have FedScale installed, you can start exploring FedScale following
 
 ***We are adding more datasets! Please contribute!***
 
-FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellanious tasks. 
+FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellaneous tasks. 
 Each one is associated with its training, validation, and testing datasets. 
 Please go to the `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
 

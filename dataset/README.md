@@ -11,11 +11,11 @@ When running in the benchmark evaluation mode, FedScale runtime can leverage the
 
 ## Download
 
-To download the dataset, run (or download from [here](https://drive.google.com/drive/folders/12s44-VmbLozTsU9oM4RGzXpBfgoeFqmy?usp=sharing) manually):
+You can use `download.sh` to download individual datasets. 
 
 ```
-# Download all datasets from the link above. Check download.sh -h for more details.
-bash download.sh -option 
+# Run download.sh -h for more details
+bash download.sh -dataset-key
 ```
 
 ## Workload Datasets Details
