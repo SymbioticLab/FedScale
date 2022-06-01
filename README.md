@@ -21,14 +21,10 @@ Once you have Anaconda installed, here are the instructions.
 git clone https://github.com/SymbioticLab/FedScale.git
 cd FedScale
 
-
-
 # Please replace ~/.bashrc with ~/.bash_profile for MacOS
-echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc
+echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
 conda init bash
 . ~/.bashrc
-
-
 
 conda env create -f environment.yml
 conda activate fedscale
