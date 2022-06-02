@@ -28,6 +28,7 @@ dependencies:
     - gym
     - jupyter
     - opacus
+    - pillow==9
 #    - sentencepiece
 #    - gdown
 #    - pyemd==0.5.1

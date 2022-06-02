@@ -10,42 +10,34 @@ Moreover, it provides datasets to faithfully emulate FL training environments wh
 
 ## Getting Started
 
-### Installing From Source
-FedScale requires Python 3.7 or better. 
-We use [Anaconda](https://www.anaconda.com/products/distribution#download-section) environments to manage its dependencies.
-FedScale also requires `FEDSCALE_HOME` environment variable set to the path of the FedScale installation directory.
+### Quick Installation (Linux)
 
-Once you have Anaconda installed, here are the instructions assuming that the current directory is where you have cloned FedScale to.
+You can simply run `install.sh`.
 
 ```
-export FEDSCALE_HOME=$PWD
+source install.sh # Add `--cuda` if you want CUDA 
+pip install -e .
+```
 
+Update `install.sh` if you prefer different versions of conda/CUDA.
+
+### Installation from Source (Linux/MacOS)
+
+If you have [Anaconda](https://www.anaconda.com/products/distribution#download-section) installed and cloned FedScale, here are the instructions.
+```
+cd FedScale
+
+# Please replace ~/.bashrc with ~/.bash_profile for MacOS
+echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
 conda init bash
-. ~/.bash_profile
+. ~/.bashrc
+
 conda env create -f environment.yml
 conda activate fedscale
 pip install -e .
 ```
 
 Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above if you want to use FedScale with GPU support.
-
-**Quick installation on Linux** 
-
-You can simply run `install.sh` without CUDA.
-
-```
-source install.sh  
-pip install -e .
-```
-
-You can add `--cuda` if you want CUDA 10.2.
-
-```
-source install.sh --cuda
-pip install -e .
-```
-
-Update `install.sh` if you prefer different versions of conda and/or CUDA.
 
 
 ### Tutorials
