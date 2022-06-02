@@ -13,7 +13,7 @@ Help()
    echo "FedScale provides a large suite of FL datasets "
    echo "to evaluate today's FL performance"
    echo
-   echo "Syntax: ./download.sh [--dataset-name]"
+   echo "Syntax: ./download.sh [--dataset_name]"
    echo "options:"
    echo "--help                         Print this Help."
    echo "--speech                       Download Speech Commands dataset (about 2.3GB)"

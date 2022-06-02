@@ -15,7 +15,7 @@ You can use `download.sh` to download individual datasets.
 
 ```
 # Run download.sh --help for more details
-bash download.sh -dataset-name
+bash download.sh -dataset_name
 ```
 
 ## Workload Datasets Details
