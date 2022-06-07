@@ -69,9 +69,9 @@ Please read and/or cite as appropriate to use FedScale code or data or learn mor
 
 ```bibtex
 @inproceedings{fedscale-icml,
-  title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
+  title={{FedScale}: Benchmarking Model and System Performance of Federated Learning at Scale},
   author={Fan Lai and Yinwei Dai and Sanjay S. Singapuram and Jiachen Liu and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
-  booktitle={ICML},
+  booktitle={International Conference on Machine Learning (ICML)},
   year={2022}
 }
 ```
