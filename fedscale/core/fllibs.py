@@ -137,7 +137,7 @@ def init_model():
         from fedscale.core.utils.voice_model import DeepSpeech, supported_rnns
 
         # Initialise new model training
-        with open(args.labels_path) as label_file:
+        with open(os.path.join(args.data_dir, "labels.json")) as label_file:
             labels = json.load(label_file)
 
         audio_conf = dict(sample_rate=args.sample_rate,
@@ -154,7 +154,6 @@ def init_model():
                            audio_conf=audio_conf,
                            bidirectional=args.bidirectional)
     elif args.task == 'detection':
-        #np.random.seed(cfg.RNG_SEED)
         cfg_from_file(args.cfg_file)
         cfg_from_list(['DATA_DIR', args.data_dir])
         model = resnet(readClass(os.path.join(args.data_dir, "class.txt")), 50, pretrained=True, class_agnostic=False,pretrained_model=args.backbone)
@@ -181,11 +180,15 @@ def init_dataset():
         if not os.path.exists(args.data_cache):
             imdb_name = "voc_2007_trainval"
             imdbval_name = "voc_2007_test"
-            imdb, roidb, ratio_list, ratio_index = combined_roidb(imdb_name, ['DATA_DIR', args.data_dir], sizes=args.train_size_file)
-            train_dataset = roibatchLoader(roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
-            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
+            imdb, roidb, ratio_list, ratio_index = combined_roidb(
+                imdb_name, ['DATA_DIR', args.data_dir], sizes=args.train_size_file)
+            train_dataset = roibatchLoader(
+                roidb, ratio_list, ratio_index, args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
+            imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(
+                imdbval_name, ['DATA_DIR', args.data_dir], sizes=args.test_size_file, training=False)
             imdb_.competition_mode(on=True)
-            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
+            test_dataset = roibatchLoader(roidb_, ratio_list_, ratio_index_, 1, 
+                imdb_.num_classes, imdb_._image_index_temp, training=False, normalize = False)
             with open(args.data_cache, 'wb') as f:
                 pickle.dump(train_dataset, f, -1)
                 pickle.dump(test_dataset, f, -1)
@@ -264,7 +267,8 @@ def init_dataset():
 
         elif args.data_set == 'google_speech':
             bkg = '_background_noise_'
-            data_aug_transform = transforms.Compose([ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(), TimeshiftAudioOnSTFT(), FixSTFTDimension()])
+            data_aug_transform = transforms.Compose(
+                [ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(), TimeshiftAudioOnSTFT(), FixSTFTDimension()])
             bg_dataset = BackgroundNoiseDataset(os.path.join(args.data_dir, bkg), data_aug_transform)
             add_bg_noise = AddBackgroundNoiseOnSTFT(bg_dataset)
             train_feature_transform = transforms.Compose([ToMelSpectrogramFromSTFT(n_mels=32), DeleteSTFT(), ToTensor('mel_spectrogram', 'input')])
@@ -281,15 +285,17 @@ def init_dataset():
         elif args.data_set == 'common_voice':
             from fedscale.core.utils.voice_data_loader import SpectrogramDataset
             train_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
-                                        manifest_filepath=args.train_manifest,
+                                        data_dir=args.data_dir,
                                         labels=model.labels,
+                                        train=True,
                                         normalize=True,
                                         speed_volume_perturb=args.speed_volume_perturb,
                                         spec_augment=args.spec_augment,
                                         data_mapfile=args.data_mapfile)
             test_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
-                                        manifest_filepath=args.test_manifest,
+                                        data_dir=args.data_dir,
                                         labels=model.labels,
+                                        train=False,
                                         normalize=True,
                                         speed_volume_perturb=False,
                                         spec_augment=False)
