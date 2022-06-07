@@ -1,40 +1,36 @@
 
 
-# Building your own FL algorithm with FedScale
+# Building Your Own FL Algorithm with FedScale
 
-This tutorial will show you how to implement your own FL algorithm with FedScale
-through giving some common examples including optimization algorithms and client selection algorithms.
+You can use FedScale to implement your own FL algorithm(s), for optimization, client selection, etc.
+In this tutorial, we focus on the API you need to implement an FL algorithm.
+Implementations for several existing FL algorithms are included as well.
 
-Please check the [setup](./tutorial.md) guide and [dataset](./dataset/Femnist_stats.ipynb) tutorial to prepare your FL experiments.
-Here we focus on the API you need to implement the FL algorithms.
-More existing FL algorithms can be found in `./examples`.
+Check the [instructions](../README.md) to set up your environment and [instructions](../dataset/README.md) to download datasets.
+
 
 ## Algorithm API
-As mentioned in [tutorial](https://www.tensorflow.org/federated/tutorials/building_your_own_federated_learning_algorithm),
-federated algorithms have 4 main components in most cases:
+Federated algorithms have four main components in most cases:
 
-- A server-to-client broadcast step.
-- A local client update step.
-- A client-to-server upload step.
-- A server update step.
-
+- A server-to-client broadcast step;
+- A local client update step;
+- A client-to-server upload step; and
+- A server-side aggregation step.
 
 To modify each of these steps for your FL algorithm, you can customize your server and client respectively.
-Here we give several examples to explain the necessary components in FedScale.
-
+Here we provide several examples to cover different components in FedScale.
 
 ## Aggregation Algorithm
 
 FedScale uses Federated averaging as the default aggregation algorithm.
-[FedAvg](https://arxiv.org/pdf/1602.05629.pdf) is a communication efficient algorithm.
-In FedAvg, clients keep their data locally for privacy protection; a central parameter server is used to communicate between clients.
+[FedAvg](https://arxiv.org/abs/1602.05629) is a communication efficient algorithm, where clients keep their data locally for privacy protection; a central parameter server is used to communicate between clients.
 Each participant locally performs E epochs of stochastic gradient descent (SGD) during every round.
-The participants then communicate their model updates to a central server, where they are averaged.
+The participants then communicate their model updates to the central server, where they are averaged.
 
-The aggregation algorithm in FedScale is mainly reflected in two code segment.
+The aggregation algorithm in FedScale is mainly reflected in two code segments.
 
-1. **Client updates**: Function `training_handler` in `fedscale/core/executor.py` will be called to initiate client training.
-The following code segment from `fedscale/core/client.py` shows how the client trains the model and updates the gradient (FedProx).
+1. **Client updates**: FedScale calls `training_handler` in [../fedscale/core/executor.py](../fedscale/core/executor.py) to initiate client training.
+The following code segment from [../fedscale/core/client.py](../fedscale/core/client.py) shows how the client trains the model and updates the gradient (when implementing FedProx).
 
 
 ```
@@ -78,11 +74,9 @@ class ClientOptimizer(object):
 
 ```
 
-
-2. **Server aggregates**: Function `round_weight_handler` in `fedscale/core/aggregator.py` will be called to do the aggregation at the end of each round.
-In the function `round_weight_handler`, you can customize your aggregator optimizer in `fedscale/core/optimizer.py`.
-The following code segment shows how FedYogi and FedAvg aggregate the participant gradients.
-
+2. **Server aggregates**: In the server-side, FedScale calls `round_weight_handler` in [../fedscale/core/aggregator.py](../fedscale/core/aggregator.py) to do the aggregation at the end of each round.
+In the function `round_weight_handler`, you can customize your aggregator optimizer in [../fedscale/core/optimizer.py](../fedscale/core/optimizer.py).
+The following code segment shows how FedYoGi and FedAvg aggregate the participant gradients.
 
 ```
 class ServerOptimizer(object):
@@ -119,31 +113,16 @@ class ServerOptimizer(object):
 ## Client Selection
 
 FedScale uses random selection among all available clients by default.
-However, you can customize the client selector by modifying the `client_manager` in `fedscale/core/aggregator.py`,
-which is defined in `fedscale/core/client_manager.py`.
+However, you can customize the client selector by modifying the `client_manager` in [../fedscale/core/aggregator.py](../fedscale/core/aggregator.py),
+which is defined in [../fedscale/core/client_manager.py](../fedscale/core/client_manager.py).
 
-
-Upon every device checking in or reporting results, FedScale aggregator calls `client_manager.registerClient(...)` or `client_manager.registerScore(...)`
-to record the necessary client information that could help you with the selection decision.
+Upon every device checking in or reporting results, FedScale aggregator calls `client_manager.registerClient(...)` or `client_manager.registerScore(...)` to record the necessary client information that could help you with the selection decision.
 At the beginning of the round, FedScale aggregator calls `client_manager.resampleClients(...)` to select the training participants.
-
-
 
 For example, [Oort](https://www.usenix.org/conference/osdi21/presentation/lai) is a client selector
 that considers both statistical and system utility to improve the model time-to-accuracy performance.
-You can find more details of Oort implementation in `thirdparty/oort/oort.py` and `fedscale/core/client_manager.py`.
+You can find more details of Oort implementation in [../thirdparty/oort/oort.py](../thirdparty/oort/oort.py) and [../fedscale/core/client_manager.py](../fedscale/core/client_manager.py).
 
+## Other Examples
 
-
-
-
-## Other examples
-
-You can find more FL algorithm examples in `examples/`, which includes differential privacy, malicious scenario, [HeteroFL](https://openreview.net/forum?id=TNkPBBYFkXg) and so on.
-By customizing the `fedscale/core/aggregator.py`, `fedscale/core/executor.py` and `fedscale/core/client.py`, you have more freedom to explore your own FL algorithms!
-
-
-
-
-
-
+You can find more FL algorithm examples in this directory, most of which involve simply customizing the `fedscale/core/aggregator.py`, `fedscale/core/executor.py`, and/or `fedscale/core/client.py`. 

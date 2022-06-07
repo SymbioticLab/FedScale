@@ -11,7 +11,7 @@ worker_ips:
     - 10.0.0.1:[5] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes.
 
 
-exp_path: $HOME/FedScale/fedscale/core
+exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: ../../examples/LocalDP/customized_executor.py
@@ -31,12 +31,12 @@ setup_commands:
 
 job_conf:
     - job_name: ldp                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/evals # Path of log files
+    - log_path: $FEDSCALE_HOME/evals # Path of log files
     - total_worker: 10
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $HOME/FedScale/dataset/data/femnist  # Path of the dataset
+    - data_dir: $FEDSCALE_HOME/dataset/data/femnist  # Path of the dataset
 #    - device_avail_file: /users/JIACHEN/FLPerf-Cluster/client_datamap/client_behave_trace
-    - sample_mode: random                                  # Client selection: random, kuiper, random by default
+    - sample_mode: random                                  # Client selection: random, oort, random by default
     - model: resnet18                            # Models: shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: fedavg                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 10                     # How many rounds to run a testing on the testing set

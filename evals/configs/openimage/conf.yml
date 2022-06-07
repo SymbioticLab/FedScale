@@ -22,7 +22,7 @@ worker_ips:
     - 10.0.0.13:[4]
     - 10.0.0.14:[4]
 
-exp_path: $HOME/FedScale/fedscale/core
+exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: executor.py
@@ -43,13 +43,13 @@ setup_commands:
 
 job_conf: 
     - job_name: openimage                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $HOME/FedScale/evals # Path of log files
+    - log_path: $FEDSCALE_HOME/evals # Path of log files
     - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: openImg                     # Dataset: openImg, google_speech, stackoverflow
-    - data_dir: $HOME/FedScale/dataset/data/openImg    # Path of the dataset
-    - data_map_file: $HOME/FedScale/dataset/data/openImg/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
-    - device_conf_file: $HOME/FedScale/dataset/data/device_info/client_device_capacity     # Path of the client trace
-    - device_avail_file: $HOME/FedScale/dataset/data/device_info/client_behave_trace
+    - data_dir: $FEDSCALE_HOME/dataset/data/openImg    # Path of the dataset
+    - data_map_file: $FEDSCALE_HOME/dataset/data/openImg/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
+    - device_conf_file: $FEDSCALE_HOME/dataset/data/device_info/client_device_capacity     # Path of the client trace
+    - device_avail_file: $FEDSCALE_HOME/dataset/data/device_info/client_behave_trace
     - model: shufflenet_v2_x2_0                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 30                     # How many rounds to run a testing on the testing set

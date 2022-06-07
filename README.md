@@ -4,52 +4,64 @@
 FedScale is a scalable and extensible open-source federated learning (FL) engine. 
 It provides high-level APIs to implement FL algorithms, deploy them at scale across diverse hardware and software backends, and evaluate them at scale.
 FedScale also includes the largest FL benchmark that contains FL tasks ranging from image classification and object detection to language modeling and speech recognition. 
-Moreover, it includes datasets to faithfully emulate FL training environments where FL will realistically be deployed.
+Moreover, it provides datasets to faithfully emulate FL training environments where FL will realistically be deployed.
 
 [http://fedscale.ai](http://fedscale.ai)
 
 ## Getting Started
 
-### Installation
+### Quick Installation (Linux)
 
-FedScale can be installed using the following commands.
+You can simply run `install.sh`.
 
 ```
-git clone https://github.com/SymbioticLab/FedScale
-cd FedScale
-source install.sh 
+source install.sh # Add `--cuda` if you want CUDA 
 pip install -e .
 ```
 
-This will install the following automatically:
+Update `install.sh` if you prefer different versions of conda/CUDA.
 
-* Anaconda Package Manager
-* CUDA 10.2
+### Installation from Source (Linux/MacOS)
 
-If you prefer different versions of conda and CUDA, please check comments in `install.sh` for details.
+If you have [Anaconda](https://www.anaconda.com/products/distribution#download-section) installed and cloned FedScale, here are the instructions.
+```
+cd FedScale
+
+# Please replace ~/.bashrc with ~/.bash_profile for MacOS
+echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
+conda init bash
+. ~/.bashrc
+
+conda env create -f environment.yml
+conda activate fedscale
+pip install -e .
+```
+
+Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads) or above if you want to use FedScale with GPU support.
+
 
 ### Tutorials
 
-You can start by following one of the following introductory tutorials:
+Now that you have FedScale installed, you can start exploring FedScale following one of these introductory tutorials.
 
-1. [Deploying your FL experiment](./tutorial.md)
-2. [Exploring FedScale datasets](./dataset/Femnist_stats.ipynb)
-3. [Implementing an FL algorithms](./examples/tutorial/FLAlgorithm.md)
+1. [Explore FedScale datasets](./dataset/Femnist_stats.ipynb)
+2. [Deploy your FL experiment](./tutorial.md)
+3. [Implement an FL algorithm](./examples/README.md)
 
 
 ## FedScale Datasets
 
 ***We are adding more datasets! Please contribute!***
 
-FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellanious tasks. 
+FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellaneous tasks. 
 Each one is associated with its training, validation, and testing datasets. 
 Please go to the `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
 
 ## FedScale Runtime
 FedScale Runtime is an scalable and extensible deployment as well as evaluation platform to simplify and standardize FL experimental setup and model evaluation. 
-It evolved from our prior system, Oort [Oort project](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
+It evolved from our prior system, [Oort](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
 
-Please go to `./core` directory and follow the FAR [README](./fedscale/core/README.md) to set up FL training scripts.
+Please go to `./core` directory and follow the [README](./fedscale/core/README.md) to set up FL training scripts.
 
 
 ## Repo Structure

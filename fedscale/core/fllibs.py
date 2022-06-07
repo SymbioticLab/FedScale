@@ -294,7 +294,7 @@ def init_dataset():
                                         speed_volume_perturb=False,
                                         spec_augment=False)
         else:
-            print('DataSet must be {}!'.format(['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
+            logging.info('DataSet must be {}!'.format(['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))
             sys.exit(-1)
 
     return train_dataset, test_dataset

@@ -141,7 +141,7 @@ class Client(object):
                         output = model(data)
                         loss = criterion(output, target)
 
-                    # ======== collect training feedback for other decision components [e.g., kuiper selector] ======
+                    # ======== collect training feedback for other decision components [e.g., oort selector] ======
 
                     if conf.task == 'nlp' or ( conf.task == 'text_clf' and  conf.model == 'albert-base-v2'):
                         loss_list = [loss.item()] #[loss.mean().data.item()]
