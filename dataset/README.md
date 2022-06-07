@@ -71,7 +71,7 @@ You can use [this example code](./Femnist_stats.ipynb) to explore any of the Fed
 A speech recognition dataset with over ten thousand clips of one-second-long duration. 
 Each clip contains one of the 35 common words (e.g., digits zero to nine, "Yes", "No", "Up", "Down") spoken by thousands of different people. 
 
-#### OpenImage 
+#### OpenImage
 [OpenImage](https://storage.googleapis.com/openimages/web/index.html) is a vision dataset collected from Flickr, an image and video hosting service. 
 It contains a total of 16M bounding boxes for 600 object classes (e.g., Microwave oven). 
 We clean up the dataset according to the provided indices of clients. 
@@ -114,9 +114,9 @@ Please read and/or cite as appropriate to use FedScale code or data or learn mor
 
 ```bibtex
 @inproceedings{fedscale-icml,
-  title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
+  title={{FedScale}: Benchmarking Model and System Performance of Federated Learning at Scale},
   author={Fan Lai and Yinwei Dai and Sanjay S. Singapuram and Jiachen Liu and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
-  booktitle={ICML},
+  booktitle={International Conference on Machine Learning (ICML)},
   year={2022}
 }
 ```
