@@ -1,5 +1,5 @@
  
-# Understand the heterogeneous FL data [Jupyter Notebook](./dataset/Femnist_stats.ipynb) 
+# Understand the heterogeneous FL data [[Jupyter Notebook](/dataset/Femnist_stats.ipynb) ]
  
 
 ## Download the Femnist dataset and FedScale
