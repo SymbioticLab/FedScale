@@ -1,6 +1,5 @@
 import math
 import os
-import pickle
 from tempfile import NamedTemporaryFile
 
 import librosa
@@ -11,7 +10,9 @@ import sox
 import torch
 from torch.utils.data import Dataset, Sampler, DistributedSampler, DataLoader
 
-from .spec_augment import spec_augment
+import csv
+from fedscale.core.utils.spec_augment import spec_augment
+import collections
 
 windows = {
     'hamming': scipy.signal.hamming,
@@ -148,8 +149,8 @@ class SpectrogramParser(AudioParser):
 
 
 class SpectrogramDataset(Dataset, SpectrogramParser):
-    def __init__(self, audio_conf, manifest_filepath, labels, normalize=False, speed_volume_perturb=False,
-                 spec_augment=False, data_mapfile=None):
+    def __init__(self, audio_conf, data_dir, train, labels, normalize=False, speed_volume_perturb=False,
+                 spec_augment=False):
         """
         Dataset that loads tensors via a csv containing file paths to audio files and transcripts separated by
         a comma. Each new line is a different sample. Example below:
@@ -164,35 +165,27 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
         :param speed_volume_perturb(default False): Apply random tempo and gain perturbations
         :param spec_augment(default False): Apply simple spectral augmentation to mel spectograms
         """
-        with open(manifest_filepath) as f:
-            ids = f.readlines()
-        ids = [x.strip().split(',') for x in ids]
-        self.ids = ids
-        self.size = len(ids)
-        self.targets = [0 for i in range(self.size)]
-        self.labels_map = dict([(labels[i], i) for i in range(len(labels))])
-        self.client_mapping = None 
+        file = "train.csv" if train else "test.csv"
+        self.ids = []
+        self.client_mapping = collections.defaultdict(list)
+        self.load_client_mapping(os.path.join(data_dir, file))
 
-        if data_mapfile:
-            self.client_mapping = self.load_client_mapping(data_mapfile)
+        self.size = len(self.ids)
+        self.targets = [0] * self.size
+        self.labels_map = dict([(labels[i], i) for i in range(len(labels))])
 
         super(SpectrogramDataset, self).__init__(audio_conf, normalize, speed_volume_perturb, spec_augment)
 
-    def load_client_mapping(self, mapping_path):
+    def load_client_mapping(self, file):
+        with open(file) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                if line_count != 0:
+                    self.ids.append([row[0], row[1], row[2]])
+                    self.client_mapping[int(row[2])].append(line_count-1)
+                line_count += 1
 
-        with open(mapping_path, 'rb') as fin:
-            raw_client_mapping = pickle.load(fin)
-
-        client_mapping = {}
-        for idx, item in enumerate(self.ids):
-            client_id = raw_client_mapping[os.path.split(item[0])[1]]
-
-            if client_id not in client_mapping:
-                client_mapping[client_id] = []
-
-            client_mapping[client_id].append(idx)
-
-        return client_mapping
 
     def __getitem__(self, index):
         sample = self.ids[index]
@@ -205,7 +198,7 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
         with open(transcript_path, 'r', encoding='utf8') as transcript_file:
             transcript = transcript_file.read().replace('\n', '')
         transcript = list(filter(None, [self.labels_map.get(x) for x in list(transcript)]))
-        
+
         return transcript
 
     def __len__(self):
