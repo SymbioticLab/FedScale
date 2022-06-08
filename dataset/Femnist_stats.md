@@ -1,16 +1,15 @@
  
-# Understand the heterogeneous FL data [Jupyter Notebook](./dataset/Femnist_stats.ipynb)**
+# Understand the heterogeneous FL data [Jupyter Notebook](./dataset/Femnist_stats.ipynb) 
  
 
-# Download the Femnist dataset and FedScale
+## Download the Femnist dataset and FedScale
 Follow the download instruction in `/content/FedScale/dataset/download.sh` to download the FEMNIST dataset.
 
 ```{code-cell} 
-!git clone https://github.com/symbioticlab/fedscale
-!wget -O  /content/femnist.tar.gz https://fedscale.eecs.umich.edu/dataset/femnist.tar.gz
-!tar -xf  /content/femnist.tar.gz -C /content/
-!rm -f  /content/femnist.tar.gz
-!echo -e "${GREEN}FEMNIST dataset downloaded!${NC}"        
+wget -O  /content/femnist.tar.gz https://fedscale.eecs.umich.edu/dataset/femnist.tar.gz
+tar -xf  /content/femnist.tar.gz -C /content/
+rm -f  /content/femnist.tar.gz
+echo -e "${GREEN}FEMNIST dataset downloaded!${NC}"        
 ```
 
 
@@ -19,6 +18,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Make sure you have downloaded and installed FedScale 
 from fedscale.core.utils.femnist import FEMNIST
 from fedscale.core.utils.utils_data import get_data_transform
 from fedscale.core.utils.divide_data import DataPartitioner
@@ -26,7 +26,7 @@ from fedscale.core.argParser import args
 ```
 
 
-# Data Loader
+## Data Loader
 
 ```{code-cell}
 train_transform, test_transform = get_data_transform('mnist')
@@ -45,7 +45,7 @@ training_sets.partition_data_helper(num_clients=None, data_map_file='/content/fe
 ```
 
 
-# Print and plot statistics of the dataset.
+## Print and plot statistics of the dataset.
 
 ```{code-cell} 
 print(f'Total number of data smaples: {training_sets.getDataLen()}')
@@ -69,9 +69,9 @@ axs[1].hist(label_dist, bins=n_bins)
 axs[1].set_title('Client label distribution')
 ```
 
-![](./dataset/femnist/client_label_heter.png)
+![image](/dataset/femnist/client_label_heter.png)
  
-# Visiualize the clients' data.
+## Visiualize the clients' data.
 
 ```{code-cell} 
 rank=1
@@ -89,4 +89,4 @@ for data in iter(dataloader):
 ```
 
 
-![](./dataset/femnist/sample_data.png)
+![image](/dataset/femnist/sample_data.png)
