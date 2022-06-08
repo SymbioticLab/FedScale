@@ -32,6 +32,7 @@ Help()
    echo "--femnist                      Download FEMNIST dataset (about 327M)"
    echo "--stackoverflow                Download StackOverflow dataset (about 13G)"
    echo "--blog                         Download Blog dataset (about 833M)"
+   echo "--common_voice                 Download Common Voice dataset (about 87G)"
 }
 
 speech()
@@ -331,6 +332,25 @@ waymo()
 fi
 }
 
+common_voice()
+{
+    if [ ! -d "${DIR}/common_voice/client_data_mapping/" ];
+    then
+        echo "Downloading common_voice dataset(about 87G)..."
+        wget -O ${DIR}/common_voice.tar.gz https://fedscale.eecs.umich.edu/dataset/common_voice.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/common_voice.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/common_voice.tar.gz
+
+        echo -e "${GREEN}common_voice dataset downloaded!${NC}"
+    else
+        echo -e "${RED}common_voice dataset already exists under ${DIR}/common_voice/!"
+fi
+}
+
 femnist()
 {
     if [ ! -d "${DIR}/femnist/client_data_mapping/" ];
@@ -418,6 +438,10 @@ while true; do
          ;;
       --stackoverflow )
          stackoverflow
+         shift
+         ;;
+      --common_voice )
+         common_voice
          shift
          ;;
       + )
