@@ -6,7 +6,7 @@ Puffer data comprises different measurements — each measurement contains a dif
 
 ## Note
 
-We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/puffer.tar.gz). The date folder structure is as follow
+We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/puffer.tar.gz). The data folder structure is as follows
 ```
 waymo/
 ├── client_data_mapping

@@ -411,6 +411,25 @@ landmark()
 fi
 }
 
+coqa()
+{
+    if [ ! -d "${DIR}/coqa/client_data_mapping" ];
+    then
+        echo "Downloading CoQA dataset(about 7.9M)..."
+        wget -O ${DIR}/coqa.tar.gz https://fedscale.eecs.umich.edu/dataset/coqa.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/coqa.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/coqa.tar.gz
+
+        echo -e "${GREEN}CoQA dataset downloaded!${NC}"
+    else
+        echo -e "${RED}CoQA dataset already exists under ${DIR}/coqa/! ${NC}"
+fi
+}
+
 while true; do
    case "$1" in
       --help ) # display Help
@@ -491,6 +510,10 @@ while true; do
         ;;
       --landmark )
          landmark
+         shift
+         ;;
+      --coqa )
+         coqa
          shift
          ;;
       + )

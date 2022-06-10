@@ -6,7 +6,7 @@ CoQA is a large-scale dataset for building Conversational Question Answering sys
 
 ## Note
 
-We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/coqa.tar.gz). The date folder structure is as follow
+We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/coqa.tar.gz). The data folder structure is as follows
 ```
 coqa/
 ├── client_data_mapping

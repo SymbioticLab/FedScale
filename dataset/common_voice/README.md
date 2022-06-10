@@ -6,7 +6,7 @@ The Common Voice dataset consists of a unique MP3 and corresponding text file. M
 
 ## Note
 
-We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/common-voice.tar.gz). The date folder structure is as follow
+We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/common-voice.tar.gz). The data folder structure is as follows
 ```
 common_voice/
 ├── client_data_mapping

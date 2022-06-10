@@ -6,7 +6,7 @@ This dataset describes a complete year (from 01/07/2013 to 30/06/2014) of the tr
 
 ## Note
 
-We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/taxi_traj.tar.gz) for Taxi Trajectory Prediction. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The date folder structure is as follow
+We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/taxi_traj.tar.gz) for Taxi Trajectory Prediction. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The data folder structure is as follows
 ```
 taxi_traj/
 ├── parser.py  # Script to generate the client-data mapping from the raw file

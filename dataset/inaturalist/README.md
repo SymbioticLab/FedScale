@@ -6,7 +6,7 @@
 
 ## Note
 
-We provide the [client mapping and train/val splitting](https://fedscale.eecs.umich.edu/dataset/inaturalist.tar.gz) for iNaturalist 2019. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The date folder structure is as follow
+We provide the [client mapping and train/val splitting](https://fedscale.eecs.umich.edu/dataset/inaturalist.tar.gz) for iNaturalist 2019. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The data folder structure is as follows
 ```
 data/
 ├── client_data_mapping

@@ -8,7 +8,7 @@ This dataset includes reviews (ratings, text, helpfulness votes), product metada
 
 ## Note
 
-We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/amazon_review.tar.gz). The date folder structure is as follow
+We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/amazon_review.tar.gz). The data folder structure is as follows
 ```
 amazon_review/
 ├── client_data_mapping
