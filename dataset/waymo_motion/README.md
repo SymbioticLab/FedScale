@@ -9,7 +9,7 @@ second overlap, and we consider each scenario as a client.
 
 ## Note
 
-We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/waymo.tar.gz) s splited into training and testing set. The date folder structure is as follow
+We provide the [data and client mapping and train/test splitting](https://fedscale.eecs.umich.edu/dataset/waymo.tar.gz) s splited into training and testing set. The data folder structure is as follows
 ```
 waymo/
 ├── client_data_mapping

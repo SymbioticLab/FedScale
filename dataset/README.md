@@ -49,7 +49,7 @@ You can use [this example code](./Femnist_stats.ipynb) to explore any of the Fed
 | Stackoverflow |   Text      |   342,477    |   135M        |  Word prediction, classification
 | Reddit        |   Text      |  1,660,820   |   351M        |  Word prediction
 | Amazon Review |   Text      | 1,822,925    |   166M        | Classification, Word prediction
-| CoQA          |   Text      |     7,189    |   114K        |  Question Answering
+| CoQA          |   Text      |     7,685    |   116K        |  Question Answering
 | LibriTTS      |   Text      |     2,456    |    37K        |   Text to speech
 | Google Speech |   Audio     |     2,618    |   105K        |   Speech recognition
 | Common Voice  |   Audio     |     12,976   |    1.1M       |   Speech recognition

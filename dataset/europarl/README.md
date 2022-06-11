@@ -6,7 +6,7 @@ The Europarl parallel corpus is extracted from the proceedings of the European P
 
 ## Note
 
-The [dataset](https://fedscale.eecs.umich.edu/dataset/europarl.tar.gz) is splited into training and testing set. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The date folder structure is as follow
+The [dataset](https://fedscale.eecs.umich.edu/dataset/europarl.tar.gz) is splited into training and testing set. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The data folder structure is as follows
 ```
 data/
 ├── client_data_mapping
