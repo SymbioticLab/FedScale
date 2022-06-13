@@ -60,7 +60,7 @@ You can use [this example code](./Femnist_stats.ipynb) to explore any of the Fed
 | -----------   | ----------- | -----------  |  ----------- |   ----------- |
 |Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction
 | Puffer        |   Text      |     121,551  |   15.4M       |   Sequence Prediction
-| Taobao        |   Text      |     182,806  |    0.9M       |   Recommendation
+| Taobao        |   Text      |     182,806  |    20.9M       |   Recommendation
 | Go dataset    |   Text      |     150,333  |    4.9M       |   Reinforcement learning
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only.***
