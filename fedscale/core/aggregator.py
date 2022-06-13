@@ -40,6 +40,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.model_weights = collections.OrderedDict() # all weights including bias/#_batch_tracked (e.g., state_dict)
         self.last_gradient_weights = [] # only gradient variables
         self.model_state_dict = None
+        # NOTE: if <param_name, param_tensor> (e.g., model.parameters() in PyTorch), then False
+        # True, if <param_name, list_param_tensors> (e.g., layer.get_weights() in Tensorflow)
+        self.using_group_params = self.args.engine == events.TENSORFLOW 
 
         # ======== channels ========
         self.connection_timeout = self.args.connection_timeout
@@ -53,6 +56,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # ======== runtime information ========
         self.tasks_round = 0
+        self.num_of_clients = 0
+
         # NOTE: sampled_participants = sampled_executors in deployment,
         # because every participant is an executor. However, in simulation mode,
         # executors is the physical machines (VMs), thus:
@@ -83,23 +88,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.log_writer = SummaryWriter(log_dir=logDir)
 
         # ======== Task specific ============
-        self.imdb = None           # object detection
+        self.init_task_context()
 
 
     def setup_env(self):
-        self.setup_seed(seed=self.this_rank)
-
-        # set up device
-        if self.args.use_cuda and self.device == None:
-            for i in range(torch.cuda.device_count()):
-                try:
-                    self.device = torch.device('cuda:'+str(i))
-                    torch.cuda.set_device(i)
-                    _ = torch.rand(1).to(device=self.device)
-                    logging.info(f'End up with cuda device ({self.device})')
-                    break
-                except Exception as e:
-                    assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
+        self.setup_seed(seed=1)
         self.optimizer = ServerOptimizer(self.args.gradient_policy, self.args, self.device)
 
 
@@ -149,15 +142,23 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         pass
 
+
     def init_model(self):
         """Load model"""
+        assert self.args.engine == events.PYTORCH, "Please define model for non-PyTorch models"
+
+        self.model = init_model()
+
+        # Initiate model parameters dictionary <param_name, param>
+        self.model_weights = self.model.state_dict()
+
+    def init_task_context(self):
+        """Initiate execution context for specific tasks"""
         if self.args.task == "detection":
             cfg_from_file(self.args.cfg_file)
             np.random.seed(self.cfg.RNG_SEED)
             self.imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', self.args.data_dir], server=True)
 
-        self.model = init_model()
-        self.model_weights = self.model.state_dict()
 
     def init_client_manager(self, args):
         """
@@ -186,33 +187,42 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         return global_client_profile
 
+    def client_register_handler(self, executorId, info):
+        """Triggered once receive new executor registration"""
+
+        logging.info(f"Loading {len(info['size'])} client traces ...")
+        for _size in info['size']:
+            # since the worker rankId starts from 1, we also configure the initial dataId as 1
+            mapped_id = (self.num_of_clients+1)%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
+            systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
+
+            clientId = (self.num_of_clients+1) if self.experiment_mode == events.SIMULATION_MODE else executorId
+            self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
+            self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
+                upload_step=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
+            self.num_of_clients += 1
+
+        logging.info("Info of all feasible clients {}".format(self.client_manager.getDataInfo()))
+
+
     def executor_info_handler(self, executorId, info):
 
         self.registered_executor_info.add(executorId)
         logging.info(f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
-        # have collected all executors
+
         # In this simulation, we run data split on each worker, so collecting info from one executor is enough
         # Waiting for data information from executors, or timeout
+        if self.experiment_mode == events.SIMULATION_MODE:
 
-        if len(self.registered_executor_info) == len(self.executors):
-
-            num_of_clients = 1
-            logging.info(f"Loading {len(info['size'])} client traces ...")
-            for _size in info['size']:
-                # since the worker rankId starts from 1, we also configure the initial dataId as 1
-                mapped_id = num_of_clients%len(self.client_profiles) if len(self.client_profiles) > 0 else 1
-                systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication':1.0})
-
-                clientId = num_of_clients if self.experiment_mode == events.SIMULATION_MODE else executorId
-                self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
-                self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
-                    upload_step=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
-                num_of_clients += 1
-
-            logging.info("Info of all feasible clients {}".format(self.client_manager.getDataInfo()))
-
-            # start to sample clients
-            self.round_completion_handler()
+            if len(self.registered_executor_info) == len(self.executors):
+                self.client_register_handler(executorId, info)
+                # start to sample clients
+                self.round_completion_handler()
+        else:
+            # In real deployments, we need to register for each client
+            self.client_register_handler(executorId, info)
+            if len(self.registered_executor_info) == len(self.executors):
+                self.round_completion_handler()
 
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
@@ -247,31 +257,40 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             round_duration = completionTimes[top_k_index[-1]]
             completionTimes.sort()
 
-            return clients_to_run, dummy_clients, completed_client_clock, round_duration, completionTimes[:num_clients_to_collect]
+            return (clients_to_run, dummy_clients, 
+                    completed_client_clock, round_duration, 
+                    completionTimes[:num_clients_to_collect])
         else:
-            completed_client_clock = {client:{'computation': 1, 'communication':1} for client in sampled_clients}
+            completed_client_clock = {
+                client:{'computation': 1, 'communication':1} for client in sampled_clients}
             completionTimes = [1 for c in sampled_clients]
-            return sampled_clients, sampled_clients, completed_client_clock, 1, completionTimes
+            return (sampled_clients, sampled_clients, completed_client_clock, 
+                1, completionTimes)
+
 
     def run(self):
         self.setup_env()
+        self.init_control_communication()
+        self.init_data_communication()
+
         self.init_model()
         self.save_last_param()
         self.model_update_size = sys.getsizeof(pickle.dumps(self.model))/1024.0*8. # kbits
         self.client_profiles = self.load_client_profile(file_path=self.args.device_conf_file)
 
-        self.init_control_communication()
-        self.init_data_communication()
         self.event_monitor()
 
 
     def select_participants(self, select_num_participants, overcommitment=1.3):
         return sorted(self.client_manager.resampleClients(
-            int(select_num_participants*overcommitment), cur_time=self.global_virtual_clock))
+            int(select_num_participants*overcommitment), 
+            cur_time=self.global_virtual_clock),
+        )
 
 
     def client_completion_handler(self, results):
-        """We may need to keep all updates from clients, if so, we need to append results to the cache"""
+        """We may need to keep all updates from clients, 
+        if so, we need to append results to the cache"""
         # Format:
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': round_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
@@ -289,7 +308,19 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 self.virtual_client_clock[results['clientId']]['communication']
         )
 
-        device = self.device
+        # ================== Aggregate weights ======================
+        self.update_lock.acquire()
+
+        self.model_in_update += 1
+        if self.using_group_params == True:
+            self.aggregate_client_group_weights(results)
+        else:
+            self.aggregate_client_weights(results)
+
+        self.update_lock.release()
+    
+    def aggregate_client_weights(self, results):
+        """May aggregate client updates on the fly"""
         """
             [FedAvg] "Communication-Efficient Learning of Deep Networks from Decentralized Data".
             H. Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, Blaise Aguera y Arcas. AISTATS, 2017
@@ -298,39 +329,69 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # Importance of each update is 1/#_of_participants
         # importance = 1./self.tasks_round
 
-        self.update_lock.acquire()
-        # ================== Aggregate weights ======================
+        for p in results['update_weight']:
+            param_weight = results['update_weight'][p]
+            if isinstance(param_weight, list):
+                param_weight = np.asarray(param_weight, dtype=np.float32)
+            param_weight = torch.from_numpy(param_weight).to(device=self.device)
 
-        self.model_in_update += 1
-        if self.model_in_update == 1:
-            for p in results['update_weight']:
-                temp_list = results['update_weight'][p]
-                if isinstance(results['update_weight'][p], list):
-                    temp_list = np.asarray(temp_list, dtype=np.float32)
-                self.model_weights[p].data = torch.from_numpy(temp_list).to(device=device)
-        else:
-            for p in results['update_weight']:
-                temp_list = results['update_weight'][p]
-                if isinstance(results['update_weight'][p], list):
-                    temp_list = np.asarray(temp_list, dtype=np.float32)
-                self.model_weights[p].data += torch.from_numpy(temp_list).to(device=device)
+            if self.model_in_update == 1:
+                self.model_weights[p].data = param_weight
+            else:
+                self.model_weights[p].data += param_weight
 
         if self.model_in_update == self.tasks_round:
             for p in self.model_weights:
                 d_type = self.model_weights[p].data.dtype
-                self.model_weights[p].data = (self.model_weights[p]/float(self.tasks_round)).to(dtype=d_type)
-        self.update_lock.release()
+
+                self.model_weights[p].data = (
+                    self.model_weights[p]/float(self.tasks_round)).to(dtype=d_type)
+
+
+    def aggregate_client_group_weights(self, results):
+        """Streaming weight aggregation. Similar to aggregate_client_weights, 
+        but each key corresponds to a group of weights (e.g., for Tensorflow)"""
+
+        for p_g in results['update_weight']:
+            param_weights = results['update_weight'][p_g]
+            for idx, param_weight in enumerate(param_weights):
+                if isinstance(param_weight, list):
+                    param_weight = np.asarray(param_weight, dtype=np.float32)
+                param_weight = torch.from_numpy(param_weight).to(device=self.device)
+
+                if self.model_in_update == 1:
+                    self.model_weights[p_g][idx].data = param_weight
+                else:
+                    self.model_weights[p_g][idx].data += param_weight
+
+        if self.model_in_update == self.tasks_round:
+            for p in self.model_weights:
+                for idx in range(len(self.model_weights[p])):
+                    d_type = self.model_weights[p][idx].data.dtype
+
+                    self.model_weights[p][idx].data = (
+                        self.model_weights[p][idx].data/float(self.tasks_round)
+                    ).to(dtype=d_type)
+
 
     def save_last_param(self):
-        self.last_gradient_weights = [p.data.clone() for p in self.model.parameters()]
+        if self.args.engine == events.TENSORFLOW:
+            self.last_gradient_weights = [layer.get_weights() for layer in self.model.layers]
+        else:
+            self.last_gradient_weights = [p.data.clone() for p in self.model.parameters()]
 
 
     def round_weight_handler(self, last_model):
         """Update model when the round completes"""
         if self.round > 1:
-            self.model.load_state_dict(self.model_weights)
-            current_grad_weights = [param.data.clone() for param in self.model.parameters()]
-            self.optimizer.update_round_gradient(last_model, current_grad_weights, self.model)
+            if self.args.engine == events.TENSORFLOW:
+                for layer in self.model.layers:
+                    layer.set_weights([p.cpu().detach().numpy() for p in self.model_weights[layer.name]])
+                # TODO: support update round gradient
+            else:
+                self.model.load_state_dict(self.model_weights)
+                current_grad_weights = [param.data.clone() for param in self.model.parameters()]
+                self.optimizer.update_round_gradient(last_model, current_grad_weights, self.model)
 
 
     def round_completion_handler(self):
@@ -362,7 +423,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # update select participants
         self.sampled_participants = self.select_participants(
                         select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
-        clientsToRun, round_stragglers, virtual_client_clock, round_duration, flatten_client_duration = self.tictak_client_tasks(
+        (clientsToRun, round_stragglers, virtual_client_clock, round_duration, flatten_client_duration) = self.tictak_client_tasks(
                         self.sampled_participants, self.args.total_worker)
 
         logging.info(f"Selected participants to run: {clientsToRun}")

@@ -2,6 +2,8 @@
 # Define Basic Experiment Setup
 SIMULATION_MODE = 'simulation'
 DEPLOYMENT_MODE = 'deployment'
+TENSORFLOW = 'tensorflow'
+PYTORCH = 'pytorch'
 
 # Define Basic FL Events
 UPDATE_MODEL = 'update_model'

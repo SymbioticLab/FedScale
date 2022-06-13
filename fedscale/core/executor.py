@@ -44,23 +44,7 @@ class Executor(object):
 
     def setup_env(self):
         logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
-
-        self.setup_seed(seed=self.this_rank)
-
-        # set up device
-        if self.args.use_cuda:
-            if self.device == None:
-                for i in range(torch.cuda.device_count()):
-                    try:
-                        self.device = torch.device('cuda:'+str(i))
-                        torch.cuda.set_device(i)
-                        print(torch.rand(1).to(device=self.device))
-                        logging.info(f'End up with cuda device ({self.device})')
-                        break
-                    except Exception as e:
-                        assert i != torch.cuda.device_count()-1, 'Can not find available GPUs'
-            else:
-                torch.cuda.set_device(self.device)
+        self.setup_seed(seed=1)
 
     def setup_communication(self):
         self.init_control_communication()
@@ -89,7 +73,10 @@ class Executor(object):
 
     def init_model(self):
         """Return the model architecture used in training"""
-        return init_model()
+        assert self.args.engine == events.PYTORCH, "Please override this function to define non-PyTorch models"
+        model = init_model()
+        model = model.to(device=self.device)
+        return model
 
     def init_data(self):
         """Return the training and testing dataset"""
@@ -119,7 +106,6 @@ class Executor(object):
     def run(self):
         self.setup_env()
         self.model = self.init_model()
-        self.model = self.model.to(device=self.device)
         self.training_sets, self.testing_sets = self.init_data()
         self.setup_communication()
         self.event_monitor()
@@ -150,11 +136,13 @@ class Executor(object):
         train_res = self.training_handler(clientId=client_id, conf=client_conf, model=model)
 
         # Report execution completion meta information
-        response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(job_api_pb2.CompleteRequest(
-            client_id = str(client_id), executor_id = self.executor_id,
-            event = events.CLIENT_TRAIN, status = True, msg = None,
-            meta_result = None, data_result = None
-        ))
+        response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(
+            job_api_pb2.CompleteRequest(
+                client_id = str(client_id), executor_id = self.executor_id,
+                event = events.CLIENT_TRAIN, status = True, msg = None,
+                meta_result = None, data_result = None
+            )
+        )
         self.dispatch_worker_events(response)
 
         return client_id, train_res
@@ -166,11 +154,13 @@ class Executor(object):
         test_res = {'executorId': self.this_rank, 'results': test_res}
 
         # Report execution completion information
-        response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(job_api_pb2.CompleteRequest(
-            client_id = self.executor_id, executor_id = self.executor_id,
-            event = events.MODEL_TEST, status = True, msg = None,
-            meta_result = None, data_result = self.serialize_response(test_res)
-        ))
+        response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(
+            job_api_pb2.CompleteRequest(
+                client_id = self.executor_id, executor_id = self.executor_id,
+                event = events.MODEL_TEST, status = True, msg = None,
+                meta_result = None, data_result = self.serialize_response(test_res)
+            )
+        )
         self.dispatch_worker_events(response)
 
 
@@ -329,5 +319,3 @@ class Executor(object):
 if __name__ == "__main__":
     executor = Executor(args)
     executor.run()
-
-

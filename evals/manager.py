@@ -72,7 +72,7 @@ def process_cmd(yaml_file,local = False):
             subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
                             shell=True, stdout=fout, stderr=fout)
 
-    time.sleep(3)
+    time.sleep(10)
     # =========== Submit job to each worker ============
     rank_id = 1
     for worker, gpu in zip(worker_ips, total_gpus):

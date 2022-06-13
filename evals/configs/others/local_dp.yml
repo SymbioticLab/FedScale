@@ -1,4 +1,4 @@
-# Configuration file of fed_hetero experiment
+# Configuration file of local differential privacy experiment
 
 # ========== Cluster configuration ==========
 # ip address of the parameter server (need 1 GPU process)
@@ -16,7 +16,7 @@ exp_path: $FEDSCALE_HOME/fedscale/core
 # Entry function of executor and aggregator under $exp_path
 executor_entry: ../../examples/LocalDP/customized_executor.py
 
-aggregator_entry: ../../examples/LocalDP/customized_aggregator.py
+aggregator_entry: aggregator.py
 
 auth:
     ssh_user: ""
@@ -30,7 +30,7 @@ setup_commands:
 # Default parameters are specified in argParser.py, wherein more description of the parameter can be found
 
 job_conf:
-    - job_name: ldp                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - job_name: local_dp                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/evals # Path of log files
     - total_worker: 10
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
