@@ -1,4 +1,4 @@
-# Configuration file of FAR training experiment
+# Configuration file of reinforcement learning training experiment
 
 # ========== Cluster configuration ========== 
 # ip address of the parameter server (need 1 GPU process)
