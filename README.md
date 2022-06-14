@@ -44,7 +44,7 @@ Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads)
 
 Now that you have FedScale installed, you can start exploring FedScale following one of these introductory tutorials.
 
-1. [Explore FedScale datasets](./dataset/Femnist_stats.ipynb)
+1. [Explore FedScale datasets](./dataset/Femnist_stats.md)
 2. [Deploy your FL experiment](./tutorial.md)
 3. [Implement an FL algorithm](./examples/README.md)
 
