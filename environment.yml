@@ -7,14 +7,15 @@ channels:
   - gurobi
 dependencies:
   - python=3.7
-#  - sox=14.4.2=h27f72bc_1013
+  - sox=14.4.2=h27f72bc_1013
   - gurobi=9.1.0
   - tensorboard
   - pip=20.0.2
   - pip:
     - torch_optimizer
     - torch
-#    - torch_baidu_ctc==0.3.0
+    - tensorflow
+    - torch_baidu_ctc==0.3.0
     - torchvision  
     - transformers
     - scipy==1.4.1
@@ -27,8 +28,10 @@ dependencies:
     - grpcio==1.40.0
     - gym
     - jupyter
-    - opacus
+    - opacuse
     - pillow==9
-#    - sentencepiece
-#    - gdown
-#    - pyemd==0.5.1
+    - sentencepiece
+    - gdown
+    - h5py
+    - librosa
+    - numba
