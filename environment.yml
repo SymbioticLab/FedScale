@@ -14,7 +14,7 @@ dependencies:
   - pip=20.0.2
   - pip:
     - torch_optimizer
-    - torch==1.10.2
+    - torch 
     - tensorflow
     - torchvision  
     - transformers
