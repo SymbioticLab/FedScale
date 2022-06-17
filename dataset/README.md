@@ -26,7 +26,7 @@ We provide real-world datasets for the federated learning community, and plan to
 Each one is associated with its training, validation and testing dataset. 
 A summary of statistics for training datasets can be found in the table below, and you can refer to each folder for more details. 
 
-You can use [this example code](./Femnist_stats.ipynb) to explore any of the FedScale datasets. 
+You can use [this example code](./Femnist_stats.md) to explore any of the FedScale datasets. 
 
 ### CV Tasks
 
