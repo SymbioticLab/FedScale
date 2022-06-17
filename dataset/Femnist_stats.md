@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Make sure you have downloaded and installed FedScale
-from fedscale.core.utils.femnist import FEMNIST
-from fedscale.core.utils.utils_data import get_data_transform
-from fedscale.core.utils.divide_data import DataPartitioner
+from fedscale.dataloaders.femnist import FEMNIST
+from fedscale.dataloaders.utils_data import get_data_transform
+from fedscale.dataloaders.divide_data import DataPartitioner
 from fedscale.core.arg_parser import args
 ```
 

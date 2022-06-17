@@ -223,7 +223,10 @@ class Executor(object):
             client = RLClient(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
         else:
-            client_data = select_dataset(clientId, self.training_sets, batch_size=conf.batch_size, args = self.args, collate_fn=self.collate_fn)
+            client_data = select_dataset(clientId, self.training_sets, 
+                batch_size=conf.batch_size, args = self.args, 
+                collate_fn=self.collate_fn
+            )
 
             client = self.get_client_trainer(conf)
             train_res = client.train(client_data=client_data, model=client_model, conf=conf)
@@ -241,18 +244,25 @@ class Executor(object):
             test_res = client.test(args, self.this_rank, model, device=device)
             _, _, _, testResults = test_res
         else:
-            data_loader = select_dataset(self.this_rank, self.testing_sets, batch_size=args.test_bsz, args = self.args, isTest=True, collate_fn=self.collate_fn)
+            data_loader = select_dataset(self.this_rank, self.testing_sets, 
+                batch_size=args.test_bsz, args = self.args, 
+                isTest=True, collate_fn=self.collate_fn
+            )
 
             if self.task == 'voice':
                 criterion = CTCLoss(reduction='mean').to(device=device)
             else:
                 criterion = torch.nn.CrossEntropyLoss().to(device=device)
 
-            test_res = test_model(self.this_rank, model, data_loader, device=device, criterion=criterion, tokenizer=tokenizer)
+            if self.args.engine == events.PYTORCH:
+                test_res = test_model(self.this_rank, model, data_loader, 
+                    device=device, criterion=criterion, tokenizer=tokenizer)
+            else:
+                raise Exception(f"Need customized implementation for model testing in {self.args.engine} engine")
 
             test_loss, acc, acc_5, testResults = test_res
             logging.info("After aggregation round {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
-                        .format(self.round, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
+                .format(self.round, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
 
         gc.collect()
 
@@ -260,12 +270,21 @@ class Executor(object):
 
     def client_register(self):
         """Register the executor information to the aggregator"""
-        response = self.aggregator_communicator.stub.CLIENT_REGISTER(job_api_pb2.RegisterRequest(
-            client_id = self.executor_id,
-            executor_id = self.executor_id,
-            executor_info = self.serialize_response(self.report_executor_info_handler())
-        ))
-        self.dispatch_worker_events(response)
+        start_time = time.time()
+        while time.time() - start_time < 180:
+            try:
+                response = self.aggregator_communicator.stub.CLIENT_REGISTER(
+                    job_api_pb2.RegisterRequest(
+                        client_id = self.executor_id,
+                        executor_id = self.executor_id,
+                        executor_info = self.serialize_response(self.report_executor_info_handler())
+                    )
+                )
+                self.dispatch_worker_events(response)
+                break
+            except Exception as e:
+                logging.warning(f"Failed to connect to aggregator {e}. Will retry in 5 sec.")
+                time.sleep(5)
 
     def client_ping(self):
         """Ping the aggregator for new task"""
