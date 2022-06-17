@@ -598,9 +598,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # We can customize whether to admit the clients here
         self.executor_info_handler(executor_id, executor_info)
+        dummy_data = self.serialize_response(events.DUMMY_RESPONSE)
 
         return job_api_pb2.ServerResponse(event=events.DUMMY_EVENT,
-                meta=None, data=None)
+                meta=dummy_data, data=dummy_data)
 
 
     def CLIENT_PING(self, request, context):

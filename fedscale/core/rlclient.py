@@ -1,10 +1,9 @@
 import torch
 import logging
 import math
-from fedscale.core.utils.nlp import mask_tokens
 from torch.autograd import Variable
 from fedscale.core.optimizer import ClientOptimizer
-from fedscale.core.utils.dqn import *
+from fedscale.dataloaders.dqn import *
 from fedscale.core.client import Client
 
 class RLClient(Client):

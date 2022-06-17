@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-
-import math
-import random
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,100 +8,20 @@ import logging
 
 # libs from fedscale
 from fedscale.core.arg_parser import args
-from fedscale.core.utils.nlp import mask_tokens
+from fedscale.dataloaders.nlp import mask_tokens
 
 if args.task == "detection":
-    import os
-    import sys
     from torch.autograd import Variable
     import torch.nn as nn
     import torch.optim as optim
-    import pickle
     from utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
-    from utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
-    from utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+    from utils.rcnn.lib.model.utils.config import cfg
     from utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
     from utils.rcnn.lib.model.roi_layers import nms
     from utils.rcnn.lib.datasets.pascal_voc import readClass
     from utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
     import numpy as np
-    from utils.rcnn.lib.model.faster_rcnn.resnet import resnet
 
-class MySGD(optim.SGD):
-
-    def __init__(self, params, lr=0.01, momentum=0.0,
-                 dampening=0, weight_decay=0, nesterov=False):
-        super().__init__(params, lr, momentum, dampening, weight_decay, nesterov)
-
-    def step(self, closure=None):
-        loss = None
-        if closure is not None:
-            loss = closure()
-
-        for group in self.param_groups:
-            weight_decay = group['weight_decay']
-            momentum = group['momentum']
-            dampening = group['dampening']
-            nesterov = group['nesterov']
-
-            for p in group['params']:
-                if p.grad is None:
-                    continue
-                d_p = p.grad.data
-                if weight_decay != 0:
-                    d_p.add_(weight_decay, p.data)
-                if momentum != 0:
-                    param_state = self.state[p]
-                    if 'momentum_buffer' not in param_state:
-                        buf = param_state['momentum_buffer'] = torch.zeros_like(p.data)
-                        buf.mul_(momentum).add_(d_p)
-                    else:
-                        buf = param_state['momentum_buffer']
-                        buf.mul_(momentum).add_(1 - dampening, d_p)
-                    if nesterov:
-                        d_p = d_p.add(momentum, buf)
-                    else:
-                        d_p = buf
-
-                # print('Previous: {}, lr: {}, grad: {}'.format(p.data, group['lr'], d_p))
-                p.data.add_(-group['lr'], d_p)
-                # print('Now: {}'.format(p.data))
-
-        return loss
-
-    def get_delta_w(self, nestedLr=0.01):
-        delta_ws = []
-        for group in self.param_groups:
-            weight_decay = group['weight_decay']
-            momentum = group['momentum']
-            dampening = group['dampening']
-            nesterov = group['nesterov']
-
-            for p in group['params']:
-                if p.grad is None:
-                    continue
-                d_p = p.grad.data
-                if weight_decay != 0:
-                    d_p.add_(weight_decay, p.data)
-                if momentum != 0:
-                    param_state = self.state[p]
-                    if 'momentum_buffer' not in param_state:
-                        buf = param_state['momentum_buffer'] = torch.zeros_like(p.data)
-                        buf.mul_(momentum).add_(d_p)
-                    else:
-                        buf = param_state['momentum_buffer']
-                        buf.mul_(momentum).add_(1 - dampening, d_p)
-                    if nesterov:
-                        d_p = d_p.add(momentum, buf)
-                    else:
-                        d_p = buf
-
-                if nestedLr == 0.01:
-                    delta_ws.append(group['lr'] * d_p)
-                else:
-                    delta_ws.append(nestedLr * d_p)
-
-        return delta_ws
 
 def cal_accuracy(targets, outputs):
     temp_acc = 0
@@ -247,7 +163,6 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     outputs = model(data, labels=target)# if args.mlm else model(data, labels=target)
     
                     loss = outputs[0]
-                    #criterion(outputs[1].view(-1, 30000), target.view(-1))
                     test_loss += loss.data.item()
                     perplexity_loss += loss.data.item()
     
@@ -285,7 +200,8 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     
                 elif args.task == 'text_clf' and args.model == 'albert-base-v2':
                     (inputs, masks) = data
-                    inputs, masks, target = Variable(inputs).to(device=device), Variable(masks).to(device=device), Variable(target).to(device=device)
+                    (inputs, masks, target) = (Variable(inputs).to(device=device), 
+                        Variable(masks).to(device=device), Variable(target).to(device=device))
                     outputs = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
             
                     loss = outputs.loss
@@ -332,8 +248,8 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     data, target = Variable(data).to(device=device), Variable(target).to(device=device)
     
                     output = model(data)
+
                     loss = criterion(output, target)
-    
                     test_loss += loss.data.item()  # Variable.data
                     acc = accuracy(output, target, topk=(1, 5))
     
@@ -386,19 +302,3 @@ def accuracy(output, target, topk=(1,)):
             res.append(correct_k)
 
         return res
-
-class RandomParams(object):
-
-    def __init__(self, ratio: float):
-        self.ratio = ratio
-
-    def get(self, params_indices: list):
-        rng = random.Random()
-        rng.seed(random.random() * 1234)
-        indexes = [x for x in range(len(params_indices))]
-        rng.shuffle(indexes)
-        # print(indexes)
-
-        part_len = int(math.floor(self.ratio * len(params_indices)))
-        result = indexes[0: part_len]
-        return [params_indices[i] for i in result]

@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import Dataset, Sampler, DistributedSampler, DataLoader
 
 import csv
-from fedscale.core.utils.spec_augment import spec_augment
+from fedscale.dataloaders.spec_augment import spec_augment
 import collections
 
 windows = {

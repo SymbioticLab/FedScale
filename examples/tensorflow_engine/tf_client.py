@@ -23,17 +23,20 @@ class Customized_Client(Client):
         def gen():
             while True:
                 for x, y in client_data:
+                    # Convert torch tensor to tf tensor
                     nx, ny = tf.convert_to_tensor(x.swapaxes(1, 3).numpy()), tf.convert_to_tensor(y.numpy()) 
                     yield nx, ny
 
+        # Sample a batch to get tensor properties
+        temp_x, temp_y = next(gen())
+
         tf_client_data = tf.data.Dataset.from_generator(
             gen,
-            output_types=(tf.float32, tf.int64),
-            output_shapes=(tf.TensorShape([conf.batch_size, 32, 32, 3]), 
-                 tf.TensorShape([conf.batch_size]))
+            output_types=(temp_x.dtype, temp_y.dtype),
+            output_shapes=(temp_x.shape, temp_y.shape)
         )
 
-        optimizer = tf.keras.optimizers.SGD(learning_rate=conf.learning_rate, momentum=0.0, 
+        optimizer = tf.keras.optimizers.SGD(learning_rate=conf.learning_rate, momentum=0.9, 
                     nesterov=False, name='SGD')
         model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', 
             metrics=['accuracy'])
