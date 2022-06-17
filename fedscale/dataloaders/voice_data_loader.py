@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import Dataset, Sampler, DistributedSampler, DataLoader
 
 import csv
-from .spec_augment import spec_augment
+from fedscale.dataloaders.spec_augment import spec_augment
 import collections
 
 windows = {
@@ -198,7 +198,7 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
         with open(transcript_path, 'r', encoding='utf8') as transcript_file:
             transcript = transcript_file.read().replace('\n', '')
         transcript = list(filter(None, [self.labels_map.get(x) for x in list(transcript)]))
-        
+
         return transcript
 
     def __len__(self):

@@ -3,7 +3,8 @@ from fedscale.core import events
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--job_name', type=str, default='demo_job')
-parser.add_argument('--log_path', type=str, default='./', help="default path is ../log")
+parser.add_argument('--log_path', type=str, default='./', 
+        help="default path is ../log")
 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
@@ -11,6 +12,8 @@ parser.add_argument('--ps_port', type=str, default='29501')
 parser.add_argument('--this_rank', type=int, default=1)
 parser.add_argument('--connection_timeout', type=int, default=60)
 parser.add_argument('--experiment_mode', type=str, default=events.SIMULATION_MODE)
+parser.add_argument('--engine', type=str, default=events.PYTORCH, 
+                    help="Tensorflow or Pytorch for cloud aggregation")
 parser.add_argument('--num_executors', type=int, default=1)
 parser.add_argument('--executor_configs', type=str, default="127.0.0.1:[1]")  # seperated by ;
 parser.add_argument('--total_worker', type=int, default=4)
@@ -20,7 +23,8 @@ parser.add_argument('--cuda_device', type=str, default=None)
 parser.add_argument('--time_stamp', type=str, default='logs')
 parser.add_argument('--task', type=str, default='cv')
 parser.add_argument('--device_avail_file', type=str, default=None)
-parser.add_argument('--clock_factor', type=float, default=1.0, help="Refactor the clock time given the profile")
+parser.add_argument('--clock_factor', type=float, default=1.0, 
+                    help="Refactor the clock time given the profile")
 
 # The configuration of model and dataset
 parser.add_argument('--data_dir', type=str, default='~/cifar10/')

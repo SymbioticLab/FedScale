@@ -32,16 +32,16 @@ Help()
    echo "--femnist                      Download FEMNIST dataset (about 327M)"
    echo "--stackoverflow                Download StackOverflow dataset (about 13G)"
    echo "--blog                         Download Blog dataset (about 833M)"
+   echo "--common_voice                 Download Common Voice dataset (about 87G)"
+   echo "--coqa                         Download CoQA dataset (about 7.9M)"
+   echo "--puffer                       Download Puffer dataset (about 2.0G)"
+   echo "--landmark                     Download Puffer dataset (about 954M)"
 }
 
 speech()
 {
     if [ ! -d "${DIR}/speech_commands/train/" ];
     then
-        echo "Install dependencies"
-        conda install -y numba=0.49.1
-        conda install librosa=0.7.2
-
         echo "Downloading Speech Commands dataset(about 2.4GB)..."
         wget -O ${DIR}/speech_commands/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
 
@@ -196,9 +196,6 @@ open_images_detection()
     if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ];
     then
 
-        echo "Install dependencies"
-        conda install h5py
-
         echo "Downloading open_images_detection dataset(about 451M)..."
         wget -O ${DIR}/openimage_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz
 
@@ -256,9 +253,6 @@ stackoverflow()
 {
     if [ ! -d "${DIR}/stackoverflow/train/" ];
     then
-        echo "Install dependencies"
-        conda install h5py
-
         echo "Downloading stackoverflow dataset(about 800M)..."
         wget -O ${DIR}/stackoverflow.tar.gz https://fedscale.eecs.umich.edu/dataset/stackoverflow.tar.gz
 
@@ -331,6 +325,25 @@ waymo()
 fi
 }
 
+common_voice()
+{
+    if [ ! -d "${DIR}/common_voice/client_data_mapping/" ];
+    then
+        echo "Downloading common_voice dataset(about 87G)..."
+        wget -O ${DIR}/common_voice.tar.gz https://fedscale.eecs.umich.edu/dataset/common_voice.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/common_voice.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/common_voice.tar.gz
+
+        echo -e "${GREEN}common_voice dataset downloaded!${NC}"
+    else
+        echo -e "${RED}common_voice dataset already exists under ${DIR}/common_voice/!"
+fi
+}
+
 femnist()
 {
     if [ ! -d "${DIR}/femnist/client_data_mapping/" ];
@@ -347,6 +360,63 @@ femnist()
         echo -e "${GREEN}FEMNIST dataset downloaded!${NC}"
     else
         echo -e "${RED}FEMNIST dataset already exists under ${DIR}/femnist/! ${NC}"
+fi
+}
+
+puffer()
+{
+    if [ ! -d "${DIR}/puffer" ];
+    then
+        echo "Downloading Puffer dataset(about 2G)..."
+        wget -O ${DIR}/puffer.tar.gz https://fedscale.eecs.umich.edu/dataset/puffer.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/puffer.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/puffer.tar.gz
+
+        echo -e "${GREEN}Puffer dataset downloaded!${NC}"
+    else
+        echo -e "${RED}Puffer dataset already exists under ${DIR}/puffer/! ${NC}"
+fi
+}
+
+landmark()
+{
+    if [ ! -d "${DIR}/landmark/client_data_mapping/" ];
+    then
+        echo "Downloading Google Landmark dataset(about 954Ms)..."
+        wget -O ${DIR}/landmark.tar.gz https://fedscale.eecs.umich.edu/dataset/landmark.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/landmark.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/landmark.tar.gz
+
+        echo -e "${GREEN}Google Landmark dataset downloaded!${NC}"
+    else
+        echo -e "${RED}Google Landmark dataset already exists under ${DIR}/landmark/! ${NC}"
+fi
+}
+
+coqa()
+{
+    if [ ! -d "${DIR}/coqa/client_data_mapping" ];
+    then
+        echo "Downloading CoQA dataset(about 7.9M)..."
+        wget -O ${DIR}/coqa.tar.gz https://fedscale.eecs.umich.edu/dataset/coqa.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/coqa.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/coqa.tar.gz
+
+        echo -e "${GREEN}CoQA dataset downloaded!${NC}"
+    else
+        echo -e "${RED}CoQA dataset already exists under ${DIR}/coqa/! ${NC}"
 fi
 }
 
@@ -418,6 +488,22 @@ while true; do
          ;;
       --stackoverflow )
          stackoverflow
+         shift
+         ;;
+      --common_voice )
+         common_voice
+         shift
+         ;;
+      --puffer )
+        puffer
+        shift
+        ;;
+      --landmark )
+         landmark
+         shift
+         ;;
+      --coqa )
+         coqa
          shift
          ;;
       + )

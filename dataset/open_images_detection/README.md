@@ -6,7 +6,7 @@ Open Images is a dataset of ~9M images annotated with image-level labels, object
 
 ## Note
 
-The [dataset](https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz) is splited into training and testing set. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The date folder structure is as follow
+The [dataset](https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz) is splited into training and testing set. Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. The data folder structure is as follows
 ```
 data/
 ├── *.txt meta files

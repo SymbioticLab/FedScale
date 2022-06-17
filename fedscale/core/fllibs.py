@@ -11,9 +11,9 @@ import numpy
 
 # libs from fedscale
 from fedscale.core.arg_parser import args
-from fedscale.core.utils.utils_data import get_data_transform
-from fedscale.core.utils.utils_model import test_model
-from fedscale.core.utils.divide_data import select_dataset, DataPartitioner
+from fedscale.dataloaders.utils_data import get_data_transform
+from fedscale.core.utils.model_test_module import test_model
+from fedscale.dataloaders.divide_data import select_dataset, DataPartitioner
 from fedscale.core.client_manager import clientManager
 from fedscale.core.utils.yogi import YoGi
 from fedscale.core.optimizer import ServerOptimizer
@@ -31,7 +31,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 tokenizer = None
 if args.task == 'nlp' or args.task == 'text_clf':
-    from fedscale.core.utils.nlp import mask_tokens, load_and_cache_examples
+    from fedscale.dataloaders.nlp import mask_tokens, load_and_cache_examples
     from transformers import (
         AdamW,
         AutoConfig,
@@ -43,28 +43,28 @@ if args.task == 'nlp' or args.task == 'text_clf':
     tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True)
 elif args.task == 'speech':
     import numba
-    from fedscale.core.utils.speech import SPEECH
-    from fedscale.core.utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
-    from fedscale.core.utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
-    from fedscale.core.utils.speech import BackgroundNoiseDataset
+    from fedscale.dataloaders.speech import SPEECH
+    from fedscale.dataloaders.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
+    from fedscale.dataloaders.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
+    from fedscale.dataloaders.speech import BackgroundNoiseDataset
 elif args.task == 'detection':
     import pickle
-    from fedscale.core.utils.rcnn.lib.roi_data_layer.roidb import combined_roidb
-    from fedscale.core.utils.rcnn.lib.datasets.factory import get_imdb
-    from fedscale.core.utils.rcnn.lib.datasets.pascal_voc import readClass
-    from fedscale.core.utils.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
-    from fedscale.core.utils.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-    from fedscale.core.utils.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
+    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roidb import combined_roidb
+    from fedscale.dataloaders.rcnn.lib.datasets.factory import get_imdb
+    from fedscale.dataloaders.rcnn.lib.datasets.pascal_voc import readClass
+    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
+    from fedscale.dataloaders.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+    from fedscale.dataloaders.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
         adjust_learning_rate, save_checkpoint, clip_gradient
-    from fedscale.core.utils.rcnn.lib.model.faster_rcnn.resnet import resnet
-    from fedscale.core.utils.rcnn.lib.model.rpn.bbox_transform import clip_boxes
-    from fedscale.core.utils.rcnn.lib.model.roi_layers import nms
-    from fedscale.core.utils.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
+    from fedscale.dataloaders.rcnn.lib.model.faster_rcnn.resnet import resnet
+    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import clip_boxes
+    from fedscale.dataloaders.rcnn.lib.model.roi_layers import nms
+    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
 elif args.task == 'voice':
     from torch_baidu_ctc import CTCLoss
 elif args.task == 'rl':
     import gym
-    from fedscale.core.utils.dqn import *
+    from fedscale.dataloaders.dqn import *
 
 # shared functions of aggregator and clients
 # initiate for nlp
@@ -225,14 +225,14 @@ def init_dataset():
             train_dataset = datasets.EMNIST(args.data_dir, split='balanced', train=True, download=True, transform=transforms.ToTensor())
 
         elif args.data_set == 'femnist':
-            from fedscale.core.utils.femnist import FEMNIST
+            from fedscale.dataloaders.femnist import FEMNIST
 
             train_transform, test_transform = get_data_transform('mnist')
             train_dataset = FEMNIST(args.data_dir, dataset='train', transform=train_transform)
             test_dataset = FEMNIST(args.data_dir, dataset='test', transform=test_transform)
 
         elif args.data_set == 'openImg':
-            from fedscale.core.utils.openimage import OpenImage
+            from fedscale.dataloaders.openimage import OpenImage
 
             train_transform, test_transform = get_data_transform('openImg')
             train_dataset = OpenImage(args.data_dir, dataset='train', transform=train_transform)
@@ -243,24 +243,24 @@ def init_dataset():
             test_dataset = load_and_cache_examples(args, tokenizer, evaluate=True)
 
         elif args.data_set == 'stackoverflow':
-            from fedscale.core.utils.stackoverflow import stackoverflow
+            from fedscale.dataloaders.stackoverflow import stackoverflow
 
             train_dataset = stackoverflow(args.data_dir, train=True)
             test_dataset = stackoverflow(args.data_dir, train=False)
 
         elif args.data_set == 'amazon':
             if args.model == 'albert':
-                import fedscale.core.utils.amazon as fl_loader
+                import fedscale.dataloaders.amazon as fl_loader
                 train_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size  )
                 test_dataset = fl_loader.AmazonReview_loader(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size )
 
             elif args.model == 'lr':
-                import fedscale.core.utils.word2vec as fl_loader
+                import fedscale.dataloaders.word2vec as fl_loader
                 train_dataset = fl_loader.AmazonReview_word2vec(args.data_dir, args.embedding_file, train=True)
                 test_dataset = fl_loader.AmazonReview_word2vec( args.data_dir, args.embedding_file, train=False)
 
         elif args.data_set == 'yelp':
-            import fedscale.core.utils.dataloaders as fl_loader
+            import fedscale.dataloaders.yelp as fl_loader
 
             train_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=True, tokenizer=tokenizer, max_len=args.clf_block_size)
             test_dataset = fl_loader.TextSentimentDataset(args.data_dir, train=False, tokenizer=tokenizer, max_len=args.clf_block_size)
@@ -283,7 +283,7 @@ def init_dataset():
                                             FixAudioLength(),
                                             valid_feature_transform]))
         elif args.data_set == 'common_voice':
-            from fedscale.core.utils.voice_data_loader import SpectrogramDataset
+            from fedscale.dataloaders.voice_data_loader import SpectrogramDataset
             train_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
                                         data_dir=args.data_dir,
                                         labels=model.labels,
