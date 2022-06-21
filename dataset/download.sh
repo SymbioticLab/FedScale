@@ -13,35 +13,35 @@ Help()
    echo "FedScale provides a large suite of FL datasets "
    echo "to evaluate today's FL performance"
    echo
-   echo "Syntax: ./download.sh [-g|h|v|V]"
+   echo "Syntax: ./download.sh [--dataset_name]"
    echo "options:"
-   echo "-h     Print this Help."
-   echo "-s     Download Speech Commands dataset (about 2.3GB)"
-   echo "-o     Download Open Images dataset (about 66GB)"
-   echo "-a     Download Amazon Review dataset (about 11G)"
-   echo "-c     Download Charades dataset (about 15G)"
-   echo "-e     Download Europarl dataset (about 458M)"
-   echo "-g     Download Go dataset (about 1.7G)"
-   echo "-i     Download Inaturalist 2019 dataset meta file (about 11M)"
-   echo "-l     Download LibriTTS dataset (about 78G)"
-   echo "-d     Download Open Images for detection (about 451M)"
-   echo "-r     Download Reddit dataset (about 25G)"
-   echo "-t     Download Taobao dataset (about 185M)"
-   echo "-x     Download Taxi Trajectory dataset (about 504M)"
-   echo "-w     Download Waymo Motion dataset meta file (about 74M)"
-   echo "-f     Download FEMNIST dataset (about 327M)"
-   echo "-v     Download StackOverflow dataset (about 13G)"
-   echo "-b     Download Blog dataset (about 833M)"
+   echo "--help                         Print this Help."
+   echo "--speech                       Download Speech Commands dataset (about 2.3GB)"
+   echo "--open_images                  Download Open Images dataset (about 66GB)"
+   echo "--amazon_review                Download Amazon Review dataset (about 11G)"
+   echo "--charades                     Download Charades dataset (about 15G)"
+   echo "--europarl                     Download Europarl dataset (about 458M)"
+   echo "--go                           Download Go dataset (about 1.7G)"
+   echo "--inaturalist                  Download Inaturalist 2019 dataset meta file (about 11M)"
+   echo "--libriTTS                     Download LibriTTS dataset (about 78G)"
+   echo "--open_images_detection        Download Open Images for detection (about 451M)"
+   echo "--reddit                       Download Reddit dataset (about 25G)"
+   echo "--taobao                       Download Taobao dataset (about 185M)"
+   echo "--taxi                         Download Taxi Trajectory dataset (about 504M)"
+   echo "--waymo                        Download Waymo Motion dataset meta file (about 74M)"
+   echo "--femnist                      Download FEMNIST dataset (about 327M)"
+   echo "--stackoverflow                Download StackOverflow dataset (about 13G)"
+   echo "--blog                         Download Blog dataset (about 833M)"
+   echo "--common_voice                 Download Common Voice dataset (about 87G)"
+   echo "--coqa                         Download CoQA dataset (about 7.9M)"
+   echo "--puffer                       Download Puffer dataset (about 2.0G)"
+   echo "--landmark                     Download Puffer dataset (about 954M)"
 }
 
 speech()
 {
     if [ ! -d "${DIR}/speech_commands/train/" ];
     then
-        echo "Install dependencies"
-        conda install -y numba=0.49.1
-        conda install librosa=0.7.2
-
         echo "Downloading Speech Commands dataset(about 2.4GB)..."
         wget -O ${DIR}/speech_commands/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
 
@@ -196,9 +196,6 @@ open_images_detection()
     if [ ! -d "${DIR}/open_images_detection/client_data_mapping/" ];
     then
 
-        echo "Install dependencies"
-        conda install h5py
-
         echo "Downloading open_images_detection dataset(about 451M)..."
         wget -O ${DIR}/openimage_detection.tar.gz https://fedscale.eecs.umich.edu/dataset/openimage_detection.tar.gz
 
@@ -256,9 +253,6 @@ stackoverflow()
 {
     if [ ! -d "${DIR}/stackoverflow/train/" ];
     then
-        echo "Install dependencies"
-        conda install h5py
-
         echo "Downloading stackoverflow dataset(about 800M)..."
         wget -O ${DIR}/stackoverflow.tar.gz https://fedscale.eecs.umich.edu/dataset/stackoverflow.tar.gz
 
@@ -331,9 +325,28 @@ waymo()
 fi
 }
 
+common_voice()
+{
+    if [ ! -d "${DIR}/common_voice/client_data_mapping/" ];
+    then
+        echo "Downloading common_voice dataset(about 87G)..."
+        wget -O ${DIR}/common_voice.tar.gz https://fedscale.eecs.umich.edu/dataset/common_voice.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/common_voice.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/common_voice.tar.gz
+
+        echo -e "${GREEN}common_voice dataset downloaded!${NC}"
+    else
+        echo -e "${RED}common_voice dataset already exists under ${DIR}/common_voice/!"
+fi
+}
+
 femnist()
 {
-    if [ ! -d "${DIR}/FEMNIST/client_data_mapping/" ];
+    if [ ! -d "${DIR}/femnist/client_data_mapping/" ];
     then
         echo "Downloading FEMNIST dataset(about 327M)..."
         wget -O ${DIR}/femnist.tar.gz https://fedscale.eecs.umich.edu/dataset/femnist.tar.gz
@@ -346,69 +359,159 @@ femnist()
 
         echo -e "${GREEN}FEMNIST dataset downloaded!${NC}"
     else
-        echo -e "${RED}FEMNIST dataset already exists under ${DIR}/FEMNIST/!"
+        echo -e "${RED}FEMNIST dataset already exists under ${DIR}/femnist/! ${NC}"
 fi
 }
 
-while getopts ":hvsoacegildrtwfxob" option; do
-   case $option in
-      h ) # display Help
+puffer()
+{
+    if [ ! -d "${DIR}/puffer" ];
+    then
+        echo "Downloading Puffer dataset(about 2G)..."
+        wget -O ${DIR}/puffer.tar.gz https://fedscale.eecs.umich.edu/dataset/puffer.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/puffer.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/puffer.tar.gz
+
+        echo -e "${GREEN}Puffer dataset downloaded!${NC}"
+    else
+        echo -e "${RED}Puffer dataset already exists under ${DIR}/puffer/! ${NC}"
+fi
+}
+
+landmark()
+{
+    if [ ! -d "${DIR}/landmark/client_data_mapping/" ];
+    then
+        echo "Downloading Google Landmark dataset(about 954Ms)..."
+        wget -O ${DIR}/landmark.tar.gz https://fedscale.eecs.umich.edu/dataset/landmark.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/landmark.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/landmark.tar.gz
+
+        echo -e "${GREEN}Google Landmark dataset downloaded!${NC}"
+    else
+        echo -e "${RED}Google Landmark dataset already exists under ${DIR}/landmark/! ${NC}"
+fi
+}
+
+coqa()
+{
+    if [ ! -d "${DIR}/coqa/client_data_mapping" ];
+    then
+        echo "Downloading CoQA dataset(about 7.9M)..."
+        wget -O ${DIR}/coqa.tar.gz https://fedscale.eecs.umich.edu/dataset/coqa.tar.gz
+
+        echo "Dataset downloaded, now decompressing..."
+        tar -xf ${DIR}/coqa.tar.gz -C ${DIR}
+
+        echo "Removing compressed file..."
+        rm -f ${DIR}/coqa.tar.gz
+
+        echo -e "${GREEN}CoQA dataset downloaded!${NC}"
+    else
+        echo -e "${RED}CoQA dataset already exists under ${DIR}/coqa/! ${NC}"
+fi
+}
+
+while true; do
+   case "$1" in
+      --help ) # display Help
          Help
+         shift
          exit;;
-      o )
+      --open_images )
          open_images
+         shift
          ;;
-      s )
+      --speech )
          speech
+         shift
          ;;
-      a )
+      --amazon_review )
          amazon_review
+         shift
          ;;
-      c )
+      --charades )
          charades
+         shift
          ;;
-      e )
+      --europarl )
          europarl
+         shift
          ;;
-      g )
+      --go )
          go
+         shift
          ;;
-      i )
+      --inaturalist )
          inaturalist
+         shift
          ;;
-      l )
+      --libriTTS )
          libriTTS
+         shift
          ;;
-      d )
+      --open_images_detection )
          open_images_detection
+         shift
          ;;
-      r )
+      --reddit )
          reddit
+         shift
          ;;
-      t )
+      --taobao )
          taobao
+         shift
          ;;
-      x )
+      --taxi )
          taxi
+         shift
          ;;
-      w )
+      --waymo )
          waymo
+         shift
          ;;
-      f )
+      --femnist )
          femnist
+         shift
          ;;
-      b )
+      --blog )
          blog
+         shift
          ;;
-      v )
+      --stackoverflow )
          stackoverflow
+         shift
          ;;
-      \? )
-         echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}"
-         exit 1;;
+      --common_voice )
+         common_voice
+         shift
+         ;;
+      --puffer )
+        puffer
+        shift
+        ;;
+      --landmark )
+         landmark
+         shift
+         ;;
+      --coqa )
+         coqa
+         shift
+         ;;
+      + )
+         echo "${RED}Usage: check --help${NC}"
+         break
+         ;;
+      * )
+        exit
+        ;;
    esac
 done
-
-if [ $OPTIND -eq 1 ]; then
-    echo -e "${RED}Usage: cmd [-h] [-A] [-o] [-t] [-p]${NC}";
-fi

@@ -14,8 +14,8 @@ When running in the benchmark evaluation mode, FedScale runtime can leverage the
 You can use `download.sh` to download individual datasets. 
 
 ```
-# Run download.sh -h for more details
-bash download.sh -dataset-key
+# Run download.sh --help for more details
+bash download.sh -dataset_name
 ```
 
 ## Workload Datasets Details
@@ -26,7 +26,7 @@ We provide real-world datasets for the federated learning community, and plan to
 Each one is associated with its training, validation and testing dataset. 
 A summary of statistics for training datasets can be found in the table below, and you can refer to each folder for more details. 
 
-You can use [this example code](./Femnist_stats.ipynb) to explore any of the FedScale datasets. 
+You can use [this example code](./Femnist_stats.md) to explore any of the FedScale datasets. 
 
 ### CV Tasks
 
@@ -49,7 +49,7 @@ You can use [this example code](./Femnist_stats.ipynb) to explore any of the Fed
 | Stackoverflow |   Text      |   342,477    |   135M        |  Word prediction, classification
 | Reddit        |   Text      |  1,660,820   |   351M        |  Word prediction
 | Amazon Review |   Text      | 1,822,925    |   166M        | Classification, Word prediction
-| CoQA          |   Text      |     7,189    |   114K        |  Question Answering
+| CoQA          |   Text      |     7,685    |   116K        |  Question Answering
 | LibriTTS      |   Text      |     2,456    |    37K        |   Text to speech
 | Google Speech |   Audio     |     2,618    |   105K        |   Speech recognition
 | Common Voice  |   Audio     |     12,976   |    1.1M       |   Speech recognition
@@ -60,7 +60,7 @@ You can use [this example code](./Femnist_stats.ipynb) to explore any of the Fed
 | -----------   | ----------- | -----------  |  ----------- |   ----------- |
 |Taxi Trajectory|   Text      |      442     |    1.7M       |   Sequence Prediction
 | Puffer        |   Text      |     121,551  |   15.4M       |   Sequence Prediction
-| Taobao        |   Text      |     182,806  |    0.9M       |   Recommendation
+| Taobao        |   Text      |     182,806  |    20.9M       |   Recommendation
 | Go dataset    |   Text      |     150,333  |    4.9M       |   Reinforcement learning
 
 ***Note that no details were kept of any of the participants age, gender, or location, and random ids were assigned to each individual. In using these datasets, we will strictly obey to their licenses, and these datasets provided in this repo should be used for research purpose only.***
@@ -71,7 +71,7 @@ You can use [this example code](./Femnist_stats.ipynb) to explore any of the Fed
 A speech recognition dataset with over ten thousand clips of one-second-long duration. 
 Each clip contains one of the 35 common words (e.g., digits zero to nine, "Yes", "No", "Up", "Down") spoken by thousands of different people. 
 
-#### OpenImage 
+#### OpenImage
 [OpenImage](https://storage.googleapis.com/openimages/web/index.html) is a vision dataset collected from Flickr, an image and video hosting service. 
 It contains a total of 16M bounding boxes for 600 object classes (e.g., Microwave oven). 
 We clean up the dataset according to the provided indices of clients. 
@@ -114,9 +114,9 @@ Please read and/or cite as appropriate to use FedScale code or data or learn mor
 
 ```bibtex
 @inproceedings{fedscale-icml,
-  title={FedScale: Benchmarking Model and System Performance of Federated Learning at Scale},
+  title={{FedScale}: Benchmarking Model and System Performance of Federated Learning at Scale},
   author={Fan Lai and Yinwei Dai and Sanjay S. Singapuram and Jiachen Liu and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
-  booktitle={ICML},
+  booktitle={International Conference on Machine Learning (ICML)},
   year={2022}
 }
 ```

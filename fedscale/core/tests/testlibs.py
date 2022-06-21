@@ -29,19 +29,14 @@ from arg_parser import args
 from utils.divide_data import partition_dataset, select_dataset, DataPartitioner
 #from utils.models import *
 from utils.utils_data import get_data_transform
-from utils.utils_model import MySGD, test_model
+from utils.model_test_module import test_model
 
 from utils.nlp import *
-print('c-1')
 from utils.speech import SPEECH
 # for voice
-print('c0')
 from utils.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio
-print('c1')
 from utils.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT
-print('c2...')
 from utils.speech import BackgroundNoiseDataset
-print('cc...')
 
 from helper.clientSampler import clientSampler
 from utils.yogi import YoGi

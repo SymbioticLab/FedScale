@@ -1,7 +1,7 @@
 import torch
 import logging
 import math
-from fedscale.core.utils.nlp import mask_tokens
+from fedscale.dataloaders.nlp import mask_tokens
 from torch.autograd import Variable
 from fedscale.core.optimizer import ClientOptimizer
 
