@@ -51,7 +51,7 @@ job_conf:
     - device_avail_file: $FEDSCALE_HOME/dataset/data/device_info/client_behave_trace
     - model: albert-base-v2                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - eval_interval: 30                     # How many rounds to run a testing on the testing set
-    - epochs: 5000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - rounds: 5000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
     - filter_less: 21                       # Remove clients w/ less than 21 samples
     - num_loaders: 4                        # Dataloaders 
     - local_steps: 30
