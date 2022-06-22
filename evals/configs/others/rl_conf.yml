@@ -50,7 +50,7 @@ job_conf:
     - model: dqn                           # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 50                     # How many rounds to run a testing on the testing set
-    - epochs: 1000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - rounds: 1000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
     - filter_less: 21                       # Remove clients w/ less than 21 samples
     - num_loaders: 2
     - yogi_eta: 3e-3 
