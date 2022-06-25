@@ -1,7 +1,6 @@
 // GRPC definition for the communication between the aggregator and the executors.
 // After modifying this file, run
 // $ python -m grpc_tools.protoc -I../communication/ --python_out=.. --grpc_python_out=.. job_api.proto
-// from FedScale/core/evals to regenerate Python files.
 syntax = "proto3";
 
 package fedscale;

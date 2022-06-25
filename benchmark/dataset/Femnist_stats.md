@@ -2,13 +2,13 @@
 # Understand the Heterogeneous FL Data  
 
 ## Download the Femnist dataset and FedScale
-Follow the download instruction in `./dataset/download.sh` to download the FEMNIST dataset.
+Follow the download instruction in `./benchmark/dataset/download.sh` to download the FEMNIST dataset.
 
 ```{code-cell}
 cd dataset
 bash download.sh --femnist
 ```
-[Install](./README.md) fedscale and import related libraries:
+[Install](../../README.md) fedscale and import related libraries:
 
 ```sh
 from torch.utils.data import DataLoader
@@ -27,8 +27,8 @@ from fedscale.core.arg_parser import args
 
 ```{code-cell}
 train_transform, test_transform = get_data_transform('mnist')
-train_dataset = FEMNIST('./dataset/data/femnist', dataset='train', transform=train_transform)
-test_dataset = FEMNIST('./dataset/data/femnist', dataset='test', transform=test_transform)
+train_dataset = FEMNIST('./benchmark/dataset/data/femnist', dataset='train', transform=train_transform)
+test_dataset = FEMNIST('./benchmark/dataset/data/femnist', dataset='test', transform=test_transform)
 ```
 
 Partition the dataset by the `client_data_mapping` file, which gives the real-world client-level heterogeneity.
@@ -36,9 +36,9 @@ Partition the dataset by the `client_data_mapping` file, which gives the real-wo
 ```{code-cell}
 args.task = 'cv'
 training_sets = DataPartitioner(data=train_dataset, args=args, numOfClass=62)
-training_sets.partition_data_helper(num_clients=None, data_map_file='./dataset/data/femnist/client_data_mapping/train.csv')
+training_sets.partition_data_helper(num_clients=None, data_map_file='./benchmark/dataset/data/femnist/client_data_mapping/train.csv')
 #testing_sets = DataPartitioner(data=test_dataset, args=args, numOfClass=62, isTest=True)
-#testing_sets.partition_data_helper(num_clients=None, data_map_file='./dataset/data/femnist/client_data_mapping/train.csv')
+#testing_sets.partition_data_helper(num_clients=None, data_map_file='./benchmark/dataset/data/femnist/client_data_mapping/train.csv')
 ```
 
 
@@ -68,7 +68,7 @@ axs[1].set_title('Client label distribution')
 plt.show()
 ```
 
-![image](/dataset/femnist/client_label_heter.png)
+![image](./benchmark/dataset/femnist/client_label_heter.png)
 
 ## Visualize the clients' data.
 
@@ -88,5 +88,5 @@ for data in iter(dataloader):
 ```
 
 
-![image](/dataset/femnist/sample_data.png)
+![image](./benchmark/dataset/femnist/sample_data.png)
 
