@@ -43,10 +43,10 @@ setup_commands:
 
 job_conf: 
     - job_name: rl                   # Generate logs under this folder: log_path/job_name/time_stamp
-    - log_path: $FEDSCALE_HOME/evals # Path of log files
+    - log_path: $FEDSCALE_HOME/benchmark # Path of log files
     - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
-    - device_conf_file: $FEDSCALE_HOME/dataset/data/device_info/client_device_capacity     # Path of the client trace
-    - device_avail_file: $FEDSCALE_HOME/dataset/data/device_info/client_behave_trace
+    - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity     # Path of the client trace
+    - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
     - model: dqn                           # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2
     - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
     - eval_interval: 50                     # How many rounds to run a testing on the testing set

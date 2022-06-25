@@ -113,7 +113,7 @@ This dataset includes 180 million trace items (e.g., battery charge or screen lo
 Please read and/or cite as appropriate to use FedScale code or data or learn more about FedScale.
 
 ```bibtex
-@inproceedings{fedscale-icml,
+@inproceedings{fedscale-icml22,
   title={{FedScale}: Benchmarking Model and System Performance of Federated Learning at Scale},
   author={Fan Lai and Yinwei Dai and Sanjay S. Singapuram and Jiachen Liu and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
   booktitle={International Conference on Machine Learning (ICML)},

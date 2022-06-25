@@ -100,7 +100,7 @@ def process_cmd(yaml_file,local = False):
         job_meta = {'user':submit_user, 'vms': running_vms}
         pickle.dump(job_meta, fout)
 
-    print(f"Submitted job, please check your logs $HOME/{job_conf['model']}/{time_stamp} for status")
+    print(f"Submitted job, please check your logs {job_conf['log_path']}/logs/{job_conf['job_name']}/{time_stamp} for status")
 
 def terminate(job_name):
 
@@ -114,13 +114,11 @@ def terminate(job_name):
         job_meta = pickle.load(fin)
 
     for vm_ip in job_meta['vms']:
-        # os.system(f'scp shutdown.py {job_meta["user"]}{vm_ip}:~/')
         print(f"Shutting down job on {vm_ip}")
         with open(f"{job_name}_logging", 'a') as fout:
             subprocess.Popen(f'ssh {job_meta["user"]}{vm_ip} "python {current_path}/shutdown.py {job_name}"',
                             shell=True, stdout=fout, stderr=fout)
 
-        # _ = os.system(f"ssh {job_meta['user']}{vm_ip} 'python {current_path}/shutdown.py {job_name}'")
 
 if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
     process_cmd(sys.argv[2], False if sys.argv[1] =='submit' else True)

@@ -1,16 +1,10 @@
 name: fedscale
 channels:
-  - pytorch
-  - conda-forge
-  - anaconda
-  - defaults
-  - gurobi
+  - main
 dependencies:
   - python=3.7
-  - gurobi=9.1.0
   - tensorboard
   - numba=0.49.1
-  - librosa=0.7.2
   - pip=20.0.2
   - pip:
     - torch_optimizer
@@ -34,3 +28,4 @@ dependencies:
     - sentencepiece
     - gdown
     - h5py
+    - librosa==0.7.2
