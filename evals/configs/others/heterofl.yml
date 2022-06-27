@@ -12,7 +12,7 @@ worker_ips:
     - 10.0.0.2:[4] 
     - 10.0.0.3:[4]
 
-exp_path: $FEDSCALE_HOME/examples/heterofl
+exp_path: $FEDSCALE_HOME/fedscale_examples/heterofl
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: customized_executor.py
