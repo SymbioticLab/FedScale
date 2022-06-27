@@ -162,6 +162,7 @@ class AsyncExecutor(Executor):
 
         # Dump latest model to disk
         with open(self.temp_model_path_version(self.round), 'wb') as model_out:
+            logging.info(f"Received latest model saved at {self.temp_model_path_version(self.round)}")
             pickle.dump(self.model, model_out)
 
 
@@ -171,6 +172,7 @@ class AsyncExecutor(Executor):
             with open(self.temp_model_path, 'rb') as model_in:
                 model = pickle.load(model_in)
         else:
+            round = min(round, self.round)
             with open(self.temp_model_path_version(round), 'rb') as model_in:
                 model = pickle.load(model_in)
         return model

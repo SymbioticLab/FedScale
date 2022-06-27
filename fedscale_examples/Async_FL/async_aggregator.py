@@ -27,7 +27,8 @@ class AsyncAggregator(Aggregator):
         self.async_buffer_size = args.async_buffer
         self.client_round_duration = {}
         self.client_start_time = {}
-        self.round_stamp = []
+        self.round_stamp = [0]
+        self.client_model_version = {}
 
     def setup_env(self):
         self.setup_seed(seed=1)
@@ -171,7 +172,7 @@ class AsyncAggregator(Aggregator):
             completed_client_clock = {}
 
             start_time = self.global_virtual_clock
-            constant_checin_period = 6
+            constant_checin_period = 3
             # 1. remove dummy clients that are not available to the end of training
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
@@ -267,6 +268,8 @@ class AsyncAggregator(Aggregator):
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
         # importance = 1./self.tasks_round
+        client_staleness = self.client_model_version[ results['clientId']] - self.round
+        importance = 1./ math.sqrt(1 + client_staleness) 
 
         for p in results['update_weight']:
             param_weight = results['update_weight'][p]
@@ -275,9 +278,9 @@ class AsyncAggregator(Aggregator):
             param_weight = torch.from_numpy(param_weight).to(device=self.device)
 
             if self.model_in_update == 1:
-                self.model_weights[p].data = param_weight
+                self.model_weights[p].data = param_weight * importance
             else:
-                self.model_weights[p].data += param_weight
+                self.model_weights[p].data += param_weight * importance
 
         if self.model_in_update == self.tasks_round:
             for p in self.model_weights:
@@ -330,9 +333,8 @@ class AsyncAggregator(Aggregator):
                 self.optimizer.update_round_gradient(last_model, current_grad_weights, self.model)
 
     def round_completion_handler(self):
-        self.global_virtual_clock += self.round_duration
-        self.round_stamp.append(self.global_virtual_clock)
-        logging.info(f"!!!!!!!! self.round_stamp: {self.round_stamp}")
+        self.global_virtual_clock = self.round_stamp[-1] # += self.round_duration
+        # self.round_stamp.append(self.global_virtual_clock)
         self.round += 1
 
         if self.round % self.args.decay_round == 0:
@@ -495,7 +497,10 @@ class AsyncAggregator(Aggregator):
         # TODO: get the model id based on the start time larger thatn the latest model
         start_time = self.client_start_time[clientId]
         model_id = self.find_latest_model(start_time)
-        logging.info(f"Find model version srating at {start_time}: model {model_id}")
+        self.client_model_version[clientId] = model_id
+        end_time = self.client_round_duration[clientId] + start_time
+        logging.info(f"Client {clientId} train on model {model_id} during {start_time}-{end_time}")
+
         conf = {
             'learning_rate': self.args.learning_rate,
             'model': model_id  # none indicates we are using the global model
@@ -633,7 +638,8 @@ class AsyncAggregator(Aggregator):
                 if current_event == events.UPLOAD_MODEL:
                     self.client_completion_handler(self.deserialize_response(data))
                     if len(self.stats_util_accumulator) == self.async_buffer_size:
-                        self.round_duration = self.client_round_duration[self.deserialize_response(data)['clientId']]
+                        clientID = self.deserialize_response(data)['clientId']
+                        self.round_stamp.append( self.client_round_duration[clientID] + self.client_start_time[clientID] )
                         self.round_completion_handler()
 
                 elif current_event == events.MODEL_TEST:
