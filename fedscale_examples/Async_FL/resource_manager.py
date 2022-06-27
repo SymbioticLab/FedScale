@@ -1,43 +1,39 @@
 from fedscale.core import events
 import threading
 
+
 class ResourceManager(object):
     """Schedule training tasks across GPUs/CPUs"""
 
     def __init__(self, experiment_mode):
 
         self.client_run_queue = []
-        self.client_run_queue_idx = 0
         self.experiment_mode = experiment_mode
         self.update_lock = threading.Lock()
-    
+
     def register_tasks(self, clientsToRun):
-        # TODO: append new checkin client
-        self.client_run_queue = clientsToRun.copy()
-        self.client_run_queue_idx = 0
+        self.client_run_queue += clientsToRun.copy()
 
     def remove_client_task(self, client_id):
-        assert(client_id in self.client_run_queue, 
-            f"client task {client_id} is not in task queue")
+        assert (client_id in self.client_run_queue,
+                f"client task {client_id} is not in task queue")
         pass
 
     def has_next_task(self, client_id=None):
-        # TODO: always has next task
         exist_next_task = False
         if self.experiment_mode == events.SIMULATION_MODE:
-            exist_next_task = self.client_run_queue_idx < len(self.client_run_queue)
+            exist_next_task = len(self.client_run_queue) > 0
         else:
             exist_next_task = client_id in self.client_run_queue
         return exist_next_task
 
     def get_next_task(self, client_id=None):
-        # TODO: remove client id when finish
         next_task_id = None
         self.update_lock.acquire()
         if self.experiment_mode == events.SIMULATION_MODE:
             if self.has_next_task(client_id):
-                next_task_id = self.client_run_queue[self.client_run_queue_idx]
-                self.client_run_queue_idx += 1
+                next_task_id = self.client_run_queue[0]
+                self.client_run_queue.pop(0)
         else:
             if client_id in self.client_run_queue:
                 next_task_id = client_id

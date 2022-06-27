@@ -1,0 +1,14 @@
+model_rate: [1, 0.5, 0.25, 0.125, 0.0625] # four model architectures
+proportion_of_model: [8, 2, 0, 0, 0] # 80% model_rate=1, 20% model_rate=0.5
+model_split_mode: 'fix' # fix or dynamic
+
+# model architecture configuration
+norm: 'bn'
+scale: '1'
+mask: '1'
+data_shape: [3, 32, 32] # for cifar10
+classes_size: 10 # for cifar10 
+global_model_rate: 1
+resnet_hidden_size: [64, 128, 256, 512]
+local_epochs: 5
+participation_rate: 0.1
