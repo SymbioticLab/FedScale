@@ -29,116 +29,7 @@ class AsyncAggregator(Aggregator):
         self.client_start_time = {}
         self.round_stamp = [0]
         self.client_model_version = {}
-
-    def setup_env(self):
-        self.setup_seed(seed=1)
         self.virtual_client_clock = {}
-        self.optimizer = ServerOptimizer(self.args.gradient_policy, self.args, self.device)
-
-    def setup_seed(self, seed=1):
-        """Set global random seed for better reproducibility"""
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        np.random.seed(seed)
-        random.seed(seed)
-        torch.backends.cudnn.deterministic = True
-
-    def init_control_communication(self):
-        # Create communication channel between aggregator and worker
-        # This channel serves control messages
-        logging.info(f"Initiating control plane communication ...")
-        if self.experiment_mode == events.SIMULATION_MODE:
-            num_of_executors = 0
-            for ip_numgpu in self.args.executor_configs.split("="):
-                ip, numgpu = ip_numgpu.split(':')
-                for numexe in numgpu.strip()[1:-1].split(','):
-                    for _ in range(int(numexe.strip())):
-                        num_of_executors += 1
-            self.executors = list(range(num_of_executors))
-        else:
-            self.executors = list(range(self.args.total_worker))
-
-        # initiate a server process
-        self.grpc_server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=20),
-            options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-            ],
-        )
-        job_api_pb2_grpc.add_JobServiceServicer_to_server(self, self.grpc_server)
-        port = '[::]:{}'.format(self.args.ps_port)
-
-        logging.info(f'%%%%%%%%%% Opening aggregator sever using port {port} %%%%%%%%%%')
-
-        self.grpc_server.add_insecure_port(port)
-        self.grpc_server.start()
-
-    def init_data_communication(self):
-        """For jumbo traffics (e.g., training results).
-        """
-        pass
-
-    def init_model(self):
-        """Load model"""
-        assert self.args.engine == events.PYTORCH, "Please define model for non-PyTorch models"
-
-        self.model = init_model()
-
-        # Initiate model parameters dictionary <param_name, param>
-        self.model_weights = self.model.state_dict()
-
-    def init_task_context(self):
-        """Initiate execution context for specific tasks"""
-        if self.args.task == "detection":
-            cfg_from_file(self.args.cfg_file)
-            np.random.seed(self.cfg.RNG_SEED)
-            self.imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', self.args.data_dir], server=True)
-
-    def init_client_manager(self, args):
-        """
-            Currently we implement two client managers:
-            1. Random client sampler
-                - it selects participants randomly in each round
-                - [Ref]: https://arxiv.org/abs/1902.01046
-            2. Oort sampler
-                - Oort prioritizes the use of those clients who have both data that offers the greatest utility
-                  in improving model accuracy and the capability to run training quickly.
-                - [Ref]: https://www.usenix.org/conference/osdi21/presentation/lai
-        """
-
-        # sample_mode: random or oort
-        client_manager = clientManager(args.sample_mode, args=args)
-
-        return client_manager
-
-    def load_client_profile(self, file_path):
-        """For Simulation Mode: load client profiles/traces"""
-        global_client_profile = {}
-        if os.path.exists(file_path):
-            with open(file_path, 'rb') as fin:
-                # {clientId: [computer, bandwidth]}
-                global_client_profile = pickle.load(fin)
-
-        return global_client_profile
-
-    def client_register_handler(self, executorId, info):
-        """Triggered once receive new executor registration"""
-
-        logging.info(f"Loading {len(info['size'])} client traces ...")
-        for _size in info['size']:
-            # since the worker rankId starts from 1, we also configure the initial dataId as 1
-            mapped_id = (self.num_of_clients + 1) % len(self.client_profiles) if len(self.client_profiles) > 0 else 1
-            systemProfile = self.client_profiles.get(mapped_id, {'computation': 1.0, 'communication': 1.0})
-
-            clientId = (self.num_of_clients + 1) if self.experiment_mode == events.SIMULATION_MODE else executorId
-            self.client_manager.registerClient(executorId, clientId, size=_size, speed=systemProfile)
-            self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
-                                                 upload_step=self.args.local_steps, upload_size=self.model_update_size,
-                                                 download_size=self.model_update_size)
-            self.num_of_clients += 1
-
-        logging.info("Info of all feasible clients {}".format(self.client_manager.getDataInfo()))
 
     def executor_info_handler(self, executorId, info):
 
@@ -156,13 +47,12 @@ class AsyncAggregator(Aggregator):
                 self.round_completion_handler()
         else:
             # In real deployments, we need to register for each client
-            # TODO: scheduler register the task
             self.client_register_handler(executorId, info)
             if len(self.registered_executor_info) == len(self.executors):
                 self.round_completion_handler()
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
-        # TODO: simulate constant arrival time
+
         if self.experiment_mode == events.SIMULATION_MODE:
             # NOTE: We try to remove dummy events as much as possible in simulations,
             # by removing the stragglers/offline clients in overcommitment"""
@@ -209,24 +99,6 @@ class AsyncAggregator(Aggregator):
             return (sampled_clients, sampled_clients, completed_client_clock,
                     1, completionTimes)
 
-    def run(self):
-        self.setup_env()
-        self.init_control_communication()
-        self.init_data_communication()
-
-        self.init_model()
-        self.save_last_param()
-        self.model_update_size = sys.getsizeof(pickle.dumps(self.model)) / 1024.0 * 8.  # kbits
-        self.client_profiles = self.load_client_profile(file_path=self.args.device_conf_file)
-
-        self.event_monitor()
-
-    def select_participants(self, select_num_participants, overcommitment=1.3):
-        return sorted(self.client_manager.resampleClients(
-            int(select_num_participants * overcommitment),
-            cur_time=self.global_virtual_clock),
-        )
-
     def client_completion_handler(self, results):
         """We may need to keep all updates from clients,
         if so, we need to append results to the cache"""
@@ -268,8 +140,8 @@ class AsyncAggregator(Aggregator):
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
         # importance = 1./self.tasks_round
-        client_staleness = self.client_model_version[ results['clientId']] - self.round
-        importance = 1./ math.sqrt(1 + client_staleness) 
+        client_staleness =  self.round - self.client_model_version[ results['clientId']]
+        importance = 1./ math.sqrt(1 + client_staleness)
 
         for p in results['update_weight']:
             param_weight = results['update_weight'][p]
@@ -314,19 +186,13 @@ class AsyncAggregator(Aggregator):
                             self.model_weights[p][idx].data / float(self.tasks_round)
                     ).to(dtype=d_type)
 
-    def save_last_param(self):
-        if self.args.engine == events.TENSORFLOW:
-            self.last_gradient_weights = [layer.get_weights() for layer in self.model.layers]
-        else:
-            self.last_gradient_weights = [p.data.clone() for p in self.model.parameters()]
-
     def round_weight_handler(self, last_model):
         """Update model when the round completes"""
         if self.round > 1:
             if self.args.engine == events.TENSORFLOW:
                 for layer in self.model.layers:
                     layer.set_weights([p.cpu().detach().numpy() for p in self.model_weights[layer.name]])
-                # TODO: support update round gradient
+
             else:
                 self.model.load_state_dict(self.model_weights)
                 current_grad_weights = [param.data.clone() for param in self.model.parameters()]
@@ -352,8 +218,6 @@ class AsyncAggregator(Aggregator):
         if len(self.loss_accumulator):
             self.log_train_result(avg_loss)
 
-        # TODO: periodically checkin new clients, simulate clients start time
-        # TODO: add all clients id into self.resource_manager.register_tasks
         # update select participants
         if self.round % 50 == 1: #  total_worker > buffer_size * 100
             self.sampled_participants = self.select_participants(
@@ -406,12 +270,6 @@ class AsyncAggregator(Aggregator):
                                    self.global_virtual_clock / 60.)
         self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
                                    self.global_virtual_clock / 60.)
-
-    def deserialize_response(self, responses):
-        return pickle.loads(responses)
-
-    def serialize_response(self, responses):
-        return pickle.dumps(responses)
 
     def testing_completion_handler(self, client_id, results):
         """Each executor will handle a subset of testing dataset"""
@@ -472,20 +330,7 @@ class AsyncAggregator(Aggregator):
 
             self.broadcast_events_queue.append(events.START_ROUND)
 
-    def broadcast_aggregator_events(self, event):
-        """Issue tasks (events) to aggregator worker processes"""
-        self.broadcast_events_queue.append(event)
-
-    def dispatch_client_events(self, event, clients=None):
-        """Issue tasks (events) to clients"""
-        if clients is None:
-            clients = self.sampled_executors
-
-        for client_id in clients:
-            self.individual_client_events[client_id].append(event)
-
     def find_latest_model(self, start_time):
-        # TODO: implement this
         for i, time_stamp in enumerate(reversed(self.round_stamp)):
             if start_time >= time_stamp:
                 return len(self.round_stamp) - i
@@ -493,8 +338,6 @@ class AsyncAggregator(Aggregator):
 
     def get_client_conf(self, clientId):
         """Training configurations that will be applied on clients"""
-        # TODO: get the start time of clientID
-        # TODO: get the model id based on the start time larger thatn the latest model
         start_time = self.client_start_time[clientId]
         model_id = self.find_latest_model(start_time)
         self.client_model_version[clientId] = model_id
@@ -519,22 +362,6 @@ class AsyncAggregator(Aggregator):
             config = self.get_client_conf(next_clientId)
             train_config = {'client_id': next_clientId, 'task_config': config}
         return train_config, model
-
-    def get_test_config(self, client_id):
-        """FL model testing on clients"""
-
-        return {'client_id': client_id}
-
-    def get_global_model(self):
-        """Get global model that would be used by all FL clients (in default FL)"""
-        return self.model
-
-    def get_shutdown_config(self, client_id):
-        return {'client_id': client_id}
-
-    def add_event_handler(self, client_id, event, meta, data):
-        """ Due to the large volume of requests, we will put all events into a queue first."""
-        self.sever_events_queue.append((client_id, event, meta, data))
 
     def CLIENT_REGISTER(self, request, context):
         """FL Client register to the aggregator"""

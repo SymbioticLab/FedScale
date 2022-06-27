@@ -21,88 +21,6 @@ class AsyncExecutor(Executor):
         Executor.__init__(self, args)
         self.temp_model_path_version = lambda round: os.path.join(logDir, 'model_' + str(round) + '.pth.tar')
 
-    def setup_env(self):
-        logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
-        self.setup_seed(seed=1)
-
-    def setup_communication(self):
-        self.init_control_communication()
-        self.init_data_communication()
-
-
-    def setup_seed(self, seed=1):
-        """Set random seed for reproducibility"""
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        np.random.seed(seed)
-        random.seed(seed)
-        torch.backends.cudnn.deterministic = True
-
-
-    def init_control_communication(self):
-        """Create communication channel between coordinator and executor.
-        This channel serves control messages."""
-        self.aggregator_communicator.connect_to_server()
-
-
-    def init_data_communication(self):
-        """In charge of jumbo data traffics (e.g., fetch training result)
-        """
-        pass
-
-    def init_model(self):
-        """Return the model architecture used in training"""
-        assert self.args.engine == events.PYTORCH, "Please override this function to define non-PyTorch models"
-        model = init_model()
-        model = model.to(device=self.device)
-        return model
-
-    def init_data(self):
-        """Return the training and testing dataset"""
-        train_dataset, test_dataset = init_dataset()
-        if self.task == "rl":
-            return train_dataset, test_dataset
-        # load data partitioner (entire_train_data)
-        logging.info("Data partitioner starts ...")
-
-        training_sets = DataPartitioner(data=train_dataset, args = self.args, numOfClass=self.args.num_class)
-        training_sets.partition_data_helper(num_clients=self.args.total_worker, data_map_file=self.args.data_map_file)
-
-        testing_sets = DataPartitioner(data=test_dataset, args = self.args, numOfClass=self.args.num_class, isTest=True)
-        testing_sets.partition_data_helper(num_clients=self.num_executors)
-
-        logging.info("Data partitioner completes ...")
-
-
-        if self.task == 'nlp':
-            self.collate_fn = collate
-        elif self.task == 'voice':
-            self.collate_fn = voice_collate_fn
-
-        return training_sets, testing_sets
-
-
-    def run(self):
-        self.setup_env()
-        self.model = self.init_model()
-        self.training_sets, self.testing_sets = self.init_data()
-        self.setup_communication()
-        self.event_monitor()
-
-    def dispatch_worker_events(self, request):
-        """Add new events to worker queues"""
-        self.event_queue.append(request)
-
-    def deserialize_response(self, responses):
-        return pickle.loads(responses)
-
-    def serialize_response(self, responses):
-        return pickle.dumps(responses)
-
-    def UpdateModel(self, config):
-        """Receive the broadcasted global model for current round"""
-        self.update_model_handler(model=config)
-
     def Train(self, config):
         """Load train config and data to start training on client """
         client_id, train_config = config['client_id'], config['task_config']
@@ -142,19 +60,6 @@ class AsyncExecutor(Executor):
         )
         self.dispatch_worker_events(response)
 
-
-    def Stop(self):
-        """Stop the current executor"""
-
-        self.aggregator_communicator.close_sever_connection()
-        self.received_stop_request = True
-
-
-    def report_executor_info_handler(self):
-        """Return the statistics of training dataset"""
-        return self.training_sets.getSize()
-
-
     def update_model_handler(self, model):
         """Update the model copy on this executor"""
         self.model = model
@@ -164,7 +69,6 @@ class AsyncExecutor(Executor):
         with open(self.temp_model_path_version(self.round), 'wb') as model_out:
             logging.info(f"Received latest model saved at {self.temp_model_path_version(self.round)}")
             pickle.dump(self.model, model_out)
-
 
     def load_global_model(self, round):
         # load last global model
@@ -176,24 +80,6 @@ class AsyncExecutor(Executor):
             with open(self.temp_model_path_version(round), 'rb') as model_in:
                 model = pickle.load(model_in)
         return model
-
-
-    def override_conf(self, config):
-        default_conf = vars(self.args).copy()
-
-        for key in config:
-            default_conf[key] = config[key]
-
-        return Namespace(**default_conf)
-
-
-    def get_client_trainer(self, conf):
-        """Developer can redefine to this function to customize the training:
-           API:
-            - train(client_data=client_data, model=client_model, conf=conf)
-        """
-        return Client(conf)
-
 
     def training_handler(self, clientId, conf, model=None):
         """Train model given client ids"""
@@ -254,32 +140,6 @@ class AsyncExecutor(Executor):
 
         return testResults
 
-    def client_register(self):
-        """Register the executor information to the aggregator"""
-        start_time = time.time()
-        while time.time() - start_time < 180:
-            try:
-                response = self.aggregator_communicator.stub.CLIENT_REGISTER(
-                    job_api_pb2.RegisterRequest(
-                        client_id = self.executor_id,
-                        executor_id = self.executor_id,
-                        executor_info = self.serialize_response(self.report_executor_info_handler())
-                    )
-                )
-                self.dispatch_worker_events(response)
-                break
-            except Exception as e:
-                logging.warning(f"Failed to connect to aggregator {e}. Will retry in 5 sec.")
-                time.sleep(5)
-
-    def client_ping(self):
-        """Ping the aggregator for new task"""
-        response = self.aggregator_communicator.stub.CLIENT_PING(job_api_pb2.PingRequest(
-            client_id = self.executor_id,
-            executor_id = self.executor_id
-        ))
-        self.dispatch_worker_events(response)
-
     def event_monitor(self):
         """Activate event handler once receiving new message"""
         logging.info("Start monitoring events ...")
@@ -291,7 +151,6 @@ class AsyncExecutor(Executor):
                 current_event = request.event
 
                 if current_event == events.CLIENT_TRAIN:
-                    # TODO : load correct version of model
                     train_config = self.deserialize_response(request.meta)
                     train_model = self.deserialize_response(request.data)
                     train_config['model'] = train_model
