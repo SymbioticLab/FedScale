@@ -6,6 +6,7 @@ import collections
 import torch
 import pickle
 
+from fedscale.core.executor import Executor
 from fedscale.core.client import Client
 from fedscale.core.rlclient import RLClient
 from fedscale.core import events
@@ -13,34 +14,12 @@ from fedscale.core.communication.channel_context import ClientConnections
 import fedscale.core.job_api_pb2 as job_api_pb2
 
 
-class Executor(object):
+class AsyncExecutor(Executor):
     """Each executor takes certain resource to run real training.
        Each run simulates the execution of an individual client"""
     def __init__(self, args):
-
-        self.args = args
-        self.device = args.cuda_device if args.use_cuda else torch.device('cpu')
-        self.num_executors = args.num_executors
-        # ======== env information ========
-        self.this_rank = args.this_rank
-        self.executor_id = str(self.this_rank)
-
-        # ======== model and data ========
-        self.model = self.training_sets = self.test_dataset = None
-        self.temp_model_path = os.path.join(logDir, 'model_'+str(args.this_rank)+'.pth.tar')
-
-        # ======== channels ========
-        self.aggregator_communicator = ClientConnections(args.ps_ip, args.ps_port)
-
-        # ======== runtime information ========
-        self.collate_fn = None
-        self.task = args.task
-        self.round = 0
-        self.start_run_time = time.time()
-        self.received_stop_request = False
-        self.event_queue = collections.deque()
-
-        super(Executor, self).__init__()
+        Executor.__init__(self, args)
+        self.temp_model_path_version = lambda round: os.path.join(logDir, 'model_' + str(round) + '.pth.tar')
 
     def setup_env(self):
         logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
@@ -182,14 +161,18 @@ class Executor(object):
         self.round += 1
 
         # Dump latest model to disk
-        with open(self.temp_model_path, 'wb') as model_out:
+        with open(self.temp_model_path_version(self.round), 'wb') as model_out:
             pickle.dump(self.model, model_out)
 
 
-    def load_global_model(self):
+    def load_global_model(self, round):
         # load last global model
-        with open(self.temp_model_path, 'rb') as model_in:
-            model = pickle.load(model_in)
+        if round == -1:
+            with open(self.temp_model_path, 'rb') as model_in:
+                model = pickle.load(model_in)
+        else:
+            with open(self.temp_model_path_version(round), 'rb') as model_in:
+                model = pickle.load(model_in)
         return model
 
 
@@ -214,7 +197,8 @@ class Executor(object):
         """Train model given client ids"""
 
         # load last global model
-        client_model = self.load_global_model() if model is None else model
+        client_model = self.load_global_model(-1) if model is None \
+                                    else self.load_global_model(model)
 
         conf.clientId, conf.device = clientId, self.device
         conf.tokenizer = tokenizer
@@ -238,7 +222,7 @@ class Executor(object):
         """Test model"""
         evalStart = time.time()
         device = self.device
-        model = self.load_global_model()
+        model = self.load_global_model(self.round)
         if self.task == 'rl':
             client = RLClient(args)
             test_res = client.test(args, self.this_rank, model, device=device)
@@ -337,5 +321,5 @@ class Executor(object):
 
 
 if __name__ == "__main__":
-    executor = Executor(args)
+    executor = AsyncExecutor(args)
     executor.run()

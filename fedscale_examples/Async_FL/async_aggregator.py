@@ -27,6 +27,7 @@ class AsyncAggregator(Aggregator):
         self.async_buffer_size = args.async_buffer
         self.client_round_duration = {}
         self.client_start_time = {}
+        self.round_stamp = []
 
     def setup_env(self):
         self.setup_seed(seed=1)
@@ -170,7 +171,7 @@ class AsyncAggregator(Aggregator):
             completed_client_clock = {}
 
             start_time = self.global_virtual_clock
-            constant_checin_period = 1
+            constant_checin_period = 6
             # 1. remove dummy clients that are not available to the end of training
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
@@ -185,20 +186,17 @@ class AsyncAggregator(Aggregator):
                 start_time += constant_checin_period
                 if self.client_manager.isClientActive(client_to_run, roundDuration + start_time):
                     sampledClientsReal.append(client_to_run)
-
-
                     completed_client_clock[client_to_run] = exe_cost
                     startTimes.append(start_time)
                     self.client_start_time[client_to_run] = start_time
                     self.client_round_duration[client_to_run] = roundDuration
                     endTimes.append(roundDuration + start_time)
 
-            num_clients_to_collect = min(num_clients_to_collect, len(startTimes))
-            # 2. get the top-k completions to remove stragglers
+            num_clients_to_collect = min(num_clients_to_collect, len(sampledClientsReal))
+            # 2. sort & execute clients based on completion time
             sortedWorkersByCompletion = sorted(range(len(endTimes)), key=lambda k: endTimes[k])
             top_k_index = sortedWorkersByCompletion[:num_clients_to_collect]
             clients_to_run = [sampledClientsReal[k] for k in top_k_index]
-
             return (clients_to_run,
                     start_time,
                     completed_client_clock ) # dict : string the speed for each client
@@ -286,7 +284,7 @@ class AsyncAggregator(Aggregator):
                 d_type = self.model_weights[p].data.dtype
 
                 self.model_weights[p].data = (
-                        self.model_weights[p] / float(self.tasks_round)).to(dtype=d_type)
+                        self.model_weights[p] / float(self.async_buffer_size)).to(dtype=d_type)
 
     def aggregate_client_group_weights(self, results):
         """Streaming weight aggregation. Similar to aggregate_client_weights,
@@ -333,6 +331,8 @@ class AsyncAggregator(Aggregator):
 
     def round_completion_handler(self):
         self.global_virtual_clock += self.round_duration
+        self.round_stamp.append(self.global_virtual_clock)
+        logging.info(f"!!!!!!!! self.round_stamp: {self.round_stamp}")
         self.round += 1
 
         if self.round % self.args.decay_round == 0:
@@ -341,18 +341,10 @@ class AsyncAggregator(Aggregator):
         # handle the global update w/ current and last
         self.round_weight_handler(self.last_gradient_weights)
 
-        avgUtilLastround = sum(self.stats_util_accumulator) / max(1, len(self.stats_util_accumulator))
-        # assign avg reward to explored, but not ran workers
-        for clientId in self.round_stragglers:
-            self.client_manager.registerScore(clientId, avgUtilLastround,
-                                              time_stamp=self.round,
-                                              duration=self.virtual_client_clock[clientId]['computation'] +
-                                                       self.virtual_client_clock[clientId]['communication'],
-                                              success=False)
-
         avg_loss = sum(self.loss_accumulator) / max(1, len(self.loss_accumulator))
-        logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Planned participants: " + \
-                     f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
+        logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Remaining participants: " + \
+                     f"{self.resource_manager.get_remaining()}, Succeed participants: " + \
+                     f"{len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
 
         # dump round completion information to tensorboard
         if len(self.loss_accumulator):
@@ -367,7 +359,7 @@ class AsyncAggregator(Aggregator):
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
                 self.sampled_participants, len(self.sampled_participants))
 
-            logging.info(f"Constant client arrival following the order: {clientsToRun}")
+            logging.info(f"{len(clientsToRun)} clients with constant arrival following the order: {clientsToRun}")
 
             # Issue requests to the resource manager; Tasks ordered by the completion time
             self.resource_manager.register_tasks(clientsToRun)
@@ -384,8 +376,6 @@ class AsyncAggregator(Aggregator):
         self.save_last_param()
         #self.round_stragglers = round_stragglers
 
-        #self.flatten_client_duration = numpy.array(flatten_client_duration)
-        #self.round_duration = round_duration
         self.model_in_update = 0
         self.test_result_accumulator = []
         self.stats_util_accumulator = []
@@ -405,7 +395,6 @@ class AsyncAggregator(Aggregator):
         self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.round)
         self.log_writer.add_scalar('FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
         self.log_writer.add_scalar('FAR/round_duration (min)', self.round_duration / 60., self.round)
-        self.log_writer.add_histogram('FAR/client_duration (min)', self.flatten_client_duration, self.round)
 
     def log_test_result(self):
         self.log_writer.add_scalar('Test/round_to_loss', self.testing_history['perf'][self.round]['loss'], self.round)
@@ -495,6 +484,9 @@ class AsyncAggregator(Aggregator):
 
     def find_latest_model(self, start_time):
         # TODO: implement this
+        for i, time_stamp in enumerate(reversed(self.round_stamp)):
+            if start_time >= time_stamp:
+                return len(self.round_stamp) - i
         return None
 
     def get_client_conf(self, clientId):
@@ -503,6 +495,7 @@ class AsyncAggregator(Aggregator):
         # TODO: get the model id based on the start time larger thatn the latest model
         start_time = self.client_start_time[clientId]
         model_id = self.find_latest_model(start_time)
+        logging.info(f"Find model version srating at {start_time}: model {model_id}")
         conf = {
             'learning_rate': self.args.learning_rate,
             'model': model_id  # none indicates we are using the global model
@@ -516,7 +509,7 @@ class AsyncAggregator(Aggregator):
         train_config = None
         # NOTE: model = None then the executor will load the global model broadcasted in UPDATE_MODEL
         model = None
-        # TODO: send the correct model version
+        # TODO: useless model?
         if next_clientId != None:
             config = self.get_client_conf(next_clientId)
             train_config = {'client_id': next_clientId, 'task_config': config}
@@ -640,7 +633,7 @@ class AsyncAggregator(Aggregator):
                 if current_event == events.UPLOAD_MODEL:
                     self.client_completion_handler(self.deserialize_response(data))
                     if len(self.stats_util_accumulator) == self.async_buffer_size:
-                        self.round_duration = self.client_round_duration[client_id]
+                        self.round_duration = self.client_round_duration[self.deserialize_response(data)['clientId']]
                         self.round_completion_handler()
 
                 elif current_event == events.MODEL_TEST:

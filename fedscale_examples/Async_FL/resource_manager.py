@@ -11,6 +11,9 @@ class ResourceManager(object):
         self.experiment_mode = experiment_mode
         self.update_lock = threading.Lock()
 
+    def get_remaining(self):
+        return len(self.client_run_queue)
+
     def register_tasks(self, clientsToRun):
         self.client_run_queue += clientsToRun.copy()
 
@@ -40,4 +43,5 @@ class ResourceManager(object):
                 self.client_run_queue.remove(next_task_id)
 
         self.update_lock.release()
+        print(f"@@@@@@ Schedule next client {next_task_id}")
         return next_task_id
