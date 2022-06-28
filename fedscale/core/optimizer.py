@@ -8,7 +8,7 @@ class ServerOptimizer(object):
         self.device = device
 
         if mode == 'fed-yogi':
-            from utils.yogi import YoGi
+            from fedscale.utils.optimizer.yogi import YoGi
             self.gradient_controller = YoGi(eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
         
         

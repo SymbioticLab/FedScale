@@ -14,7 +14,7 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: $FEDSCALE_HOME/benchmark/examples/LocalDP/customized_executor.py
+executor_entry: $FEDSCALE_HOME/examples/LocalDP/customized_executor.py
 
 aggregator_entry: aggregator.py
 

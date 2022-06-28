@@ -100,7 +100,7 @@ def process_cmd(yaml_file,local = False):
         job_meta = {'user':submit_user, 'vms': running_vms}
         pickle.dump(job_meta, fout)
 
-    print(f"Submitted job, please check your logs {job_conf['log_path']}/{job_conf['model']}/{time_stamp} for status")
+    print(f"Submitted job, please check your logs {job_conf['log_path']}/logs/{job_conf['job_name']}/{time_stamp} for status")
 
 def terminate(job_name):
 

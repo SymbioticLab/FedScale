@@ -12,11 +12,14 @@ import numpy
 # libs from fedscale
 from fedscale.core.arg_parser import args
 from fedscale.dataloaders.utils_data import get_data_transform
-from fedscale.core.utils.model_test_module import test_model
+from fedscale.utils.model_test_module import test_model
 from fedscale.dataloaders.divide_data import select_dataset, DataPartitioner
 from fedscale.core.client_manager import clientManager
-from fedscale.core.utils.yogi import YoGi
+from fedscale.utils.optimizer.yogi import YoGi
 from fedscale.core.optimizer import ServerOptimizer
+
+# FedScale model libs
+from fedscale.utils.models.model_provider import get_cv_model
 
 # PyTorch libs
 import torch
@@ -102,7 +105,7 @@ def init_model():
             config.num_labels = outputClass[args.data_set]
             model = AlbertForSequenceClassification(config)
         elif args.model == 'lr':
-            from fedscale.core.utils.models import  LogisticRegression
+            from fedscale.utils.models.simple.models import LogisticRegression
             model = LogisticRegression(300, outputClass[args.data_set])
 
 
@@ -111,22 +114,22 @@ def init_model():
         model = LogisticRegression(args.vocab_token_size, args.vocab_tag_size)
     elif args.task == 'speech':
         if args.model == 'mobilenet':
-            from fedscale.core.utils.resnet_speech import mobilenet_v2
+            from fedscale.utils.models.specialized.resnet_speech import mobilenet_v2
             model = mobilenet_v2(num_classes=outputClass[args.data_set])
         elif args.model == "resnet18":
-            from fedscale.core.utils.resnet_speech import resnet18
+            from fedscale.utils.models.specialized.resnet_speech import resnet18
             model = resnet18(num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet34":
-            from fedscale.core.utils.resnet_speech import resnet34
+            from fedscale.utils.models.specialized.resnet_speech import resnet34
             model = resnet34(num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet50":
-            from fedscale.core.utils.resnet_speech import resnet50
+            from fedscale.utils.models.specialized.resnet_speech import resnet50
             model = resnet50(num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet101":
-            from fedscale.core.utils.resnet_speech import resnet101
+            from fedscale.utils.models.specialized.resnet_speech import resnet101
             model = resnet101(num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet152":
-            from fedscale.core.utils.resnet_speech import resnet152
+            from fedscale.utils.models.specialized.resnet_speech import resnet152
             model = resnet152(num_classes=outputClass[args.data_set], in_channels=1)
         else:
             # Should not reach here
@@ -134,7 +137,7 @@ def init_model():
             sys.exit(-1)
 
     elif args.task == 'voice':
-        from fedscale.core.utils.voice_model import DeepSpeech, supported_rnns
+        from fedscale.utils.models.specialized.voice_model import DeepSpeech, supported_rnns
 
         # Initialise new model training
         with open(os.path.join(args.data_dir, "labels.json")) as label_file:
@@ -163,14 +166,21 @@ def init_model():
         model = DQN(args).target_net
     else:
         if args.model == "lr":
-            from fedscale.core.utils.models import LogisticRegression
+            from fedscale.utils.models.simple.models import LogisticRegression
             model = LogisticRegression(args.input_dim, outputClass[args.data_set])
         elif args.model == 'svm':
-            from fedscale.core.utils.models import LinearSVM
+            from fedscale.utils.models.simple.models import LinearSVM
             model = LinearSVM(args.input_dim, outputClass[args.data_set])
         else:
-            model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
-
+            if args.model_zoo == "fedscale-zoo":
+                if args.task == "cv":
+                    model = get_cv_model()
+                else:
+                    raise NameError(f"Model zoo {args.model_zoo} does not exist")
+            elif args.model_zoo == "torchcv":
+                model = tormodels.__dict__[args.model](num_classes=outputClass[args.data_set])
+            else:
+                raise NameError(f"Model zoo {args.model_zoo} does not exist")
     return model
 
 

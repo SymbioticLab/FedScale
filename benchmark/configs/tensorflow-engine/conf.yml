@@ -13,9 +13,9 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: $FEDSCALE_HOME/benchmark/examples/tensorflow_engine/tf_executor.py
+executor_entry: $FEDSCALE_HOME/examples/tensorflow_engine/tf_executor.py
 
-aggregator_entry: $FEDSCALE_HOME/benchmark/examples/tensorflow_engine/tf_aggregator.py
+aggregator_entry: $FEDSCALE_HOME/examples/tensorflow_engine/tf_aggregator.py
 
 auth:
     ssh_user: ""

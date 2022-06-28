@@ -47,6 +47,8 @@ Comments in our example will help you quickly understand how to specify these pa
 
 - ```python manager.py stop [job_name]``` will terminate the running ```job_name``` (specified in yml) on the used nodes. 
 
+**Note**: FedScale are supporting 20+ [datasets](https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/README.md) and 70+ [models](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/utils/models/cv_models/README.md).
+
 ## Dashboard
 
 We have integrated Tensorboad for the visualization of experiment results. To track the experiment with ```[log_path]``` (e.g., ```./FedScale/benchmark/logs/cifar10/0209_141336```), please try ```tensorboard --logdir=[log_path] --bind_all```, and all the results will be available at: ```http://[ip_of_coordinator]:6006/```.

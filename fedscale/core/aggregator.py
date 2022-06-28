@@ -42,7 +42,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.model_state_dict = None
         # NOTE: if <param_name, param_tensor> (e.g., model.parameters() in PyTorch), then False
         # True, if <param_name, list_param_tensors> (e.g., layer.get_weights() in Tensorflow)
-        self.using_group_params = self.args.engine == events.TENSORFLOW 
+        self.using_group_params = self.args.engine == events.TENSORFLOW
 
         # ======== channels ========
         self.connection_timeout = self.args.connection_timeout
@@ -257,14 +257,14 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             round_duration = completionTimes[top_k_index[-1]]
             completionTimes.sort()
 
-            return (clients_to_run, dummy_clients, 
-                    completed_client_clock, round_duration, 
+            return (clients_to_run, dummy_clients,
+                    completed_client_clock, round_duration,
                     completionTimes[:num_clients_to_collect])
         else:
             completed_client_clock = {
                 client:{'computation': 1, 'communication':1} for client in sampled_clients}
             completionTimes = [1 for c in sampled_clients]
-            return (sampled_clients, sampled_clients, completed_client_clock, 
+            return (sampled_clients, sampled_clients, completed_client_clock,
                 1, completionTimes)
 
 
@@ -283,13 +283,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
     def select_participants(self, select_num_participants, overcommitment=1.3):
         return sorted(self.client_manager.resampleClients(
-            int(select_num_participants*overcommitment), 
+            int(select_num_participants*overcommitment),
             cur_time=self.global_virtual_clock),
         )
 
 
     def client_completion_handler(self, results):
-        """We may need to keep all updates from clients, 
+        """We may need to keep all updates from clients,
         if so, we need to append results to the cache"""
         # Format:
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': round_train_loss,
@@ -318,7 +318,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self.aggregate_client_weights(results)
 
         self.update_lock.release()
-    
+
     def aggregate_client_weights(self, results):
         """May aggregate client updates on the fly"""
         """
@@ -349,7 +349,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
 
     def aggregate_client_group_weights(self, results):
-        """Streaming weight aggregation. Similar to aggregate_client_weights, 
+        """Streaming weight aggregation. Similar to aggregate_client_weights,
         but each key corresponds to a group of weights (e.g., for Tensorflow)"""
 
         for p_g in results['update_weight']:
@@ -632,7 +632,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 response_msg = self.get_shutdown_config(executor_id)
 
         if current_event != events.DUMMY_EVENT:
-            logging.info(f"Issue EVENT ({current_event}) to CLIENT ({executor_id})")
+            logging.info(f"Issue EVENT ({current_event}) to EXECUTOR ({executor_id})")
         response_msg, response_data = self.serialize_response(response_msg), self.serialize_response(response_data)
         # NOTE: in simulation mode, response data is pickle for faster (de)serialization
         return job_api_pb2.ServerResponse(event=current_event,

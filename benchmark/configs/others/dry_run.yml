@@ -14,7 +14,7 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: ../../benchmark/examples/dry_run/customized_executor.py
+executor_entry: ../../examples/dry_run/customized_executor.py
 
 aggregator_entry: aggregator.py
 

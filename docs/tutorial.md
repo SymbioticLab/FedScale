@@ -40,9 +40,9 @@ python manager.py start configs/femnist/conf.yml
 ```
 
 ### Test on Your Local Machine with Jupyter Notebook
-We also provide jupyter notebook [examples](../benchmark/examples/notebook/) to run your code locally.
-You can first start running [server](../benchmark/examples/notebook/fedscale_demo_server.ipynb), 
-and then run the [client](../benchmark/examples/notebook/fedscale_demo_client.ipynb).
+We also provide jupyter notebook [examples](../examples/notebook/) to run your code locally.
+You can first start running [server](../examples/notebook/fedscale_demo_server.ipynb), 
+and then run the [client](../examples/notebook/fedscale_demo_client.ipynb).
  
 
 
