@@ -94,6 +94,14 @@ parser.add_argument('--malicious_factor', type=int, default=1e15)
 
 # for asynchronous FL buffer size
 parser.add_argument('--async_buffer', type=int, default=10)
+parser.add_argument(
+    '--checkin_period', type=int, default=50, help='number of rounds to sample async clients'
+)
+parser.add_argument('--arrival_interval', type=int, default=3)
+parser.add_argument(
+    "--async_mode", type=bool, default=False, help="use async FL aggregation"
+)
+
 
 # for differential privacy
 parser.add_argument('--noise_factor', type=float, default=0.1)

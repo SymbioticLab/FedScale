@@ -62,7 +62,7 @@ class AsyncAggregator(Aggregator):
             completed_client_clock = {}
 
             start_time = self.global_virtual_clock
-            constant_checin_period = 3
+            constant_checin_period = self.args.arrival_interval
             # 1. remove dummy clients that are not available to the end of training
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
@@ -127,8 +127,6 @@ class AsyncAggregator(Aggregator):
             self.aggregate_client_group_weights(results)
         else:
             self.aggregate_client_weights(results)
-        # TODO: mark model version ID and aggregation time
-
         self.update_lock.release()
 
     def aggregate_client_weights(self, results):
@@ -140,7 +138,7 @@ class AsyncAggregator(Aggregator):
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/#_of_participants
         # importance = 1./self.tasks_round
-        client_staleness =  self.round - self.client_model_version[ results['clientId']]
+        client_staleness = self.round - self.client_model_version[ results['clientId']]
         importance = 1./ math.sqrt(1 + client_staleness)
 
         for p in results['update_weight']:
@@ -177,7 +175,7 @@ class AsyncAggregator(Aggregator):
                 else:
                     self.model_weights[p_g][idx].data += param_weight
 
-        if self.model_in_update == self.tasks_round:
+        if self.model_in_update == self.async_buffer_size:
             for p in self.model_weights:
                 for idx in range(len(self.model_weights[p])):
                     d_type = self.model_weights[p][idx].data.dtype
@@ -219,7 +217,7 @@ class AsyncAggregator(Aggregator):
             self.log_train_result(avg_loss)
 
         # update select participants
-        if self.round % 50 == 1: #  total_worker > buffer_size * 100
+        if self.round % self.args.checkin_period == 1: # total_worker > buffer_size * sample_interval
             self.sampled_participants = self.select_participants(
                 select_num_participants=self.args.total_worker, overcommitment=self.args.overcommitment)
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
@@ -231,7 +229,6 @@ class AsyncAggregator(Aggregator):
             self.resource_manager.register_tasks(clientsToRun)
             self.tasks_round = len(clientsToRun)
             self.virtual_client_clock.update(virtual_client_clock)
-
 
         # Update executors and participants
         if self.experiment_mode == events.SIMULATION_MODE:

@@ -43,5 +43,4 @@ class ResourceManager(object):
                 self.client_run_queue.remove(next_task_id)
 
         self.update_lock.release()
-        print(f"@@@@@@ Schedule next client {next_task_id}")
         return next_task_id
