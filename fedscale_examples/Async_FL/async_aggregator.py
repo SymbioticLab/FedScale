@@ -152,7 +152,7 @@ class AsyncAggregator(Aggregator):
             else:
                 self.model_weights[p].data += param_weight * importance
 
-        if self.model_in_update == self.tasks_round:
+        if self.model_in_update == self.async_buffer_size:
             for p in self.model_weights:
                 d_type = self.model_weights[p].data.dtype
 
@@ -181,7 +181,7 @@ class AsyncAggregator(Aggregator):
                     d_type = self.model_weights[p][idx].data.dtype
 
                     self.model_weights[p][idx].data = (
-                            self.model_weights[p][idx].data / float(self.tasks_round)
+                            self.model_weights[p][idx].data / float(self.async_buffer_size)
                     ).to(dtype=d_type)
 
     def round_weight_handler(self, last_model):
