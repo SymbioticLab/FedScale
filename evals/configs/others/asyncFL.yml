@@ -51,6 +51,12 @@ job_conf:
     - test_bsz: 20
     - malicious_factor: 4
     - use_cuda: False
-    - decay_round: 500
+    - decay_round: 50
     - overcommitment: 1.0
+    - async_buffer: 10
+    - checkin_period: 50
+    - arrival_interval: 3
+
+
+
 

@@ -31,6 +31,7 @@ class AsyncAggregator(Aggregator):
         self.client_model_version = {}
         self.virtual_client_clock = {}
 
+
     def executor_info_handler(self, executorId, info):
 
         self.registered_executor_info.add(executorId)
@@ -50,6 +51,7 @@ class AsyncAggregator(Aggregator):
             self.client_register_handler(executorId, info)
             if len(self.registered_executor_info) == len(self.executors):
                 self.round_completion_handler()
+
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
 
@@ -99,6 +101,7 @@ class AsyncAggregator(Aggregator):
             return (sampled_clients, sampled_clients, completed_client_clock,
                     1, completionTimes)
 
+
     def client_completion_handler(self, results):
         """We may need to keep all updates from clients,
         if so, we need to append results to the cache"""
@@ -128,6 +131,7 @@ class AsyncAggregator(Aggregator):
         else:
             self.aggregate_client_weights(results)
         self.update_lock.release()
+
 
     def aggregate_client_weights(self, results):
         """May aggregate client updates on the fly"""
@@ -163,6 +167,9 @@ class AsyncAggregator(Aggregator):
         """Streaming weight aggregation. Similar to aggregate_client_weights,
         but each key corresponds to a group of weights (e.g., for Tensorflow)"""
 
+        client_staleness = self.round - self.client_model_version[results['clientId']]
+        importance = 1. / math.sqrt(1 + client_staleness)
+
         for p_g in results['update_weight']:
             param_weights = results['update_weight'][p_g]
             for idx, param_weight in enumerate(param_weights):
@@ -171,9 +178,9 @@ class AsyncAggregator(Aggregator):
                 param_weight = torch.from_numpy(param_weight).to(device=self.device)
 
                 if self.model_in_update == 1:
-                    self.model_weights[p_g][idx].data = param_weight
+                    self.model_weights[p_g][idx].data = param_weight * importance
                 else:
-                    self.model_weights[p_g][idx].data += param_weight
+                    self.model_weights[p_g][idx].data += param_weight * importance
 
         if self.model_in_update == self.async_buffer_size:
             for p in self.model_weights:
@@ -184,17 +191,6 @@ class AsyncAggregator(Aggregator):
                             self.model_weights[p][idx].data / float(self.async_buffer_size)
                     ).to(dtype=d_type)
 
-    def round_weight_handler(self, last_model):
-        """Update model when the round completes"""
-        if self.round > 1:
-            if self.args.engine == events.TENSORFLOW:
-                for layer in self.model.layers:
-                    layer.set_weights([p.cpu().detach().numpy() for p in self.model_weights[layer.name]])
-
-            else:
-                self.model.load_state_dict(self.model_weights)
-                current_grad_weights = [param.data.clone() for param in self.model.parameters()]
-                self.optimizer.update_round_gradient(last_model, current_grad_weights, self.model)
 
     def round_completion_handler(self):
         self.global_virtual_clock = self.round_stamp[-1] # += self.round_duration
@@ -227,7 +223,6 @@ class AsyncAggregator(Aggregator):
 
             # Issue requests to the resource manager; Tasks ordered by the completion time
             self.resource_manager.register_tasks(clientsToRun)
-            self.tasks_round = len(clientsToRun)
             self.virtual_client_clock.update(virtual_client_clock)
 
         # Update executors and participants
@@ -259,74 +254,6 @@ class AsyncAggregator(Aggregator):
         self.log_writer.add_scalar('FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
         self.log_writer.add_scalar('FAR/round_duration (min)', self.round_duration / 60., self.round)
 
-    def log_test_result(self):
-        self.log_writer.add_scalar('Test/round_to_loss', self.testing_history['perf'][self.round]['loss'], self.round)
-        self.log_writer.add_scalar('Test/round_to_accuracy', self.testing_history['perf'][self.round]['top_1'],
-                                   self.round)
-        self.log_writer.add_scalar('FAR/time_to_test_loss (min)', self.testing_history['perf'][self.round]['loss'],
-                                   self.global_virtual_clock / 60.)
-        self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
-                                   self.global_virtual_clock / 60.)
-
-    def testing_completion_handler(self, client_id, results):
-        """Each executor will handle a subset of testing dataset"""
-
-        results = results['results']
-
-        # List append is thread-safe
-        self.test_result_accumulator.append(results)
-
-        # Have collected all testing results
-        if len(self.test_result_accumulator) == len(self.executors):
-            accumulator = self.test_result_accumulator[0]
-            for i in range(1, len(self.test_result_accumulator)):
-                if self.args.task == "detection":
-                    for key in accumulator:
-                        if key == "boxes":
-                            for j in range(self.imdb.num_classes):
-                                accumulator[key][j] = accumulator[key][j] + self.test_result_accumulator[i][key][j]
-                        else:
-                            accumulator[key] += self.test_result_accumulator[i][key]
-                else:
-                    for key in accumulator:
-                        accumulator[key] += self.test_result_accumulator[i][key]
-            if self.args.task == "detection":
-                self.testing_history['perf'][self.round] = {'round': self.round, 'clock': self.global_virtual_clock,
-                                                            'top_1': round(accumulator['top_1'] * 100.0 / len(
-                                                                self.test_result_accumulator), 4),
-                                                            'top_5': round(accumulator['top_5'] * 100.0 / len(
-                                                                self.test_result_accumulator), 4),
-                                                            'loss': accumulator['test_loss'],
-                                                            'test_len': accumulator['test_len']
-                                                            }
-            else:
-                self.testing_history['perf'][self.round] = {'round': self.round, 'clock': self.global_virtual_clock,
-                                                            'top_1': round(
-                                                                accumulator['top_1'] / accumulator['test_len'] * 100.0,
-                                                                4),
-                                                            'top_5': round(
-                                                                accumulator['top_5'] / accumulator['test_len'] * 100.0,
-                                                                4),
-                                                            'loss': accumulator['test_loss'] / accumulator['test_len'],
-                                                            'test_len': accumulator['test_len']
-                                                            }
-
-            logging.info(
-                "FL Testing in round: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {:.4f}, test len: {}"
-                .format(self.round, self.global_virtual_clock, self.testing_history['perf'][self.round]['top_1'],
-                        self.testing_history['perf'][self.round]['top_5'],
-                        self.testing_history['perf'][self.round]['loss'],
-                        self.testing_history['perf'][self.round]['test_len']))
-
-            # Dump the testing result
-            with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
-                pickle.dump(self.testing_history, fout)
-
-            if len(self.loss_accumulator):
-                self.log_test_result()
-
-            self.broadcast_events_queue.append(events.START_ROUND)
-
     def find_latest_model(self, start_time):
         for i, time_stamp in enumerate(reversed(self.round_stamp)):
             if start_time >= time_stamp:
@@ -347,6 +274,7 @@ class AsyncAggregator(Aggregator):
         }
         return conf
 
+
     def create_client_task(self, executorId):
         """Issue a new client training task to the executor"""
 
@@ -359,6 +287,7 @@ class AsyncAggregator(Aggregator):
             config = self.get_client_conf(next_clientId)
             train_config = {'client_id': next_clientId, 'task_config': config}
         return train_config, model
+
 
     def CLIENT_REGISTER(self, request, context):
         """FL Client register to the aggregator"""
@@ -380,62 +309,6 @@ class AsyncAggregator(Aggregator):
         return job_api_pb2.ServerResponse(event=events.DUMMY_EVENT,
                                           meta=dummy_data, data=dummy_data)
 
-    def CLIENT_PING(self, request, context):
-        """Handle client requests"""
-
-        # NOTE: client_id = executor_id in deployment,
-        # while multiple client_id may use the same executor_id (VMs) in simulations
-        executor_id, client_id = request.executor_id, request.client_id
-        response_data = response_msg = events.DUMMY_RESPONSE
-
-        if len(self.individual_client_events[executor_id]) == 0:
-            # send dummy response
-            current_event = events.DUMMY_EVENT
-            response_data = response_msg = events.DUMMY_RESPONSE
-        else:
-            current_event = self.individual_client_events[executor_id].popleft()
-            if current_event == events.CLIENT_TRAIN:
-                response_msg, response_data = self.create_client_task(client_id)
-                if response_msg is None:
-                    current_event = events.DUMMY_EVENT
-                    if self.experiment_mode != events.SIMULATION_MODE:
-                        self.individual_client_events[executor_id].appendleft(events.CLIENT_TRAIN)
-            elif current_event == events.MODEL_TEST:
-                response_msg = self.get_test_config(client_id)
-            elif current_event == events.UPDATE_MODEL:
-                response_data = self.get_global_model()
-            elif current_event == events.SHUT_DOWN:
-                response_msg = self.get_shutdown_config(executor_id)
-
-        if current_event != events.DUMMY_EVENT:
-            logging.info(f"Issue EVENT ({current_event}) to CLIENT ({executor_id})")
-        response_msg, response_data = self.serialize_response(response_msg), self.serialize_response(response_data)
-        # NOTE: in simulation mode, response data is pickle for faster (de)serialization
-        return job_api_pb2.ServerResponse(event=current_event,
-                                          meta=response_msg, data=response_data)
-
-    def CLIENT_EXECUTE_COMPLETION(self, request, context):
-        """FL clients complete the execution task."""
-
-        executor_id, client_id, event = request.executor_id, request.client_id, request.event
-        execution_status, execution_msg = request.status, request.msg
-        meta_result, data_result = request.meta_result, request.data_result
-
-        if event == events.CLIENT_TRAIN:
-            # Training results may be uploaded in CLIENT_EXECUTE_RESULT request later,
-            # so we need to specify whether to ask client to do so (in case of straggler/timeout in real FL).
-            if execution_status is False:
-                logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
-            if self.resource_manager.has_next_task(executor_id):
-                # NOTE: we do not pop the train immediately in simulation mode,
-                # since the executor may run multiple clients
-                self.individual_client_events[executor_id].appendleft(events.CLIENT_TRAIN)
-
-        elif event in (events.MODEL_TEST, events.UPLOAD_MODEL):
-            self.add_event_handler(executor_id, event, meta_result, data_result)
-        else:
-            logging.error(f"Received undefined event {event} from client {client_id}")
-        return self.CLIENT_PING(request, context)
 
     def event_monitor(self):
         logging.info("Start monitoring events ...")
@@ -475,6 +348,7 @@ class AsyncAggregator(Aggregator):
             else:
                 # execute every 100 ms
                 time.sleep(0.1)
+
 
     def stop(self):
         logging.info(f"Terminating the aggregator ...")
