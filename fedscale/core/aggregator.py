@@ -387,7 +387,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             if self.args.engine == events.TENSORFLOW:
                 for layer in self.model.layers:
                     layer.set_weights([p.cpu().detach().numpy() for p in self.model_weights[layer.name]])
-                # TODO: support update round gradient
             else:
                 self.model.load_state_dict(self.model_weights)
                 current_grad_weights = [param.data.clone() for param in self.model.parameters()]
@@ -516,7 +515,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     'test_len': accumulator['test_len']
                 }
 
-
             logging.info("FL Testing in round: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {:.4f}, test len: {}"
                     .format(self.round, self.global_virtual_clock, self.testing_history['perf'][self.round]['top_1'],
                     self.testing_history['perf'][self.round]['top_5'], self.testing_history['perf'][self.round]['loss'],
@@ -546,7 +544,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
     def get_client_conf(self, clientId):
         """Training configurations that will be applied on clients"""
-
         conf = {
             'learning_rate': self.args.learning_rate,
             'model': None # none indicates we are using the global model

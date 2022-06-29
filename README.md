@@ -46,7 +46,7 @@ Now that you have FedScale installed, you can start exploring FedScale following
 
 1. [Explore FedScale datasets](./dataset/Femnist_stats.md)
 2. [Deploy your FL experiment](./tutorial.md)
-3. [Implement an FL algorithm](./examples/README.md)
+3. [Implement an FL algorithm](./fedscale_examples/README.md)
 
 
 ## FedScale Datasets
@@ -71,7 +71,7 @@ Repo Root
 |---- dataset     # FedScale benchmarking datasets
 |---- fedscale    # FedScale source code
   |---- core      # Experiment platform of FedScale
-|---- examples    # Examples of new plugins
+|---- fedscale_examples    # Examples of new plugins
 |---- evals       # Backend for FL job submission
     
 ```
