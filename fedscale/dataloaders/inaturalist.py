@@ -9,6 +9,7 @@ import codecs
 import string
 import time
 
+
 class INATURALIST():
     """
     Args:
@@ -50,7 +51,7 @@ class INATURALIST():
         return self.data
 
     def __init__(self, root, train=True, transform=None, target_transform=None, imgview=False, max_class=1e10):
-        
+
         self.train = train  # training set or test set
         self.root = root
         self.transform = transform
@@ -92,7 +93,7 @@ class INATURALIST():
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
         img = Image.open(os.path.join(self.processed_folder, imgName))
-        
+
         # avoid channel error
         img = img.convert('RGB')
 
@@ -124,12 +125,12 @@ class INATURALIST():
         rawImg, rawTags = [], []
 
         # imgFiles = os.scandir(path)
-        
+
         if self.train:
             for imgFile in self.training_data:
                 rawImg.append(imgFile)
                 rawTags.append(int(imgFile.replace('.jpg', '').split('/')[2]))
-        
+
         else:
             for imgFile in self.testing_data:
                 rawImg.append(imgFile)

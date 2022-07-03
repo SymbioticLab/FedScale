@@ -20,7 +20,7 @@ if torch.cuda.is_available():
     headers += ['src/roi_align_cuda.h']
     defines += [('WITH_CUDA', None)]
     with_cuda = True
-    
+
     extra_objects = ['src/roi_align_kernel.cu.o']
     extra_objects = [os.path.join(this_file, fname) for fname in extra_objects]
 

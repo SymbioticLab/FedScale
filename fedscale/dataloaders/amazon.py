@@ -5,13 +5,15 @@ import pandas as pd
 
 # This loader works for Amazon Review
 # task : text_clf
+
+
 class AmazonReview_loader(Dataset):
-    def __init__(self, data_path, max_len, train=True, tokenizer=None ):
+    def __init__(self, data_path, max_len, train=True, tokenizer=None):
 
         file = 'train.csv' if train else 'test.csv'
-        
+
         map_file = os.path.join(data_path, 'client_data_mapping', file)
-        
+
         self.df = pd.read_csv(map_file, delimiter=',')
         # A reset reindexes from 1 to len(df), the shuffled df frames are sparse.
         self.df.reset_index(drop=True, inplace=True)
@@ -19,11 +21,11 @@ class AmazonReview_loader(Dataset):
         self.maxlen = max_len
         self.client_mapping = {}
         self.targets = []
-        
+
         # TODO :not used
         # initiate the (sample, client) pairs
-        for  row in  self.df.itertuples():
-            (sample_id, client_id,data_path,label_name,label_id) = row
+        for row in self.df.itertuples():
+            (sample_id, client_id, data_path, label_name, label_id) = row
             client_id = int(client_id) - 1
             if client_id not in self.client_mapping:
                 self.client_mapping[client_id] = []
@@ -48,7 +50,8 @@ class AmazonReview_loader(Dataset):
 
         if len(tokens) < self.maxlen:
             # Add the ['PAD'] token
-            tokens = tokens + ['[PAD]' for item in range(self.maxlen-len(tokens))]
+            tokens = tokens + \
+                ['[PAD]' for item in range(self.maxlen-len(tokens))]
         else:
             # Truncate the tokens at maxLen - 1 and add a '[SEP]' tag.
             tokens = tokens[:self.maxlen-1] + ['[SEP]']

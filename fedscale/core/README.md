@@ -7,7 +7,7 @@ It evolved from our prior system, Oort [Oort project](https://github.com/Symbiot
 
 ## Architecture
 
-<img src="fedscale-sim-mode.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
+<img src="../../docs/fedscale-sim-mode.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
 
 During benchmarking, FedScale relies on a distributed setting of GPUs/CPUs via the Parameter-Server (PS) architecture. 
 We have evaluated it using up to 68 GPUs to simulate FL aggregation of 1300 participants in each round. 
@@ -35,23 +35,25 @@ Please assure that these paths are consistent across all nodes so that FedScale 
 
 - ***Coordinator node***: Make sure that the coodinator (master node) has access to other worker nodes via ```ssh```. 
 
-- ***All nodes***: Follow [this](https://github.com/SymbioticLab/FedScale#getting-started) to install all necessary libs, and then download the datasets following [this](https://github.com/SymbioticLab/FedScale/blob/master/dataset/README.md).
+- ***All nodes***: Follow [this](https://github.com/SymbioticLab/FedScale#getting-started) to install all necessary libs, and then download the datasets following [this](https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/README.md).
 
 ### Setting Up Job Configuration
 
-We provide an example of submitting a training job in ```FedScale/evals/manager.py```, whereby the user can submit jobs on the master node. 
+We provide an example of submitting a training job, whereby the user can submit jobs on the master node. 
 
-- ```python manager.py submit [conf.yml]``` will submit a job with parameters specified in conf.yml on both the PS and worker nodes. 
-We provide some example ```conf.yml``` in ```FedScale/evals/configs``` for each dataset. 
+- `fedscale driver submit [conf.yml]` (or `python docker/driver.py submit [conf.yml]`) will submit a job with parameters specified in conf.yml on both the PS and worker nodes. 
+We provide some example ```conf.yml``` in ```FedScale/benchmark/configs``` for each dataset. 
 Comments in our example will help you quickly understand how to specify these parameters. 
 
-- ```python manager.py stop [job_name]``` will terminate the running ```job_name``` (specified in yml) on the used nodes. 
+- `fedscale driver stop [job_name]` (or `python docker/driver.py stop [job_name]`)  will terminate the running ```job_name``` (specified in yml) on the used nodes. 
+
+**Note**: FedScale are supporting 20+ [datasets](https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/README.md) and 70+ [models](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/utils/models/cv_models/README.md).
 
 ## Dashboard
 
-We have integrated Tensorboad for the visualization of experiment results. To track the experiment with ```[log_path]``` (e.g., ```./FedScale/evals/logs/cifar10/0209_141336```), please try ```tensorboard --logdir=[log_path] --bind_all```, and all the results will be available at: ```http://[ip_of_coordinator]:6006/```.
+We have integrated Tensorboad for the visualization of experiment results. To track the experiment with ```[log_path]``` (e.g., ```./FedScale/benchmark/logs/cifar10/0209_141336```), please try ```tensorboard --logdir=[log_path] --bind_all```, and all the results will be available at: ```http://[ip_of_coordinator]:6006/```.
 
 ## Logs and Metrics
 
 Meanwhile, all logs are dumped to ```log_path``` (specified in the config file) on each node. 
-```testing_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. The user can also check ```/evals/[job_name]_logging``` to see whether the job is moving on.
+```testing_perf``` locates at the master node under this path, and the user can load it with ```pickle``` to check the time-to-accuracy performance. The user can also check ```/benchmark/[job_name]_logging``` to see whether the job is moving on.

@@ -13,6 +13,7 @@ NB: Boxes from the MCG website are in (y1, x1, y2, x2) order.
 Boxes from Hosang et al. are in (x1, y1, x2, y2) order.
 """
 
+
 def munge(src_dir):
     # stored as: ./MCG-COCO-val2014-boxes/COCO_val2014_000000193401.mat
     # want:      ./MCG/mat/COCO_val2014_0/COCO_val2014_000000141/COCO_val2014_000000141334.mat
@@ -31,6 +32,7 @@ def munge(src_dir):
         dst = os.path.join(dst_dir, fn)
         print('MV: {} -> {}'.format(src, dst))
         os.rename(src, dst)
+
 
 if __name__ == '__main__':
     # src_dir should look something like:

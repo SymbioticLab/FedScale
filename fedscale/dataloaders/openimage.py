@@ -5,6 +5,7 @@ import os
 import os.path
 import csv
 
+
 class OpenImage():
     """
     Args:
@@ -44,11 +45,11 @@ class OpenImage():
         return self.data
 
     def __init__(self, root, dataset='train', transform=None, target_transform=None, imgview=False):
-        
+
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
-        self.data_file = dataset # 'train', 'test', 'validation'
+        self.data_file = dataset  # 'train', 'test', 'validation'
 
         if not self._check_exists():
             raise RuntimeError('Dataset not found.' +
@@ -72,7 +73,7 @@ class OpenImage():
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
         img = Image.open(os.path.join(self.path, imgName))
-        
+
         # avoid channel error
         if img.mode != 'RGB':
             img = img.convert('RGB')
@@ -117,6 +118,7 @@ class OpenImage():
     def load_file(self, path):
 
         # load meta file to get labels
-        datas, labels = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
+        datas, labels = self.load_meta_data(os.path.join(
+            self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
 
         return datas, labels

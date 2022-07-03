@@ -79,7 +79,8 @@ class NoiseInjection(object):
         data_len = len(data) / self.sample_rate
         noise_start = np.random.rand() * (noise_len - data_len)
         noise_end = noise_start + data_len
-        noise_dst = audio_with_sox(noise_path, self.sample_rate, noise_start, noise_end)
+        noise_dst = audio_with_sox(
+            noise_path, self.sample_rate, noise_start, noise_end)
         assert len(data) == len(noise_dst)
         noise_energy = np.sqrt(noise_dst.dot(noise_dst) / noise_dst.size)
         data_energy = np.sqrt(data.dot(data) / data.size)
@@ -167,14 +168,15 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
         """
         file = "train.csv" if train else "test.csv"
         self.ids = []
-        self.client_mapping = collections.defaultdict(list) 
+        self.client_mapping = collections.defaultdict(list)
         self.load_client_mapping(os.path.join(data_dir, file))
 
         self.size = len(self.ids)
         self.targets = [0] * self.size
         self.labels_map = dict([(labels[i], i) for i in range(len(labels))])
-        
-        super(SpectrogramDataset, self).__init__(audio_conf, normalize, speed_volume_perturb, spec_augment)
+
+        super(SpectrogramDataset, self).__init__(audio_conf,
+                                                 normalize, speed_volume_perturb, spec_augment)
 
     def load_client_mapping(self, file):
         with open(file) as csv_file:
@@ -186,7 +188,6 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
                     self.client_mapping[int(row[2])].append(line_count-1)
                 line_count += 1
 
-
     def __getitem__(self, index):
         sample = self.ids[index]
         audio_path, transcript_path = sample[0], sample[1]
@@ -197,7 +198,8 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
     def parse_transcript(self, transcript_path):
         with open(transcript_path, 'r', encoding='utf8') as transcript_file:
             transcript = transcript_file.read().replace('\n', '')
-        transcript = list(filter(None, [self.labels_map.get(x) for x in list(transcript)]))
+        transcript = list(
+            filter(None, [self.labels_map.get(x) for x in list(transcript)]))
 
         return transcript
 
@@ -255,7 +257,8 @@ class DSRandomSampler(Sampler):
         self.start_index = start_index
         self.batch_size = batch_size
         ids = list(range(len(self.dataset)))
-        self.bins = [ids[i:i + self.batch_size] for i in range(0, len(ids), self.batch_size)]
+        self.bins = [ids[i:i + self.batch_size]
+                     for i in range(0, len(ids), self.batch_size)]
 
     def __iter__(self):
         # deterministically shuffle based on epoch
@@ -263,8 +266,8 @@ class DSRandomSampler(Sampler):
         g.manual_seed(self.epoch)
         indices = (
             torch.randperm(len(self.bins) - self.start_index, generator=g)
-                .add(self.start_index)
-                .tolist()
+            .add(self.start_index)
+            .tolist()
         )
         for x in indices:
             batch_ids = self.bins[x]
@@ -292,9 +295,11 @@ class DSElasticDistributedSampler(DistributedSampler):
         self.start_index = start_index
         self.batch_size = batch_size
         ids = list(range(len(dataset)))
-        self.bins = [ids[i:i + self.batch_size] for i in range(0, len(ids), self.batch_size)]
+        self.bins = [ids[i:i + self.batch_size]
+                     for i in range(0, len(ids), self.batch_size)]
         self.num_samples = int(
-            math.ceil(float(len(self.bins) - self.start_index) / self.num_replicas)
+            math.ceil(float(len(self.bins) - self.start_index) /
+                      self.num_replicas)
         )
         self.total_size = self.num_samples * self.num_replicas
 
@@ -304,8 +309,8 @@ class DSElasticDistributedSampler(DistributedSampler):
         g.manual_seed(self.epoch)
         indices = (
             torch.randperm(len(self.bins) - self.start_index, generator=g)
-                .add(self.start_index)
-                .tolist()
+            .add(self.start_index)
+            .tolist()
         )
 
         # add extra samples to make it evenly divisible
@@ -326,7 +331,8 @@ class DSElasticDistributedSampler(DistributedSampler):
     def reset_training_step(self, training_step):
         self.start_index = training_step
         self.num_samples = int(
-            math.ceil(float(len(self.bins) - self.start_index) / self.num_replicas)
+            math.ceil(float(len(self.bins) - self.start_index) /
+                      self.num_replicas)
         )
         self.total_size = self.num_samples * self.num_replicas
 
@@ -351,7 +357,8 @@ def augment_audio_with_sox(path, sample_rate, tempo, gain):
     """
     with NamedTemporaryFile(suffix=".wav") as augmented_file:
         augmented_filename = augmented_file.name
-        sox_augment_params = ["tempo", "{:.3f}".format(tempo), "gain", "{:.3f}".format(gain)]
+        sox_augment_params = ["tempo", "{:.3f}".format(
+            tempo), "gain", "{:.3f}".format(gain)]
         sox_params = "sox \"{}\" -r {} -c 1 -b 16 -e si {} {} >/dev/null 2>&1".format(path, sample_rate,
                                                                                       augmented_filename,
                                                                                       " ".join(sox_augment_params))
@@ -373,4 +380,3 @@ def load_randomly_augmented_audio(path, sample_rate=16000, tempo_range=(0.85, 1.
     audio = augment_audio_with_sox(path=path, sample_rate=sample_rate,
                                    tempo=tempo_value, gain=gain_value)
     return audio
-

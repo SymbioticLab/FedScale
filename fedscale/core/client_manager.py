@@ -3,7 +3,8 @@ from random import Random
 import pickle
 import logging
 
-from fedscale.core.helper.client import Client
+from fedscale.core.internal.client import Client
+
 
 class clientManager(object):
 
@@ -14,16 +15,17 @@ class clientManager(object):
         self.filter_less = args.filter_less
         self.filter_more = args.filter_more
 
-        self.ucbSampler = None 
+        self.ucbSampler = None
 
-        if self.mode == 'oort': 
-            import sys,os
+        if self.mode == 'oort':
+            import sys
+            import os
             current = os.path.dirname(os.path.realpath(__file__))
             parent = os.path.dirname(current)
             sys.path.append(parent)
             from thirdparty.oort.oort import create_training_selector
-            #sys.path.append(current) 
-            self.ucbSampler =  create_training_selector(args=args)
+            # sys.path.append(current)
+            self.ucbSampler = create_training_selector(args=args)
         self.feasibleClients = []
         self.rng = Random()
         self.rng.seed(sample_seed)
@@ -40,9 +42,10 @@ class clientManager(object):
     def registerClient(self, hostId, clientId, size, speed, duration=1):
 
         uniqueId = self.getUniqueId(hostId, clientId)
-        user_trace = None if self.user_trace is None else self.user_trace[self.user_trace_keys[int(clientId)%len(self.user_trace)]]
+        user_trace = None if self.user_trace is None else self.user_trace[self.user_trace_keys[int(
+            clientId) % len(self.user_trace)]]
 
-        self.Clients[uniqueId] = Client(hostId, clientId, speed, user_trace, is_real_mobile=args.mobile_deploy)
+        self.Clients[uniqueId] = Client(hostId, clientId, speed, user_trace)
 
         # remove clients
         if size >= self.filter_less and size <= self.filter_more:
@@ -50,9 +53,9 @@ class clientManager(object):
             self.feasible_samples += size
 
             if self.mode == "oort":
-                feedbacks = {'reward':min(size, self.args.local_steps*self.args.batch_size),
-                            'duration':duration,
-                            }
+                feedbacks = {'reward': min(size, self.args.local_steps*self.args.batch_size),
+                             'duration': duration,
+                             }
                 self.ucbSampler.register_client(clientId, feedbacks=feedbacks)
         else:
             del self.Clients[uniqueId]
@@ -69,17 +72,18 @@ class clientManager(object):
     def registerDuration(self, clientId, batch_size, upload_step, upload_size, download_size):
         if self.mode == "oort" and self.getUniqueId(0, clientId) in self.Clients:
             exe_cost = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-                    batch_size=batch_size, upload_step=upload_step,
-                    upload_size=upload_size, download_size=download_size
-            )
-            self.ucbSampler.update_duration(clientId, exe_cost['computation']+exe_cost['communication'])
-
-    def getCompletionTime(self, clientId, batch_size, upload_step, upload_size, download_size):
-        
-        return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
                 batch_size=batch_size, upload_step=upload_step,
                 upload_size=upload_size, download_size=download_size
             )
+            self.ucbSampler.update_duration(
+                clientId, exe_cost['computation']+exe_cost['communication'])
+
+    def getCompletionTime(self, clientId, batch_size, upload_step, upload_size, download_size):
+
+        return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
+            batch_size=batch_size, upload_step=upload_step,
+            upload_size=upload_size, download_size=download_size
+        )
 
     def registerSpeed(self, hostId, clientId, speed):
         uniqueId = self.getUniqueId(hostId, clientId)
@@ -121,11 +125,12 @@ class clientManager(object):
             if csize >= self.filter_less and csize <= self.filter_more:
                 return int(clientId)
 
-            init_id = max(0, min(int(math.floor(self.rng.random() * lenPossible)), lenPossible - 1))
+            init_id = max(
+                0, min(int(math.floor(self.rng.random() * lenPossible)), lenPossible - 1))
 
     def getUniqueId(self, hostId, clientId):
         return str(clientId)
-        #return (str(hostId) + '_' + str(clientId))
+        # return (str(hostId) + '_' + str(clientId))
 
     def clientSampler(self, clientId):
         return self.Clients[self.getUniqueId(0, clientId)].size
@@ -151,7 +156,7 @@ class clientManager(object):
                     uniqueId = self.getUniqueId(key, client)
                     totalSampleInTraining += self.Clients[uniqueId].size
 
-            #1./len(self.clientOnHosts.keys())
+            # 1./len(self.clientOnHosts.keys())
             return float(self.Clients[self.getUniqueId(hostId, clientId)].size)/float(totalSampleInTraining)
         else:
             for key in self.clientOnHosts.keys():
@@ -163,10 +168,11 @@ class clientManager(object):
         if self.user_trace is None:
             clients_online = self.feasibleClients
         else:
-            clients_online = [clientId for clientId in self.feasibleClients if self.Clients[self.getUniqueId(0, clientId)].isActive(cur_time)]
+            clients_online = [clientId for clientId in self.feasibleClients if self.Clients[self.getUniqueId(
+                0, clientId)].isActive(cur_time)]
 
-        logging.info(f"Wall clock time: {round(cur_time)}, {len(clients_online)} clients online, " + \
-                    f"{len(self.feasibleClients)-len(clients_online)} clients offline")
+        logging.info(f"Wall clock time: {round(cur_time)}, {len(clients_online)} clients online, " +
+                     f"{len(self.feasibleClients)-len(clients_online)} clients offline")
 
         return clients_online
 
@@ -185,10 +191,11 @@ class clientManager(object):
         clients_online_set = set(clients_online)
 
         if self.mode == "oort" and self.count > 1:
-            pickled_clients = self.ucbSampler.select_participant(numOfClients, feasible_clients=clients_online_set)
+            pickled_clients = self.ucbSampler.select_participant(
+                numOfClients, feasible_clients=clients_online_set)
         else:
             self.rng.shuffle(clients_online)
-            client_len = min(numOfClients, len(clients_online) -1)
+            client_len = min(numOfClients, len(clients_online) - 1)
             pickled_clients = clients_online[:client_len]
 
         return pickled_clients
@@ -208,4 +215,3 @@ class clientManager(object):
         if self.mode == 'oort':
             return self.ucbSampler.get_median_reward()
         return 0.
-

@@ -9,6 +9,7 @@ import json
 import pickle
 import torch.nn.functional as F
 
+
 class reddit():
     classes = []
     MAX_SEQ_LEN = 20000
@@ -36,7 +37,7 @@ class reddit():
     def __init__(self, root, train=True):
         self.train = train  # training set or test set
         self.root = root
-        
+
         self.train_file = 'train'
         self.test_file = 'test'
         self.train = train
@@ -106,12 +107,14 @@ class reddit():
         return tokens[:vocab_size]
 
     def load_file(self, path, is_train):
-        file_name = os.path.join(path, 'train') if self.train else os.path.join(path, 'test') 
+        file_name = os.path.join(
+            path, 'train') if self.train else os.path.join(path, 'test')
 
         # check whether we have generated the cache file before
-        cache_path = os.path.join(path, "train_cache") if self.train else os.path.join(path, "test_cache")
+        cache_path = os.path.join(
+            path, "train_cache") if self.train else os.path.join(path, "test_cache")
 
-        text= []
+        text = []
         mapping_dict = {}
 
         if os.path.exists(cache_path):
@@ -131,7 +134,7 @@ class reddit():
             # Load the traning/testing data
             if self.train:
                 train_files = sorted(glob.glob(file_name + "/*.json"))
-                
+
                 for f in train_files[:2]:
                     print("========Loading {}=========".format(f))
                     with open(f, 'rb') as cin:
@@ -142,8 +145,6 @@ class reddit():
                 with open(os.path.join(file_name, "test.json"), 'rb') as cin:
                     data = json.load(cin)
                 client_data_list.append(data)
-                
-
 
             count = 0
             clientCount = 0
@@ -156,8 +157,9 @@ class reddit():
                     tokens_list = list(client_data['user_data'][client]['x'])
 
                     for tokens in tokens_list:
-                        
-                        tokens_list = [vocab_tokens_dict[s] for s in (tokens.split()) if s in vocab_tokens_dict]
+
+                        tokens_list = [vocab_tokens_dict[s] for s in (
+                            tokens.split()) if s in vocab_tokens_dict]
                         if not tokens_list:
                             continue
 
@@ -165,13 +167,13 @@ class reddit():
                         text.append(tokens_list)
 
                         count += 1
-                    
+
                     clientCount += 1
 
                     # num_of_remains = 1628176 - int(client)
                     #print("====In loading data, remains {} clients, may take {} sec".format(num_of_remains, (time.time() - start_time)/clientCount * num_of_remains))
                     # logging.info("====In loading  data, remains {} clients".format(num_of_remains)
-                    
+
                     if clientId % 5000 == 0:
                         # dump the cache
                         with open(cache_path, 'wb') as fout:
@@ -186,5 +188,3 @@ class reddit():
                 pickle.dump(mapping_dict, fout)
 
         return text, mapping_dict
-
-

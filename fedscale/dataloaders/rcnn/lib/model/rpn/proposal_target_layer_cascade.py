@@ -17,6 +17,7 @@ from ..utils.config import cfg
 from .bbox_transform import bbox_overlaps_batch, bbox_transform_batch
 import pdb
 
+
 class _ProposalTargetLayer(nn.Module):
     """
     Assign object detection proposals to ground-truth targets. Produces proposal
@@ -26,9 +27,12 @@ class _ProposalTargetLayer(nn.Module):
     def __init__(self, nclasses):
         super(_ProposalTargetLayer, self).__init__()
         self._num_classes = nclasses
-        self.BBOX_NORMALIZE_MEANS = torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS)
-        self.BBOX_NORMALIZE_STDS = torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS)
-        self.BBOX_INSIDE_WEIGHTS = torch.FloatTensor(cfg.TRAIN.BBOX_INSIDE_WEIGHTS)
+        self.BBOX_NORMALIZE_MEANS = torch.FloatTensor(
+            cfg.TRAIN.BBOX_NORMALIZE_MEANS)
+        self.BBOX_NORMALIZE_STDS = torch.FloatTensor(
+            cfg.TRAIN.BBOX_NORMALIZE_STDS)
+        self.BBOX_INSIDE_WEIGHTS = torch.FloatTensor(
+            cfg.TRAIN.BBOX_INSIDE_WEIGHTS)
 
     def forward(self, all_rois, gt_boxes, num_boxes):
 
@@ -37,14 +41,15 @@ class _ProposalTargetLayer(nn.Module):
         self.BBOX_INSIDE_WEIGHTS = self.BBOX_INSIDE_WEIGHTS.type_as(gt_boxes)
 
         gt_boxes_append = gt_boxes.new(gt_boxes.size()).zero_()
-        gt_boxes_append[:,:,1:5] = gt_boxes[:,:,:4]
+        gt_boxes_append[:, :, 1:5] = gt_boxes[:, :, :4]
 
         # Include ground-truth boxes in the set of candidate rois
         all_rois = torch.cat([all_rois, gt_boxes_append], 1)
 
         num_images = 1
         rois_per_image = int(cfg.TRAIN.BATCH_SIZE / num_images)
-        fg_rois_per_image = int(np.round(cfg.TRAIN.FG_FRACTION * rois_per_image))
+        fg_rois_per_image = int(
+            np.round(cfg.TRAIN.FG_FRACTION * rois_per_image))
         fg_rois_per_image = 1 if fg_rois_per_image == 0 else fg_rois_per_image
 
         labels, rois, bbox_targets, bbox_inside_weights = self._sample_rois_pytorch(
@@ -77,7 +82,8 @@ class _ProposalTargetLayer(nn.Module):
         batch_size = labels_batch.size(0)
         rois_per_image = labels_batch.size(1)
         clss = labels_batch
-        bbox_targets = bbox_target_data.new(batch_size, rois_per_image, 4).zero_()
+        bbox_targets = bbox_target_data.new(
+            batch_size, rois_per_image, 4).zero_()
         bbox_inside_weights = bbox_target_data.new(bbox_targets.size()).zero_()
 
         for b in range(batch_size):
@@ -91,7 +97,6 @@ class _ProposalTargetLayer(nn.Module):
                 bbox_inside_weights[b, ind, :] = self.BBOX_INSIDE_WEIGHTS
 
         return bbox_targets, bbox_inside_weights
-
 
     def _compute_targets_pytorch(self, ex_rois, gt_rois):
         """Compute bounding-box regression targets for an image."""
@@ -108,10 +113,9 @@ class _ProposalTargetLayer(nn.Module):
         if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
             # Optionally normalize targets by a precomputed mean and stdev
             targets = ((targets - self.BBOX_NORMALIZE_MEANS.expand_as(targets))
-                        / self.BBOX_NORMALIZE_STDS.expand_as(targets))
+                       / self.BBOX_NORMALIZE_STDS.expand_as(targets))
 
         return targets
-
 
     def _sample_rois_pytorch(self, all_rois, gt_boxes, fg_rois_per_image, rois_per_image, num_classes):
         """Generate a random sample of RoIs comprising foreground and background
@@ -131,16 +135,18 @@ class _ProposalTargetLayer(nn.Module):
         offset = offset.view(-1, 1).type_as(gt_assignment) + gt_assignment
 
         # changed indexing way for pytorch 1.0
-        labels = gt_boxes[:,:,4].contiguous().view(-1)[(offset.view(-1),)].view(batch_size, -1)
+        labels = gt_boxes[:, :, 4].contiguous(
+        ).view(-1)[(offset.view(-1),)].view(batch_size, -1)
 
         labels_batch = labels.new(batch_size, rois_per_image).zero_()
-        rois_batch  = all_rois.new(batch_size, rois_per_image, 5).zero_()
+        rois_batch = all_rois.new(batch_size, rois_per_image, 5).zero_()
         gt_rois_batch = all_rois.new(batch_size, rois_per_image, 5).zero_()
         # Guard against the case when an image has fewer than max_fg_rois_per_image
         # foreground RoIs
         for i in range(batch_size):
 
-            fg_inds = torch.nonzero(max_overlaps[i] >= cfg.TRAIN.FG_THRESH).view(-1)
+            fg_inds = torch.nonzero(
+                max_overlaps[i] >= cfg.TRAIN.FG_THRESH).view(-1)
             fg_num_rois = fg_inds.numel()
 
             # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
@@ -156,7 +162,8 @@ class _ProposalTargetLayer(nn.Module):
                 # See https://github.com/pytorch/pytorch/issues/1868 for more details.
                 # use numpy instead.
                 #rand_num = torch.randperm(fg_num_rois).long().cuda()
-                rand_num = torch.from_numpy(np.random.permutation(fg_num_rois)).type_as(gt_boxes).long()
+                rand_num = torch.from_numpy(np.random.permutation(
+                    fg_num_rois)).type_as(gt_boxes).long()
                 fg_inds = fg_inds[rand_num[:fg_rois_per_this_image]]
 
                 # sampling bg
@@ -165,14 +172,16 @@ class _ProposalTargetLayer(nn.Module):
                 # Seems torch.rand has a bug, it will generate very large number and make an error.
                 # We use numpy rand instead.
                 #rand_num = (torch.rand(bg_rois_per_this_image) * bg_num_rois).long().cuda()
-                rand_num = np.floor(np.random.rand(bg_rois_per_this_image) * bg_num_rois)
+                rand_num = np.floor(np.random.rand(
+                    bg_rois_per_this_image) * bg_num_rois)
                 rand_num = torch.from_numpy(rand_num).type_as(gt_boxes).long()
                 bg_inds = bg_inds[rand_num]
 
             elif fg_num_rois > 0 and bg_num_rois == 0:
                 # sampling fg
                 #rand_num = torch.floor(torch.rand(rois_per_image) * fg_num_rois).long().cuda()
-                rand_num = np.floor(np.random.rand(rois_per_image) * fg_num_rois)
+                rand_num = np.floor(np.random.rand(
+                    rois_per_image) * fg_num_rois)
                 rand_num = torch.from_numpy(rand_num).type_as(gt_boxes).long()
                 fg_inds = fg_inds[rand_num]
                 fg_rois_per_this_image = rois_per_image
@@ -180,14 +189,16 @@ class _ProposalTargetLayer(nn.Module):
             elif bg_num_rois > 0 and fg_num_rois == 0:
                 # sampling bg
                 #rand_num = torch.floor(torch.rand(rois_per_image) * bg_num_rois).long().cuda()
-                rand_num = np.floor(np.random.rand(rois_per_image) * bg_num_rois)
+                rand_num = np.floor(np.random.rand(
+                    rois_per_image) * bg_num_rois)
                 rand_num = torch.from_numpy(rand_num).type_as(gt_boxes).long()
 
                 bg_inds = bg_inds[rand_num]
                 bg_rois_per_this_image = rois_per_image
                 fg_rois_per_this_image = 0
             else:
-                raise ValueError("bg_num_rois = 0 and fg_num_rois = 0, this should not happen!")
+                raise ValueError(
+                    "bg_num_rois = 0 and fg_num_rois = 0, this should not happen!")
 
             # The indices that we're selecting (both fg and bg)
             keep_inds = torch.cat([fg_inds, bg_inds], 0)
@@ -200,14 +211,15 @@ class _ProposalTargetLayer(nn.Module):
                 labels_batch[i][fg_rois_per_this_image:] = 0
 
             rois_batch[i] = all_rois[i][keep_inds]
-            rois_batch[i,:,0] = i
+            rois_batch[i, :, 0] = i
 
             gt_rois_batch[i] = gt_boxes[i][gt_assignment[i][keep_inds]]
 
         bbox_target_data = self._compute_targets_pytorch(
-                rois_batch[:,:,1:5], gt_rois_batch[:,:,:4])
+            rois_batch[:, :, 1:5], gt_rois_batch[:, :, :4])
 
         bbox_targets, bbox_inside_weights = \
-                self._get_bbox_regression_labels_pytorch(bbox_target_data, labels_batch, num_classes)
+            self._get_bbox_regression_labels_pytorch(
+                bbox_target_data, labels_batch, num_classes)
 
         return labels_batch, rois_batch, bbox_targets, bbox_inside_weights

@@ -29,6 +29,7 @@ cd FedScale
 
 # Please replace ~/.bashrc with ~/.bash_profile for MacOS
 echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
+echo "alias fedscale='bash $FEDSCALE_HOME/fedscale.sh'" >> ~/.bashrc 
 conda init bash
 . ~/.bashrc
 
@@ -44,9 +45,9 @@ Finally, install NVIDIA [CUDA 10.2](https://developer.nvidia.com/cuda-downloads)
 
 Now that you have FedScale installed, you can start exploring FedScale following one of these introductory tutorials.
 
-1. [Explore FedScale datasets](./dataset/Femnist_stats.md)
-2. [Deploy your FL experiment](./tutorial.md)
-3. [Implement an FL algorithm](./fedscale_examples/README.md)
+1. [Explore FedScale datasets](./docs/Femnist_stats.md)
+2. [Deploy your FL experiment](./docs/tutorial.md)
+3. [Implement an FL algorithm](./examples/README.md)
 
 
 ## FedScale Datasets
@@ -55,32 +56,37 @@ Now that you have FedScale installed, you can start exploring FedScale following
 
 FedScale consists of 20+ large-scale, heterogeneous FL datasets covering computer vision (CV), natural language processing (NLP), and miscellaneous tasks. 
 Each one is associated with its training, validation, and testing datasets. 
-Please go to the `./dataset` directory and follow the dataset [README](./dataset/README.md) for more details.
+Please go to the `./benchmark/dataset` directory and follow the dataset [README](./benchmark/dataset/README.md) for more details.
 
 ## FedScale Runtime
 FedScale Runtime is an scalable and extensible deployment as well as evaluation platform to simplify and standardize FL experimental setup and model evaluation. 
 It evolved from our prior system, [Oort](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
 
-Please go to `./core` directory and follow the [README](./fedscale/core/README.md) to set up FL training scripts.
+Please go to `./fedscale/core` directory and follow the [README](./fedscale/core/README.md) to set up FL training scripts.
 
 
 ## Repo Structure
 
 ```
 Repo Root
-|---- dataset     # FedScale benchmarking datasets
-|---- fedscale    # FedScale source code
-  |---- core      # Experiment platform of FedScale
-|---- fedscale_examples    # Examples of new plugins
-|---- evals       # Backend for FL job submission
-    
+|---- fedscale          # FedScale source code
+  |---- core            # Core of FedScale service
+  |---- utils           # Auxiliaries (e.g, model zoo and FL optimizer)
+  |---- deploy          # Deployment backends (e.g., mobile)
+  |---- dataloaders     # Data loaders of benchmarking dataset
+
+|---- benchmark         # FedScale datasets and configs
+  |---- dataset         # Benchmarking datasets
+
+|---- examples          # Examples of implementing new FL designs
+|---- docs              # FedScale tutorials and APIs
 ```
 
 ## References
 Please read and/or cite as appropriate to use FedScale code or data or learn more about FedScale.
 
 ```bibtex
-@inproceedings{fedscale-icml,
+@inproceedings{fedscale-icml22,
   title={{FedScale}: Benchmarking Model and System Performance of Federated Learning at Scale},
   author={Fan Lai and Yinwei Dai and Sanjay S. Singapuram and Jiachen Liu and Xiangfeng Zhu and Harsha V. Madhyastha and Mosharaf Chowdhury},
   booktitle={International Conference on Machine Learning (ICML)},
