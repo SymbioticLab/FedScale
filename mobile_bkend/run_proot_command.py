@@ -19,5 +19,5 @@ with open(f'proot_commands/{now}.sh','w') as f:
     f.write(command)
 
 # Run proot
-proot_login = 'proot-distro login flamingo-proot-distro --user singam'
-os.system(f"{proot_login} -- bash /home/singam/termux-home/proot_commands/{now}.sh")
+proot_login = 'proot-distro login swan-proot-distro --user fedscale'
+os.system(f"{proot_login} -- bash /home/fedscale/termux-home/proot_commands/{now}.sh")

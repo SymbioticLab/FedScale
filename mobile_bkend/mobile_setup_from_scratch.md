@@ -38,18 +38,18 @@ ssh W.X.Y.Z -p 8022
 
 Follow the instructions [here](https://github.com/tuanpham-dev/termux-ubuntu) to install the Ubuntu Focal (20.04) distro within Termux.
 
-## (OR) Install Ubuntu proot-distro for Flamingo
+## (OR) Install Ubuntu proot-distro for Swan
 
 1. Install [proot\-distro](https://github.com/termux/proot-distro) using `apt install proot-distro`.
-2. Place the [flamingo\-proot\-distro.sh](flamingo-proot-distro.sh) in `$HOME/../usr/etc/proot-distro`.
-3. Install the distro using `proot-distro install flamingo-proot-distro`.
-4. Log-in to the distro using `proot-distro login flamingo-proot-distro --user singam`.
+2. Place the [swan\-proot\-distro.sh](swan-proot-distro.sh) in `$HOME/../usr/etc/proot-distro`.
+3. Install the distro using `proot-distro install swan-proot-distro`.
+4. Log-in to the distro using `proot-distro login swan-proot-distro --user fedscale`.
 
 ## Setting up Ubuntu environment
 
 Once within the distro installation of your choice, update the package registry and install dependences by running the script [install\_mob\_deps.sh](install_mob_deps.sh).
 
-Set and export the `FLAMINGO_PREFIX` environment varaible to point the scripts to installation location.
+Set and export the `SWAN_PREFIX` environment varaible to point the scripts to installation location.
 
 ## Build OpenBLAS
 

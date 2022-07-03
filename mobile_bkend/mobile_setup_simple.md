@@ -34,6 +34,6 @@ Set the password using `passwd`. Connect to the phone using `ssh` in the followi
 ssh W.X.Y.Z -p 8022
 ```
 
-## Download and Install Flamingo Container
+## Download and Install Swan Container
 
-After connecting to the phone using the previous steps, run the [mobile\_setup\_simple.sh](./mobile_setup_simple.sh) script to install all depdencies for the container and then the container itself. Start the container with `proot-distro flamingo-proot-distro --user singam`.
+After connecting to the phone using the previous steps, run the [mobile\_setup\_simple.sh](./mobile_setup_simple.sh) script to install all depdencies for the container and then the container itself. Start the container with `proot-distro swan-proot-distro --user fedscale`.
