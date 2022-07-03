@@ -1,7 +1,7 @@
 
 class Client(object):
 
-    def __init__(self, hostId, clientId, speed, traces=None):
+    def __init__(self, hostId, clientId, speed, traces=None, is_real_mobile=False):
         self.hostId = hostId
         self.clientId = clientId
         self.compute_speed = speed['computation']
@@ -9,6 +9,7 @@ class Client(object):
         self.score = 0
         self.traces = traces
         self.behavior_index = 0
+        self.is_real_mobile = is_real_mobile
 
     def getScore(self):
         return self.score
@@ -17,7 +18,7 @@ class Client(object):
         self.score = reward
 
     def isActive(self, cur_time):
-        if self.traces is None:
+        if self.traces is None or self.is_real_mobile:
             return True
             
         norm_time = cur_time % self.traces['finish_time']

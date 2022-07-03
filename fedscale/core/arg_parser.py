@@ -194,8 +194,15 @@ parser.add_argument('--noise-max', default=0.5,
 parser.add_argument('--no-bidirectional', dest='bidirectional', action='store_false', default=True,
                     help='Turn off bi-directional RNNs, introduces lookahead convolution')
 
+# Smartphone Deployment
+parser.add_argument('--mobile-deploy', dest='mobile_deploy', action='store_true', default=False,
+                    help='Deploy training on smartphones')
+
 args, unknown = parser.parse_known_args()
 args.use_cuda = eval(args.use_cuda)
+
+if args.mobile_deploy:
+    assert(args.use_cuda == False)
 
 
 datasetCategories = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47,
