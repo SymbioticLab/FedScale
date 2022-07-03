@@ -4,6 +4,8 @@ import os
 import pandas as pd
 
 # This loader works for Amazon/Yelp Review
+
+
 class TextSentimentDataset(Dataset):
     def __init__(self, data_path, max_len, train=True, tokenizer=None):
 
@@ -44,7 +46,8 @@ class TextSentimentDataset(Dataset):
 
         if len(tokens) < self.maxlen:
             # Add the ['PAD'] token
-            tokens = tokens + ['[PAD]' for item in range(self.maxlen-len(tokens))]
+            tokens = tokens + \
+                ['[PAD]' for item in range(self.maxlen-len(tokens))]
         else:
             # Truncate the tokens at maxLen - 1 and add a '[SEP]' tag.
             tokens = tokens[:self.maxlen-1] + ['[SEP]']

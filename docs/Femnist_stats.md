@@ -19,7 +19,7 @@ import numpy as np
 from fedscale.dataloaders.femnist import FEMNIST
 from fedscale.dataloaders.utils_data import get_data_transform
 from fedscale.dataloaders.divide_data import DataPartitioner
-from fedscale.core.arg_parser import args
+from fedscale.core.config_parser import args
 ```
 
 
@@ -68,7 +68,7 @@ axs[1].set_title('Client label distribution')
 plt.show()
 ```
 
-![image](./benchmark/dataset/femnist/client_label_heter.png)
+![image](../benchmark/dataset/femnist/client_label_heter.png)
 
 ## Visualize the clients' data.
 
@@ -88,5 +88,5 @@ for data in iter(dataloader):
 ```
 
 
-![image](./benchmark/dataset/femnist/sample_data.png)
+![image](../benchmark/dataset/femnist/sample_data.png)
 

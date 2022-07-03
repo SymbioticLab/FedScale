@@ -22,6 +22,7 @@ class Stem(nn.Module):
     channels : tuple/list of 3 int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  channels):
@@ -62,6 +63,7 @@ class LinearBottleneck(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the second convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -104,6 +106,7 @@ class FeatureExtractor(nn.Module):
     channels : list of list of int
         Number of output channels for each unit.
     """
+
     def __init__(self,
                  in_channels,
                  channels):
@@ -140,6 +143,7 @@ class PoolingBranch(nn.Module):
     down_size : int
         Spatial size of downscaled image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -177,6 +181,7 @@ class FastPyramidPooling(nn.Module):
     in_size : tuple of 2 int or None
         Spatial size of input image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -218,6 +223,7 @@ class FeatureFusion(nn.Module):
     x_in_size : tuple of 2 int or None
         Spatial size of high resolution (x) input image.
     """
+
     def __init__(self,
                  x_in_channels,
                  y_in_channels,
@@ -265,6 +271,7 @@ class Head(nn.Module):
     num_classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  in_channels,
                  num_classes):
@@ -302,6 +309,7 @@ class AuxHead(nn.Module):
     num_classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -340,6 +348,7 @@ class FastSCNN(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  aux=False,
                  fixed_size=True,
@@ -363,12 +372,14 @@ class FastSCNN(nn.Module):
         self.features = FeatureExtractor(
             in_channels=in_channels,
             channels=feature_channels)
-        pool_out_size = (in_size[0] // 32, in_size[1] // 32) if fixed_size else None
+        pool_out_size = (in_size[0] // 32, in_size[1] //
+                         32) if fixed_size else None
         self.pool = FastPyramidPooling(
             in_channels=feature_channels[-1][-1],
             out_channels=feature_channels[-1][-1],
             in_size=pool_out_size)
-        fusion_out_size = (in_size[0] // 8, in_size[1] // 8) if fixed_size else None
+        fusion_out_size = (
+            in_size[0] // 8, in_size[1] // 8) if fixed_size else None
         fusion_out_channels = 128
         self.fusion = FeatureFusion(
             x_in_channels=steam_channels[-1],
@@ -434,7 +445,8 @@ def get_fastscnn(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -488,7 +500,8 @@ def _test():
 
     for model, num_classes in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size, aux=aux)
+        net = model(pretrained=pretrained, in_size=in_size,
+                    fixed_size=fixed_size, aux=aux)
 
         # net.train()
         net.eval()

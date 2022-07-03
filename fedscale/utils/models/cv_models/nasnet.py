@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1707.07012.
 """
 
-__all__ = ['NASNet', 'nasnet_4a1056', 'nasnet_6a4032', 'nasnet_dual_path_sequential']
+__all__ = ['NASNet', 'nasnet_4a1056',
+           'nasnet_6a4032', 'nasnet_dual_path_sequential']
 
 import os
 import torch
@@ -22,6 +23,7 @@ class NasDualPathScheme(object):
     can_skip_input : bool
         Whether can skip input for some modules.
     """
+
     def __init__(self,
                  can_skip_input):
         super(NasDualPathScheme, self).__init__()
@@ -46,6 +48,7 @@ class NasDualPathScheme(object):
     x : Tensor
         Current processed tensor.
     """
+
     def __call__(self,
                  module,
                  x,
@@ -169,6 +172,7 @@ class NasMaxPoolBlock(nn.Module):
     extra_padding : bool, default False
         Whether to use extra padding.
     """
+
     def __init__(self,
                  extra_padding=False):
         super(NasMaxPoolBlock, self).__init__()
@@ -199,6 +203,7 @@ class NasAvgPoolBlock(nn.Module):
     extra_padding : bool, default False
         Whether to use extra padding.
     """
+
     def __init__(self,
                  extra_padding=False):
         super(NasAvgPoolBlock, self).__init__()
@@ -240,6 +245,7 @@ class NasConv(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -306,6 +312,7 @@ class DwsConv(nn.Module):
     bias : bool, default False
         Whether the layers use a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -352,6 +359,7 @@ class NasDwsConv(nn.Module):
     extra_padding : bool, default False
         Whether to use extra padding.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -406,6 +414,7 @@ class DwsBranch(nn.Module):
     stem : bool, default False
         Whether to use squeeze reduction if False.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -555,6 +564,7 @@ class NasPathBranch(nn.Module):
     extra_padding : bool, default False
         Whether to use extra padding.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -589,6 +599,7 @@ class NasPathBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -625,6 +636,7 @@ class Stem1Unit(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -691,6 +703,7 @@ class Stem2Unit(nn.Module):
     extra_padding : bool
         Whether to use extra padding.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -762,6 +775,7 @@ class FirstUnit(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -827,6 +841,7 @@ class NormalUnit(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -893,6 +908,7 @@ class ReductionBaseUnit(nn.Module):
     extra_padding : bool, default True
         Whether to use extra padding.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -965,6 +981,7 @@ class Reduction1Unit(ReductionBaseUnit):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -991,6 +1008,7 @@ class Reduction2Unit(ReductionBaseUnit):
     extra_padding : bool
         Whether to use extra padding.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -1014,6 +1032,7 @@ class NASNetInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -1059,6 +1078,7 @@ class NASNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -1100,7 +1120,8 @@ class NASNet(nn.Module):
         in_channels = out_channels
 
         for i, channels_per_stage in enumerate(channels):
-            stage = nasnet_dual_path_sequential(can_skip_input=skip_reduction_layer_input)
+            stage = nasnet_dual_path_sequential(
+                can_skip_input=skip_reduction_layer_input)
             for j, out_channels in enumerate(channels_per_stage):
                 if (j == 0) and (i != 0):
                     unit = reduction_units[i - 1]
@@ -1190,11 +1211,13 @@ def get_nasnet(repeat,
     stem_blocks_channels = [1, 2]
     reduct_channels = [[], [8], [16]]
     norm_channels = [6, 12, 24]
-    channels = [rci + [nci] * repeat for rci, nci in zip(reduct_channels, norm_channels)]
+    channels = [rci + [nci] * repeat for rci,
+                nci in zip(reduct_channels, norm_channels)]
 
     base_channel_chunk = penultimate_filters // channels[-1][-1]
 
-    stem_blocks_channels = [(ci * base_channel_chunk) for ci in stem_blocks_channels]
+    stem_blocks_channels = [(ci * base_channel_chunk)
+                            for ci in stem_blocks_channels]
     channels = [[(cij * base_channel_chunk) for cij in ci] for ci in channels]
 
     net = NASNet(
@@ -1209,7 +1232,8 @@ def get_nasnet(repeat,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

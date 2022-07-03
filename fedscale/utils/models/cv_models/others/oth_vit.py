@@ -29,8 +29,10 @@ class Attention(nn.Module):
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C //
+                                  self.num_heads).permute(2, 0, 3, 1, 4)
+        # make torchscript happy (cannot use tensor as tuple)
+        q, k, v = qkv[0], qkv[1], qkv[2]
 
         attn = (q.matmul(k.transpose(-2, -1))) * self.scale
         attn = attn.softmax(dim=-1)
@@ -155,10 +157,12 @@ class VisionTransformer(nn.Module):
             in_channels=in_channels,
             embedding_dim=embed_dim,
             patch_size=patch_size)
-        num_patches = (in_size[1] // patch_size[1]) * (in_size[0] // patch_size[0])
+        num_patches = (in_size[1] // patch_size[1]) * \
+            (in_size[0] // patch_size[0])
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, embed_dim))
+        self.pos_embed = nn.Parameter(
+            torch.zeros(1, num_patches + 1, embed_dim))
         self.pos_drop = nn.Dropout(p=dropout_rate)
 
         self.blocks = nn.Sequential()
@@ -216,7 +220,8 @@ def vit_small_patch16_224(pretrained=False, **kwargs):
     if pretrained:
         # NOTE my scale was wrong for original weights, leaving this here until I have better ones for this model
         model_kwargs.setdefault('qk_scale', 768 ** -0.5)
-    model = _create_vision_transformer('vit_small_patch16_224', pretrained=pretrained, **model_kwargs)
+    model = _create_vision_transformer(
+        'vit_small_patch16_224', pretrained=pretrained, **model_kwargs)
     return model
 
 
@@ -225,7 +230,8 @@ def vit_base_patch16_224(pretrained=False, **kwargs):
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
     model_kwargs = dict(embed_dim=768, depth=12, num_heads=12, **kwargs)
-    model = _create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, **model_kwargs)
+    model = _create_vision_transformer(
+        'vit_base_patch16_224', pretrained=pretrained, **model_kwargs)
     return model
 
 
@@ -234,7 +240,8 @@ def vit_large_patch16_224(pretrained=False, **kwargs):
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
     model_kwargs = dict(embed_dim=1024, depth=24, num_heads=16, **kwargs)
-    model = _create_vision_transformer('vit_large_patch16_224', pretrained=pretrained, **model_kwargs)
+    model = _create_vision_transformer(
+        'vit_large_patch16_224', pretrained=pretrained, **model_kwargs)
     return model
 
 
@@ -243,7 +250,8 @@ def vit_deit_tiny_patch16_224(pretrained=False, **kwargs):
     ImageNet-1k weights from https://github.com/facebookresearch/deit.
     """
     model_kwargs = dict(embed_dim=192, depth=12, num_heads=3, **kwargs)
-    model = _create_vision_transformer('vit_deit_tiny_patch16_224', pretrained=pretrained, **model_kwargs)
+    model = _create_vision_transformer(
+        'vit_deit_tiny_patch16_224', pretrained=pretrained, **model_kwargs)
     return model
 
 

@@ -34,6 +34,7 @@ class ResNeXtBottleneck(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -83,6 +84,7 @@ class ResNeXtUnit(nn.Module):
     bottleneck_width: int
         Width of bottleneck block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -138,6 +140,7 @@ class ResNeXt(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -228,7 +231,8 @@ def get_resnext(blocks,
     elif blocks == 101:
         layers = [3, 4, 23, 3]
     else:
-        raise ValueError("Unsupported ResNeXt with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported ResNeXt with number of blocks: {}".format(blocks))
 
     assert (sum(layers) * 3 + 2 == blocks)
 
@@ -246,7 +250,8 @@ def get_resnext(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

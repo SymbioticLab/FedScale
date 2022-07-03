@@ -26,6 +26,7 @@ class UpSamplingBlock(nn.Module):
     scale_factor : int
         Multiplier for spatial size.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -61,6 +62,7 @@ class HRBlock(nn.Module):
     num_subblocks : list of int
         Number of subblock.
     """
+
     def __init__(self,
                  in_channels_list,
                  out_channels_list,
@@ -96,7 +98,8 @@ class HRBlock(nn.Module):
                             out_channels=in_channels_list[i],
                             scale_factor=2 ** (j - i)))
                     elif j == i:
-                        fuse_layer.add_module("block{}".format(j + 1), Identity())
+                        fuse_layer.add_module(
+                            "block{}".format(j + 1), Identity())
                     else:
                         conv3x3_seq = nn.Sequential()
                         for k in range(i - j):
@@ -111,8 +114,10 @@ class HRBlock(nn.Module):
                                     in_channels=in_channels_list[j],
                                     out_channels=in_channels_list[j],
                                     stride=2))
-                        fuse_layer.add_module("block{}".format(j + 1), conv3x3_seq)
-                self.fuse_layers.add_module("layer{}".format(i + 1), fuse_layer)
+                        fuse_layer.add_module(
+                            "block{}".format(j + 1), conv3x3_seq)
+                self.fuse_layers.add_module(
+                    "layer{}".format(i + 1), fuse_layer)
             self.activ = nn.ReLU(True)
 
     def forward(self, x):
@@ -152,6 +157,7 @@ class HRStage(nn.Module):
     num_subblocks : list of int
         Number of subblocks.
     """
+
     def __init__(self,
                  in_channels_list,
                  out_channels_list,
@@ -173,17 +179,20 @@ class HRStage(nn.Module):
                         out_channels=out_channels_list[i],
                         stride=1))
                 else:
-                    self.transition.add_module("block{}".format(i + 1), Identity())
+                    self.transition.add_module(
+                        "block{}".format(i + 1), Identity())
             else:
                 conv3x3_seq = nn.Sequential()
                 for j in range(i + 1 - in_branches):
                     in_channels_i = in_channels_list[-1]
-                    out_channels_i = out_channels_list[i] if j == i - in_branches else in_channels_i
+                    out_channels_i = out_channels_list[i] if j == i - \
+                        in_branches else in_channels_i
                     conv3x3_seq.add_module("subblock{}".format(j + 1), conv3x3_block(
                         in_channels=in_channels_i,
                         out_channels=out_channels_i,
                         stride=2))
-                self.transition.add_module("block{}".format(i + 1), conv3x3_seq)
+                self.transition.add_module(
+                    "block{}".format(i + 1), conv3x3_seq)
 
         self.layers = nn.Sequential()
         for i in range(num_modules):
@@ -198,7 +207,8 @@ class HRStage(nn.Module):
         x_list = []
         for j in range(self.branches):
             if not isinstance(self.transition[j], Identity):
-                x_list.append(self.transition[j](x[-1] if type(x) is list else x))
+                x_list.append(self.transition[j](
+                    x[-1] if type(x) is list else x))
             else:
                 x_list_j = x[j] if type(x) is list else x
                 x_list.append(x_list_j)
@@ -221,6 +231,7 @@ class HRInitBlock(nn.Module):
     num_subblocks : int
         Number of subblocks.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -263,6 +274,7 @@ class HRFinalBlock(nn.Module):
     out_channels_list : list of int
         Number of output channels per stage.
     """
+
     def __init__(self,
                  in_channels_list,
                  out_channels_list):
@@ -319,6 +331,7 @@ class HRNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -364,7 +377,8 @@ class HRNet(nn.Module):
     def _init_params(self):
         for module in self.named_modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_uniform_(module.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_uniform_(
+                    module.weight, mode="fan_out", nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.constant_(module.bias, 0)
             elif isinstance(module, nn.BatchNorm2d):
@@ -457,7 +471,8 @@ def get_hrnet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

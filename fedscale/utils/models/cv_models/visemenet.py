@@ -22,6 +22,7 @@ class VisemeDenseBranch(nn.Module):
     out_channels_list : list of int
         Number of middle/output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list):
@@ -59,6 +60,7 @@ class VisemeRnnBranch(nn.Module):
     dropout_rate : float
         Dropout rate.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -104,6 +106,7 @@ class VisemeNet(nn.Module):
     dropout_rate : float, default 0.5
         Dropout rate for RNNs.
     """
+
     def __init__(self,
                  audio_features=195,
                  audio_window_size=8,
@@ -117,7 +120,7 @@ class VisemeNet(nn.Module):
         stage1_rnn_hidden_size = 256
         stage1_fc_mid_channels = 256
         stage2_rnn_in_features = (audio_features + num_landmarks + stage1_fc_mid_channels) * \
-                                 stage2_window_size // audio_window_size
+            stage2_window_size // audio_window_size
         self.audio_window_size = audio_window_size
         self.stage2_window_size = stage2_window_size
 
@@ -163,11 +166,12 @@ class VisemeNet(nn.Module):
 
         z2 = torch.cat((z, x[:, self.audio_window_size // 2, :]), dim=1)
         n_net2_input = z2.shape[1]
-        z2 = torch.cat((torch.zeros((self.stage2_window_size // 2, n_net2_input)), z2), dim=0)
+        z2 = torch.cat(
+            (torch.zeros((self.stage2_window_size // 2, n_net2_input)), z2), dim=0)
         z = torch.stack(
             [z2[i:i + self.stage2_window_size].reshape(
                 (self.audio_window_size, n_net2_input * self.stage2_window_size // self.audio_window_size))
-              for i in range(z2.shape[0] - self.stage2_window_size)],
+             for i in range(z2.shape[0] - self.stage2_window_size)],
             dim=0)
         cls = self.cls_branch(z)
         reg = self.reg_branch(z)
@@ -197,7 +201,8 @@ def get_visemenet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

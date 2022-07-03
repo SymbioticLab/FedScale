@@ -26,6 +26,7 @@ class PyrBlock(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -59,6 +60,7 @@ class PyrBottleneck(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -100,6 +102,7 @@ class PyrUnit(nn.Module):
     bottleneck : bool
         Whether to use a bottleneck or simple block in units.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -149,6 +152,7 @@ class PyrInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -194,6 +198,7 @@ class PyramidNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -221,7 +226,8 @@ class PyramidNet(nn.Module):
                     bottleneck=bottleneck))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PreResActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PreResActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -290,14 +296,16 @@ def get_pyramidnet(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported ResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported ResNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
 
     growth_add = float(alpha) / float(sum(layers))
     from functools import reduce
     channels = reduce(
-        lambda xi, yi: xi + [[(i + 1) * growth_add + xi[-1][-1] for i in list(range(yi))]],
+        lambda xi, yi: xi + [[(i + 1) * growth_add + xi[-1][-1]
+                              for i in list(range(yi))]],
         layers,
         [[init_block_channels]])[1:]
     channels = [[int(round(cij)) for cij in ci] for ci in channels]
@@ -316,7 +324,8 @@ def get_pyramidnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

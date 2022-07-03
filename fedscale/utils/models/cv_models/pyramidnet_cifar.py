@@ -38,6 +38,7 @@ class CIFARPyramidNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -66,7 +67,8 @@ class CIFARPyramidNet(nn.Module):
                     bottleneck=bottleneck))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PreResActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PreResActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=8,
             stride=1))
@@ -132,7 +134,8 @@ def get_pyramidnet_cifar(num_classes,
     growth_add = float(alpha) / float(sum(layers))
     from functools import reduce
     channels = reduce(
-        lambda xi, yi: xi + [[(i + 1) * growth_add + xi[-1][-1] for i in list(range(yi))]],
+        lambda xi, yi: xi + [[(i + 1) * growth_add + xi[-1][-1]
+                              for i in list(range(yi))]],
         layers,
         [[init_block_channels]])[1:]
     channels = [[int(round(cij)) for cij in ci] for ci in channels]
@@ -149,7 +152,8 @@ def get_pyramidnet_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

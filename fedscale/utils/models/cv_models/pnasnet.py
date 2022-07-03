@@ -25,6 +25,7 @@ class PnasMaxPoolBlock(nn.Module):
     extra_padding : bool, default False
         Whether to use extra padding.
     """
+
     def __init__(self,
                  stride=2,
                  extra_padding=False):
@@ -90,6 +91,7 @@ class DwsBranch(nn.Module):
     stem : bool, default False
         Whether to use squeeze reduction if False.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -220,6 +222,7 @@ class PnasMaxPathBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -241,6 +244,7 @@ class PnasBaseUnit(nn.Module):
     """
     PNASNet base unit.
     """
+
     def __init__(self):
         super(PnasBaseUnit, self).__init__()
 
@@ -253,7 +257,8 @@ class PnasBaseUnit(nn.Module):
         x1 = self.comb1_left(x_right) + self.comb1_right(x_right)
         x2 = self.comb2_left(x_right) + self.comb2_right(x_right)
         x3 = self.comb3_left(x2) + self.comb3_right(x_right)
-        x4 = self.comb4_left(x_left) + (self.comb4_right(x_right) if self.comb4_right else x_right)
+        x4 = self.comb4_left(x_left) + (self.comb4_right(x_right)
+                                        if self.comb4_right else x_right)
 
         x_out = torch.cat((x0, x1, x2, x3, x4), dim=1)
         return x_out
@@ -270,6 +275,7 @@ class Stem1Unit(PnasBaseUnit):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -341,6 +347,7 @@ class PnasUnit(PnasBaseUnit):
     match_prev_layer_dimensions : bool, default False
         Whether to match previous layer dimensions.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -442,6 +449,7 @@ class PNASNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -473,7 +481,8 @@ class PNASNet(nn.Module):
             for j, out_channels in enumerate(channels_per_stage):
                 reduction = (j == 0)
                 extra_padding = (j == 0) and (i not in [0, 2])
-                match_prev_layer_dimensions = (j == 1) or ((j == 0) and (i == 0))
+                match_prev_layer_dimensions = (
+                    j == 1) or ((j == 0) and (i == 0))
                 stage.add_module("unit{}".format(j + 1), PnasUnit(
                     in_channels=in_channels,
                     prev_in_channels=prev_in_channels,
@@ -544,7 +553,8 @@ def get_pnasnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

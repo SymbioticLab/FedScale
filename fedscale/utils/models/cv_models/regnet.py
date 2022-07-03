@@ -33,6 +33,7 @@ class RegNetBottleneck(nn.Module):
     bottleneck_factor : int, default 1
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -88,6 +89,7 @@ class RegNetUnit(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -143,6 +145,7 @@ class RegNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -174,7 +177,8 @@ class RegNet(nn.Module):
                     use_se=use_se))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Linear(
             in_features=in_channels,
@@ -231,13 +235,15 @@ def get_regnet(channels_init,
         Location for keeping the model parameters.
     """
     divisor = 8
-    assert (channels_slope >= 0) and (channels_init > 0) and (channels_mult > 1) and (channels_init % divisor == 0)
+    assert (channels_slope >= 0) and (channels_init > 0) and (
+        channels_mult > 1) and (channels_init % divisor == 0)
 
     # Generate continuous per-block channels/widths:
     channels_cont = np.arange(depth) * channels_slope + channels_init
 
     # Generate quantized per-block channels/widths:
-    channels_exps = np.round(np.log(channels_cont / channels_init) / np.log(channels_mult))
+    channels_exps = np.round(
+        np.log(channels_cont / channels_init) / np.log(channels_mult))
     channels = channels_init * np.power(channels_mult, channels_exps)
     channels = (np.round(channels / divisor) * divisor).astype(np.int)
 
@@ -246,7 +252,8 @@ def get_regnet(channels_init,
 
     # Adjusts the compatibility of channels/widths and groups:
     groups_per_stage = [min(groups, c) for c in channels_per_stage]
-    channels_per_stage = [int(round(c / g) * g) for c, g in zip(channels_per_stage, groups_per_stage)]
+    channels_per_stage = [int(round(c / g) * g)
+                          for c, g in zip(channels_per_stage, groups_per_stage)]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_stage, layers)]
 
@@ -261,7 +268,8 @@ def get_regnet(channels_init,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

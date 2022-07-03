@@ -3,7 +3,8 @@
     Original paper: 'BAM: Bottleneck Attention Module,' https://arxiv.org/abs/1807.06514.
 """
 
-__all__ = ['BamResNet', 'bam_resnet18', 'bam_resnet34', 'bam_resnet50', 'bam_resnet101', 'bam_resnet152']
+__all__ = ['BamResNet', 'bam_resnet18', 'bam_resnet34',
+           'bam_resnet50', 'bam_resnet101', 'bam_resnet152']
 
 import os
 import torch.nn as nn
@@ -23,6 +24,7 @@ class DenseBlock(nn.Module):
     out_features : int
         Number of output features.
     """
+
     def __init__(self,
                  in_features,
                  out_features):
@@ -53,6 +55,7 @@ class ChannelGate(nn.Module):
     num_layers : int, default 1
         Number of dense blocks.
     """
+
     def __init__(self,
                  channels,
                  reduction_ratio=16,
@@ -99,6 +102,7 @@ class SpatialGate(nn.Module):
     dilation : int, default 4
         Dilation/padding value for corresponding convolutions.
     """
+
     def __init__(self,
                  channels,
                  reduction_ratio=16,
@@ -145,6 +149,7 @@ class BamBlock(nn.Module):
     channels : int
         Number of input/output channels.
     """
+
     def __init__(self,
                  channels):
         super(BamBlock, self).__init__()
@@ -173,6 +178,7 @@ class BamResUnit(nn.Module):
     bottleneck : bool
         Whether to use a bottleneck or simple block in units.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -216,6 +222,7 @@ class BamResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -304,7 +311,8 @@ def get_resnet(blocks,
     elif blocks == 152:
         layers = [3, 8, 36, 3]
     else:
-        raise ValueError("Unsupported BAM-ResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported BAM-ResNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
 
@@ -325,7 +333,8 @@ def get_resnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

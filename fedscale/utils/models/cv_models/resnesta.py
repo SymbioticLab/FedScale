@@ -29,6 +29,7 @@ class ResNeStABlock(nn.Module):
     use_bn : bool, default True
         Whether to use BatchNorm layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -78,6 +79,7 @@ class ResNeStABottleneck(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -125,6 +127,7 @@ class ResNeStADownBlock(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -161,6 +164,7 @@ class ResNeStAUnit(nn.Module):
     bottleneck : bool, default True
         Whether to use a bottleneck or simple block in units.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -219,6 +223,7 @@ class ResNeStA(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -247,7 +252,8 @@ class ResNeStA(nn.Module):
                     bottleneck=bottleneck))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Sequential()
         if dropout_rate > 0.0:
@@ -331,7 +337,8 @@ def get_resnesta(blocks,
     elif blocks == 269:
         layers = [3, 30, 48, 8]
     else:
-        raise ValueError("Unsupported ResNeSt(A) with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported ResNeSt(A) with number of blocks: {}".format(blocks))
 
     if bottleneck:
         assert (sum(layers) * 3 + 2 == blocks)
@@ -346,7 +353,8 @@ def get_resnesta(blocks,
 
     if bottleneck:
         bottleneck_factor = 4
-        channels_per_layers = [ci * bottleneck_factor for ci in channels_per_layers]
+        channels_per_layers = [
+            ci * bottleneck_factor for ci in channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -363,7 +371,8 @@ def get_resnesta(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

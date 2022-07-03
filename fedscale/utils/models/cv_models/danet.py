@@ -3,7 +3,8 @@
     Original paper: 'Dual Attention Network for Scene Segmentation,' https://arxiv.org/abs/1809.02983.
 """
 
-__all__ = ['DANet', 'danet_resnetd50b_cityscapes', 'danet_resnetd101b_cityscapes', 'ScaleBlock']
+__all__ = ['DANet', 'danet_resnetd50b_cityscapes',
+           'danet_resnetd101b_cityscapes', 'ScaleBlock']
 
 import os
 import torch
@@ -19,6 +20,7 @@ class ScaleBlock(nn.Module):
     """
     Simple scale block.
     """
+
     def __init__(self):
         super(ScaleBlock, self).__init__()
         self.alpha = Parameter(torch.Tensor((1,)))
@@ -51,6 +53,7 @@ class PosAttBlock(nn.Module):
     reduction : int, default 8
         Squeeze reduction value.
     """
+
     def __init__(self,
                  channels,
                  reduction=8):
@@ -92,6 +95,7 @@ class ChaAttBlock(nn.Module):
     Channel attention block from 'Dual Attention Network for Scene Segmentation,' https://arxiv.org/abs/1809.02983.
     It explicitly models interdependencies between channels.
     """
+
     def __init__(self):
         super(ChaAttBlock, self).__init__()
         self.scale = ScaleBlock()
@@ -127,6 +131,7 @@ class DANetHeadBranch(nn.Module):
     pose_att : bool, default True
         Whether to use position attention instead of channel one.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -171,6 +176,7 @@ class DANetHead(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -222,6 +228,7 @@ class DANet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels=2048,
@@ -258,8 +265,10 @@ class DANet(nn.Module):
         x, y, z = self.head(x)
         x = F.interpolate(x, size=in_size, mode="bilinear", align_corners=True)
         if self.aux:
-            y = F.interpolate(y, size=in_size, mode="bilinear", align_corners=True)
-            z = F.interpolate(z, size=in_size, mode="bilinear", align_corners=True)
+            y = F.interpolate(
+                y, size=in_size, mode="bilinear", align_corners=True)
+            z = F.interpolate(
+                z, size=in_size, mode="bilinear", align_corners=True)
             return x, y, z
         else:
             return x
@@ -298,7 +307,8 @@ def get_danet(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -326,7 +336,8 @@ def danet_resnetd50b_cityscapes(pretrained_backbone=False, num_classes=19, aux=T
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_danet(backbone=backbone, num_classes=num_classes, aux=aux, model_name="danet_resnetd50b_cityscapes",
                      **kwargs)
@@ -350,7 +361,8 @@ def danet_resnetd101b_cityscapes(pretrained_backbone=False, num_classes=19, aux=
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_danet(backbone=backbone, num_classes=num_classes, aux=aux, model_name="danet_resnetd101b_cityscapes",
                      **kwargs)

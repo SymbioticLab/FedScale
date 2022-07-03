@@ -3,8 +3,8 @@
 import sys, os
 from customized_client import Customized_Client
 
-from fedscale.core.executor import Executor
-from fedscale.core.fl_client_libs import args
+from fedscale.core.execution.executor import Executor
+from fedscale.core.logger.execution import args
 
 """In this example, we only need to change the Client Component we need to import"""
 

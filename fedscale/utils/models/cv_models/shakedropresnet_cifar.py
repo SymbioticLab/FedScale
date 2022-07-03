@@ -3,7 +3,8 @@
     Original paper: 'ShakeDrop Regularization for Deep Residual Learning,' https://arxiv.org/abs/1802.02375.
 """
 
-__all__ = ['CIFARShakeDropResNet', 'shakedropresnet20_cifar10', 'shakedropresnet20_cifar100', 'shakedropresnet20_svhn']
+__all__ = ['CIFARShakeDropResNet', 'shakedropresnet20_cifar10',
+           'shakedropresnet20_cifar100', 'shakedropresnet20_svhn']
 
 import os
 import torch
@@ -26,7 +27,8 @@ class ShakeDrop(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, dy):
-        beta = torch.rand(dy.size(0), dtype=dy.dtype, device=dy.device).view(-1, 1, 1, 1)
+        beta = torch.rand(dy.size(0), dtype=dy.dtype,
+                          device=dy.device).view(-1, 1, 1, 1)
         b, = ctx.saved_tensors
         return (b + beta - b * beta) * dy, None, None
 
@@ -48,6 +50,7 @@ class ShakeDropResUnit(nn.Module):
     life_prob : float
         Residual branch life probability.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -79,8 +82,10 @@ class ShakeDropResUnit(nn.Module):
             identity = x
         x = self.body(x)
         if self.training:
-            b = torch.bernoulli(torch.full((1,), self.life_prob, dtype=x.dtype, device=x.device))
-            alpha = torch.empty(x.size(0), dtype=x.dtype, device=x.device).view(-1, 1, 1, 1).uniform_(-1.0, 1.0)
+            b = torch.bernoulli(torch.full(
+                (1,), self.life_prob, dtype=x.dtype, device=x.device))
+            alpha = torch.empty(
+                x.size(0), dtype=x.dtype, device=x.device).view(-1, 1, 1, 1).uniform_(-1.0, 1.0)
             x = self.shake_drop(x, b, alpha)
         else:
             x = self.life_prob * x
@@ -111,6 +116,7 @@ class CIFARShakeDropResNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -210,7 +216,8 @@ def get_shakedropresnet_cifar(classes,
 
     total_layers = sum(layers)
     final_death_prob = 0.5
-    life_probs = [1.0 - float(i + 1) / float(total_layers) * final_death_prob for i in range(total_layers)]
+    life_probs = [1.0 - float(i + 1) / float(total_layers)
+                  * final_death_prob for i in range(total_layers)]
 
     net = CIFARShakeDropResNet(
         channels=channels,
@@ -222,7 +229,8 @@ def get_shakedropresnet_cifar(classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

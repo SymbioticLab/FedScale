@@ -36,15 +36,18 @@ except NameError:
     xrange = range  # Python 3
 
 # <<<< obsolete
+
+
 def readClass(path):
     s = ('__background__',)
     f = open(path, 'r')
     lines = f.readlines()
     for l in lines:
         if len(l) > 1:
-             s = s + (l[:-1].lower(),)
+            s = s + (l[:-1].lower(),)
     f.close()
     return s
+
 
 class pascal_voc(imdb):
     def __init__(self, image_set, year, devkit_path=None):
@@ -267,8 +270,10 @@ class pascal_voc(imdb):
 
     def _get_voc_results_file_template(self, rank):
         # VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
-        filename = self._get_comp_id() + '_det_' + self._image_set + '_{:s}.txt'
-        filedir = os.path.join(self._devkit_path, 'results', 'VOC' + self._year, 'Main', str(rank))
+        filename = self._get_comp_id() + '_det_' + \
+            self._image_set + '_{:s}.txt'
+        filedir = os.path.join(self._devkit_path, 'results',
+                               'VOC' + self._year, 'Main', str(rank))
         if not os.path.exists(filedir):
             os.makedirs(filedir)
         path = os.path.join(filedir, filename)
@@ -293,7 +298,8 @@ class pascal_voc(imdb):
                                        dets[k, 2] + 1, dets[k, 3] + 1))
 
     def _reset_index(self, index):
-        self._image_index = [self._image_index_temp[i].split(".")[0] for i in index] 
+        self._image_index = [self._image_index_temp[i].split(".")[
+            0] for i in index]
 
     def _do_python_eval(self, output_dir='output', rank=None):
         annopath = os.path.join(
@@ -384,6 +390,6 @@ class pascal_voc(imdb):
 if __name__ == '__main__':
     d = pascal_voc('trainval', '2007')
     res = d.roidb
-    from IPython import embed;
+    from IPython import embed
 
     embed()

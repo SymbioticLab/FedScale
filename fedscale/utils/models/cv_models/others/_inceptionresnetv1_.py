@@ -9,6 +9,7 @@ class MaxPoolBranch(nn.Module):
     """
     InceptionResNetV2 specific max pooling branch block.
     """
+
     def __init__(self):
         super(MaxPoolBranch, self).__init__()
         self.pool = nn.MaxPool2d(
@@ -34,6 +35,7 @@ class Conv1x1Branch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -68,6 +70,7 @@ class ConvSeqBranch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -106,6 +109,7 @@ class InceptionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptionAUnit, self).__init__()
@@ -155,6 +159,7 @@ class ReductionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(ReductionAUnit, self).__init__()
@@ -191,6 +196,7 @@ class InceptionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptionBUnit, self).__init__()
@@ -233,6 +239,7 @@ class ReductionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(ReductionBUnit, self).__init__()
@@ -280,6 +287,7 @@ class InceptionCUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps,
                  scale=0.2,
@@ -329,6 +337,7 @@ class InceptInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps):
@@ -396,6 +405,7 @@ class InceptHead(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps,
                  dropout_rate,
@@ -432,6 +442,7 @@ class InceptionResNetV1(nn.Module):
             initialized. (default: {None})
         dropout_prob {float} -- Dropout probability. (default: {0.6})
     """
+
     def __init__(self,
                  dropout_prob=0.6,
                  bn_eps=1e-5,
@@ -458,9 +469,11 @@ class InceptionResNetV1(nn.Module):
                 else:
                     unit = normal_units[i]
                 if (i == len(layers) - 1) and (j == layers_per_stage - 1):
-                    stage.add_module("unit{}".format(j + 1), unit(bn_eps=bn_eps, scale=1.0, activate=False))
+                    stage.add_module("unit{}".format(
+                        j + 1), unit(bn_eps=bn_eps, scale=1.0, activate=False))
                 else:
-                    stage.add_module("unit{}".format(j + 1), unit(bn_eps=bn_eps))
+                    stage.add_module("unit{}".format(
+                        j + 1), unit(bn_eps=bn_eps))
             self.features.add_module("stage{}".format(i + 1), stage)
 
         self.avgpool_1a = nn.AdaptiveAvgPool2d(1)

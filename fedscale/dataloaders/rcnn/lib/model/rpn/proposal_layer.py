@@ -23,6 +23,7 @@ import pdb
 
 DEBUG = False
 
+
 class _ProposalLayer(nn.Module):
     """
     Outputs object detection proposals by applying estimated bounding-box
@@ -34,7 +35,7 @@ class _ProposalLayer(nn.Module):
 
         self._feat_stride = feat_stride
         self._anchors = torch.from_numpy(generate_anchors(scales=np.array(scales),
-            ratios=np.array(ratios))).float()
+                                                          ratios=np.array(ratios))).float()
         self._num_anchors = self._anchors.size(0)
 
         # rois blob: holds R regions of interest, each is a 5-tuple
@@ -61,7 +62,6 @@ class _ProposalLayer(nn.Module):
         # take after_nms_topN proposals after NMS
         # return the top proposals (-> RoIs top, scores top)
 
-
         # the first set of _num_anchors channels are bg probs
         # the second set are the fg probs
         scores = input[0][:, self._num_anchors:, :, :]
@@ -69,10 +69,10 @@ class _ProposalLayer(nn.Module):
         im_info = input[2]
         cfg_key = input[3]
 
-        pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N
+        pre_nms_topN = cfg[cfg_key].RPN_PRE_NMS_TOP_N
         post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N
-        nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH
-        min_size      = cfg[cfg_key].RPN_MIN_SIZE
+        nms_thresh = cfg[cfg_key].RPN_NMS_THRESH
+        min_size = cfg[cfg_key].RPN_MIN_SIZE
 
         batch_size = bbox_deltas.size(0)
 
@@ -139,12 +139,13 @@ class _ProposalLayer(nn.Module):
                 order_single = order_single[:pre_nms_topN]
 
             proposals_single = proposals_single[order_single, :]
-            scores_single = scores_single[order_single].view(-1,1)
+            scores_single = scores_single[order_single].view(-1, 1)
 
             # 6. apply nms (e.g. threshold = 0.7)
             # 7. take after_nms_topN (e.g. 300)
             # 8. return the top proposals (-> RoIs top)
-            keep_idx_i = nms(proposals_single, scores_single.squeeze(1), nms_thresh)
+            keep_idx_i = nms(proposals_single,
+                             scores_single.squeeze(1), nms_thresh)
             keep_idx_i = keep_idx_i.long().view(-1)
 
             if post_nms_topN > 0:
@@ -154,8 +155,8 @@ class _ProposalLayer(nn.Module):
 
             # padding 0 at the end.
             num_proposal = proposals_single.size(0)
-            output[i,:,0] = i
-            output[i,:num_proposal,1:] = proposals_single
+            output[i, :, 0] = i
+            output[i, :num_proposal, 1:] = proposals_single
 
         return output
 
@@ -171,5 +172,6 @@ class _ProposalLayer(nn.Module):
         """Remove all boxes with any side smaller than min_size."""
         ws = boxes[:, :, 2] - boxes[:, :, 0] + 1
         hs = boxes[:, :, 3] - boxes[:, :, 1] + 1
-        keep = ((ws >= min_size.view(-1,1).expand_as(ws)) & (hs >= min_size.view(-1,1).expand_as(hs)))
+        keep = ((ws >= min_size.view(-1, 1).expand_as(ws)) &
+                (hs >= min_size.view(-1, 1).expand_as(hs)))
         return keep

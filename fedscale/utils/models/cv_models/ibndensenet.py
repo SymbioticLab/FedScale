@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1807.09441.
 """
 
-__all__ = ['IBNDenseNet', 'ibn_densenet121', 'ibn_densenet161', 'ibn_densenet169', 'ibn_densenet201']
+__all__ = ['IBNDenseNet', 'ibn_densenet121',
+           'ibn_densenet161', 'ibn_densenet169', 'ibn_densenet201']
 
 import os
 import torch
@@ -36,6 +37,7 @@ class IBNPreConvBlock(nn.Module):
     return_preact : bool, default False
         Whether return pre-activation. It's used by PreResNet.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -125,6 +127,7 @@ class IBNDenseUnit(nn.Module):
     conv1_ibn : bool
         Whether to use IBN normalization in the first convolution layer of the block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -176,6 +179,7 @@ class IBNDenseNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -208,7 +212,8 @@ class IBNDenseNet(nn.Module):
                     conv1_ibn=conv1_ibn))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PreResActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PreResActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -270,7 +275,8 @@ def get_ibndensenet(num_layers,
         growth_rate = 32
         layers = [6, 12, 48, 32]
     else:
-        raise ValueError("Unsupported IBN-DenseNet version with number of layers {}".format(num_layers))
+        raise ValueError(
+            "Unsupported IBN-DenseNet version with number of layers {}".format(num_layers))
 
     from functools import reduce
     channels = reduce(
@@ -288,7 +294,8 @@ def get_ibndensenet(num_layers,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

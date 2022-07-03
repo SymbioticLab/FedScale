@@ -46,8 +46,10 @@ def calc_tf_padding(x,
     height, width = x.size()[2:]
     oh = math.ceil(float(height) / stride)
     ow = math.ceil(float(width) / stride)
-    pad_h = max((oh - 1) * stride + (kernel_size - 1) * dilation + 1 - height, 0)
-    pad_w = max((ow - 1) * stride + (kernel_size - 1) * dilation + 1 - width, 0)
+    pad_h = max((oh - 1) * stride + (kernel_size - 1)
+                * dilation + 1 - height, 0)
+    pad_w = max((ow - 1) * stride + (kernel_size - 1)
+                * dilation + 1 - width, 0)
     return pad_h // 2, pad_h - pad_h // 2, pad_w // 2, pad_w - pad_w // 2
 
 
@@ -71,6 +73,7 @@ class EffiDwsConvUnit(nn.Module):
     tf_mode : bool
         Whether to use TF-like mode.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -136,6 +139,7 @@ class EffiInvResUnit(nn.Module):
     tf_mode : bool
         Whether to use TF-like mode.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -153,7 +157,8 @@ class EffiInvResUnit(nn.Module):
         self.residual = (in_channels == out_channels) and (stride == 1)
         self.use_se = se_factor > 0
         mid_channels = in_channels * exp_factor
-        dwconv_block_fn = dwconv3x3_block if kernel_size == 3 else (dwconv5x5_block if kernel_size == 5 else None)
+        dwconv_block_fn = dwconv3x3_block if kernel_size == 3 else (
+            dwconv5x5_block if kernel_size == 5 else None)
 
         self.conv1 = conv1x1_block(
             in_channels=in_channels,
@@ -183,7 +188,8 @@ class EffiInvResUnit(nn.Module):
             identity = x
         x = self.conv1(x)
         if self.tf_mode:
-            x = F.pad(x, pad=calc_tf_padding(x, kernel_size=self.kernel_size, stride=self.stride))
+            x = F.pad(x, pad=calc_tf_padding(
+                x, kernel_size=self.kernel_size, stride=self.stride))
         x = self.conv2(x)
         if self.use_se:
             x = self.se(x)
@@ -267,6 +273,7 @@ class EfficientNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -328,7 +335,8 @@ class EfficientNet(nn.Module):
             bn_eps=bn_eps,
             activation=activation))
         in_channels = final_block_channels
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Sequential()
         if dropout_rate > 0.0:
@@ -439,7 +447,8 @@ def get_efficientnet(version,
     final_block_channels = 1280
 
     layers = [int(math.ceil(li * depth_factor)) for li in layers]
-    channels_per_layers = [round_channels(ci * width_factor) for ci in channels_per_layers]
+    channels_per_layers = [round_channels(
+        ci * width_factor) for ci in channels_per_layers]
 
     from functools import reduce
     channels = reduce(lambda x, y: x + [[y[0]] * y[1]] if y[2] != 0 else x[:-1] + [x[-1] + [y[0]] * y[1]],
@@ -455,8 +464,10 @@ def get_efficientnet(version,
     init_block_channels = round_channels(init_block_channels * width_factor)
 
     if width_factor > 1.0:
-        assert (int(final_block_channels * width_factor) == round_channels(final_block_channels * width_factor))
-        final_block_channels = round_channels(final_block_channels * width_factor)
+        assert (int(final_block_channels * width_factor) ==
+                round_channels(final_block_channels * width_factor))
+        final_block_channels = round_channels(
+            final_block_channels * width_factor)
 
     net = EfficientNet(
         channels=channels,
@@ -473,7 +484,8 @@ def get_efficientnet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

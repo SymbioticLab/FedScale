@@ -27,6 +27,7 @@ class LffdDetectionBranch(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -66,6 +67,7 @@ class LffdDetectionBlock(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layer.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -118,6 +120,7 @@ class LFFD(nn.Module):
     in_size : tuple of two ints, default (640, 640)
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  enc_channels,
                  dec_channels,
@@ -236,7 +239,8 @@ def get_lffd(blocks,
         enc_channels = [64, 64, 128, 128]
         int_bends = [1, 1, 0, 2]
     else:
-        raise ValueError("Unsupported LFFD with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported LFFD with number of blocks: {}".format(blocks))
 
     dec_channels = 128
     init_block_channels = 64
@@ -252,7 +256,8 @@ def get_lffd(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

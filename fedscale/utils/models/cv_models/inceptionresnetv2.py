@@ -22,6 +22,7 @@ class InceptBlock5b(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptBlock5b, self).__init__()
@@ -68,6 +69,7 @@ class InceptInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps):
@@ -142,6 +144,7 @@ class InceptionResNetV2(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  dropout_rate=0.0,
                  bn_eps=1e-5,
@@ -153,8 +156,10 @@ class InceptionResNetV2(nn.Module):
         self.num_classes = num_classes
         layers = [10, 21, 11]
         in_channels_list = [320, 1088, 2080]
-        normal_out_channels_list = [[32, 32, 32, 32, 48, 64], [192, 128, 160, 192], [192, 192, 224, 256]]
-        reduction_out_channels_list = [[384, 256, 256, 384], [256, 384, 256, 288, 256, 288, 320]]
+        normal_out_channels_list = [[32, 32, 32, 32, 48, 64], [
+            192, 128, 160, 192], [192, 192, 224, 256]]
+        reduction_out_channels_list = [
+            [384, 256, 256, 384], [256, 384, 256, 288, 256, 288, 320]]
 
         normal_units = [InceptionAUnit, InceptionBUnit, InceptionCUnit]
         reduction_units = [ReductionAUnit, ReductionBUnit]
@@ -236,7 +241,8 @@ def get_inceptionresnetv2(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

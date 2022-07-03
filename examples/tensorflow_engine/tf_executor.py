@@ -3,8 +3,8 @@
 import sys, os
 from tf_client import Customized_Client
 
-from fedscale.core.executor import Executor
-from fedscale.core.fl_client_libs import *
+from fedscale.core.execution.executor import Executor
+from fedscale.core.logger.execution import *
 import tensorflow as tf 
 
 """In this example, we only need to change the Client Component we need to import"""

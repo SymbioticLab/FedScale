@@ -138,6 +138,7 @@ class PRResBottleneck(nn.Module):
     bottleneck_factor : int, default 2
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -186,6 +187,7 @@ class PRResUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -234,6 +236,7 @@ class PROutputBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -280,6 +283,7 @@ class PRNet(nn.Module):
     num_classes : int, default 3
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -370,7 +374,8 @@ def get_prnet(model_name=None,
     """
     init_block_channels = 16
     enc_channels = [[32, 32], [64, 64], [128, 128], [256, 256], [512, 512]]
-    dec_channels = [[512], [256, 256, 256], [128, 128, 128], [64, 64, 64], [32, 32], [16, 16]]
+    dec_channels = [[512], [256, 256, 256], [
+        128, 128, 128], [64, 64, 64], [32, 32], [16, 16]]
     channels = [enc_channels, dec_channels]
 
     net = PRNet(
@@ -380,7 +385,8 @@ def get_prnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

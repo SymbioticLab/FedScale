@@ -26,6 +26,7 @@ class Conv3x3Branch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -64,6 +65,7 @@ class ConvSeq3x3Branch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -116,6 +118,7 @@ class InceptionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptionAUnit, self).__init__()
@@ -160,6 +163,7 @@ class ReductionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(ReductionAUnit, self).__init__()
@@ -196,6 +200,7 @@ class InceptionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptionBUnit, self).__init__()
@@ -240,6 +245,7 @@ class ReductionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(ReductionBUnit, self).__init__()
@@ -276,6 +282,7 @@ class InceptionCUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptionCUnit, self).__init__()
@@ -322,6 +329,7 @@ class InceptBlock3a(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptBlock3a, self).__init__()
@@ -346,6 +354,7 @@ class InceptBlock4a(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptBlock4a, self).__init__()
@@ -379,6 +388,7 @@ class InceptBlock5a(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  bn_eps):
         super(InceptBlock5a, self).__init__()
@@ -405,6 +415,7 @@ class InceptInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps):
@@ -459,6 +470,7 @@ class InceptionV4(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  dropout_rate=0.0,
                  bn_eps=1e-5,
@@ -534,7 +546,8 @@ def get_inceptionv4(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

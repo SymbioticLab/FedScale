@@ -3,7 +3,8 @@
     Original paper: 'Dilated Residual Networks,' https://arxiv.org/abs/1705.09914.
 """
 
-__all__ = ['DRN', 'drnc26', 'drnc42', 'drnc58', 'drnd22', 'drnd38', 'drnd54', 'drnd105']
+__all__ = ['DRN', 'drnc26', 'drnc42', 'drnc58',
+           'drnd22', 'drnd38', 'drnd54', 'drnd105']
 
 import os
 import torch.nn as nn
@@ -31,6 +32,7 @@ class DRNConv(nn.Module):
     activate : bool
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -136,6 +138,7 @@ class DRNBlock(nn.Module):
     dilation : int or tuple/list of 2 int
         Padding/dilation value for convolution layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -176,6 +179,7 @@ class DRNBottleneck(nn.Module):
     dilation : int or tuple/list of 2 int
         Padding/dilation value for 3x3 convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -229,6 +233,7 @@ class DRNUnit(nn.Module):
     residual : bool
         Whether do residual calculations.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -242,7 +247,8 @@ class DRNUnit(nn.Module):
         assert (not (bottleneck and simplified))
         assert (not (residual and simplified))
         self.residual = residual
-        self.resize_identity = ((in_channels != out_channels) or (stride != 1)) and self.residual and (not simplified)
+        self.resize_identity = ((in_channels != out_channels) or (
+            stride != 1)) and self.residual and (not simplified)
 
         if bottleneck:
             self.body = DRNBottleneck(
@@ -330,6 +336,7 @@ class DRN(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -430,7 +437,8 @@ def get_drn(blocks,
         assert simplified
         layers = [1, 1, 3, 4, 23, 3, 1, 1]
     else:
-        raise ValueError("Unsupported DRN with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported DRN with number of blocks: {}".format(blocks))
 
     if blocks < 50:
         channels_per_layers = [16, 32, 64, 128, 256, 512, 512, 512]
@@ -452,7 +460,8 @@ def get_drn(blocks,
     def expand(property_per_layers):
         from functools import reduce
         return reduce(
-            lambda x, y: x + [[y[0]] * y[1]] if y[2] != 0 else x[:-1] + [x[-1] + [y[0]] * y[1]],
+            lambda x, y: x +
+            [[y[0]] * y[1]] if y[2] != 0 else x[:-1] + [x[-1] + [y[0]] * y[1]],
             zip(property_per_layers, layers, downsample),
             [[]])
 
@@ -475,7 +484,8 @@ def get_drn(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

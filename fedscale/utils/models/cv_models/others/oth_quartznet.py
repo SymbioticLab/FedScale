@@ -18,11 +18,13 @@ class CtcDecoder(object):
     vocabulary : list of str
         Vocabulary of the dataset.
     """
+
     def __init__(self,
                  vocabulary):
         super().__init__()
         self.blank_id = len(vocabulary)
-        self.labels_map = dict([(i, vocabulary[i]) for i in range(len(vocabulary))])
+        self.labels_map = dict([(i, vocabulary[i])
+                               for i in range(len(vocabulary))])
 
     def __call__(self,
                  predictions):
@@ -47,7 +49,8 @@ class CtcDecoder(object):
                 if (p != previous or previous == self.blank_id) and p != self.blank_id:
                     decoded_prediction.append(p)
                 previous = p
-            hypothesis = "".join([self.labels_map[c] for c in decoded_prediction])
+            hypothesis = "".join([self.labels_map[c]
+                                 for c in decoded_prediction])
             hypotheses.append(hypothesis)
         return hypotheses
 
@@ -130,7 +133,7 @@ def oth_quartznet5x5_en_ls(pretrained=False, num_classes=29, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_en(pretrained=False, num_classes=29, **kwargs):
@@ -139,7 +142,7 @@ def oth_quartznet15x5_en(pretrained=False, num_classes=29, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_en_nr(pretrained=False, num_classes=29, **kwargs):
@@ -148,7 +151,7 @@ def oth_quartznet15x5_en_nr(pretrained=False, num_classes=29, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_fr(pretrained=False, num_classes=43, **kwargs):
@@ -157,7 +160,7 @@ def oth_quartznet15x5_fr(pretrained=False, num_classes=43, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_de(pretrained=False, num_classes=32, **kwargs):
@@ -166,7 +169,7 @@ def oth_quartznet15x5_de(pretrained=False, num_classes=32, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_it(pretrained=False, num_classes=39, **kwargs):
@@ -175,7 +178,7 @@ def oth_quartznet15x5_it(pretrained=False, num_classes=39, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_es(pretrained=False, num_classes=36, **kwargs):
@@ -184,7 +187,7 @@ def oth_quartznet15x5_es(pretrained=False, num_classes=36, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_ca(pretrained=False, num_classes=39, **kwargs):
@@ -193,7 +196,7 @@ def oth_quartznet15x5_ca(pretrained=False, num_classes=39, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_pl(pretrained=False, num_classes=34, **kwargs):
@@ -202,7 +205,7 @@ def oth_quartznet15x5_pl(pretrained=False, num_classes=34, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_ru(pretrained=False, num_classes=35, **kwargs):
@@ -211,7 +214,7 @@ def oth_quartznet15x5_ru(pretrained=False, num_classes=35, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_jasperdr10x5_en(pretrained=False, num_classes=29, **kwargs):
@@ -220,7 +223,7 @@ def oth_jasperdr10x5_en(pretrained=False, num_classes=29, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_jasperdr10x5_en_nr(pretrained=False, num_classes=29, **kwargs):
@@ -229,7 +232,7 @@ def oth_jasperdr10x5_en_nr(pretrained=False, num_classes=29, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def oth_quartznet15x5_ru34(pretrained=False, num_classes=34, **kwargs):
@@ -238,7 +241,7 @@ def oth_quartznet15x5_ru34(pretrained=False, num_classes=34, **kwargs):
     raw_net = EncDecCTCModel.restore_from(quartznet_nemo_path)
     net = QuartzNet(raw_net=raw_net, num_classes=num_classes)
     net = net.cpu()
-    return net#, raw_net
+    return net  # , raw_net
 
 
 def _calc_width(net):

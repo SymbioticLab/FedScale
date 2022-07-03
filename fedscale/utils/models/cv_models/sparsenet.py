@@ -3,7 +3,8 @@
     Original paper: 'Sparsely Aggregated Convolutional Networks,' https://arxiv.org/abs/1801.05895.
 """
 
-__all__ = ['SparseNet', 'sparsenet121', 'sparsenet161', 'sparsenet169', 'sparsenet201', 'sparsenet264']
+__all__ = ['SparseNet', 'sparsenet121', 'sparsenet161',
+           'sparsenet169', 'sparsenet201', 'sparsenet264']
 
 import os
 import math
@@ -45,6 +46,7 @@ class SparseBlock(nn.Module):
     dropout_rate : float
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -88,6 +90,7 @@ class SparseStage(nn.Module):
     do_transition : bool
         Whether use transition block.
     """
+
     def __init__(self,
                  in_channels,
                  channels_per_stage,
@@ -143,6 +146,7 @@ class SparseNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -169,7 +173,8 @@ class SparseNet(nn.Module):
                 do_transition=(i != 0))
             in_channels = channels_per_stage[-1]
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PreResActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PreResActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -235,12 +240,14 @@ def get_sparsenet(num_layers,
         growth_rate = 32
         layers = [6, 12, 64, 48]
     else:
-        raise ValueError("Unsupported SparseNet version with number of layers {}".format(num_layers))
+        raise ValueError(
+            "Unsupported SparseNet version with number of layers {}".format(num_layers))
 
     from functools import reduce
     channels = reduce(
         lambda xi, yi: xi + [reduce(
-            lambda xj, yj: xj + [sum(sparsenet_exponential_fetch([xj[0]] + [yj[0]] * (yj[1] + 1)))],
+            lambda xj, yj: xj +
+            [sum(sparsenet_exponential_fetch([xj[0]] + [yj[0]] * (yj[1] + 1)))],
             zip([growth_rate] * yi, range(yi)),
             [xi[-1][-1] // 2])[1:]],
         layers,
@@ -254,7 +261,8 @@ def get_sparsenet(num_layers,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

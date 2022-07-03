@@ -24,8 +24,10 @@ class CovPool(torch.autograd.Function):
         batch, channels, height, width = x.size()
         n = height * width
         xn = x.reshape(batch, channels, n)
-        identity_bar = ((1.0 / n) * torch.eye(n, dtype=xn.dtype, device=xn.device)).unsqueeze(dim=0).repeat(batch, 1, 1)
-        ones_bar = torch.full((batch, n, n), fill_value=(-1.0 / n / n), dtype=xn.dtype, device=xn.device)
+        identity_bar = ((1.0 / n) * torch.eye(n, dtype=xn.dtype,
+                        device=xn.device)).unsqueeze(dim=0).repeat(batch, 1, 1)
+        ones_bar = torch.full(
+            (batch, n, n), fill_value=(-1.0 / n / n), dtype=xn.dtype, device=xn.device)
         i_bar = identity_bar + ones_bar
         sigma = xn.bmm(i_bar).bmm(xn.transpose(1, 2))
         ctx.save_for_backward(x, i_bar)
@@ -60,7 +62,8 @@ class NewtonSchulzSqrt(torch.autograd.Function):
         batch, cols, rows = x.size()
         assert (cols == rows)
         m = cols
-        identity = torch.eye(m, dtype=x.dtype, device=x.device).unsqueeze(dim=0).repeat(batch, 1, 1)
+        identity = torch.eye(m, dtype=x.dtype, device=x.device).unsqueeze(
+            dim=0).repeat(batch, 1, 1)
         x_trace = (x * identity).sum(dim=(1, 2), keepdim=True)
         a = x / x_trace
         i3 = 3.0 * identity
@@ -92,22 +95,32 @@ class NewtonSchulzSqrt(torch.autograd.Function):
 
         grad_yn = grad_c * x_trace_sqrt
         b = i3 - yi[:, n - 2, :, :].bmm(zi[:, n - 2, :, :])
-        grad_yi = 0.5 * (grad_yn.bmm(b) - zi[:, n - 2, :, :].bmm(yi[:, n - 2, :, :]).bmm(grad_yn))
-        grad_zi = -0.5 * yi[:, n - 2, :, :].bmm(grad_yn).bmm(yi[:, n - 2, :, :])
+        grad_yi = 0.5 * \
+            (grad_yn.bmm(b) - zi[:, n - 2, :,
+             :].bmm(yi[:, n - 2, :, :]).bmm(grad_yn))
+        grad_zi = -0.5 * yi[:, n - 2, :,
+                            :].bmm(grad_yn).bmm(yi[:, n - 2, :, :])
         for i in range(n - 3, -1, -1):
             b = i3 - yi[:, i, :, :].bmm(zi[:, i, :, :])
             ziyi = zi[:, i, :, :].bmm(yi[:, i, :, :])
-            grad_yi_m1 = 0.5 * (grad_yi.bmm(b) - zi[:, i, :, :].bmm(grad_zi).bmm(zi[:, i, :, :]) - ziyi.bmm(grad_yi))
-            grad_zi_m1 = 0.5 * (b.bmm(grad_zi) - yi[:, i, :, :].bmm(grad_yi).bmm(yi[:, i, :, :]) - grad_zi.bmm(ziyi))
+            grad_yi_m1 = 0.5 * \
+                (grad_yi.bmm(
+                    b) - zi[:, i, :, :].bmm(grad_zi).bmm(zi[:, i, :, :]) - ziyi.bmm(grad_yi))
+            grad_zi_m1 = 0.5 * \
+                (b.bmm(grad_zi) -
+                 yi[:, i, :, :].bmm(grad_yi).bmm(yi[:, i, :, :]) - grad_zi.bmm(ziyi))
             grad_yi = grad_yi_m1
             grad_zi = grad_zi_m1
 
         grad_a = 0.5 * (grad_yi.bmm(i3 - a) - grad_zi - a.bmm(grad_yi))
 
         x_trace_sqr = x_trace * x_trace
-        grad_atx_trace = (grad_a.transpose(1, 2).bmm(x) * identity).sum(dim=(1, 2), keepdim=True)
-        grad_cty_trace = (grad_c.transpose(1, 2).bmm(yn) * identity).sum(dim=(1, 2), keepdim=True)
-        grad_x_extra = (0.5 * grad_cty_trace / x_trace_sqrt - grad_atx_trace / x_trace_sqr).repeat(1, m, m) * identity
+        grad_atx_trace = (grad_a.transpose(1, 2).bmm(
+            x) * identity).sum(dim=(1, 2), keepdim=True)
+        grad_cty_trace = (grad_c.transpose(1, 2).bmm(
+            yn) * identity).sum(dim=(1, 2), keepdim=True)
+        grad_x_extra = (0.5 * grad_cty_trace / x_trace_sqrt -
+                        grad_atx_trace / x_trace_sqr).repeat(1, m, m) * identity
 
         grad_x = grad_a / x_trace + grad_x_extra
         return grad_x, None
@@ -148,6 +161,7 @@ class iSQRTCOVPool(nn.Module):
     num_iter : int, default 5
         Number of iterations (num_iter > 1).
     """
+
     def __init__(self,
                  num_iter=5):
         super(iSQRTCOVPool, self).__init__()
@@ -187,6 +201,7 @@ class iSQRTCOVResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -208,7 +223,8 @@ class iSQRTCOVResNet(nn.Module):
         for i, channels_per_stage in enumerate(channels):
             stage = nn.Sequential()
             for j, out_channels in enumerate(channels_per_stage):
-                stride = 2 if (j == 0) and (i not in [0, len(channels) - 1]) else 1
+                stride = 2 if (j == 0) and (
+                    i not in [0, len(channels) - 1]) else 1
                 stage.add_module("unit{}".format(j + 1), ResUnit(
                     in_channels=in_channels,
                     out_channels=out_channels,
@@ -280,7 +296,8 @@ def get_isqrtcovresnet(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported iSQRT-COV-ResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported iSQRT-COV-ResNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
     final_block_channels = 256
@@ -304,7 +321,8 @@ def get_isqrtcovresnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

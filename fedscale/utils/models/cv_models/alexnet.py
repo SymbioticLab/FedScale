@@ -32,6 +32,7 @@ class AlexConv(ConvBlock):
     use_lrn : bool
         Whether to use LRN layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -67,6 +68,7 @@ class AlexDense(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -95,6 +97,7 @@ class AlexOutputBlock(nn.Module):
     classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  in_channels,
                  classes):
@@ -142,6 +145,7 @@ class AlexNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  kernel_sizes,
@@ -239,7 +243,8 @@ def get_alexnet(version="a",
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

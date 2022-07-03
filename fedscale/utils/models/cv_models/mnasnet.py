@@ -34,6 +34,7 @@ class DwsExpSEResUnit(nn.Module):
     activation : str, default 'relu'
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -45,7 +46,8 @@ class DwsExpSEResUnit(nn.Module):
                  activation="relu"):
         super(DwsExpSEResUnit, self).__init__()
         assert (exp_factor >= 1)
-        self.residual = (in_channels == out_channels) and (stride == 1) and use_skip
+        self.residual = (in_channels == out_channels) and (
+            stride == 1) and use_skip
         self.use_exp_conv = exp_factor > 1
         self.use_se = se_factor > 0
         mid_channels = exp_factor * in_channels
@@ -101,6 +103,7 @@ class MnasInitBlock(nn.Module):
     use_skip : bool
         Whether to use skip connection in the second block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -137,6 +140,7 @@ class MnasFinalBlock(nn.Module):
     use_skip : bool
         Whether to use skip connection in the second block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -188,6 +192,7 @@ class MnasNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -282,7 +287,8 @@ def get_mnasnet(version,
     if version == "b1":
         init_block_channels = [32, 16]
         final_block_channels = [320, 1280]
-        channels = [[24, 24, 24], [40, 40, 40], [80, 80, 80, 96, 96], [192, 192, 192, 192]]
+        channels = [[24, 24, 24], [40, 40, 40], [
+            80, 80, 80, 96, 96], [192, 192, 192, 192]]
         kernels3 = [[1, 1, 1], [0, 0, 0], [0, 0, 0, 1, 1], [0, 0, 0, 0]]
         exp_factors = [[3, 3, 3], [3, 3, 3], [6, 6, 6, 6, 6], [6, 6, 6, 6]]
         se_factors = [[0, 0, 0], [0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0]]
@@ -291,7 +297,8 @@ def get_mnasnet(version,
     elif version == "a1":
         init_block_channels = [32, 16]
         final_block_channels = [320, 1280]
-        channels = [[24, 24], [40, 40, 40], [80, 80, 80, 80, 112, 112], [160, 160, 160]]
+        channels = [[24, 24], [40, 40, 40], [
+            80, 80, 80, 80, 112, 112], [160, 160, 160]]
         kernels3 = [[1, 1], [0, 0, 0], [1, 1, 1, 1, 1, 1], [0, 0, 0]]
         exp_factors = [[6, 6], [3, 3, 3], [6, 6, 6, 6, 6, 6], [6, 6, 6]]
         se_factors = [[0, 0], [4, 4, 4], [0, 0, 0, 0, 4, 4], [4, 4, 4]]
@@ -310,7 +317,8 @@ def get_mnasnet(version,
         raise ValueError("Unsupported MnasNet version {}".format(version))
 
     if width_scale != 1.0:
-        channels = [[round_channels(cij * width_scale) for cij in ci] for ci in channels]
+        channels = [[round_channels(cij * width_scale)
+                     for cij in ci] for ci in channels]
         init_block_channels = round_channels(init_block_channels * width_scale)
 
     net = MnasNet(
@@ -326,7 +334,8 @@ def get_mnasnet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -26,6 +26,7 @@ class ESPFinalBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -79,6 +80,7 @@ class ESPNet(ESPCNet):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  layers,
                  channels,
@@ -130,11 +132,11 @@ class ESPNet(ESPCNet):
             bn_eps=bn_eps,
             activation=(lambda: nn.PReLU(2 * num_classes))))
         self.up2.add_module("block2", ESPBlock(
-                in_channels=(2 * num_classes),
-                out_channels=num_classes,
-                downsample=False,
-                residual=False,
-                bn_eps=bn_eps))
+            in_channels=(2 * num_classes),
+            out_channels=num_classes,
+            downsample=False,
+            residual=False,
+            bn_eps=bn_eps))
         self.up2.add_module("block3", DeconvBlock(
             in_channels=num_classes,
             out_channels=num_classes,
@@ -207,7 +209,8 @@ def get_espnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -255,7 +258,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()

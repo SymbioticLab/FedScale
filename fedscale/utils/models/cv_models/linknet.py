@@ -30,6 +30,7 @@ class DecoderStage(nn.Module):
     bias : bool, default False
         Whether the layer uses a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -72,6 +73,7 @@ class LinkNetHead(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -135,6 +137,7 @@ class LinkNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels,
@@ -239,7 +242,8 @@ def get_linknet(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -293,7 +297,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()

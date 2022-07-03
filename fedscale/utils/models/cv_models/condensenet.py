@@ -33,6 +33,7 @@ class CondenseSimpleConv(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -102,6 +103,7 @@ class CondenseComplexConv(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -172,6 +174,7 @@ class CondenseUnit(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -210,6 +213,7 @@ class TransitionBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self):
         super(TransitionBlock, self).__init__()
         self.pool = nn.AvgPool2d(
@@ -233,6 +237,7 @@ class CondenseInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -259,6 +264,7 @@ class PostActivation(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(PostActivation, self).__init__()
@@ -284,6 +290,7 @@ class CondenseLinear(nn.Module):
     drop_rate : float
         Fraction of input channels for drop.
     """
+
     def __init__(self,
                  in_features,
                  out_features,
@@ -322,6 +329,7 @@ class CondenseNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -349,7 +357,8 @@ class CondenseNet(nn.Module):
                     groups=groups))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PostActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PostActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -407,7 +416,8 @@ def get_condensenet(num_layers,
         layers = [4, 6, 8, 10, 8]
         growth_rates = [8, 16, 32, 64, 128]
     else:
-        raise ValueError("Unsupported CondenseNet version with number of layers {}".format(num_layers))
+        raise ValueError(
+            "Unsupported CondenseNet version with number of layers {}".format(num_layers))
 
     from functools import reduce
     channels = reduce(lambda xi, yi:
@@ -426,7 +436,8 @@ def get_condensenet(num_layers,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

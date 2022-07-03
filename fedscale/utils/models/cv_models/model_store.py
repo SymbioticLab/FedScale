@@ -608,7 +608,8 @@ imgclsmob_repo_url = 'https://github.com/osmr/imgclsmob'
 
 def get_model_name_suffix_data(model_name):
     if model_name not in _model_sha1:
-        raise ValueError("Pretrained model for {name} is not available.".format(name=model_name))
+        raise ValueError(
+            "Pretrained model for {name} is not available.".format(name=model_name))
     error, sha1_hash, repo_release_tag, _, _, _, _, _, _, _ = _model_sha1[model_name]
     return error, sha1_hash, repo_release_tag
 
@@ -643,9 +644,11 @@ def get_model_file(model_name,
         if _check_sha1(file_path, sha1_hash):
             return file_path
         else:
-            logging.warning("Mismatch in the content of model file detected. Downloading again.")
+            logging.warning(
+                "Mismatch in the content of model file detected. Downloading again.")
     else:
-        logging.info("Model file not found. Downloading to {}.".format(file_path))
+        logging.info(
+            "Model file not found. Downloading to {}.".format(file_path))
 
     if not os.path.exists(local_model_store_dir_path):
         os.makedirs(local_model_store_dir_path)
@@ -665,7 +668,8 @@ def get_model_file(model_name,
     if _check_sha1(file_path, sha1_hash):
         return file_path
     else:
-        raise ValueError("Downloaded file has different hash. Please try again.")
+        raise ValueError(
+            "Downloaded file has different hash. Please try again.")
 
 
 def _download(url, path=None, overwrite=False, sha1_hash=None, retries=5, verify_ssl=True):
@@ -800,7 +804,8 @@ def load_model(net,
     if ignore_extra:
         pretrained_state = torch.load(file_path)
         model_dict = net.state_dict()
-        pretrained_state = {k: v for k, v in pretrained_state.items() if k in model_dict}
+        pretrained_state = {k: v for k,
+                            v in pretrained_state.items() if k in model_dict}
         net.load_state_dict(pretrained_state)
     else:
         net.load_state_dict(torch.load(file_path))
@@ -808,7 +813,8 @@ def load_model(net,
 
 def download_model(net,
                    model_name,
-                   local_model_store_dir_path=os.path.join("~", ".torch", "models"),
+                   local_model_store_dir_path=os.path.join(
+                       "~", ".torch", "models"),
                    ignore_extra=True):
     """
     Load model state dictionary from a file with downloading it if necessary.

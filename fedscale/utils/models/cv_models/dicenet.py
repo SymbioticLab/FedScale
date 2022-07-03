@@ -26,6 +26,7 @@ class SpatialDiceBranch(nn.Module):
     is_height : bool
         Is selected dimension height.
     """
+
     def __init__(self,
                  sp_size,
                  is_height):
@@ -52,7 +53,8 @@ class SpatialDiceBranch(nn.Module):
 
         if real_sp_size != self.base_sp_size:
             if real_sp_size < self.base_sp_size:
-                x = F.interpolate(x, size=base_in_size, mode="bilinear", align_corners=True)
+                x = F.interpolate(x, size=base_in_size,
+                                  mode="bilinear", align_corners=True)
             else:
                 x = F.adaptive_avg_pool2d(x, output_size=base_in_size)
 
@@ -63,7 +65,8 @@ class SpatialDiceBranch(nn.Module):
         changed_sp_size = x.size(self.index)
         if real_sp_size != changed_sp_size:
             if changed_sp_size < real_sp_size:
-                x = F.interpolate(x, size=real_in_size, mode="bilinear", align_corners=True)
+                x = F.interpolate(x, size=real_in_size,
+                                  mode="bilinear", align_corners=True)
             else:
                 x = F.adaptive_avg_pool2d(x, output_size=real_in_size)
 
@@ -81,6 +84,7 @@ class DiceBaseBlock(nn.Module):
     in_size : tuple of two ints
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  channels,
                  in_size):
@@ -132,6 +136,7 @@ class DiceAttBlock(nn.Module):
     reduction : int, default 4
         Squeeze reduction value.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -173,6 +178,7 @@ class DiceBlock(nn.Module):
     in_size : tuple of two ints
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -209,6 +215,7 @@ class StridedDiceLeftBranch(nn.Module):
     channels : int
         Number of input/output channels.
     """
+
     def __init__(self,
                  channels):
         super(StridedDiceLeftBranch, self).__init__()
@@ -240,6 +247,7 @@ class StridedDiceRightBranch(nn.Module):
     in_size : tuple of two ints
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  channels,
                  in_size):
@@ -277,6 +285,7 @@ class StridedDiceBlock(nn.Module):
     in_size : tuple of two ints
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -285,7 +294,8 @@ class StridedDiceBlock(nn.Module):
         assert (out_channels == 2 * in_channels)
 
         self.branches = Concurrent()
-        self.branches.add_module("left_branch", StridedDiceLeftBranch(channels=in_channels))
+        self.branches.add_module(
+            "left_branch", StridedDiceLeftBranch(channels=in_channels))
         self.branches.add_module("right_branch", StridedDiceRightBranch(
             channels=in_channels,
             in_size=in_size))
@@ -312,6 +322,7 @@ class ShuffledDiceRightBranch(nn.Module):
     in_size : tuple of two ints
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -345,6 +356,7 @@ class ShuffledDiceBlock(nn.Module):
     in_size : tuple of two ints
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -381,6 +393,7 @@ class DiceInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -416,6 +429,7 @@ class DiceClassifier(nn.Module):
     dropout_rate : float
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -460,6 +474,7 @@ class DiceNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -488,9 +503,11 @@ class DiceNet(nn.Module):
                     out_channels=out_channels,
                     in_size=in_size))
                 in_channels = out_channels
-                in_size = (in_size[0] // 2, in_size[1] // 2) if j == 0 else in_size
+                in_size = (in_size[0] // 2, in_size[1] //
+                           2) if j == 0 else in_size
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = DiceClassifier(
             in_channels=in_channels,
@@ -553,7 +570,8 @@ def get_dicenet(width_scale,
     }
 
     if width_scale not in channels_per_layers_dict.keys():
-        raise ValueError("Unsupported DiceNet with width scale: {}".format(width_scale))
+        raise ValueError(
+            "Unsupported DiceNet with width scale: {}".format(width_scale))
 
     channels_per_layers = channels_per_layers_dict[width_scale]
     layers = [3, 7, 3]
@@ -563,7 +581,8 @@ def get_dicenet(width_scale,
     else:
         init_block_channels = 16
 
-    channels = [[ci] * li for i, (ci, li) in enumerate(zip(channels_per_layers, layers))]
+    channels = [[ci] * li for i,
+                (ci, li) in enumerate(zip(channels_per_layers, layers))]
     for i in range(len(channels)):
         pred_channels = channels[i - 1][-1] if i != 0 else init_block_channels
         channels[i] = [pred_channels * 2] + channels[i]
@@ -587,7 +606,8 @@ def get_dicenet(width_scale,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

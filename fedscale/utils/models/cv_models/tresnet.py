@@ -55,6 +55,7 @@ class TResBlock(nn.Module):
     activation : str
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -103,6 +104,7 @@ class TResBottleneck(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -161,6 +163,7 @@ class ResADownBlock(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -203,6 +206,7 @@ class TResUnit(nn.Module):
     activation : str
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -282,6 +286,7 @@ class TResInitBlock(nn.Module):
     activation : str
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -320,6 +325,7 @@ class TResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -352,7 +358,8 @@ class TResNet(nn.Module):
                     activation=activation))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Sequential()
         self.output.add_module("fc", nn.Linear(
@@ -417,11 +424,13 @@ def get_tresnet(version,
 
     if width_scale != 1.0:
         init_block_channels = int(init_block_channels * width_scale)
-        channels_per_layers = [init_block_channels * (2 ** i) for i in range(len(channels_per_layers))]
+        channels_per_layers = [init_block_channels *
+                               (2 ** i) for i in range(len(channels_per_layers))]
 
     bottleneck = [False, False, True, True]
     bottleneck_factor = 4
-    channels_per_layers = [ci * bottleneck_factor if bi else ci for (ci, bi) in zip(channels_per_layers, bottleneck)]
+    channels_per_layers = [
+        ci * bottleneck_factor if bi else ci for (ci, bi) in zip(channels_per_layers, bottleneck)]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -433,7 +442,8 @@ def get_tresnet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1704.04861.
 """
 
-__all__ = ['MobileNet', 'mobilenet_w1', 'mobilenet_w3d4', 'mobilenet_wd2', 'mobilenet_wd4', 'get_mobilenet']
+__all__ = ['MobileNet', 'mobilenet_w1', 'mobilenet_w3d4',
+           'mobilenet_wd2', 'mobilenet_wd4', 'get_mobilenet']
 
 import os
 import torch.nn as nn
@@ -33,6 +34,7 @@ class MobileNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  first_stage_stride,
@@ -55,7 +57,8 @@ class MobileNet(nn.Module):
         for i, channels_per_stage in enumerate(channels[1:]):
             stage = nn.Sequential()
             for j, out_channels in enumerate(channels_per_stage):
-                stride = 2 if (j == 0) and ((i != 0) or first_stage_stride) else 1
+                stride = 2 if (j == 0) and (
+                    (i != 0) or first_stage_stride) else 1
                 stage.add_module("unit{}".format(j + 1), dwsconv3x3_block(
                     in_channels=in_channels,
                     out_channels=out_channels,
@@ -116,7 +119,8 @@ def get_mobilenet(width_scale,
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    channels = [[32], [64], [128, 128], [256, 256], [512, 512, 512, 512, 512, 512], [1024, 1024]]
+    channels = [[32], [64], [128, 128], [256, 256], [
+        512, 512, 512, 512, 512, 512], [1024, 1024]]
     first_stage_stride = False
 
     if width_scale != 1.0:
@@ -138,7 +142,8 @@ def get_mobilenet(width_scale,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

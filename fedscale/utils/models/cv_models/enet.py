@@ -26,6 +26,7 @@ class ENetMaxDownBlock(nn.Module):
     padding : int, or tuple/list of 2 int, or tuple/list of 4 int
         Padding value for convolution layer.
     """
+
     def __init__(self,
                  ext_channels,
                  kernel_size,
@@ -42,7 +43,8 @@ class ENetMaxDownBlock(nn.Module):
     def forward(self, x):
         x, max_indices = self.pool(x)
         branch, _, height, width = x.size()
-        pad = torch.zeros(branch, self.ext_channels, height, width, dtype=x.dtype, device=x.device)
+        pad = torch.zeros(branch, self.ext_channels, height,
+                          width, dtype=x.dtype, device=x.device)
         x = torch.cat((x, pad), dim=1)
         return x, max_indices
 
@@ -60,6 +62,7 @@ class ENetUpBlock(nn.Module):
     bias : bool
         Whether the layer uses a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -107,6 +110,7 @@ class ENetUnit(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -249,6 +253,7 @@ class ENetStage(nn.Module):
     downs : bool
         Whether to downscale or upscale.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -316,6 +321,7 @@ class ENetMixDownBlock(nn.Module):
     correct_size_mistmatch : bool, default False
         Whether to correct downscaled sizes of images.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -346,7 +352,8 @@ class ENetMixDownBlock(nn.Module):
         if self.correct_size_mismatch:
             diff_h = y2.size()[2] - y1.size()[2]
             diff_w = y2.size()[3] - y1.size()[3]
-            y1 = F.pad(y1, pad=(diff_w // 2, diff_w - diff_w // 2, diff_h // 2, diff_h - diff_h // 2))
+            y1 = F.pad(y1, pad=(diff_w // 2, diff_w - diff_w //
+                       2, diff_h // 2, diff_h - diff_h // 2))
 
         x = torch.cat((y2, y1), dim=1)
         x = self.norm_activ(x)
@@ -391,6 +398,7 @@ class ENet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -437,7 +445,8 @@ class ENet(nn.Module):
                 use_asym_convs=use_asym_convs[i],
                 dropout_rate=dropout_rates[i],
                 bias=bias,
-                activation=(encoder_activation if downs[i] == 1 else decoder_activation),
+                activation=(
+                    encoder_activation if downs[i] == 1 else decoder_activation),
                 down=(downs[i] == 1)))
             in_channels = channels_per_stage
 
@@ -486,10 +495,14 @@ def get_enet(model_name=None,
         Location for keeping the model parameters.
     """
     channels = [64, 128, 64, 16]
-    kernel_sizes = [[3, 3, 3, 3, 3], [3, 3, 3, 5, 3, 3, 3, 5, 3, 3, 3, 5, 3, 3, 3, 5, 3], [3, 3, 3], [3, 3]]
-    paddings = [[1, 1, 1, 1, 1], [1, 1, 2, 2, 4, 1, 8, 2, 16, 1, 2, 2, 4, 1, 8, 2, 16], [1, 1, 1], [1, 1]]
-    dilations = [[1, 1, 1, 1, 1], [1, 1, 2, 1, 4, 1, 8, 1, 16, 1, 2, 1, 4, 1, 8, 1, 16], [1, 1, 1], [1, 1]]
-    use_asym_convs = [[0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 0, 0], [0, 0]]
+    kernel_sizes = [[3, 3, 3, 3, 3], [3, 3, 3, 5, 3, 3, 3,
+                                      5, 3, 3, 3, 5, 3, 3, 3, 5, 3], [3, 3, 3], [3, 3]]
+    paddings = [[1, 1, 1, 1, 1], [1, 1, 2, 2, 4, 1, 8, 2,
+                                  16, 1, 2, 2, 4, 1, 8, 2, 16], [1, 1, 1], [1, 1]]
+    dilations = [[1, 1, 1, 1, 1], [1, 1, 2, 1, 4, 1, 8, 1,
+                                   16, 1, 2, 1, 4, 1, 8, 1, 16], [1, 1, 1], [1, 1]]
+    use_asym_convs = [[0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0,
+                                        0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 0, 0], [0, 0]]
     dropout_rates = [0.01, 0.1, 0.1, 0.1]
     downs = [1, 1, 0, 0]
     init_block_channels = 16
@@ -507,7 +520,8 @@ def get_enet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -555,7 +569,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()

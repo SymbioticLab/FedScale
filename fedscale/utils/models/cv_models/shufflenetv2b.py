@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1807.11164.
 """
 
-__all__ = ['ShuffleNetV2b', 'shufflenetv2b_wd2', 'shufflenetv2b_w1', 'shufflenetv2b_w3d2', 'shufflenetv2b_w2']
+__all__ = ['ShuffleNetV2b', 'shufflenetv2b_wd2',
+           'shufflenetv2b_w1', 'shufflenetv2b_w3d2', 'shufflenetv2b_w2']
 
 import os
 import torch
@@ -32,6 +33,7 @@ class ShuffleUnit(nn.Module):
     shuffle_group_first : bool
         Whether to use channel shuffle in group first mode.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -112,6 +114,7 @@ class ShuffleInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -159,6 +162,7 @@ class ShuffleNetV2b(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -263,7 +267,8 @@ def get_shufflenetv2b(width_scale,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

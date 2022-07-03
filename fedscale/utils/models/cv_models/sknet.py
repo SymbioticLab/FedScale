@@ -33,6 +33,7 @@ class SKConvBlock(nn.Module):
     min_channels : int, default 32
         Minimal number of intermediate channels (`L` parameter in the paper).
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -98,6 +99,7 @@ class SKNetBottleneck(nn.Module):
     bottleneck_factor : int, default 2
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -138,6 +140,7 @@ class SKNetUnit(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -185,6 +188,7 @@ class SKNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -261,7 +265,8 @@ def get_sknet(blocks,
     elif blocks == 152:
         layers = [3, 8, 36, 3]
     else:
-        raise ValueError("Unsupported SKNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported SKNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
     channels_per_layers = [256, 512, 1024, 2048]
@@ -274,7 +279,8 @@ def get_sknet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

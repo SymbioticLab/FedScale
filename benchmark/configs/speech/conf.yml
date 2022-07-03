@@ -23,9 +23,9 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: executor.py
+executor_entry: execution/executor.py
 
-aggregator_entry: aggregator.py
+aggregator_entry: aggregation/aggregator.py
 
 auth:
     ssh_user: ""
@@ -37,13 +37,13 @@ setup_commands:
     - export NCCL_SOCKET_IFNAME='enp94s0f0'         # Run "ifconfig" to ensure the right NIC for nccl if you have multiple NICs
 
 # ========== Additional job configuration ========== 
-# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
 
 job_conf: 
     - job_name: google_speech                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
     - task: speech
-    - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - num_participants: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: google_speech                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/google_speech    # Path of the dataset
     - data_map_file: $FEDSCALE_HOME/benchmark/dataset/data/google_speech/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided

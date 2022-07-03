@@ -33,7 +33,8 @@ def outmask_fill(x, x_len, value=0.0):
         Resulted tensor.
     """
     max_len = x.size(2)
-    mask = torch.arange(max_len).to(x_len.device).expand(len(x_len), max_len) >= x_len.unsqueeze(1)
+    mask = torch.arange(max_len).to(x_len.device).expand(
+        len(x_len), max_len) >= x_len.unsqueeze(1)
     mask = mask.unsqueeze(dim=1).to(device=x.device)
     x = x.masked_fill(mask=mask, value=value)
     return x
@@ -125,6 +126,7 @@ class NemoAudioReader(object):
     trunc_value : int or None, default None
         Value to truncate.
     """
+
     def __init__(self, desired_audio_sample_rate=16000):
         super(NemoAudioReader, self).__init__()
         self.desired_audio_sample_rate = desired_audio_sample_rate
@@ -152,7 +154,8 @@ class NemoAudioReader(object):
 
         if sample_rate != self.desired_audio_sample_rate:
             from librosa.core import resample as lr_resample
-            audio_data = lr_resample(y=audio_data, orig_sr=sample_rate, target_sr=self.desired_audio_sample_rate)
+            audio_data = lr_resample(
+                y=audio_data, orig_sr=sample_rate, target_sr=self.desired_audio_sample_rate)
         if audio_data.ndim >= 2:
             audio_data = np.mean(audio_data, axis=1)
 
@@ -202,6 +205,7 @@ class NemoMelSpecExtractor(nn.Module):
     dither : float, default 1.0e-05
         Amount of white-noise dithering.
     """
+
     def __init__(self,
                  sample_rate=16000,
                  window_size_sec=0.02,
@@ -297,11 +301,13 @@ class CtcDecoder(object):
     vocabulary : list of str
         Vocabulary of the dataset.
     """
+
     def __init__(self,
                  vocabulary):
         super().__init__()
         self.blank_id = len(vocabulary)
-        self.labels_map = dict([(i, vocabulary[i]) for i in range(len(vocabulary))])
+        self.labels_map = dict([(i, vocabulary[i])
+                               for i in range(len(vocabulary))])
 
     def __call__(self,
                  predictions):
@@ -326,7 +332,8 @@ class CtcDecoder(object):
                 if (p != previous or previous == self.blank_id) and p != self.blank_id:
                     decoded_prediction.append(p)
                 previous = p
-            hypothesis = "".join([self.labels_map[c] for c in decoded_prediction])
+            hypothesis = "".join([self.labels_map[c]
+                                 for c in decoded_prediction])
             hypotheses.append(hypothesis)
         return hypotheses
 
@@ -386,6 +393,7 @@ class MaskConv1d(nn.Conv1d):
     use_mask : bool, default True
         Whether to use mask.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -484,6 +492,7 @@ class MaskConvBlock1d(nn.Module):
     dropout_rate : float, default 0.0
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -570,6 +579,7 @@ class ChannelShuffle1d(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  channels,
                  groups):
@@ -624,6 +634,7 @@ class DwsConvBlock1d(nn.Module):
     dropout_rate : float, default 0.0
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -707,6 +718,7 @@ class JasperUnit(nn.Module):
     use_dr : bool
         Whether to use dense residual scheme.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -741,7 +753,8 @@ class JasperUnit(nn.Module):
 
         self.body = DualPathSequential()
         for i in range(repeat):
-            activation = (lambda: nn.ReLU(inplace=True)) if i < repeat - 1 else None
+            activation = (lambda: nn.ReLU(inplace=True)
+                          ) if i < repeat - 1 else None
             dropout_rate_i = dropout_rate if i < repeat - 1 else 0.0
             self.body.add_module("block{}".format(i + 1), block_class(
                 in_channels=in_channels,
@@ -760,7 +773,8 @@ class JasperUnit(nn.Module):
 
     def forward(self, x, x_len):
         if self.use_dr:
-            x_len, y, y_len = x_len if type(x_len) is tuple else (x_len, None, None)
+            x_len, y, y_len = x_len if type(
+                x_len) is tuple else (x_len, None, None)
             y = [x] if y is None else y + [x]
             y_len = [x_len] if y_len is None else y_len + [x_len]
             identity, _ = self.identity_block(y, y_len)
@@ -802,6 +816,7 @@ class JasperFinalBlock(nn.Module):
     use_dr : bool
         Whether to use dense residual scheme.
     """
+
     def __init__(self,
                  in_channels,
                  channels,
@@ -874,6 +889,7 @@ class Jasper(nn.Module):
     num_classes : int, default 29
         Number of classification classes (number of graphemes).
     """
+
     def __init__(self,
                  channels,
                  kernel_sizes,
@@ -962,7 +978,8 @@ class Jasper(nn.Module):
         x = self.output(x)
 
         if self.return_text:
-            greedy_predictions = x.transpose(1, 2).log_softmax(dim=-1).argmax(dim=-1, keepdim=False).cpu().numpy()
+            greedy_predictions = x.transpose(1, 2).log_softmax(
+                dim=-1).argmax(dim=-1, keepdim=False).cpu().numpy()
             return self.ctc_decoder(greedy_predictions)
         else:
             return x, x_len
@@ -1014,13 +1031,17 @@ def get_jasper(version,
         kernel_sizes_per_stage = [33, 33, 39, 51, 63, 75, 87, 1]
         dropout_rates_per_stage = [0.0] * 8
     else:
-        raise ValueError("Unsupported Jasper family model type: {}".format(model_type))
+        raise ValueError(
+            "Unsupported Jasper family model type: {}".format(model_type))
 
     stage_repeat = np.full((8,), 1)
     stage_repeat[1:-2] *= main_stage_repeat
-    channels = sum([[a] * r for (a, r) in zip(channels_per_stage, stage_repeat)], [])
-    kernel_sizes = sum([[a] * r for (a, r) in zip(kernel_sizes_per_stage, stage_repeat)], [])
-    dropout_rates = sum([[a] * r for (a, r) in zip(dropout_rates_per_stage, stage_repeat)], [])
+    channels = sum(
+        [[a] * r for (a, r) in zip(channels_per_stage, stage_repeat)], [])
+    kernel_sizes = sum(
+        [[a] * r for (a, r) in zip(kernel_sizes_per_stage, stage_repeat)], [])
+    dropout_rates = sum(
+        [[a] * r for (a, r) in zip(dropout_rates_per_stage, stage_repeat)], [])
 
     net = Jasper(
         channels=channels,
@@ -1035,7 +1056,8 @@ def get_jasper(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -1137,7 +1159,8 @@ def _test():
         aud_scale = 640 if from_audio else 1
         seq_len = np.random.randint(150, 250, batch) * aud_scale
         seq_len_max = seq_len.max() + 2
-        x_shape = (batch, seq_len_max) if from_audio else (batch, audio_features, seq_len_max)
+        x_shape = (batch, seq_len_max) if from_audio else (
+            batch, audio_features, seq_len_max)
         x = torch.randn(x_shape)
         x_len = torch.tensor(seq_len, dtype=torch.long, device=x.device)
 
@@ -1150,7 +1173,8 @@ def _test():
 
         assert (tuple(y.size())[:2] == (batch, net.num_classes))
         if from_audio:
-            assert (y.size()[2] in range(seq_len_max // aud_scale * 2, seq_len_max // aud_scale * 2 + 9))
+            assert (y.size()[2] in range(seq_len_max //
+                    aud_scale * 2, seq_len_max // aud_scale * 2 + 9))
         else:
             assert (y.size()[2] in [seq_len_max // 2, seq_len_max // 2 + 1])
 

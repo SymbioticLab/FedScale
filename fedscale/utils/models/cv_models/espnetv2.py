@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1811.11431.
 """
 
-__all__ = ['ESPNetv2', 'espnetv2_wd2', 'espnetv2_w1', 'espnetv2_w5d4', 'espnetv2_w3d2', 'espnetv2_w2']
+__all__ = ['ESPNetv2', 'espnetv2_wd2', 'espnetv2_w1',
+           'espnetv2_w5d4', 'espnetv2_w3d2', 'espnetv2_w2']
 
 import os
 import math
@@ -23,6 +24,7 @@ class PreActivation(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(PreActivation, self).__init__()
@@ -46,6 +48,7 @@ class ShortcutBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -74,6 +77,7 @@ class HierarchicalConcurrent(nn.Sequential):
     axis : int, default 1
         The axis on which to concatenate the outputs.
     """
+
     def __init__(self, axis=1):
         super(HierarchicalConcurrent, self).__init__()
         self.axis = axis
@@ -106,6 +110,7 @@ class ESPBlock(nn.Module):
     dilations : list of int
         Dilation values for branches.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -168,6 +173,7 @@ class DownsampleBlock(nn.Module):
     dilations : list of int
         Dilation values for branches in EESP block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -212,6 +218,7 @@ class ESPInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -245,6 +252,7 @@ class ESPFinalBlock(nn.Module):
     final_groups : int
         Number of groups in the last convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -293,6 +301,7 @@ class ESPNetv2(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -390,12 +399,16 @@ def get_espnetv2(width_scale,
     layers = [1, 4, 8, 4]
 
     max_dilation_list = [6, 5, 4, 3, 2]
-    max_dilations = [[max_dilation_list[i]] + [max_dilation_list[i + 1]] * (li - 1) for (i, li) in enumerate(layers)]
-    dilations = [[sorted([k + 1 if k < dij else 1 for k in range(branches)]) for dij in di] for di in max_dilations]
+    max_dilations = [[max_dilation_list[i]] + [max_dilation_list[i + 1]]
+                     * (li - 1) for (i, li) in enumerate(layers)]
+    dilations = [[sorted([k + 1 if k < dij else 1 for k in range(branches)])
+                  for dij in di] for di in max_dilations]
 
     base_channels = 32
-    weighed_base_channels = math.ceil(float(math.floor(base_channels * width_scale)) / branches) * branches
-    channels_per_layers = [weighed_base_channels * pow(2, i + 1) for i in range(len(layers))]
+    weighed_base_channels = math.ceil(
+        float(math.floor(base_channels * width_scale)) / branches) * branches
+    channels_per_layers = [weighed_base_channels *
+                           pow(2, i + 1) for i in range(len(layers))]
 
     init_block_channels = base_channels if weighed_base_channels > base_channels else weighed_base_channels
     final_block_channels = 1024 if width_scale <= 1.5 else 1280
@@ -412,7 +425,8 @@ def get_espnetv2(width_scale,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

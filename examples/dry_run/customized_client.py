@@ -6,7 +6,7 @@ import numpy as np
 
 import sys, os
 
-from fedscale.core.client import Client
+from fedscale.core.execution.client import Client
 
 class Customized_Client(Client):
     """Basic client component in Federated Learning"""

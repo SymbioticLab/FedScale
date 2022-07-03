@@ -29,6 +29,7 @@ class DeepLabv3FinalBlock(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -50,7 +51,8 @@ class DeepLabv3FinalBlock(nn.Module):
         x = self.conv1(x)
         x = self.dropout(x)
         x = self.conv2(x)
-        x = F.interpolate(x, size=out_size, mode="bilinear", align_corners=True)
+        x = F.interpolate(x, size=out_size, mode="bilinear",
+                          align_corners=True)
         return x
 
 
@@ -67,6 +69,7 @@ class ASPPAvgBranch(nn.Module):
     upscale_out_size : tuple of 2 int
         Spatial size of output image for the bilinear upsampling operation.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -98,6 +101,7 @@ class AtrousSpatialPyramidPooling(nn.Module):
     upscale_out_size : tuple of 2 int
         Spatial size of the input tensor for the bilinear upsampling operation.
     """
+
     def __init__(self,
                  in_channels,
                  upscale_out_size):
@@ -155,6 +159,7 @@ class DeepLabv3(nn.Module):
     num_classes : int, default 21
         Number of segmentation classes.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels=2048,
@@ -171,7 +176,8 @@ class DeepLabv3(nn.Module):
         self.fixed_size = fixed_size
 
         self.backbone = backbone
-        pool_out_size = (self.in_size[0] // 8, self.in_size[1] // 8) if fixed_size else None
+        pool_out_size = (
+            self.in_size[0] // 8, self.in_size[1] // 8) if fixed_size else None
         self.pool = AtrousSpatialPyramidPooling(
             in_channels=backbone_out_channels,
             upscale_out_size=pool_out_size)
@@ -242,7 +248,8 @@ def get_deeplabv3(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -270,7 +277,8 @@ def deeplabv3_resnetd50b_voc(pretrained_backbone=False, num_classes=21, aux=True
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd50b_voc",
                          **kwargs)
@@ -294,7 +302,8 @@ def deeplabv3_resnetd101b_voc(pretrained_backbone=False, num_classes=21, aux=Tru
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd101b_voc",
                          **kwargs)
@@ -318,7 +327,8 @@ def deeplabv3_resnetd152b_voc(pretrained_backbone=False, num_classes=21, aux=Tru
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd152b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd152b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd152b_voc",
                          **kwargs)
@@ -342,7 +352,8 @@ def deeplabv3_resnetd50b_coco(pretrained_backbone=False, num_classes=21, aux=Tru
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd50b_coco",
                          **kwargs)
@@ -366,7 +377,8 @@ def deeplabv3_resnetd101b_coco(pretrained_backbone=False, num_classes=21, aux=Tr
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd101b_coco",
                          **kwargs)
@@ -390,7 +402,8 @@ def deeplabv3_resnetd152b_coco(pretrained_backbone=False, num_classes=21, aux=Tr
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd152b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd152b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd152b_coco",
                          **kwargs)
@@ -414,7 +427,8 @@ def deeplabv3_resnetd50b_ade20k(pretrained_backbone=False, num_classes=150, aux=
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd50b_ade20k",
                          **kwargs)
@@ -438,7 +452,8 @@ def deeplabv3_resnetd101b_ade20k(pretrained_backbone=False, num_classes=150, aux
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux, model_name="deeplabv3_resnetd101b_ade20k",
                          **kwargs)
@@ -462,7 +477,8 @@ def deeplabv3_resnetd50b_cityscapes(pretrained_backbone=False, num_classes=19, a
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux,
                          model_name="deeplabv3_resnetd50b_cityscapes", **kwargs)
@@ -486,7 +502,8 @@ def deeplabv3_resnetd101b_cityscapes(pretrained_backbone=False, num_classes=19, 
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_deeplabv3(backbone=backbone, num_classes=num_classes, aux=aux,
                          model_name="deeplabv3_resnetd101b_cityscapes", **kwargs)
@@ -538,8 +555,10 @@ def _test():
             assert (model != deeplabv3_resnetd152b_coco or weight_count == 76763626)
             assert (model != deeplabv3_resnetd50b_ade20k or weight_count == 42194156)
             assert (model != deeplabv3_resnetd101b_ade20k or weight_count == 61186284)
-            assert (model != deeplabv3_resnetd50b_cityscapes or weight_count == 42126822)
-            assert (model != deeplabv3_resnetd101b_cityscapes or weight_count == 61118950)
+            assert (
+                model != deeplabv3_resnetd50b_cityscapes or weight_count == 42126822)
+            assert (
+                model != deeplabv3_resnetd101b_cityscapes or weight_count == 61118950)
         else:
             assert (model != deeplabv3_resnetd50b_voc or weight_count == 39762645)
             assert (model != deeplabv3_resnetd101b_voc or weight_count == 58754773)
@@ -549,8 +568,10 @@ def _test():
             assert (model != deeplabv3_resnetd152b_coco or weight_count == 74398421)
             assert (model != deeplabv3_resnetd50b_ade20k or weight_count == 39795798)
             assert (model != deeplabv3_resnetd101b_ade20k or weight_count == 58787926)
-            assert (model != deeplabv3_resnetd50b_cityscapes or weight_count == 39762131)
-            assert (model != deeplabv3_resnetd101b_cityscapes or weight_count == 58754259)
+            assert (
+                model != deeplabv3_resnetd50b_cityscapes or weight_count == 39762131)
+            assert (
+                model != deeplabv3_resnetd101b_cityscapes or weight_count == 58754259)
 
         x = torch.randn(1, 3, in_size[0], in_size[1])
         ys = net(x)

@@ -26,6 +26,7 @@ class NvpAttExpEncoder(nn.Module):
     encoder_features : int
         Number of encoder features.
     """
+
     def __init__(self,
                  audio_features,
                  audio_window_size,
@@ -92,7 +93,8 @@ class NvpAttExpEncoder(nn.Module):
         batch = x.shape[0]
         batch_seq_len = batch * self.seq_len
 
-        x = x.view(batch_seq_len, 1, self.audio_window_size, self.audio_features)
+        x = x.view(batch_seq_len, 1, self.audio_window_size,
+                   self.audio_features)
         x = x.transpose(1, 3).contiguous()
         x = self.conv_branch(x)
         x = x.view(batch_seq_len, 1, -1)
@@ -132,6 +134,7 @@ class NvpAttExp(nn.Module):
     encoder_features : int, default 32
         Number of encoder features.
     """
+
     def __init__(self,
                  audio_features=29,
                  audio_window_size=16,
@@ -198,7 +201,8 @@ def get_nvpattexp(base_persons,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

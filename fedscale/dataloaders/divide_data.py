@@ -4,7 +4,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 import logging
 import time
-import random, csv
+import random
+import csv
 from collections import defaultdict
 #from argParser import args
 
@@ -53,7 +54,7 @@ class DataPartitioner(object):
         return len(self.partitions)
 
     def getClientLabel(self):
-        return [len(self.client_label_cnt[i]) for i in range( self.getClientLen())]
+        return [len(self.client_label_cnt[i]) for i in range(self.getClientLen())]
 
     def trace_partition(self, data_map_file):
         """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category, category_id>"""
@@ -78,7 +79,8 @@ class DataPartitioner(object):
                         unique_clientIds[client_id] = len(unique_clientIds)
 
                     clientId_maps[sample_id] = unique_clientIds[client_id]
-                    self.client_label_cnt[unique_clientIds[client_id]].add(row[-1])
+                    self.client_label_cnt[unique_clientIds[client_id]].add(
+                        row[-1])
                     sample_id += 1
 
         # Partition data given mapping
@@ -86,7 +88,6 @@ class DataPartitioner(object):
 
         for idx in range(sample_id):
             self.partitions[clientId_maps[idx]].append(idx)
-
 
     def partition_data_helper(self, num_clients, data_map_file=None):
 
@@ -113,12 +114,12 @@ class DataPartitioner(object):
     def use(self, partition, istest):
         resultIndex = self.partitions[partition]
 
-        exeuteLength = len(resultIndex) if not istest else int(len(resultIndex) * self.args.test_ratio)
+        exeuteLength = len(resultIndex) if not istest else int(
+            len(resultIndex) * self.args.test_ratio)
         resultIndex = resultIndex[:exeuteLength]
         self.rng.shuffle(resultIndex)
 
         return Partition(self.data, resultIndex)
-
 
     def getSize(self):
         # return the size of samples
@@ -138,5 +139,3 @@ def select_dataset(rank, partition, batch_size, args, isTest=False, collate_fn=N
     if collate_fn is not None:
         return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, timeout=time_out, num_workers=num_loaders, drop_last=dropLast, collate_fn=collate_fn)
     return DataLoader(partition, batch_size=batch_size, shuffle=True, pin_memory=True, timeout=time_out, num_workers=num_loaders, drop_last=dropLast)
-
-

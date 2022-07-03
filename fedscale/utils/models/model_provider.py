@@ -704,7 +704,7 @@ _models = {
     'nin_cifar100': nin_cifar100,
     'nin_svhn': nin_svhn,
 
-    #'resnet34_cifar10': resnet34_cifar10,
+    # 'resnet34_cifar10': resnet34_cifar10,
     'resnet14_cifar10': resnet14_cifar10,
     'resnet20_cifar10': resnet20_cifar10,
     'resnet20_cifar100': resnet20_cifar100,
@@ -1234,4 +1234,3 @@ def get_cv_model(name, **kwargs):
         raise ValueError("Unsupported model: {}".format(name))
     net = _models[name](**kwargs)
     return net
-

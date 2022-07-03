@@ -44,6 +44,7 @@ class OctConv(nn.Conv2d):
     oct_value : int, default 2
         Octave value.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -74,7 +75,8 @@ class OctConv(nn.Conv2d):
             in_alpha = 0.0
             out_alpha = 0.0
         else:
-            raise ValueError("Unsupported octave convolution mode: {}".format(oct_mode))
+            raise ValueError(
+                "Unsupported octave convolution mode: {}".format(oct_mode))
         self.h_in_channels = int(in_channels * (1.0 - in_alpha))
         self.h_out_channels = int(out_channels * (1.0 - out_alpha))
         self.l_out_channels = out_channels - self.h_out_channels
@@ -112,14 +114,16 @@ class OctConv(nn.Conv2d):
 
         hhy = F.conv2d(
             input=hx,
-            weight=self.weight[0:self.h_out_channels, 0:self.h_in_channels, :, :],
+            weight=self.weight[0:self.h_out_channels,
+                               0:self.h_in_channels, :, :],
             bias=self.bias[0:self.h_out_channels] if self.bias is not None else None,
             **self.conv_kwargs)
 
         if self.oct_mode != "first":
             hlx = F.conv2d(
                 input=lx,
-                weight=self.weight[0:self.h_out_channels, self.h_in_channels:, :, :],
+                weight=self.weight[0:self.h_out_channels,
+                                   self.h_in_channels:, :, :],
                 bias=self.bias[0:self.h_out_channels] if self.bias is not None else None,
                 **self.conv_kwargs)
 
@@ -134,7 +138,8 @@ class OctConv(nn.Conv2d):
             stride=(self.oct_value, self.oct_value))
         lhy = F.conv2d(
             input=lhx,
-            weight=self.weight[self.h_out_channels:, 0:self.h_in_channels, :, :],
+            weight=self.weight[self.h_out_channels:,
+                               0:self.h_in_channels, :, :],
             bias=self.bias[self.h_out_channels:] if self.bias is not None else None,
             **self.conv_kwargs)
 
@@ -157,7 +162,8 @@ class OctConv(nn.Conv2d):
             llx = lx
         lly = F.conv2d(
             input=llx,
-            weight=self.weight[self.h_out_channels:, self.h_in_channels:, :, :],
+            weight=self.weight[self.h_out_channels:,
+                               self.h_in_channels:, :, :],
             bias=self.bias[self.h_out_channels:] if self.bias is not None else None,
             **self.conv_kwargs)
 
@@ -199,6 +205,7 @@ class OctConvBlock(nn.Module):
     activate : bool, default True
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -390,6 +397,7 @@ class OctResBlock(nn.Module):
     oct_mode : str, default 'std'
         Octave convolution mode. It can be 'first', 'norm', 'last', or 'std'.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -407,7 +415,8 @@ class OctResBlock(nn.Module):
             in_channels=out_channels,
             out_channels=out_channels,
             oct_alpha=oct_alpha,
-            oct_mode=("std" if oct_mode == "last" else (oct_mode if oct_mode != "first" else "norm")),
+            oct_mode=("std" if oct_mode == "last" else (
+                oct_mode if oct_mode != "first" else "norm")),
             activation=None,
             activate=False)
 
@@ -442,6 +451,7 @@ class OctResBottleneck(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -473,7 +483,8 @@ class OctResBottleneck(nn.Module):
             in_channels=mid_channels,
             out_channels=out_channels,
             oct_alpha=oct_alpha,
-            oct_mode=("std" if oct_mode == "last" else (oct_mode if oct_mode != "first" else "norm")),
+            oct_mode=("std" if oct_mode == "last" else (
+                oct_mode if oct_mode != "first" else "norm")),
             activation=None,
             activate=False)
 
@@ -509,6 +520,7 @@ class OctResUnit(nn.Module):
     conv1_stride : bool, default False
         Whether to use stride in the first or the second convolution layer of the block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -589,6 +601,7 @@ class OctResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -719,7 +732,8 @@ def get_octresnet(blocks,
     elif blocks == 269:
         layers = [3, 30, 48, 8]
     else:
-        raise ValueError("Unsupported Oct-ResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported Oct-ResNet with number of blocks: {}".format(blocks))
 
     if bottleneck:
         assert (sum(layers) * 3 + 2 == blocks)
@@ -731,7 +745,8 @@ def get_octresnet(blocks,
 
     if bottleneck:
         bottleneck_factor = 4
-        channels_per_layers = [ci * bottleneck_factor for ci in channels_per_layers]
+        channels_per_layers = [
+            ci * bottleneck_factor for ci in channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -750,7 +765,8 @@ def get_octresnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

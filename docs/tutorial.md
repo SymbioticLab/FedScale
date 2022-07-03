@@ -15,28 +15,31 @@ conda activate fedscale
 ```
 
 ## Create Your Experiment Profile
-Go to `../benchmark/configs/femnist/` directory and modify/create your **[configuration file](../benchmark/configs/femnist/conf.yml)** to submit your job.
+Go to `benchmark/configs/femnist/` directory and modify/create your **[configuration file](../benchmark/configs/femnist/conf.yml)** to submit your job.
 
 
 Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need.
  
 ## Submit Your FL Job
 
-Go to `../benchmark/` and use [manager.py](../benchmark/manager.py)
-to submit your FL job.
-`manager.py` will automatically launch the `aggregator.py` and `executor.py` to start the FL evaluation.
+Use `fedscale driver submit [conf_yml_path]` (Or `python docker/driver.py submit`) to submit your FL job. It will automatically launch the `aggregator.py` and `executor.py` to start the FL evaluation.
 You can either choose to evaluate your large-scale FL experiment over a GPU cluster or test your code on your local machine.
- 
- 
+
+To stop your job:
+```
+fedscale driver stop [job_name]
+# Or python docker/driver.py stop [job_name] (specified in the yml config)
+```
+
 ### Test on Your Local Machine by Submitting Config
  
 It is more convenient to first test your code without a GPU cluster. 
 First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `benchmark/configs/femnist/conf.yml` if you are training without using any GPU.
 
 Set `ps_ip` and `worker_ips` to be `localhost` and `localhost:[x]` by default, where x represent how many executors you want to run on your local machine.
-Go to `./benchmark/` and run the following command to start your FL job:
+Then run the following command to start your FL job:
 ```
-python manager.py start configs/femnist/conf.yml
+python driver.py start benchmark/configs/femnist/conf.yml
 ```
 
 ### Test on Your Local Machine with Jupyter Notebook
@@ -56,12 +59,12 @@ means launching `4 executors` on each of the first two GPUs on `10.0.0.2` to tra
 
 Make sure the node you submit the job has access to the computation nodes.
 Also make sure you have synchronized the code across all the nodes.
-Go to `../benchmark/` and run the following command to start your FL job:
+Then run the following command to submit your FL job:
 
 ```
-python manager.py submit configs/femnist/conf.yml
+fedscale driver submit [conf_yml_path] 
+# Or python docker/driver.py submit benchmark/configs/femnist/conf.yml
 ```
-
 
 ## Monitor Your Training Progress
  

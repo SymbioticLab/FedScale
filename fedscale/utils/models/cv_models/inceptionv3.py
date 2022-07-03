@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1512.00567.
 """
 
-__all__ = ['InceptionV3', 'inceptionv3', 'MaxPoolBranch', 'AvgPoolBranch', 'Conv1x1Branch', 'ConvSeqBranch']
+__all__ = ['InceptionV3', 'inceptionv3', 'MaxPoolBranch',
+           'AvgPoolBranch', 'Conv1x1Branch', 'ConvSeqBranch']
 
 import os
 import torch
@@ -16,6 +17,7 @@ class MaxPoolBranch(nn.Module):
     """
     Inception specific max pooling branch block.
     """
+
     def __init__(self):
         super(MaxPoolBranch, self).__init__()
         self.pool = nn.MaxPool2d(
@@ -43,6 +45,7 @@ class AvgPoolBranch(nn.Module):
     count_include_pad : bool, default True
         Whether to include the zero-padding in the averaging calculation.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -78,6 +81,7 @@ class Conv1x1Branch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -112,6 +116,7 @@ class ConvSeqBranch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -160,6 +165,7 @@ class ConvSeq3x3Branch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -215,6 +221,7 @@ class InceptionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -265,6 +272,7 @@ class ReductionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -310,6 +318,7 @@ class InceptionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -333,7 +342,8 @@ class InceptionBUnit(nn.Module):
             bn_eps=bn_eps))
         self.branches.add_module("branch3", ConvSeqBranch(
             in_channels=in_channels,
-            out_channels_list=(mid_channels, mid_channels, mid_channels, mid_channels, 192),
+            out_channels_list=(mid_channels, mid_channels,
+                               mid_channels, mid_channels, 192),
             kernel_size_list=(1, (7, 1), (1, 7), (7, 1), (1, 7)),
             strides_list=(1, 1, 1, 1, 1),
             padding_list=(0, (3, 0), (0, 3), (3, 0), (0, 3)),
@@ -361,6 +371,7 @@ class ReductionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -404,6 +415,7 @@ class InceptionCUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -453,6 +465,7 @@ class InceptInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -534,6 +547,7 @@ class InceptionV3(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -633,7 +647,8 @@ def get_inceptionv3(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

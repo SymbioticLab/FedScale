@@ -27,6 +27,7 @@ class PeleeBranch1(nn.Module):
     stride : int or tuple/list of 2 int, default 1
         Strides of the second convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -60,6 +61,7 @@ class PeleeBranch2(nn.Module):
     mid_channels : int
         Number of intermediate channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -93,6 +95,7 @@ class StemBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -140,6 +143,7 @@ class DenseBlock(nn.Module):
     bottleneck_size : int
         Bottleneck width.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -175,6 +179,7 @@ class TransitionBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -215,6 +220,7 @@ class PeleeNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -313,7 +319,8 @@ def get_peleenet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

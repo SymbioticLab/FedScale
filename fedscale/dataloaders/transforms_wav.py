@@ -11,9 +11,11 @@ from torch.utils.data import Dataset
 
 random.seed(233)
 
+
 def should_apply_transform(prob=0.5):
     """Transforms are only randomly applied with the given probability."""
     return random.random() < prob
+
 
 class LoadAudio(object):
     """Loads an audio into a numpy array."""
@@ -33,6 +35,7 @@ class LoadAudio(object):
         data['sample_rate'] = sample_rate
         return data
 
+
 class FixAudioLength(object):
     """Either pads or truncates an audio into a fixed length."""
 
@@ -46,8 +49,10 @@ class FixAudioLength(object):
         if length < len(samples):
             data['samples'] = samples[:length]
         elif length > len(samples):
-            data['samples'] = np.pad(samples, (0, length - len(samples)), "constant")
+            data['samples'] = np.pad(
+                samples, (0, length - len(samples)), "constant")
         return data
+
 
 class ChangeAmplitude(object):
     """Changes amplitude of an audio randomly."""
@@ -59,8 +64,10 @@ class ChangeAmplitude(object):
         if not should_apply_transform():
             return data
 
-        data['samples'] = data['samples'] * random.uniform(*self.amplitude_range)
+        data['samples'] = data['samples'] * \
+            random.uniform(*self.amplitude_range)
         return data
+
 
 class ChangeSpeedAndPitchAudio(object):
     """Change the speed of an audio. This transform also changes the pitch of the audio."""
@@ -75,9 +82,11 @@ class ChangeSpeedAndPitchAudio(object):
         samples = data['samples']
         sample_rate = data['sample_rate']
         scale = random.uniform(-self.max_scale, self.max_scale)
-        speed_fac = 1.0  / (1 + scale)
-        data['samples'] = np.interp(np.arange(0, len(samples), speed_fac), np.arange(0,len(samples)), samples).astype(np.float32)
+        speed_fac = 1.0 / (1 + scale)
+        data['samples'] = np.interp(np.arange(0, len(samples), speed_fac), np.arange(
+            0, len(samples)), samples).astype(np.float32)
         return data
+
 
 class StretchAudio(object):
     """Stretches an audio randomly."""
@@ -90,8 +99,10 @@ class StretchAudio(object):
             return data
 
         scale = random.uniform(-self.max_scale, self.max_scale)
-        data['samples'] = librosa.effects.time_stretch(data['samples'], 1+scale)
+        data['samples'] = librosa.effects.time_stretch(
+            data['samples'], 1+scale)
         return data
+
 
 class TimeshiftAudio(object):
     """Shifts an audio randomly."""
@@ -113,6 +124,7 @@ class TimeshiftAudio(object):
         data['samples'] = samples[:len(samples) - a] if a else samples[b:]
         return data
 
+
 class AddBackgroundNoise(Dataset):
     """Adds a random background noise."""
 
@@ -130,6 +142,7 @@ class AddBackgroundNoise(Dataset):
         data['samples'] = samples * (1 - percentage) + noise * percentage
         return data
 
+
 class ToMelSpectrogram(object):
     """Creates the mel spectrogram from an audio. The result is a 32x32 matrix."""
 
@@ -139,9 +152,11 @@ class ToMelSpectrogram(object):
     def __call__(self, data):
         samples = data['samples']
         sample_rate = data['sample_rate']
-        s = librosa.feature.melspectrogram(samples, sr=sample_rate, n_mels=self.n_mels)
+        s = librosa.feature.melspectrogram(
+            samples, sr=sample_rate, n_mels=self.n_mels)
         data['mel_spectrogram'] = librosa.power_to_db(s, ref=np.max)
         return data
+
 
 class ToTensor(object):
     """Converts into a tensor."""

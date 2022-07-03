@@ -34,6 +34,7 @@ class PolyConv(nn.Module):
     num_blocks : int
         Number of blocks (BatchNorm layers).
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -89,6 +90,7 @@ class MaxPoolBranch(nn.Module):
     """
     PolyNet specific max pooling branch block.
     """
+
     def __init__(self):
         super(MaxPoolBranch, self).__init__()
         self.pool = nn.MaxPool2d(
@@ -112,6 +114,7 @@ class Conv1x1Branch(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -136,6 +139,7 @@ class Conv3x3Branch(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -168,6 +172,7 @@ class ConvSeqBranch(nn.Module):
     padding_list : list of tuple of int or tuple of tuple/list of 2 int
         List of padding values for convolution layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -214,6 +219,7 @@ class PolyConvSeqBranch(nn.Module):
     num_blocks : int
         Number of blocks for PolyConv.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -247,6 +253,7 @@ class TwoWayABlock(nn.Module):
     """
     PolyNet type Inception-A block.
     """
+
     def __init__(self):
         super(TwoWayABlock, self).__init__()
         in_channels = 384
@@ -282,6 +289,7 @@ class TwoWayBBlock(nn.Module):
     """
     PolyNet type Inception-B block.
     """
+
     def __init__(self):
         super(TwoWayBBlock, self).__init__()
         in_channels = 1152
@@ -311,6 +319,7 @@ class TwoWayCBlock(nn.Module):
     """
     PolyNet type Inception-C block.
     """
+
     def __init__(self):
         super(TwoWayCBlock, self).__init__()
         in_channels = 2048
@@ -349,6 +358,7 @@ class PolyPreBBlock(nn.Module):
     num_blocks : int
         Number of blocks (BatchNorm layers).
     """
+
     def __init__(self,
                  num_blocks):
         super(PolyPreBBlock, self).__init__()
@@ -385,6 +395,7 @@ class PolyPreCBlock(nn.Module):
     num_blocks : int
         Number of blocks (BatchNorm layers).
     """
+
     def __init__(self,
                  num_blocks):
         super(PolyPreCBlock, self).__init__()
@@ -443,6 +454,7 @@ class MultiResidual(nn.Module):
     num_blocks : int
         Number of residual branches.
     """
+
     def __init__(self,
                  scale,
                  res_block,
@@ -451,7 +463,8 @@ class MultiResidual(nn.Module):
         assert (num_blocks >= 1)
         self.scale = scale
 
-        self.res_blocks = nn.ModuleList([res_block() for _ in range(num_blocks)])
+        self.res_blocks = nn.ModuleList(
+            [res_block() for _ in range(num_blocks)])
         self.activ = nn.ReLU(inplace=False)
 
     def forward(self, x):
@@ -477,6 +490,7 @@ class PolyResidual(nn.Module):
     pre_block : Module class
         Preliminary block.
     """
+
     def __init__(self,
                  scale,
                  res_block,
@@ -487,7 +501,8 @@ class PolyResidual(nn.Module):
         self.scale = scale
 
         self.pre_block = pre_block(num_blocks=num_blocks)
-        self.res_blocks = nn.ModuleList([res_block() for _ in range(num_blocks)])
+        self.res_blocks = nn.ModuleList(
+            [res_block() for _ in range(num_blocks)])
         self.activ = nn.ReLU(inplace=False)
 
     def forward(self, x):
@@ -518,6 +533,7 @@ class PolyBaseUnit(nn.Module):
     poly_pre_block : Module class, default None
         Preliminary branch block for poly-stage.
     """
+
     def __init__(self,
                  two_way_scale,
                  two_way_block,
@@ -561,6 +577,7 @@ class PolyAUnit(PolyBaseUnit):
     poly_scale : float
         Scale value for 2-way stage.
     """
+
     def __init__(self,
                  two_way_scale,
                  poly_scale=0.0):
@@ -581,6 +598,7 @@ class PolyBUnit(PolyBaseUnit):
     poly_scale : float
         Scale value for 2-way stage.
     """
+
     def __init__(self,
                  two_way_scale,
                  poly_scale):
@@ -603,6 +621,7 @@ class PolyCUnit(PolyBaseUnit):
     poly_scale : float
         Scale value for 2-way stage.
     """
+
     def __init__(self,
                  two_way_scale,
                  poly_scale):
@@ -618,6 +637,7 @@ class ReductionAUnit(nn.Module):
     """
     PolyNet type Reduction-A unit.
     """
+
     def __init__(self):
         super(ReductionAUnit, self).__init__()
         in_channels = 384
@@ -646,6 +666,7 @@ class ReductionBUnit(nn.Module):
     """
     PolyNet type Reduction-B unit.
     """
+
     def __init__(self):
         super(ReductionBUnit, self).__init__()
         in_channels = 1152
@@ -680,6 +701,7 @@ class PolyBlock3a(nn.Module):
     """
     PolyNet type Mixed-3a block.
     """
+
     def __init__(self):
         super(PolyBlock3a, self).__init__()
         self.branches = Concurrent()
@@ -697,6 +719,7 @@ class PolyBlock4a(nn.Module):
     """
     PolyNet type Mixed-4a block.
     """
+
     def __init__(self):
         super(PolyBlock4a, self).__init__()
         self.branches = Concurrent()
@@ -722,6 +745,7 @@ class PolyBlock5a(nn.Module):
     """
     PolyNet type Mixed-5a block.
     """
+
     def __init__(self):
         super(PolyBlock5a, self).__init__()
         self.branches = Concurrent()
@@ -744,6 +768,7 @@ class PolyInitBlock(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(PolyInitBlock, self).__init__()
@@ -793,6 +818,7 @@ class PolyNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  two_way_scales,
                  poly_scales,
@@ -866,12 +892,16 @@ def get_polynet(model_name=None,
         Location for keeping the model parameters.
     """
     two_way_scales = [
-        [1.000000, 0.992308, 0.984615, 0.976923, 0.969231, 0.961538, 0.953846, 0.946154, 0.938462, 0.930769],
-        [0.000000, 0.915385, 0.900000, 0.884615, 0.869231, 0.853846, 0.838462, 0.823077, 0.807692, 0.792308, 0.776923],
+        [1.000000, 0.992308, 0.984615, 0.976923, 0.969231,
+            0.961538, 0.953846, 0.946154, 0.938462, 0.930769],
+        [0.000000, 0.915385, 0.900000, 0.884615, 0.869231, 0.853846,
+            0.838462, 0.823077, 0.807692, 0.792308, 0.776923],
         [0.000000, 0.761538, 0.746154, 0.730769, 0.715385, 0.700000]]
     poly_scales = [
-        [0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000],
-        [0.000000, 0.923077, 0.907692, 0.892308, 0.876923, 0.861538, 0.846154, 0.830769, 0.815385, 0.800000, 0.784615],
+        [0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+            0.000000, 0.000000, 0.000000, 0.000000, 0.000000],
+        [0.000000, 0.923077, 0.907692, 0.892308, 0.876923, 0.861538,
+            0.846154, 0.830769, 0.815385, 0.800000, 0.784615],
         [0.000000, 0.769231, 0.753846, 0.738462, 0.723077, 0.707692]]
 
     net = PolyNet(
@@ -881,7 +911,8 @@ def get_polynet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -67,6 +67,7 @@ class ChannetConv(nn.Module):
     activate : bool, default True
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -210,6 +211,7 @@ class ChannetDwsConvBlock(nn.Module):
     dropout_rate : float, default 0.0
         Dropout rate.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -248,6 +250,7 @@ class SimpleGroupBlock(nn.Module):
     dropout_rate : float
         Dropout rate.
     """
+
     def __init__(self,
                  channels,
                  multi_blocks,
@@ -279,6 +282,7 @@ class ChannelwiseConv2d(nn.Module):
     dropout_rate : float
         Dropout rate.
     """
+
     def __init__(self,
                  groups,
                  dropout_rate):
@@ -320,6 +324,7 @@ class ConvGroupBlock(nn.Module):
     dropout_rate : float
         Dropout rate.
     """
+
     def __init__(self,
                  channels,
                  multi_blocks,
@@ -364,6 +369,7 @@ class ChannetUnit(nn.Module):
     merge_type : str
         Type of sub-block output merging.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -449,6 +455,7 @@ class ChannelNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  block_names,
@@ -523,11 +530,13 @@ def get_channelnet(model_name=None,
         Location for keeping the model parameters.
     """
 
-    channels = [[[32, 64]], [[128, 128]], [[256, 256]], [[512, 512], [512, 512]], [[1024, 1024]]]
+    channels = [[[32, 64]], [[128, 128]], [[256, 256]],
+                [[512, 512], [512, 512]], [[1024, 1024]]]
     block_names = [[["channet_conv3x3", "channet_dws_conv_block"]],
                    [["channet_dws_conv_block", "channet_dws_conv_block"]],
                    [["channet_dws_conv_block", "channet_dws_conv_block"]],
-                   [["channet_dws_conv_block", "simple_group_block"], ["conv_group_block", "conv_group_block"]],
+                   [["channet_dws_conv_block", "simple_group_block"],
+                       ["conv_group_block", "conv_group_block"]],
                    [["channet_dws_conv_block", "channet_dws_conv_block"]]]
     merge_types = [["cat"], ["cat"], ["cat"], ["add", "add"], ["seq"]]
 
@@ -539,7 +548,8 @@ def get_channelnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

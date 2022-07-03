@@ -37,6 +37,7 @@ class MixConv(nn.Module):
     axis : int, default 1
         The axis on which to concatenate the outputs.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -48,10 +49,12 @@ class MixConv(nn.Module):
                  bias=False,
                  axis=1):
         super(MixConv, self).__init__()
-        kernel_size = kernel_size if isinstance(kernel_size, list) else [kernel_size]
+        kernel_size = kernel_size if isinstance(
+            kernel_size, list) else [kernel_size]
         padding = padding if isinstance(padding, list) else [padding]
         kernel_count = len(kernel_size)
-        self.splitted_in_channels = self.split_channels(in_channels, kernel_count)
+        self.splitted_in_channels = self.split_channels(
+            in_channels, kernel_count)
         splitted_out_channels = self.split_channels(out_channels, kernel_count)
         for i, kernel_size_i in enumerate(kernel_size):
             in_channels_i = self.splitted_in_channels[i]
@@ -66,7 +69,8 @@ class MixConv(nn.Module):
                     stride=stride,
                     padding=padding_i,
                     dilation=dilation,
-                    groups=(out_channels_i if out_channels == groups else groups),
+                    groups=(out_channels_i if out_channels ==
+                            groups else groups),
                     bias=bias))
         self.axis = axis
 
@@ -114,6 +118,7 @@ class MixConvBlock(nn.Module):
     activate : bool, default True
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -228,6 +233,7 @@ class MixUnit(nn.Module):
     activation : str
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -316,6 +322,7 @@ class MixInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -370,6 +377,7 @@ class MixNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -394,7 +402,8 @@ class MixNet(nn.Module):
         for i, channels_per_stage in enumerate(channels):
             stage = nn.Sequential()
             for j, out_channels in enumerate(channels_per_stage):
-                stride = 2 if ((j == 0) and (i != 3)) or ((j == len(channels_per_stage) // 2) and (i == 3)) else 1
+                stride = 2 if ((j == 0) and (i != 3)) or (
+                    (j == len(channels_per_stage) // 2) and (i == 3)) else 1
                 exp_kernel_count = exp_kernel_counts[i][j]
                 conv1_kernel_count = conv1_kernel_counts[i][j]
                 conv2_kernel_count = conv2_kernel_counts[i][j]
@@ -466,27 +475,38 @@ def get_mixnet(version,
 
     if version == "s":
         init_block_channels = 16
-        channels = [[24, 24], [40, 40, 40, 40], [80, 80, 80], [120, 120, 120, 200, 200, 200]]
-        exp_kernel_counts = [[2, 2], [1, 2, 2, 2], [1, 1, 1], [2, 2, 2, 1, 1, 1]]
-        conv1_kernel_counts = [[1, 1], [3, 2, 2, 2], [3, 2, 2], [3, 4, 4, 5, 4, 4]]
-        conv2_kernel_counts = [[2, 2], [1, 2, 2, 2], [2, 2, 2], [2, 2, 2, 1, 2, 2]]
+        channels = [[24, 24], [40, 40, 40, 40], [
+            80, 80, 80], [120, 120, 120, 200, 200, 200]]
+        exp_kernel_counts = [[2, 2], [1, 2, 2, 2],
+                             [1, 1, 1], [2, 2, 2, 1, 1, 1]]
+        conv1_kernel_counts = [[1, 1], [3, 2, 2, 2],
+                               [3, 2, 2], [3, 4, 4, 5, 4, 4]]
+        conv2_kernel_counts = [[2, 2], [1, 2, 2, 2],
+                               [2, 2, 2], [2, 2, 2, 1, 2, 2]]
         exp_factors = [[6, 3], [6, 6, 6, 6], [6, 6, 6], [6, 3, 3, 6, 6, 6]]
         se_factors = [[0, 0], [2, 2, 2, 2], [4, 4, 4], [2, 2, 2, 2, 2, 2]]
     elif version == "m":
         init_block_channels = 24
-        channels = [[32, 32], [40, 40, 40, 40], [80, 80, 80, 80], [120, 120, 120, 120, 200, 200, 200, 200]]
-        exp_kernel_counts = [[2, 2], [1, 2, 2, 2], [1, 2, 2, 2], [1, 2, 2, 2, 1, 1, 1, 1]]
-        conv1_kernel_counts = [[3, 1], [4, 2, 2, 2], [3, 4, 4, 4], [1, 4, 4, 4, 4, 4, 4, 4]]
-        conv2_kernel_counts = [[2, 2], [1, 2, 2, 2], [1, 2, 2, 2], [1, 2, 2, 2, 1, 2, 2, 2]]
-        exp_factors = [[6, 3], [6, 6, 6, 6], [6, 6, 6, 6], [6, 3, 3, 3, 6, 6, 6, 6]]
-        se_factors = [[0, 0], [2, 2, 2, 2], [4, 4, 4, 4], [2, 2, 2, 2, 2, 2, 2, 2]]
+        channels = [[32, 32], [40, 40, 40, 40], [80, 80, 80, 80],
+                    [120, 120, 120, 120, 200, 200, 200, 200]]
+        exp_kernel_counts = [[2, 2], [1, 2, 2, 2],
+                             [1, 2, 2, 2], [1, 2, 2, 2, 1, 1, 1, 1]]
+        conv1_kernel_counts = [[3, 1], [4, 2, 2, 2],
+                               [3, 4, 4, 4], [1, 4, 4, 4, 4, 4, 4, 4]]
+        conv2_kernel_counts = [[2, 2], [1, 2, 2, 2],
+                               [1, 2, 2, 2], [1, 2, 2, 2, 1, 2, 2, 2]]
+        exp_factors = [[6, 3], [6, 6, 6, 6], [
+            6, 6, 6, 6], [6, 3, 3, 3, 6, 6, 6, 6]]
+        se_factors = [[0, 0], [2, 2, 2, 2], [
+            4, 4, 4, 4], [2, 2, 2, 2, 2, 2, 2, 2]]
     else:
         raise ValueError("Unsupported MixNet version {}".format(version))
 
     final_block_channels = 1536
 
     if width_scale != 1.0:
-        channels = [[round_channels(cij * width_scale) for cij in ci] for ci in channels]
+        channels = [[round_channels(cij * width_scale)
+                     for cij in ci] for ci in channels]
         init_block_channels = round_channels(init_block_channels * width_scale)
 
     net = MixNet(
@@ -502,7 +522,8 @@ def get_mixnet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

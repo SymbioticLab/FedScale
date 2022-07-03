@@ -3,7 +3,8 @@
     Original paper: 'Squeeze-and-Excitation Networks,' https://arxiv.org/abs/1709.01507.
 """
 
-__all__ = ['SENet', 'senet16', 'senet28', 'senet40', 'senet52', 'senet103', 'senet154', 'SEInitBlock']
+__all__ = ['SENet', 'senet16', 'senet28', 'senet40',
+           'senet52', 'senet103', 'senet154', 'SEInitBlock']
 
 import os
 import math
@@ -29,6 +30,7 @@ class SENetBottleneck(nn.Module):
     bottleneck_width: int
         Width of bottleneck block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -80,6 +82,7 @@ class SENetUnit(nn.Module):
     identity_conv3x3 : bool, default False
         Whether to use 3x3 convolution in the identity link.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -135,6 +138,7 @@ class SEInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -185,6 +189,7 @@ class SENet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -281,7 +286,8 @@ def get_senet(blocks,
         layers = [3, 8, 36, 3]
         cardinality = 64
     else:
-        raise ValueError("Unsupported SENet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported SENet with number of blocks: {}".format(blocks))
 
     bottleneck_width = 4
     init_block_channels = 128
@@ -298,7 +304,8 @@ def get_senet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

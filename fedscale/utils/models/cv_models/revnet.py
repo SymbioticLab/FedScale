@@ -80,7 +80,8 @@ class ReversibleBlockFunction(torch.autograd.Function):
             y2_ = x2_ + gm(y1_)
             y = torch.cat((y1_, y2_), dim=1)
 
-            dd = torch.autograd.grad(y, (x1_, x2_) + tuple(gm.parameters()) + tuple(fm.parameters()), grad_y)
+            dd = torch.autograd.grad(
+                y, (x1_, x2_) + tuple(gm.parameters()) + tuple(fm.parameters()), grad_y)
 
             gm_params_len = len([p for p in gm.parameters()])
             gm_params_grads = dd[2:2 + gm_params_len]
@@ -107,6 +108,7 @@ class ReversibleBlock(nn.Module):
     gm : nn.Module
         Gm-function.
     """
+
     def __init__(self,
                  fm,
                  gm):
@@ -118,7 +120,8 @@ class ReversibleBlock(nn.Module):
     def forward(self, x):
         assert (x.shape[1] % 2 == 0)
 
-        params = [w for w in self.fm.parameters()] + [w for w in self.gm.parameters()]
+        params = [w for w in self.fm.parameters()] + \
+            [w for w in self.gm.parameters()]
         y = self.rev_funct(x, self.fm, self.gm, *params)
 
         x.data.set_()
@@ -154,6 +157,7 @@ class RevResBlock(nn.Module):
     preactivate : bool
         Whether use pre-activation for the first convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -197,6 +201,7 @@ class RevResBottleneck(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -246,6 +251,7 @@ class RevUnit(nn.Module):
     preactivate : bool
         Whether use pre-activation for the first convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -304,6 +310,7 @@ class RevPostActivation(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(RevPostActivation, self).__init__()
@@ -336,6 +343,7 @@ class RevNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -365,7 +373,8 @@ class RevNet(nn.Module):
                     preactivate=preactivate))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_postactiv", RevPostActivation(in_channels=in_channels))
+        self.features.add_module(
+            "final_postactiv", RevPostActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=56,
             stride=1))
@@ -423,7 +432,8 @@ def get_revnet(blocks,
         channels_per_layers = [128, 256, 512]
         bottleneck = True
     else:
-        raise ValueError("Unsupported RevNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported RevNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 32
 
@@ -437,7 +447,8 @@ def get_revnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

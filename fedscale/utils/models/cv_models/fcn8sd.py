@@ -28,6 +28,7 @@ class FCNFinalBlock(nn.Module):
     bottleneck_factor : int, default 4
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -49,7 +50,8 @@ class FCNFinalBlock(nn.Module):
         x = self.conv1(x)
         x = self.dropout(x)
         x = self.conv2(x)
-        x = F.interpolate(x, size=out_size, mode="bilinear", align_corners=True)
+        x = F.interpolate(x, size=out_size, mode="bilinear",
+                          align_corners=True)
         return x
 
 
@@ -75,6 +77,7 @@ class FCN8sd(nn.Module):
     num_classes : int, default 21
         Number of segmentation classes.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels=2048,
@@ -155,7 +158,8 @@ def get_fcn8sd(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -183,7 +187,8 @@ def fcn8sd_resnetd50b_voc(pretrained_backbone=False, num_classes=21, aux=True, *
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd50b_voc", **kwargs)
 
@@ -206,7 +211,8 @@ def fcn8sd_resnetd101b_voc(pretrained_backbone=False, num_classes=21, aux=True, 
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd101b_voc",
                       **kwargs)
@@ -230,7 +236,8 @@ def fcn8sd_resnetd50b_coco(pretrained_backbone=False, num_classes=21, aux=True, 
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd50b_coco",
                       **kwargs)
@@ -254,7 +261,8 @@ def fcn8sd_resnetd101b_coco(pretrained_backbone=False, num_classes=21, aux=True,
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd101b_coco",
                       **kwargs)
@@ -278,7 +286,8 @@ def fcn8sd_resnetd50b_ade20k(pretrained_backbone=False, num_classes=150, aux=Tru
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd50b_ade20k",
                       **kwargs)
@@ -302,7 +311,8 @@ def fcn8sd_resnetd101b_ade20k(pretrained_backbone=False, num_classes=150, aux=Tr
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd101b_ade20k",
                       **kwargs)
@@ -326,7 +336,8 @@ def fcn8sd_resnetd50b_cityscapes(pretrained_backbone=False, num_classes=19, aux=
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd50b(pretrained=pretrained_backbone,
+                          ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd50b_cityscapes",
                       **kwargs)
@@ -350,7 +361,8 @@ def fcn8sd_resnetd101b_cityscapes(pretrained_backbone=False, num_classes=19, aux
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone = resnetd101b(pretrained=pretrained_backbone, ordinary_init=False, bends=(3,)).features
+    backbone = resnetd101b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=(3,)).features
     del backbone[-1]
     return get_fcn8sd(backbone=backbone, num_classes=num_classes, aux=aux, model_name="fcn8sd_resnetd101b_cityscapes",
                       **kwargs)
@@ -399,7 +411,8 @@ def _test():
             assert (model != fcn8sd_resnetd50b_ade20k or weight_count == 35545324)
             assert (model != fcn8sd_resnetd101b_ade20k or weight_count == 54537452)
             assert (model != fcn8sd_resnetd50b_cityscapes or weight_count == 35444454)
-            assert (model != fcn8sd_resnetd101b_cityscapes or weight_count == 54436582)
+            assert (
+                model != fcn8sd_resnetd101b_cityscapes or weight_count == 54436582)
         else:
             assert (model != fcn8sd_resnetd50b_voc or weight_count == 33080789)
             assert (model != fcn8sd_resnetd101b_voc or weight_count == 52072917)
@@ -408,7 +421,8 @@ def _test():
             assert (model != fcn8sd_resnetd50b_ade20k or weight_count == 33146966)
             assert (model != fcn8sd_resnetd101b_ade20k or weight_count == 52139094)
             assert (model != fcn8sd_resnetd50b_cityscapes or weight_count == 33079763)
-            assert (model != fcn8sd_resnetd101b_cityscapes or weight_count == 52071891)
+            assert (
+                model != fcn8sd_resnetd101b_cityscapes or weight_count == 52071891)
 
         x = torch.randn(1, 3, in_size[0], in_size[1])
         ys = net(x)

@@ -38,6 +38,7 @@ class CIFARSEResNet(nn.Module):
     num_classes : int, default 10
         Number of classification num_classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -141,7 +142,8 @@ def get_seresnet_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -30,6 +30,7 @@ class VoVUnit(nn.Module):
     use_residual : bool
         Whether to use residual block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -82,6 +83,7 @@ class VoVInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -127,6 +129,7 @@ class VoVNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  branch_channels,
@@ -171,7 +174,8 @@ class VoVNet(nn.Module):
     def _init_params(self):
         for module in self.named_modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_uniform_(module.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_uniform_(
+                    module.weight, mode="fan_out", nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.constant_(module.bias, 0)
             elif isinstance(module, nn.BatchNorm2d):
@@ -214,7 +218,8 @@ def get_vovnet(blocks,
     elif blocks == 57:
         layers = [1, 1, 4, 3]
     else:
-        raise ValueError("Unsupported VoVNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported VoVNet with number of blocks: {}".format(blocks))
 
     assert (sum(layers) * 6 + 3 == blocks)
 
@@ -223,10 +228,12 @@ def get_vovnet(blocks,
     branch_channels_per_layers = [128, 160, 192, 224]
     if slim:
         channels_per_layers = [ci // 2 for ci in channels_per_layers]
-        branch_channels_per_layers = [ci // 2 for ci in branch_channels_per_layers]
+        branch_channels_per_layers = [
+            ci // 2 for ci in branch_channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
-    branch_channels = [[ci] * li for (ci, li) in zip(branch_channels_per_layers, layers)]
+    branch_channels = [
+        [ci] * li for (ci, li) in zip(branch_channels_per_layers, layers)]
 
     net = VoVNet(
         channels=channels,
@@ -236,7 +243,8 @@ def get_vovnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

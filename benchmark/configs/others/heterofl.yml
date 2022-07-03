@@ -28,12 +28,12 @@ setup_commands:
     - source $HOME/anaconda3/bin/activate fedscale
 
 # ========== Additional job configuration ========== 
-# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
 
 job_conf: 
     - job_name: heterofl                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
-    - total_worker: 10                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - num_participants: 10                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/    # Path of the dataset
     - model: resnet_heterofl                      # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2# - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default

@@ -31,6 +31,7 @@ class PFCUBranch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  channels,
                  kernel_size,
@@ -74,6 +75,7 @@ class PFCU(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  channels,
                  kernel_size,
@@ -141,6 +143,7 @@ class ESNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  layers,
                  channels,
@@ -271,7 +274,8 @@ def get_esnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

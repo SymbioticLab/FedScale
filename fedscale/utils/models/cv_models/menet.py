@@ -33,6 +33,7 @@ class MEUnit(nn.Module):
     ignore_group : bool
         Whether ignore group value in the first convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -130,6 +131,7 @@ class MEInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -179,6 +181,7 @@ class MENet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -287,7 +290,8 @@ def get_menet(first_stage_channels,
         init_block_channels = 48
         channels_per_layers = [456, 912, 1824]
     else:
-        raise ValueError("The {} of `first_stage_channels` is not supported".format(first_stage_channels))
+        raise ValueError("The {} of `first_stage_channels` is not supported".format(
+            first_stage_channels))
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -300,7 +304,8 @@ def get_menet(first_stage_channels,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

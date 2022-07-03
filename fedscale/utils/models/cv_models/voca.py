@@ -27,6 +27,7 @@ class VocaEncoder(nn.Module):
     encoder_features : int
         Number of encoder features.
     """
+
     def __init__(self,
                  audio_features,
                  audio_window_size,
@@ -92,6 +93,7 @@ class VOCA(nn.Module):
     vertices : int, default 5023
         Number of 3D geometry vertices.
     """
+
     def __init__(self,
                  audio_features=29,
                  audio_window_size=16,
@@ -156,7 +158,8 @@ def get_voca(base_persons,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

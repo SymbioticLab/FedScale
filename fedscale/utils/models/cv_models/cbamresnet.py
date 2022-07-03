@@ -3,7 +3,8 @@
     Original paper: 'CBAM: Convolutional Block Attention Module,' https://arxiv.org/abs/1807.06521.
 """
 
-__all__ = ['CbamResNet', 'cbam_resnet18', 'cbam_resnet34', 'cbam_resnet50', 'cbam_resnet101', 'cbam_resnet152']
+__all__ = ['CbamResNet', 'cbam_resnet18', 'cbam_resnet34',
+           'cbam_resnet50', 'cbam_resnet101', 'cbam_resnet152']
 
 import os
 import torch
@@ -24,6 +25,7 @@ class MLP(nn.Module):
     reduction_ratio : int, default 16
         Channel reduction ratio.
     """
+
     def __init__(self,
                  channels,
                  reduction_ratio=16):
@@ -57,6 +59,7 @@ class ChannelGate(nn.Module):
     reduction_ratio : int, default 16
         Channel reduction ratio.
     """
+
     def __init__(self,
                  channels,
                  reduction_ratio=16):
@@ -85,6 +88,7 @@ class SpatialGate(nn.Module):
     """
     CBAM spatial gate block.
     """
+
     def __init__(self):
         super(SpatialGate, self).__init__()
         self.conv = conv7x7_block(
@@ -114,6 +118,7 @@ class CbamBlock(nn.Module):
     reduction_ratio : int, default 16
         Channel reduction ratio.
     """
+
     def __init__(self,
                  channels,
                  reduction_ratio=16):
@@ -144,6 +149,7 @@ class CbamResUnit(nn.Module):
     bottleneck : bool
         Whether to use a bottleneck or simple block in units.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -203,6 +209,7 @@ class CbamResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -291,7 +298,8 @@ def get_resnet(blocks,
     elif blocks == 152:
         layers = [3, 8, 36, 3]
     else:
-        raise ValueError("Unsupported CBAM-ResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported CBAM-ResNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
 
@@ -312,7 +320,8 @@ def get_resnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

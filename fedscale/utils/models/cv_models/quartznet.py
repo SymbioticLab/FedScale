@@ -294,7 +294,8 @@ def _test():
         aud_scale = 640 if from_audio else 1
         seq_len = np.random.randint(150, 250, batch) * aud_scale
         seq_len_max = seq_len.max() + 2
-        x_shape = (batch, seq_len_max) if from_audio else (batch, audio_features, seq_len_max)
+        x_shape = (batch, seq_len_max) if from_audio else (
+            batch, audio_features, seq_len_max)
         x = torch.randn(x_shape)
         x_len = torch.tensor(seq_len, dtype=torch.long, device=x.device)
 
@@ -307,7 +308,8 @@ def _test():
 
         assert (tuple(y.size())[:2] == (batch, net.num_classes))
         if from_audio:
-            assert (y.size()[2] in range(seq_len_max // aud_scale * 2, seq_len_max // aud_scale * 2 + 9))
+            assert (y.size()[2] in range(seq_len_max //
+                    aud_scale * 2, seq_len_max // aud_scale * 2 + 9))
         else:
             assert (y.size()[2] in [seq_len_max // 2, seq_len_max // 2 + 1])
 

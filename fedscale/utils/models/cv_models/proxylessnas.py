@@ -32,6 +32,7 @@ class ProxylessBlock(nn.Module):
     expansion : int
         Expansion ratio.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -97,6 +98,7 @@ class ProxylessUnit(nn.Module):
     shortcut : bool
         Whether to use identity branch.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -161,6 +163,7 @@ class ProxylessNAS(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -259,41 +262,55 @@ def get_proxylessnas(version,
     """
 
     if version == "cpu":
-        residuals = [[1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 0, 0, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
+        residuals = [[1], [1, 1, 1, 1], [1, 1, 1, 1],
+                     [1, 0, 0, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
         channels = [[24], [32, 32, 32, 32], [48, 48, 48, 48], [88, 88, 88, 88, 104, 104, 104, 104],
                     [216, 216, 216, 216, 360]]
-        kernel_sizes = [[3], [3, 3, 3, 3], [3, 3, 3, 5], [3, 3, 3, 3, 5, 3, 3, 3], [5, 5, 5, 3, 5]]
-        expansions = [[1], [6, 3, 3, 3], [6, 3, 3, 3], [6, 3, 3, 3, 6, 3, 3, 3], [6, 3, 3, 3, 6]]
+        kernel_sizes = [[3], [3, 3, 3, 3], [3, 3, 3, 5],
+                        [3, 3, 3, 3, 5, 3, 3, 3], [5, 5, 5, 3, 5]]
+        expansions = [[1], [6, 3, 3, 3], [6, 3, 3, 3],
+                      [6, 3, 3, 3, 6, 3, 3, 3], [6, 3, 3, 3, 6]]
         init_block_channels = 40
         final_block_channels = 1432
     elif version == "gpu":
-        residuals = [[1], [1, 0, 0, 0], [1, 0, 0, 1], [1, 0, 0, 1, 1, 0, 1, 1], [1, 1, 1, 1, 1]]
+        residuals = [[1], [1, 0, 0, 0], [1, 0, 0, 1],
+                     [1, 0, 0, 1, 1, 0, 1, 1], [1, 1, 1, 1, 1]]
         channels = [[24], [32, 32, 32, 32], [56, 56, 56, 56], [112, 112, 112, 112, 128, 128, 128, 128],
                     [256, 256, 256, 256, 432]]
-        kernel_sizes = [[3], [5, 3, 3, 3], [7, 3, 3, 3], [7, 5, 5, 5, 5, 3, 3, 5], [7, 7, 7, 5, 7]]
-        expansions = [[1], [3, 3, 3, 3], [3, 3, 3, 3], [6, 3, 3, 3, 6, 3, 3, 3], [6, 6, 6, 6, 6]]
+        kernel_sizes = [[3], [5, 3, 3, 3], [7, 3, 3, 3],
+                        [7, 5, 5, 5, 5, 3, 3, 5], [7, 7, 7, 5, 7]]
+        expansions = [[1], [3, 3, 3, 3], [3, 3, 3, 3],
+                      [6, 3, 3, 3, 6, 3, 3, 3], [6, 6, 6, 6, 6]]
         init_block_channels = 40
         final_block_channels = 1728
     elif version == "mobile":
-        residuals = [[1], [1, 1, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
+        residuals = [[1], [1, 1, 0, 0], [1, 1, 1, 1],
+                     [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
         channels = [[16], [32, 32, 32, 32], [40, 40, 40, 40], [80, 80, 80, 80, 96, 96, 96, 96],
                     [192, 192, 192, 192, 320]]
-        kernel_sizes = [[3], [5, 3, 3, 3], [7, 3, 5, 5], [7, 5, 5, 5, 5, 5, 5, 5], [7, 7, 7, 7, 7]]
-        expansions = [[1], [3, 3, 3, 3], [3, 3, 3, 3], [6, 3, 3, 3, 6, 3, 3, 3], [6, 6, 3, 3, 6]]
+        kernel_sizes = [[3], [5, 3, 3, 3], [7, 3, 5, 5],
+                        [7, 5, 5, 5, 5, 5, 5, 5], [7, 7, 7, 7, 7]]
+        expansions = [[1], [3, 3, 3, 3], [3, 3, 3, 3],
+                      [6, 3, 3, 3, 6, 3, 3, 3], [6, 6, 3, 3, 6]]
         init_block_channels = 32
         final_block_channels = 1280
     elif version == "mobile14":
-        residuals = [[1], [1, 1, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
+        residuals = [[1], [1, 1, 0, 0], [1, 1, 1, 1],
+                     [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
         channels = [[24], [40, 40, 40, 40], [56, 56, 56, 56], [112, 112, 112, 112, 136, 136, 136, 136],
                     [256, 256, 256, 256, 448]]
-        kernel_sizes = [[3], [5, 3, 3, 3], [7, 3, 5, 5], [7, 5, 5, 5, 5, 5, 5, 5], [7, 7, 7, 7, 7]]
-        expansions = [[1], [3, 3, 3, 3], [3, 3, 3, 3], [6, 3, 3, 3, 6, 3, 3, 3], [6, 6, 3, 3, 6]]
+        kernel_sizes = [[3], [5, 3, 3, 3], [7, 3, 5, 5],
+                        [7, 5, 5, 5, 5, 5, 5, 5], [7, 7, 7, 7, 7]]
+        expansions = [[1], [3, 3, 3, 3], [3, 3, 3, 3],
+                      [6, 3, 3, 3, 6, 3, 3, 3], [6, 6, 3, 3, 6]]
         init_block_channels = 48
         final_block_channels = 1792
     else:
-        raise ValueError("Unsupported ProxylessNAS version: {}".format(version))
+        raise ValueError(
+            "Unsupported ProxylessNAS version: {}".format(version))
 
-    shortcuts = [[0], [0, 1, 1, 1], [0, 1, 1, 1], [0, 1, 1, 1, 0, 1, 1, 1], [0, 1, 1, 1, 0]]
+    shortcuts = [[0], [0, 1, 1, 1], [0, 1, 1, 1],
+                 [0, 1, 1, 1, 0, 1, 1, 1], [0, 1, 1, 1, 0]]
 
     net = ProxylessNAS(
         channels=channels,
@@ -307,7 +324,8 @@ def get_proxylessnas(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

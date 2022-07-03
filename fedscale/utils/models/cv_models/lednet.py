@@ -29,6 +29,7 @@ class LEDBranch(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  channels,
                  dilation,
@@ -76,6 +77,7 @@ class LEDUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  channels,
                  dilation,
@@ -132,6 +134,7 @@ class PoolingBranch(nn.Module):
     down_size : int
         Spatial size of downscaled image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -175,6 +178,7 @@ class APN(nn.Module):
     in_size : tuple of 2 int or None
         Spatial size of input image.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -286,6 +290,7 @@ class LEDNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  channels,
                  dilations,
@@ -381,7 +386,8 @@ def get_lednet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

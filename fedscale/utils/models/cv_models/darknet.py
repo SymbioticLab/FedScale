@@ -69,6 +69,7 @@ class DarkNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  odd_pointwise,
@@ -156,7 +157,8 @@ def get_darknet(version,
         avg_pool_size = 3
         cls_activ = True
     elif version == 'tiny':
-        channels = [[16], [32], [16, 128, 16, 128], [32, 256, 32, 256], [64, 512, 64, 512, 128]]
+        channels = [[16], [32], [16, 128, 16, 128], [
+            32, 256, 32, 256], [64, 512, 64, 512, 128]]
         odd_pointwise = True
         avg_pool_size = 14
         cls_activ = False
@@ -178,7 +180,8 @@ def get_darknet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

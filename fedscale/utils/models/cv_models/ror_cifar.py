@@ -26,6 +26,7 @@ class RoRBlock(nn.Module):
     dropout_rate : float
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -66,6 +67,7 @@ class RoRResUnit(nn.Module):
     last_activate : bool, default True
         Whether activate output.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -113,6 +115,7 @@ class RoRResStage(nn.Module):
     downsample : bool, default True
         Whether downsample output.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -164,6 +167,7 @@ class RoRResBody(nn.Module):
     dropout_rate : float
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_lists,
@@ -213,6 +217,7 @@ class CIFARRoR(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -298,7 +303,8 @@ def get_ror_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

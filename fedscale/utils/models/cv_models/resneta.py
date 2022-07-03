@@ -3,7 +3,8 @@
     Original paper: 'Deep Residual Learning for Image Recognition,' https://arxiv.org/abs/1512.03385.
 """
 
-__all__ = ['ResNetA', 'resneta10', 'resnetabc14b', 'resneta18', 'resneta50b', 'resneta101b', 'resneta152b']
+__all__ = ['ResNetA', 'resneta10', 'resnetabc14b',
+           'resneta18', 'resneta50b', 'resneta101b', 'resneta152b']
 
 import os
 import torch.nn as nn
@@ -27,6 +28,7 @@ class ResADownBlock(nn.Module):
     dilation : int or tuple/list of 2 int, default 1
         Dilation value for the second convolution layer in bottleneck.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -70,6 +72,7 @@ class ResAUnit(nn.Module):
     conv1_stride : bool, default False
         Whether to use stride in the first or the second convolution layer of the block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -137,6 +140,7 @@ class ResNetA(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -174,7 +178,8 @@ class ResNetA(nn.Module):
                     conv1_stride=conv1_stride))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Linear(
             in_features=in_channels,
@@ -256,7 +261,8 @@ def get_resneta(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported ResNet(A) with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported ResNet(A) with number of blocks: {}".format(blocks))
 
     if bottleneck:
         assert (sum(layers) * 3 + 2 == blocks)
@@ -268,7 +274,8 @@ def get_resneta(blocks,
 
     if bottleneck:
         bottleneck_factor = 4
-        channels_per_layers = [ci * bottleneck_factor for ci in channels_per_layers]
+        channels_per_layers = [
+            ci * bottleneck_factor for ci in channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -286,7 +293,8 @@ def get_resneta(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

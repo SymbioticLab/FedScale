@@ -32,6 +32,7 @@ class IbpResBottleneck(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -85,6 +86,7 @@ class IbpResUnit(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -135,6 +137,7 @@ class IbpBackbone(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -192,6 +195,7 @@ class IbpDownBlock(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -226,6 +230,7 @@ class IbpUpBlock(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -267,6 +272,7 @@ class MergeBlock(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -296,6 +302,7 @@ class IbpPreBlock(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  out_channels,
                  use_bn,
@@ -344,6 +351,7 @@ class IbpPass(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  channels,
                  mid_channels,
@@ -439,6 +447,7 @@ class IbpPose(nn.Module):
     in_size : tuple of two ints, default (256, 256)
         Spatial size of the expected input image.
     """
+
     def __init__(self,
                  passes,
                  backbone_out_channels,
@@ -528,7 +537,8 @@ def get_ibppose(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -584,7 +594,8 @@ def _test():
         x = torch.randn(batch, 3, in_size[0], in_size[1])
         y = net(x)
         assert ((y.shape[0] == batch) and (y.shape[1] == 50))
-        assert ((y.shape[2] == x.shape[2] // 4) and (y.shape[3] == x.shape[3] // 4))
+        assert ((y.shape[2] == x.shape[2] // 4)
+                and (y.shape[3] == x.shape[3] // 4))
 
 
 if __name__ == "__main__":

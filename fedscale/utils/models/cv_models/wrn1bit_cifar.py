@@ -54,6 +54,7 @@ class Conv2d1bit(nn.Conv2d):
     binarized : bool, default False
         Whether to use binarization.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -77,7 +78,8 @@ class Conv2d1bit(nn.Conv2d):
 
     def forward(self, input):
         weight = Binarize.apply(self.weight) if self.binarized else self.weight
-        bias = Binarize.apply(self.bias) if self.bias is not None and self.binarized else self.bias
+        bias = Binarize.apply(
+            self.bias) if self.bias is not None and self.binarized else self.bias
         return F.conv2d(
             input=input,
             weight=weight,
@@ -191,6 +193,7 @@ class ConvBlock1bit(nn.Module):
     binarized : bool, default False
         Whether to use binarization.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -305,6 +308,7 @@ class PreConvBlock1bit(nn.Module):
     binarized : bool, default False
         Whether to use binarization.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -410,6 +414,7 @@ class PreResBlock1bit(nn.Module):
     binarized : bool, default False
         Whether to use binarization.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -450,6 +455,7 @@ class PreResUnit1bit(nn.Module):
     binarized : bool, default False
         Whether to use binarization.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -490,6 +496,7 @@ class PreResActivation(nn.Module):
     bn_affine : bool, default True
         Whether the BatchNorm layer learns affine parameters.
     """
+
     def __init__(self,
                  in_channels,
                  bn_affine=True):
@@ -524,6 +531,7 @@ class CIFARWRN1bit(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -616,7 +624,8 @@ def get_wrn1bit_cifar(num_classes,
     channels_per_layers = [16, 32, 64]
     init_block_channels = 16
 
-    channels = [[ci * width_factor] * li for (ci, li) in zip(channels_per_layers, layers)]
+    channels = [[ci * width_factor] *
+                li for (ci, li) in zip(channels_per_layers, layers)]
     init_block_channels *= width_factor
 
     net = CIFARWRN1bit(
@@ -628,7 +637,8 @@ def get_wrn1bit_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

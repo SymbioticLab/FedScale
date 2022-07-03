@@ -29,6 +29,7 @@ class FireBlock(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -84,6 +85,7 @@ class ParallelDilatedConv(nn.Module):
     activation : function or str or None
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -128,6 +130,7 @@ class SQNetUpStage(nn.Module):
     use_parallel_conv : bool
         Whether to use parallel dilated convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -189,6 +192,7 @@ class SQNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -314,7 +318,8 @@ def get_sqnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -362,7 +367,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()

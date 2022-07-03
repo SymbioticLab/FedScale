@@ -26,6 +26,7 @@ class PyramidPoolingZeroBranch(nn.Module):
     in_size : tuple of 2 int
         Spatial size of output image for the upsampling operation.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -61,6 +62,7 @@ class AttentionRefinementBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -95,6 +97,7 @@ class PyramidPoolingMainBranch(nn.Module):
     scale_factor : float
         Multiplier for spatial size.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -132,6 +135,7 @@ class FeatureFusion(nn.Module):
     reduction : int, default 4
         Squeeze reduction value.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -180,6 +184,7 @@ class PyramidPooling(nn.Module):
     y32_out_size : tuple of 2 int
         Spatial size of the y32 tensor.
     """
+
     def __init__(self,
                  x16_in_channels,
                  x32_in_channels,
@@ -225,6 +230,7 @@ class BiSeHead(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -263,6 +269,7 @@ class BiSeNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  backbone,
                  aux=True,
@@ -281,7 +288,8 @@ class BiSeNet(nn.Module):
 
         y_out_channels = backbone_out_channels[0]
         z_out_channels = 2 * y_out_channels
-        y32_out_size = (self.in_size[0] // 32, self.in_size[1] // 32) if fixed_size else None
+        y32_out_size = (
+            self.in_size[0] // 32, self.in_size[1] // 32) if fixed_size else None
         self.pool = PyramidPooling(
             x16_in_channels=backbone_out_channels[1],
             x32_in_channels=backbone_out_channels[2],
@@ -303,7 +311,8 @@ class BiSeNet(nn.Module):
                 in_channels=y_out_channels,
                 mid_channels=mid_channels,
                 out_channels=num_classes)
-            self.up16 = InterpolationBlock(scale_factor=(16 if fixed_size else None))
+            self.up16 = InterpolationBlock(
+                scale_factor=(16 if fixed_size else None))
 
         self._init_params()
 
@@ -354,7 +363,8 @@ def get_bisenet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -423,9 +433,11 @@ def _test():
         weight_count = _calc_width(net)
         print("m={}, {}".format(model.__name__, weight_count))
         if aux:
-            assert (model != bisenet_resnet18_celebamaskhq or weight_count == 13300416)
+            assert (
+                model != bisenet_resnet18_celebamaskhq or weight_count == 13300416)
         else:
-            assert (model != bisenet_resnet18_celebamaskhq or weight_count == 13150272)
+            assert (
+                model != bisenet_resnet18_celebamaskhq or weight_count == 13150272)
 
         batch = 1
         x = torch.randn(batch, 3, in_size[0], in_size[1])

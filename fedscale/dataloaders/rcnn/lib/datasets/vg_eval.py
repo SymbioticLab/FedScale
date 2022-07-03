@@ -10,13 +10,14 @@ import os
 import numpy as np
 from .voc_eval import voc_ap
 
-def vg_eval( detpath,
-             gt_roidb,
-             image_index,
-             classindex,
-             ovthresh=0.5,
-             use_07_metric=False,
-             eval_attributes=False):
+
+def vg_eval(detpath,
+            gt_roidb,
+            image_index,
+            classindex,
+            ovthresh=0.5,
+            use_07_metric=False,
+            eval_attributes=False):
     """rec, prec, ap, sorted_scores, npos = voc_eval(
                                 detpath, 
                                 gt_roidb,
@@ -38,27 +39,29 @@ def vg_eval( detpath,
     # extract gt objects for this class
     class_recs = {}
     npos = 0
-    for item,imagename in zip(gt_roidb,image_index):
+    for item, imagename in zip(gt_roidb, image_index):
         if eval_attributes:
-            bbox = item['boxes'][np.where(np.any(item['gt_attributes'].toarray() == classindex, axis=1))[0], :]
+            bbox = item['boxes'][np.where(
+                np.any(item['gt_attributes'].toarray() == classindex, axis=1))[0], :]
         else:
-            bbox = item['boxes'][np.where(item['gt_classes'] == classindex)[0], :]
+            bbox = item['boxes'][np.where(
+                item['gt_classes'] == classindex)[0], :]
         difficult = np.zeros((bbox.shape[0],)).astype(np.bool)
         det = [False] * bbox.shape[0]
-        npos = npos + sum(~difficult)        
+        npos = npos + sum(~difficult)
         class_recs[str(imagename)] = {'bbox': bbox,
-                                 'difficult': difficult,
-                                 'det': det}
+                                      'difficult': difficult,
+                                      'det': det}
     if npos == 0:
         # No ground truth examples
-        return 0,0,0,0,npos
+        return 0, 0, 0, 0, npos
 
     # read dets
     with open(detpath, 'r') as f:
         lines = f.readlines()
     if len(lines) == 0:
         # No detection examples
-        return 0,0,0,0,npos
+        return 0, 0, 0, 0, npos
 
     splitlines = [x.strip().split(' ') for x in lines]
     image_ids = [x[0] for x in splitlines]
@@ -119,5 +122,5 @@ def vg_eval( detpath,
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     ap = voc_ap(rec, prec, use_07_metric)
-    
+
     return rec, prec, ap, sorted_scores, npos

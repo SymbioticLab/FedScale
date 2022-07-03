@@ -14,9 +14,9 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: $FEDSCALE_HOME/examples/LocalDP/customized_executor.py
+executor_entry: $FEDSCALE_HOME/examples/localDP/customized_executor.py
 
-aggregator_entry: aggregator.py
+aggregator_entry: aggregation/aggregator.py
 
 auth:
     ssh_user: ""
@@ -27,12 +27,12 @@ setup_commands:
     - source $HOME/anaconda3/bin/activate fedscale
 
 # ========== Additional job configuration ==========
-# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
 
 job_conf:
     - job_name: local_dp                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
-    - total_worker: 10
+    - num_participants: 10
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/femnist  # Path of the dataset
 #    - device_avail_file: /users/JIACHEN/FLPerf-Cluster/client_datamap/client_behave_trace

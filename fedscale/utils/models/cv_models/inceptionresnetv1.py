@@ -26,6 +26,7 @@ class InceptionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -52,7 +53,8 @@ class InceptionAUnit(nn.Module):
             strides_list=(1, 1, 1),
             padding_list=(0, 1, 1),
             bn_eps=bn_eps))
-        conv_in_channels = out_channels_list[0] + out_channels_list[2] + out_channels_list[5]
+        conv_in_channels = out_channels_list[0] + \
+            out_channels_list[2] + out_channels_list[5]
         self.conv = conv1x1(
             in_channels=conv_in_channels,
             out_channels=in_channels,
@@ -81,6 +83,7 @@ class InceptionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -133,6 +136,7 @@ class InceptionCUnit(nn.Module):
     activate : bool, default True
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -186,6 +190,7 @@ class ReductionAUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -226,6 +231,7 @@ class ReductionBUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -271,6 +277,7 @@ class InceptInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps):
@@ -342,6 +349,7 @@ class InceptHead(nn.Module):
     num_classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps,
@@ -390,6 +398,7 @@ class InceptionResNetV1(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  dropout_prob=0.6,
                  bn_eps=1e-5,
@@ -401,8 +410,10 @@ class InceptionResNetV1(nn.Module):
         self.num_classes = num_classes
         layers = [5, 11, 7]
         in_channels_list = [256, 896, 1792]
-        normal_out_channels_list = [[32, 32, 32, 32, 32, 32], [128, 128, 128, 128], [192, 192, 192, 192]]
-        reduction_out_channels_list = [[384, 192, 192, 256], [256, 384, 256, 256, 256, 256, 256]]
+        normal_out_channels_list = [[32, 32, 32, 32, 32, 32], [
+            128, 128, 128, 128], [192, 192, 192, 192]]
+        reduction_out_channels_list = [
+            [384, 192, 192, 256], [256, 384, 256, 256, 256, 256, 256]]
 
         normal_units = [InceptionAUnit, InceptionBUnit, InceptionCUnit]
         reduction_units = [ReductionAUnit, ReductionBUnit]
@@ -479,7 +490,8 @@ def get_inceptionresnetv1(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

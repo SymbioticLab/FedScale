@@ -27,6 +27,7 @@ class SPHead(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -67,6 +68,7 @@ class SPDetector(nn.Module):
     reduction : int, default 8
         Feature reduction factor.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -98,9 +100,11 @@ class SPDetector(nn.Module):
         nodust = dense[:, :-1, :, :]
 
         heatmap = nodust.permute(0, 2, 3, 1)
-        heatmap = heatmap.reshape((-1, x_height, x_width, self.reduction, self.reduction))
+        heatmap = heatmap.reshape(
+            (-1, x_height, x_width, self.reduction, self.reduction))
         heatmap = heatmap.permute(0, 1, 3, 2, 4)
-        heatmap = heatmap.reshape((-1, 1, x_height * self.reduction, x_width * self.reduction))
+        heatmap = heatmap.reshape(
+            (-1, 1, x_height * self.reduction, x_width * self.reduction))
         heatmap_mask = (heatmap >= self.conf_thresh)
         pad = self.nms_dist
         bord = self.border_size + pad
@@ -123,7 +127,8 @@ class SPDetector(nn.Module):
                 assert (0 <= pt[0] - pad < img_height)
                 assert (0 <= pt[1] - pad < img_width)
                 if heatmap_mask2_i[pt[0], pt[1]] == 1:
-                    heatmap_mask2_i[(pt[0] - pad):(pt[0] + pad + 1), (pt[1] - pad):(pt[1] + pad + 1)] = 0
+                    heatmap_mask2_i[(pt[0] - pad):(pt[0] + pad + 1),
+                                    (pt[1] - pad):(pt[1] + pad + 1)] = 0
                     if (bord < pt[0] - pad <= img_height - bord) and (bord < pt[1] - pad <= img_width - bord):
                         dst_inds[dst_pts_count] = ind_j
                         dst_pts_count += 1
@@ -153,6 +158,7 @@ class SPDescriptor(nn.Module):
     reduction : int, default 8
         Feature reduction factor.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -181,7 +187,8 @@ class SPDescriptor(nn.Module):
             pts[:, 0] = pts[:, 0] / (0.5 * x_height * self.reduction) - 1.0
             pts[:, 1] = pts[:, 1] / (0.5 * x_width * self.reduction) - 1.0
             if self.transpose_descriptors:
-                pts = torch.index_select(pts, dim=1, index=torch.tensor([1, 0], device=pts.device))
+                pts = torch.index_select(
+                    pts, dim=1, index=torch.tensor([1, 0], device=pts.device))
             pts = pts.unsqueeze(0).unsqueeze(0)
             descriptors = F.grid_sample(coarse_desc_map[i:(i + 1)], pts)
             descriptors = descriptors.squeeze(0).squeeze(1)
@@ -208,6 +215,7 @@ class SuperPointNet(nn.Module):
     in_channels : int, default 1
         Number of input channels.
     """
+
     def __init__(self,
                  channels,
                  final_block_channels,
@@ -284,7 +292,8 @@ def get_superpointnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

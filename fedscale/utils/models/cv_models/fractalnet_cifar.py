@@ -34,6 +34,7 @@ class DropConvBlock(nn.Module):
     dropout_rate : float, default 0.0
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -117,6 +118,7 @@ class FractalBlock(nn.Module):
     dropout_prob : float
         Probability of dropout.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -135,7 +137,8 @@ class FractalBlock(nn.Module):
             for j in range(self.num_columns):
                 column_step_j = 2 ** j
                 if (i + 1) % column_step_j == 0:
-                    in_channels_ij = in_channels if (i + 1 == column_step_j) else out_channels
+                    in_channels_ij = in_channels if (
+                        i + 1 == column_step_j) else out_channels
                     level_block_i.add_module("subblock{}".format(j + 1), drop_conv3x3_block(
                         in_channels=in_channels_ij,
                         out_channels=out_channels,
@@ -170,10 +173,13 @@ class FractalBlock(nn.Module):
             Resulted mask.
         """
         glob_batch_size = glob_num_columns.shape[0]
-        glob_drop_mask = np.zeros((curr_num_columns, glob_batch_size), dtype=np.float32)
-        glob_drop_num_columns = glob_num_columns - (max_num_columns - curr_num_columns)
+        glob_drop_mask = np.zeros(
+            (curr_num_columns, glob_batch_size), dtype=np.float32)
+        glob_drop_num_columns = glob_num_columns - \
+            (max_num_columns - curr_num_columns)
         glob_drop_indices = np.where(glob_drop_num_columns >= 0)[0]
-        glob_drop_mask[glob_drop_num_columns[glob_drop_indices], glob_drop_indices] = 1.0
+        glob_drop_mask[glob_drop_num_columns[glob_drop_indices],
+                       glob_drop_indices] = 1.0
 
         loc_batch_size = batch_size - glob_batch_size
         loc_drop_mask = np.random.binomial(
@@ -182,7 +188,8 @@ class FractalBlock(nn.Module):
             size=(curr_num_columns, loc_batch_size)).astype(np.float32)
         alive_count = loc_drop_mask.sum(axis=0)
         dead_indices = np.where(alive_count == 0.0)[0]
-        loc_drop_mask[np.random.randint(0, curr_num_columns, size=dead_indices.shape), dead_indices] = 1.0
+        loc_drop_mask[np.random.randint(
+            0, curr_num_columns, size=dead_indices.shape), dead_indices] = 1.0
 
         drop_mask = np.concatenate((glob_drop_mask, loc_drop_mask), axis=1)
         return torch.from_numpy(drop_mask)
@@ -280,6 +287,7 @@ class FractalUnit(nn.Module):
     dropout_prob : float
         Probability of dropout.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -327,6 +335,7 @@ class CIFARFractalNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  num_columns,
@@ -368,7 +377,8 @@ class CIFARFractalNet(nn.Module):
 
     def forward(self, x):
         glob_batch_size = int(x.size(0) * self.glob_drop_ratio)
-        glob_num_columns = np.random.randint(0, self.num_columns, size=(glob_batch_size,))
+        glob_num_columns = np.random.randint(
+            0, self.num_columns, size=(glob_batch_size,))
 
         x = self.features(x, glob_num_columns=glob_num_columns)
         x = x.view(x.size(0), -1)
@@ -397,7 +407,8 @@ def get_fractalnet_cifar(num_classes,
     """
 
     dropout_probs = (0.0, 0.1, 0.2, 0.3, 0.4)
-    channels = [64 * (2 ** (i if i != len(dropout_probs) - 1 else i - 1)) for i in range(len(dropout_probs))]
+    channels = [64 * (2 ** (i if i != len(dropout_probs) - 1 else i - 1))
+                for i in range(len(dropout_probs))]
     num_columns = 3
     loc_drop_prob = 0.15
     glob_drop_ratio = 0.5
@@ -413,7 +424,8 @@ def get_fractalnet_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

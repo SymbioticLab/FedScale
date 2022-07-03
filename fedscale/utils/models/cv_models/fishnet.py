@@ -48,6 +48,7 @@ class ChannelSqueeze(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  channels,
                  groups):
@@ -120,6 +121,7 @@ class FishBottleneck(nn.Module):
     dilation : int or tuple/list of 2 int
         Dilation value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -165,6 +167,7 @@ class FishBlock(nn.Module):
     squeeze : bool, default False
         Whether to use a channel squeeze operation.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -214,6 +217,7 @@ class DownUnit(nn.Module):
     out_channels_list : list of int
         Number of output channels for each block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list):
@@ -247,6 +251,7 @@ class UpUnit(nn.Module):
     dilation : int or tuple/list of 2 int, default 1
         Dilation value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list,
@@ -261,7 +266,8 @@ class UpUnit(nn.Module):
                 dilation=dilation,
                 squeeze=squeeze))
             in_channels = out_channels
-        self.upsample = InterpolationBlock(scale_factor=2, mode="nearest", align_corners=None)
+        self.upsample = InterpolationBlock(
+            scale_factor=2, mode="nearest", align_corners=None)
 
     def forward(self, x):
         x = self.blocks(x)
@@ -280,6 +286,7 @@ class SkipUnit(nn.Module):
     out_channels_list : list of int
         Number of output channels for each block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list):
@@ -307,6 +314,7 @@ class SkipAttUnit(nn.Module):
     out_channels_list : list of int
         Number of output channels for each block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels_list):
@@ -352,6 +360,7 @@ class FishFinalBlock(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(FishFinalBlock, self).__init__()
@@ -389,6 +398,7 @@ class FishNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  direct_channels,
                  skip_channels,
@@ -458,7 +468,8 @@ class FishNet(nn.Module):
             down2_seq.add_module("unit{}".format(i + 1), DownUnit(
                 in_channels=in_channels,
                 out_channels_list=down2_channels_list))
-            in_channels = down2_channels_list[-1] + skip2_channels[depth - 1 - i][-1]
+            in_channels = down2_channels_list[-1] + \
+                skip2_channels[depth - 1 - i][-1]
 
         self.features.add_module("hg", SesquialteralHourglass(
             down1_seq=down1_seq,
@@ -466,7 +477,8 @@ class FishNet(nn.Module):
             up_seq=up_seq,
             skip2_seq=skip2_seq,
             down2_seq=down2_seq))
-        self.features.add_module("final_block", FishFinalBlock(in_channels=in_channels))
+        self.features.add_module(
+            "final_block", FishFinalBlock(in_channels=in_channels))
         in_channels = in_channels // 2
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
@@ -521,9 +533,11 @@ def get_fishnet(blocks,
         direct_layers = [[2, 4, 8], [2, 2, 2], [2, 2, 4]]
         skip_layers = [[2, 2, 2, 4], [4, 2, 2, 0]]
     else:
-        raise ValueError("Unsupported FishNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported FishNet with number of blocks: {}".format(blocks))
 
-    direct_channels_per_layers = [[128, 256, 512], [512, 384, 256], [320, 832, 1600]]
+    direct_channels_per_layers = [
+        [128, 256, 512], [512, 384, 256], [320, 832, 1600]]
     skip_channels_per_layers = [[64, 128, 256, 512], [512, 768, 512, 0]]
 
     direct_channels = [[[b] * c for (b, c) in zip(*a)] for a in
@@ -541,7 +555,8 @@ def get_fishnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

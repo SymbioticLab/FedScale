@@ -3,7 +3,8 @@
     Original paper: 'SqueezeNext: Hardware-Aware Neural Network Design,' https://arxiv.org/abs/1803.10615.
 """
 
-__all__ = ['SqueezeNext', 'sqnxt23_w1', 'sqnxt23_w3d2', 'sqnxt23_w2', 'sqnxt23v5_w1', 'sqnxt23v5_w3d2', 'sqnxt23v5_w2']
+__all__ = ['SqueezeNext', 'sqnxt23_w1', 'sqnxt23_w3d2',
+           'sqnxt23_w2', 'sqnxt23v5_w1', 'sqnxt23v5_w3d2', 'sqnxt23v5_w2']
 
 import os
 import torch.nn as nn
@@ -24,6 +25,7 @@ class SqnxtUnit(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -101,6 +103,7 @@ class SqnxtInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -141,6 +144,7 @@ class SqueezeNext(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -245,7 +249,8 @@ def get_squeezenext(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -3,7 +3,8 @@
     Original paper: 'Squeeze-and-Excitation Networks,' https://arxiv.org/abs/1709.01507.
 """
 
-__all__ = ['SEResNeXt', 'seresnext50_32x4d', 'seresnext101_32x4d', 'seresnext101_64x4d']
+__all__ = ['SEResNeXt', 'seresnext50_32x4d',
+           'seresnext101_32x4d', 'seresnext101_64x4d']
 
 import os
 import torch.nn as nn
@@ -30,6 +31,7 @@ class SEResNeXtUnit(nn.Module):
     bottleneck_width: int
         Width of bottleneck block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -87,6 +89,7 @@ class SEResNeXt(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -171,7 +174,8 @@ def get_seresnext(blocks,
     elif blocks == 101:
         layers = [3, 4, 23, 3]
     else:
-        raise ValueError("Unsupported SE-ResNeXt with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported SE-ResNeXt with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
     channels_per_layers = [256, 512, 1024, 2048]
@@ -187,7 +191,8 @@ def get_seresnext(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1802.03750.
 """
 
-__all__ = ['fdmobilenet_w1', 'fdmobilenet_w3d4', 'fdmobilenet_wd2', 'fdmobilenet_wd4', 'get_fdmobilenet']
+__all__ = ['fdmobilenet_w1', 'fdmobilenet_w3d4',
+           'fdmobilenet_wd2', 'fdmobilenet_wd4', 'get_fdmobilenet']
 
 import os
 from .mobilenet import MobileNet
@@ -29,7 +30,8 @@ def get_fdmobilenet(width_scale,
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    channels = [[32], [64], [128, 128], [256, 256], [512, 512, 512, 512, 512, 1024]]
+    channels = [[32], [64], [128, 128], [
+        256, 256], [512, 512, 512, 512, 512, 1024]]
     first_stage_stride = True
 
     if width_scale != 1.0:
@@ -42,7 +44,8 @@ def get_fdmobilenet(width_scale,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

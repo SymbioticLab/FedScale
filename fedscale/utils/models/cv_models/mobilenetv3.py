@@ -35,6 +35,7 @@ class MobileNetV3Unit(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -105,6 +106,7 @@ class MobileNetV3FinalBlock(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -145,6 +147,7 @@ class MobileNetV3Classifier(nn.Module):
     dropout_rate : float
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -206,6 +209,7 @@ class MobileNetV3(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  exp_channels,
@@ -305,7 +309,8 @@ def get_mobilenetv3(version,
     if version == "small":
         init_block_channels = 16
         channels = [[16], [24, 24], [40, 40, 40, 48, 48], [96, 96, 96]]
-        exp_channels = [[16], [72, 88], [96, 240, 240, 120, 144], [288, 576, 576]]
+        exp_channels = [[16], [72, 88], [
+            96, 240, 240, 120, 144], [288, 576, 576]]
         kernels3 = [[1], [1, 1], [0, 0, 0, 0, 0], [0, 0, 0]]
         use_relu = [[1], [1, 1], [0, 0, 0, 0, 0], [0, 0, 0]]
         use_se = [[1], [0, 0], [1, 1, 1, 1, 1], [1, 1, 1]]
@@ -313,8 +318,10 @@ def get_mobilenetv3(version,
         final_block_channels = 576
     elif version == "large":
         init_block_channels = 16
-        channels = [[16], [24, 24], [40, 40, 40], [80, 80, 80, 80, 112, 112], [160, 160, 160]]
-        exp_channels = [[16], [64, 72], [72, 120, 120], [240, 200, 184, 184, 480, 672], [672, 960, 960]]
+        channels = [[16], [24, 24], [40, 40, 40], [
+            80, 80, 80, 80, 112, 112], [160, 160, 160]]
+        exp_channels = [[16], [64, 72], [72, 120, 120], [
+            240, 200, 184, 184, 480, 672], [672, 960, 960]]
         kernels3 = [[1], [1, 1], [0, 0, 0], [1, 1, 1, 1, 1, 1], [0, 0, 0]]
         use_relu = [[1], [1, 1], [1, 1, 1], [0, 0, 0, 0, 0, 0], [0, 0, 0]]
         use_se = [[0], [0, 0], [1, 1, 1], [0, 0, 0, 0, 1, 1], [1, 1, 1]]
@@ -327,11 +334,14 @@ def get_mobilenetv3(version,
     classifier_mid_channels = 1280
 
     if width_scale != 1.0:
-        channels = [[round_channels(cij * width_scale) for cij in ci] for ci in channels]
-        exp_channels = [[round_channels(cij * width_scale) for cij in ci] for ci in exp_channels]
+        channels = [[round_channels(cij * width_scale)
+                     for cij in ci] for ci in channels]
+        exp_channels = [[round_channels(cij * width_scale)
+                         for cij in ci] for ci in exp_channels]
         init_block_channels = round_channels(init_block_channels * width_scale)
         if width_scale > 1.0:
-            final_block_channels = round_channels(final_block_channels * width_scale)
+            final_block_channels = round_channels(
+                final_block_channels * width_scale)
 
     net = MobileNetV3(
         channels=channels,
@@ -348,7 +358,8 @@ def get_mobilenetv3(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

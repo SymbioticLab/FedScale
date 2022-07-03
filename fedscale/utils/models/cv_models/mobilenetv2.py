@@ -29,6 +29,7 @@ class LinearBottleneck(nn.Module):
     remove_exp_conv : bool
         Whether to remove expansion convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -88,6 +89,7 @@ class MobileNetV2(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -181,7 +183,8 @@ def get_mobilenetv2(width_scale,
 
     from functools import reduce
     channels = reduce(
-        lambda x, y: x + [[y[0]] * y[1]] if y[2] != 0 else x[:-1] + [x[-1] + [y[0]] * y[1]],
+        lambda x, y: x + [[y[0]] * y[1]
+                          ] if y[2] != 0 else x[:-1] + [x[-1] + [y[0]] * y[1]],
         zip(channels_per_layers, layers, downsample),
         [[]])
 
@@ -200,7 +203,8 @@ def get_mobilenetv2(width_scale,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

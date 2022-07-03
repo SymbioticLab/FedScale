@@ -5,7 +5,7 @@ import numpy as np
 
 import sys, os
 
-from fedscale.core.client import Client
+from fedscale.core.execution.client import Client
 import tensorflow as tf 
 
 class Customized_Client(Client):

@@ -111,6 +111,7 @@ class CIFAR10MSDNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_layer_channels,
@@ -202,7 +203,8 @@ def get_msdnet_cifar10(blocks,
     step_mode = "even"
     layers_per_subnets = [base]
     for i in range(num_feature_blocks - 1):
-        layers_per_subnets.append(step if step_mode == 'even' else step * i + 1)
+        layers_per_subnets.append(
+            step if step_mode == 'even' else step * i + 1)
     total_layers = sum(layers_per_subnets)
 
     interval = math.ceil(total_layers / num_scales)
@@ -219,7 +221,8 @@ def get_msdnet_cifar10(blocks,
         channels_i = []
         bottleneck_factors_i = []
         for j in range(layers_per_subnet):
-            out_scales = int(num_scales - math.floor(global_layer_ind / interval))
+            out_scales = int(
+                num_scales - math.floor(global_layer_ind / interval))
             global_layer_ind += 1
             scales_i += [out_scales]
             scale_offset = num_scales - out_scales
@@ -228,7 +231,8 @@ def get_msdnet_cifar10(blocks,
             out_channels = [in_channels_tmp[scale_offset - in_dec_scales + k] + growth * growth_factor[scale_offset + k]
                             for k in range(out_scales)]
             in_dec_scales = num_scales - len(in_channels_tmp)
-            bottleneck_factors_ij = bottleneck_factor_per_scales[in_dec_scales:][:len(in_channels_tmp)]
+            bottleneck_factors_ij = bottleneck_factor_per_scales[in_dec_scales:][:len(
+                in_channels_tmp)]
 
             in_channels_tmp = out_channels
             channels_i += [out_channels]
@@ -236,8 +240,10 @@ def get_msdnet_cifar10(blocks,
 
             if in_scales > out_scales:
                 assert (in_channels_tmp[0] % growth_factor[scale_offset] == 0)
-                out_channels1 = int(math.floor(in_channels_tmp[0] / growth_factor[scale_offset] * reduction_rate))
-                out_channels = [out_channels1 * growth_factor[scale_offset + k] for k in range(out_scales)]
+                out_channels1 = int(math.floor(
+                    in_channels_tmp[0] / growth_factor[scale_offset] * reduction_rate))
+                out_channels = [
+                    out_channels1 * growth_factor[scale_offset + k] for k in range(out_scales)]
                 in_channels_tmp = out_channels
                 channels_i += [out_channels]
                 bottleneck_factors_i += [[]]
@@ -257,7 +263,8 @@ def get_msdnet_cifar10(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

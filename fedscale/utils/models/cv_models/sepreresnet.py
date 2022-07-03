@@ -32,6 +32,7 @@ class SEPreResUnit(nn.Module):
     conv1_stride : bool
         Whether to use stride in the first or the second convolution layer of the block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -90,6 +91,7 @@ class SEPreResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -119,7 +121,8 @@ class SEPreResNet(nn.Module):
                     conv1_stride=conv1_stride))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PreResActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PreResActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -203,7 +206,8 @@ def get_sepreresnet(blocks,
     elif blocks == 269:
         layers = [3, 30, 48, 8]
     else:
-        raise ValueError("Unsupported SE-PreResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported SE-PreResNet with number of blocks: {}".format(blocks))
 
     if bottleneck:
         assert (sum(layers) * 3 + 2 == blocks)
@@ -215,7 +219,8 @@ def get_sepreresnet(blocks,
 
     if bottleneck:
         bottleneck_factor = 4
-        channels_per_layers = [ci * bottleneck_factor for ci in channels_per_layers]
+        channels_per_layers = [
+            ci * bottleneck_factor for ci in channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -228,7 +233,8 @@ def get_sepreresnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

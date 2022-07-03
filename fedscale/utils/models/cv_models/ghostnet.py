@@ -35,6 +35,7 @@ class GhostConvBlock(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -77,6 +78,7 @@ class GhostExpBlock(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -138,6 +140,7 @@ class GhostUnit(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -185,6 +188,7 @@ class GhostClassifier(nn.Module):
     mid_channels : int
         Number of middle channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -233,6 +237,7 @@ class GhostNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -289,7 +294,8 @@ class GhostNet(nn.Module):
     def _init_params(self):
         for name, module in self.named_modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_normal_(module.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_normal_(
+                    module.weight, mode="fan_out", nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.constant_(module.bias, 0)
 
@@ -320,19 +326,24 @@ def get_ghostnet(width_scale=1.0,
         Location for keeping the model parameters.
     """
     init_block_channels = 16
-    channels = [[16], [24, 24], [40, 40], [80, 80, 80, 80, 112, 112], [160, 160, 160, 160, 160]]
+    channels = [[16], [24, 24], [40, 40], [
+        80, 80, 80, 80, 112, 112], [160, 160, 160, 160, 160]]
     kernels3 = [[1], [1, 1], [0, 0], [1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0]]
-    exp_factors = [[1], [3, 3], [3, 3], [6, 2.5, 2.3, 2.3, 6, 6], [6, 6, 6, 6, 6]]
+    exp_factors = [[1], [3, 3], [3, 3], [
+        6, 2.5, 2.3, 2.3, 6, 6], [6, 6, 6, 6, 6]]
     use_se = [[0], [0, 0], [1, 1], [0, 0, 0, 0, 1, 1], [1, 0, 1, 0, 1]]
     final_block_channels = 960
     classifier_mid_channels = 1280
     first_stride = False
 
     if width_scale != 1.0:
-        channels = [[round_channels(cij * width_scale, divisor=4) for cij in ci] for ci in channels]
-        init_block_channels = round_channels(init_block_channels * width_scale, divisor=4)
+        channels = [[round_channels(cij * width_scale, divisor=4)
+                     for cij in ci] for ci in channels]
+        init_block_channels = round_channels(
+            init_block_channels * width_scale, divisor=4)
         if width_scale > 1.0:
-            final_block_channels = round_channels(final_block_channels * width_scale, divisor=4)
+            final_block_channels = round_channels(
+                final_block_channels * width_scale, divisor=4)
 
     net = GhostNet(
         channels=channels,
@@ -347,7 +358,8 @@ def get_ghostnet(width_scale=1.0,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

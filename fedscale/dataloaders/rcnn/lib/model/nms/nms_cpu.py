@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import numpy as np
 import torch
 
+
 def nms_cpu(dets, thresh):
     dets = dets.numpy()
     x1 = dets[:, 0]
@@ -32,5 +33,3 @@ def nms_cpu(dets, thresh):
         order = order[inds + 1]
 
     return torch.IntTensor(keep)
-
-

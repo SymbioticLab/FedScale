@@ -33,6 +33,7 @@ class FBNetUnit(nn.Module):
     activation : str, default 'relu'
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -98,6 +99,7 @@ class FBNetInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -148,6 +150,7 @@ class FBNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -237,9 +240,12 @@ def get_fbnet(version,
     if version == "c":
         init_block_channels = 16
         final_block_channels = 1984
-        channels = [[24, 24, 24], [32, 32, 32, 32], [64, 64, 64, 64, 112, 112, 112, 112], [184, 184, 184, 184, 352]]
-        kernels3 = [[1, 1, 1], [0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1]]
-        exp_factors = [[6, 1, 1], [6, 3, 6, 6], [6, 3, 6, 6, 6, 6, 6, 3], [6, 6, 6, 6, 6]]
+        channels = [[24, 24, 24], [32, 32, 32, 32], [64, 64, 64,
+                                                     64, 112, 112, 112, 112], [184, 184, 184, 184, 352]]
+        kernels3 = [[1, 1, 1], [0, 0, 0, 1], [
+            0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1]]
+        exp_factors = [[6, 1, 1], [6, 3, 6, 6], [
+            6, 3, 6, 6, 6, 6, 6, 3], [6, 6, 6, 6, 6]]
     else:
         raise ValueError("Unsupported FBNet version {}".format(version))
 
@@ -254,7 +260,8 @@ def get_fbnet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

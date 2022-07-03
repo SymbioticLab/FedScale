@@ -11,11 +11,11 @@ When running in the benchmark evaluation mode, FedScale runtime can leverage the
 
 ## Download
 
-You can use `download.sh` to download individual datasets. 
+You can run `fedscale dataset` (or use `download.sh`) to download or remove individual datasets. 
 
 ```
-# Run download.sh --help for more details
-bash download.sh -dataset_name
+# Run `fedscale dataset help` for more details
+`fedscale dataset download [dataset_name]`   # Or `bash download.sh download [dataset_name] `
 ```
 
 ## Workload Datasets Details
@@ -26,7 +26,7 @@ We provide real-world datasets for the federated learning community, and plan to
 Each one is associated with its training, validation and testing dataset. 
 A summary of statistics for training datasets can be found in the table below, and you can refer to each folder for more details. 
 
-You can use [this example code](./Femnist_stats.md) to explore any of the FedScale datasets. 
+You can use [this example code](../../docs/Femnist_stats.md) to explore any of the FedScale datasets. 
 
 ### CV Tasks
 

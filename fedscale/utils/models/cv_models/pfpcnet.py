@@ -32,6 +32,7 @@ class PFPCNet(nn.Module):
     vertices : int, default 5023
         Number of 3D geometry vertices.
     """
+
     def __init__(self,
                  channels,
                  pca_size,
@@ -111,7 +112,8 @@ def get_pfpcnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

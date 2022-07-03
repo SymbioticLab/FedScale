@@ -29,6 +29,7 @@ cd FedScale
 
 # Please replace ~/.bashrc with ~/.bash_profile for MacOS
 echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
+echo "alias fedscale='bash $FEDSCALE_HOME/fedscale.sh'" >> ~/.bashrc 
 conda init bash
 . ~/.bashrc
 
@@ -68,16 +69,17 @@ Please go to `./fedscale/core` directory and follow the [README](./fedscale/core
 
 ```
 Repo Root
-|---- fedscale      # FedScale source code
-  |---- core        # Experiment platform of FedScale
-  |---- utils       # Auxiliaries (e.g, model zoo and FL optimizer)
-  |---- dataloaders # Data loaders of benchmarking dataset
+|---- fedscale          # FedScale source code
+  |---- core            # Core of FedScale service
+  |---- utils           # Auxiliaries (e.g, model zoo and FL optimizer)
+  |---- deploy          # Deployment backends (e.g., mobile)
+  |---- dataloaders     # Data loaders of benchmarking dataset
 
-|---- benchmark     # FedScale benchmarking and job submission
-  |---- dataset     # Benchmarking datasets
+|---- benchmark         # FedScale datasets and configs
+  |---- dataset         # Benchmarking datasets
 
-|---- examples      # Examples of implementing new FL designs
-|---- docs          # FedScale tutorials and APIs
+|---- examples          # Examples of implementing new FL designs
+|---- docs              # FedScale tutorials and APIs
 ```
 
 ## References

@@ -33,6 +33,7 @@ class AlphaPose(nn.Module):
     keypoints : int, default 17
         Number of keypoints.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels,
@@ -50,7 +51,8 @@ class AlphaPose(nn.Module):
         self.backbone = backbone
 
         self.decoder = nn.Sequential()
-        self.decoder.add_module("init_block", nn.PixelShuffle(upscale_factor=2))
+        self.decoder.add_module(
+            "init_block", nn.PixelShuffle(upscale_factor=2))
         in_channels = backbone_out_channels // 4
         for i, out_channels in enumerate(channels):
             self.decoder.add_module("unit{}".format(i + 1), DucBlock(
@@ -120,7 +122,8 @@ def get_alphapose(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -173,7 +176,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, return_heatmap=return_heatmap)
+        net = model(pretrained=pretrained, in_size=in_size,
+                    return_heatmap=return_heatmap)
 
         # net.train()
         net.eval()
@@ -186,7 +190,8 @@ def _test():
         y = net(x)
         assert ((y.shape[0] == batch) and (y.shape[1] == keypoints))
         if return_heatmap:
-            assert ((y.shape[2] == x.shape[2] // 4) and (y.shape[3] == x.shape[3] // 4))
+            assert ((y.shape[2] == x.shape[2] // 4)
+                    and (y.shape[3] == x.shape[3] // 4))
         else:
             assert (y.shape[2] == 3)
 

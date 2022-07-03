@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import copy
 from collections import OrderedDict
-from fedscale.core.arg_parser import args
+from fedscale.core.config_parser import args
 
 def init_model():
     global tokenizer

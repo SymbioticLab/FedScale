@@ -25,9 +25,9 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/core
 
 # Entry function of executor and aggregator under $exp_path
-executor_entry: executor.py
+executor_entry: execution/executor.py
 
-aggregator_entry: aggregator.py
+aggregator_entry: aggregation/aggregator.py
 
 auth:
     ssh_user: ""
@@ -39,12 +39,12 @@ setup_commands:
     - export NCCL_SOCKET_IFNAME='enp94s0f0'         # Run "ifconfig" to ensure the right NIC for nccl if you have multiple NICs
 
 # ========== Additional job configuration ========== 
-# Default parameters are specified in argParser.py, wherein more description of the parameter can be found
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
 
 job_conf: 
     - job_name: rl                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
-    - total_worker: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - num_participants: 100                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity     # Path of the client trace
     - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
     - model: dqn                           # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2

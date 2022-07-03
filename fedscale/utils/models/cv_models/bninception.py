@@ -31,6 +31,7 @@ class Inception3x3Branch(nn.Module):
     use_bn : bool, default True
         Whether to use BatchNorm layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -76,6 +77,7 @@ class InceptionDouble3x3Branch(nn.Module):
     use_bn : bool, default True
         Whether to use BatchNorm layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -125,6 +127,7 @@ class InceptionPoolBranch(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -174,6 +177,7 @@ class StemBlock(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -229,6 +233,7 @@ class InceptionBlock(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layers.
     """
+
     def __init__(self,
                  in_channels,
                  mid1_channels_list,
@@ -287,6 +292,7 @@ class ReductionBlock(nn.Module):
     use_bn : bool
         Whether to use BatchNorm layers.
     """
+
     def __init__(self,
                  in_channels,
                  mid1_channels_list,
@@ -349,6 +355,7 @@ class BNInception(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels_list,
@@ -384,7 +391,8 @@ class BNInception(nn.Module):
                         bias=bias,
                         use_bn=use_bn))
                 else:
-                    avg_pool = (i != len(channels) - 1) or (j != len(channels_per_stage) - 1)
+                    avg_pool = (i != len(channels) - 1) or (j !=
+                                                            len(channels_per_stage) - 1)
                     stage.add_module("unit{}".format(j + 1), InceptionBlock(
                         in_channels=in_channels,
                         mid1_channels_list=mid1_channels_list_i[j],
@@ -470,7 +478,8 @@ def get_bninception(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

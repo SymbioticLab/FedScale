@@ -3,7 +3,8 @@
     Original paper: 'Deep Networks with Stochastic Depth,' https://arxiv.org/abs/1603.09382.
 """
 
-__all__ = ['CIFARResDropResNet', 'resdropresnet20_cifar10', 'resdropresnet20_cifar100', 'resdropresnet20_svhn']
+__all__ = ['CIFARResDropResNet', 'resdropresnet20_cifar10',
+           'resdropresnet20_cifar100', 'resdropresnet20_svhn']
 
 import os
 import torch
@@ -30,6 +31,7 @@ class ResDropResUnit(nn.Module):
     life_prob : float
         Residual branch life probability.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -60,7 +62,8 @@ class ResDropResUnit(nn.Module):
             identity = x
         x = self.body(x)
         if self.training:
-            b = torch.bernoulli(torch.full((1,), self.life_prob, dtype=x.dtype, device=x.device))
+            b = torch.bernoulli(torch.full(
+                (1,), self.life_prob, dtype=x.dtype, device=x.device))
             x = float(b) / self.life_prob * x
         x = x + identity
         x = self.activ(x)
@@ -88,6 +91,7 @@ class CIFARResDropResNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -187,7 +191,8 @@ def get_resdropresnet_cifar(classes,
 
     total_layers = sum(layers)
     final_death_prob = 0.5
-    life_probs = [1.0 - float(i + 1) / float(total_layers) * final_death_prob for i in range(total_layers)]
+    life_probs = [1.0 - float(i + 1) / float(total_layers)
+                  * final_death_prob for i in range(total_layers)]
 
     net = CIFARResDropResNet(
         channels=channels,
@@ -199,7 +204,8 @@ def get_resdropresnet_cifar(classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

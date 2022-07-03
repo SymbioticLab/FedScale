@@ -6,7 +6,8 @@ import numba
 import librosa
 import csv
 
-CLASSES = ['up', 'two', 'sheila', 'zero', 'yes', 'five', 'one', 'happy', 'marvin', 'no', 'go', 'seven', 'eight', 'tree', 'stop', 'down', 'forward', 'learn', 'house', 'three', 'six', 'backward', 'dog', 'cat', 'wow', 'left', 'off', 'on', 'four', 'visual', 'nine', 'bird', 'right', 'follow', 'bed']
+CLASSES = ['up', 'two', 'sheila', 'zero', 'yes', 'five', 'one', 'happy', 'marvin', 'no', 'go', 'seven', 'eight', 'tree', 'stop', 'down', 'forward',
+           'learn', 'house', 'three', 'six', 'backward', 'dog', 'cat', 'wow', 'left', 'off', 'on', 'four', 'visual', 'nine', 'bird', 'right', 'follow', 'bed']
 
 
 class SPEECH():
@@ -54,14 +55,13 @@ class SPEECH():
         self.target_transform = target_transform
 
         self.classMapping = {classes[i]: i for i in range(len(classes))}
-        self.data_file = dataset # 'train', 'test', 'validation'
-
+        self.data_file = dataset  # 'train', 'test', 'validation'
 
         self.path = os.path.join(self.processed_folder, self.data_file)
         # load data and targets
         self.data, self.targets = self.load_file(self.path)
 
-        self.data_dir =  os.path.join(self.root, self.data_file)
+        self.data_dir = os.path.join(self.root, self.data_file)
 
     def __getitem__(self, index):
         """
@@ -113,7 +113,8 @@ class SPEECH():
     def load_file(self, path):
         rawData, rawTags = [], []
         # load meta file to get labels
-        classMapping = self.load_meta_data(os.path.join(self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
+        classMapping = self.load_meta_data(os.path.join(
+            self.processed_folder, 'client_data_mapping', self.data_file+'.csv'))
 
         for imgFile in list(classMapping.keys()):
             rawData.append(imgFile)
@@ -146,10 +147,10 @@ class BackgroundNoiseDataset():
         return len(self.samples)
 
     def __getitem__(self, index):
-        data = {'samples': self.samples[index], 'sample_rate': self.sample_rate, 'target': 1, 'path': self.path}
+        data = {'samples': self.samples[index],
+                'sample_rate': self.sample_rate, 'target': 1, 'path': self.path}
 
         if self.transform is not None:
             data = self.transform(data)
 
         return data
-

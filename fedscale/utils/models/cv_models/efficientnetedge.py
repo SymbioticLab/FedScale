@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1905.11946.
 """
 
-__all__ = ['EfficientNetEdge', 'efficientnet_edge_small_b', 'efficientnet_edge_medium_b', 'efficientnet_edge_large_b']
+__all__ = ['EfficientNetEdge', 'efficientnet_edge_small_b',
+           'efficientnet_edge_medium_b', 'efficientnet_edge_large_b']
 
 import os
 import math
@@ -39,6 +40,7 @@ class EffiEdgeResUnit(nn.Module):
     activation : str
         Name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -50,7 +52,8 @@ class EffiEdgeResUnit(nn.Module):
                  bn_eps,
                  activation):
         super(EffiEdgeResUnit, self).__init__()
-        self.residual = (in_channels == out_channels) and (stride == 1) and use_skip
+        self.residual = (in_channels == out_channels) and (
+            stride == 1) and use_skip
         self.use_se = se_factor > 0
         mid_channels = in_channels * exp_factor if mid_from_in else out_channels * exp_factor
 
@@ -115,6 +118,7 @@ class EfficientNetEdge(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -181,7 +185,8 @@ class EfficientNetEdge(nn.Module):
             bn_eps=bn_eps,
             activation=activation))
         in_channels = final_block_channels
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Sequential()
         if dropout_rate > 0.0:
@@ -251,7 +256,8 @@ def get_efficientnet_edge(version,
         width_factor = 1.2
         # dropout_rate = 0.3
     else:
-        raise ValueError("Unsupported EfficientNet-Edge version {}".format(version))
+        raise ValueError(
+            "Unsupported EfficientNet-Edge version {}".format(version))
 
     init_block_channels = 32
     layers = [1, 2, 4, 5, 4, 2]
@@ -263,7 +269,8 @@ def get_efficientnet_edge(version,
     final_block_channels = 1280
 
     layers = [int(math.ceil(li * depth_factor)) for li in layers]
-    channels_per_layers = [round_channels(ci * width_factor) for ci in channels_per_layers]
+    channels_per_layers = [round_channels(
+        ci * width_factor) for ci in channels_per_layers]
 
     from functools import reduce
     channels = reduce(lambda x, y: x + [[y[0]] * y[1]] if y[2] != 0 else x[:-1] + [x[-1] + [y[0]] * y[1]],
@@ -279,8 +286,10 @@ def get_efficientnet_edge(version,
     init_block_channels = round_channels(init_block_channels * width_factor)
 
     if width_factor > 1.0:
-        assert (int(final_block_channels * width_factor) == round_channels(final_block_channels * width_factor))
-        final_block_channels = round_channels(final_block_channels * width_factor)
+        assert (int(final_block_channels * width_factor) ==
+                round_channels(final_block_channels * width_factor))
+        final_block_channels = round_channels(
+            final_block_channels * width_factor)
 
     net = EfficientNetEdge(
         channels=channels,
@@ -297,7 +306,8 @@ def get_efficientnet_edge(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

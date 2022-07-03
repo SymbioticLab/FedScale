@@ -3,7 +3,8 @@
     Original paper: 'Deep Layer Aggregation,' https://arxiv.org/abs/1707.06484.
 """
 
-__all__ = ['DLA', 'dla34', 'dla46c', 'dla46xc', 'dla60', 'dla60x', 'dla60xc', 'dla102', 'dla102x', 'dla102x2', 'dla169']
+__all__ = ['DLA', 'dla34', 'dla46c', 'dla46xc', 'dla60', 'dla60x',
+           'dla60xc', 'dla102', 'dla102x', 'dla102x2', 'dla169']
 
 import os
 import torch
@@ -29,6 +30,7 @@ class DLABottleneck(ResBottleneck):
     bottleneck_factor : int, default 2
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -58,6 +60,7 @@ class DLABottleneckX(ResNeXtBottleneck):
     bottleneck_width: int, default 8
         Width of bottleneck block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -89,6 +92,7 @@ class DLAResBlock(nn.Module):
     return_down : bool, default False
         Whether return downsample result.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -142,6 +146,7 @@ class DLARoot(nn.Module):
     residual : bool
         Whether use residual connection.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -192,6 +197,7 @@ class DLATree(nn.Module):
     return_down : bool, default False
         Whether return downsample result.
     """
+
     def __init__(self,
                  levels,
                  in_channels,
@@ -281,6 +287,7 @@ class DLAInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -328,6 +335,7 @@ class DLA(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  levels,
                  channels,
@@ -426,7 +434,8 @@ def get_dla(levels,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -569,7 +578,8 @@ def dla102x2(**kwargs):
     """
     class DLABottleneckX64(DLABottleneckX):
         def __init__(self, in_channels, out_channels, stride):
-            super(DLABottleneckX64, self).__init__(in_channels, out_channels, stride, cardinality=64)
+            super(DLABottleneckX64, self).__init__(
+                in_channels, out_channels, stride, cardinality=64)
 
     return get_dla(levels=[1, 3, 4, 1], channels=[128, 256, 512, 1024], res_body_class=DLABottleneckX64,
                    residual_root=True, model_name="dla102x2", **kwargs)

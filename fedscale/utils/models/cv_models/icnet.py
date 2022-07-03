@@ -24,6 +24,7 @@ class ICInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -63,6 +64,7 @@ class PSPBlock(nn.Module):
     bottleneck_factor : int
         Bottleneck factor.
     """
+
     def __init__(self,
                  in_channels,
                  upscale_out_size,
@@ -101,6 +103,7 @@ class CFFBlock(nn.Module):
     num_classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  in_channels_low,
                  in_channels_high,
@@ -142,6 +145,7 @@ class ICHeadBlock(nn.Module):
     num_classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  num_classes):
         super(ICHeadBlock, self).__init__()
@@ -206,6 +210,7 @@ class ICNet(nn.Module):
     num_classes : int, default 21
         Number of segmentation classes.
     """
+
     def __init__(self,
                  backbones,
                  backbones_out_channels,
@@ -222,7 +227,8 @@ class ICNet(nn.Module):
         self.num_classes = num_classes
         self.aux = aux
         self.fixed_size = fixed_size
-        psp_pool_out_size = (self.in_size[0] // 32, self.in_size[1] // 32) if fixed_size else None
+        psp_pool_out_size = (
+            self.in_size[0] // 32, self.in_size[1] // 32) if fixed_size else None
         psp_head_out_channels = 512
 
         self.branch1 = ICInitBlock(
@@ -230,11 +236,13 @@ class ICNet(nn.Module):
             out_channels=channels[0])
 
         self.branch2 = MultiOutputSequential()
-        self.branch2.add_module("down1", InterpolationBlock(scale_factor=2, up=False))
+        self.branch2.add_module(
+            "down1", InterpolationBlock(scale_factor=2, up=False))
         backbones[0].do_output = True
         self.branch2.add_module("backbones1", backbones[0])
 
-        self.branch2.add_module("down2", InterpolationBlock(scale_factor=2, up=False))
+        self.branch2.add_module(
+            "down2", InterpolationBlock(scale_factor=2, up=False))
         self.branch2.add_module("backbones2", backbones[1])
         self.branch2.add_module("psp", PSPBlock(
             in_channels=backbones_out_channels[1],
@@ -313,7 +321,8 @@ def get_icnet(backbones,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -341,10 +350,12 @@ def icnet_resnetd50b_cityscapes(pretrained_backbone=False, num_classes=19, aux=T
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    backbone1 = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=None).features
+    backbone1 = resnetd50b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=None).features
     for i in range(len(backbone1) - 3):
         del backbone1[-1]
-    backbone2 = resnetd50b(pretrained=pretrained_backbone, ordinary_init=False, bends=None).features
+    backbone2 = resnetd50b(pretrained=pretrained_backbone,
+                           ordinary_init=False, bends=None).features
     del backbone2[-1]
     for i in range(3):
         del backbone2[0]
@@ -377,7 +388,8 @@ def _test():
 
     for model, num_classes in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size, aux=aux)
+        net = model(pretrained=pretrained, in_size=in_size,
+                    fixed_size=fixed_size, aux=aux)
 
         # net.train()
         net.eval()

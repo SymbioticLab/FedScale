@@ -78,6 +78,7 @@ class NavigatorBranch(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -109,6 +110,7 @@ class NavigatorUnit(nn.Module):
     """
     Navigator init.
     """
+
     def __init__(self):
         super(NavigatorUnit, self).__init__()
         self.branch1 = NavigatorBranch(
@@ -150,6 +152,7 @@ class NTSNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  backbone,
                  aux=False,
@@ -210,14 +213,16 @@ class NTSNet(nn.Module):
         rpn_score = self.navigator_unit(raw_pre_features)
         all_cdds = [np.concatenate((y.reshape(-1, 1), self.edge_anchors.copy()), axis=1)
                     for y in rpn_score.detach().cpu().numpy()]
-        top_n_cdds = [hard_nms(y, top_n=self.top_n, iou_thresh=0.25) for y in all_cdds]
+        top_n_cdds = [hard_nms(y, top_n=self.top_n, iou_thresh=0.25)
+                      for y in all_cdds]
         top_n_cdds = np.array(top_n_cdds)
         top_n_index = top_n_cdds[:, :, -1].astype(np.int64)
         top_n_index = torch.from_numpy(top_n_index).long().to(x.device)
         top_n_prob = torch.gather(rpn_score, dim=1, index=top_n_index)
 
         batch = x.size(0)
-        part_imgs = torch.zeros(batch, self.top_n, 3, 224, 224, dtype=x.dtype, device=x.device)
+        part_imgs = torch.zeros(batch, self.top_n, 3,
+                                224, 224, dtype=x.dtype, device=x.device)
         x_pad = self.pad(x)
         for i in range(batch):
             for j in range(self.top_n):
@@ -241,7 +246,8 @@ class NTSNet(nn.Module):
 
         if self.aux:
             raw_logits = self.backbone_classifier(raw_features)
-            part_logits = self.partcls_net(part_features).view(batch, self.top_n, -1)
+            part_logits = self.partcls_net(
+                part_features).view(batch, self.top_n, -1)
             return concat_logits, raw_logits, part_logits, top_n_prob
         else:
             return concat_logits
@@ -268,8 +274,10 @@ class NTSNet(nn.Module):
         anchor_scale = [2 ** (1.0 / 3.0), 2 ** (2.0 / 3.0)]
         anchor_aspect_ratio = [0.667, 1, 1.5]
         anchors_setting = (
-            dict(layer="p3", stride=32, size=48, scale=anchor_scale, aspect_ratio=anchor_aspect_ratio),
-            dict(layer="p4", stride=64, size=96, scale=anchor_scale, aspect_ratio=anchor_aspect_ratio),
+            dict(layer="p3", stride=32, size=48, scale=anchor_scale,
+                 aspect_ratio=anchor_aspect_ratio),
+            dict(layer="p4", stride=64, size=96, scale=anchor_scale,
+                 aspect_ratio=anchor_aspect_ratio),
             dict(layer="p5", stride=128, size=192, scale=[1, anchor_scale[0], anchor_scale[1]],
                  aspect_ratio=anchor_aspect_ratio),
         )
@@ -294,23 +302,30 @@ class NTSNet(nn.Module):
             oy = oy.reshape(output_shape[0], 1)
             ox = np.arange(ostart, ostart + stride * output_shape[1], stride)
             ox = ox.reshape(1, output_shape[1])
-            center_anchor_map_template = np.zeros(output_shape, dtype=np.float32)
+            center_anchor_map_template = np.zeros(
+                output_shape, dtype=np.float32)
             center_anchor_map_template[:, :, 0] = oy
             center_anchor_map_template[:, :, 1] = ox
             for anchor_scale in scales:
                 for anchor_aspect_ratio in aspect_ratios:
                     center_anchor_map = center_anchor_map_template.copy()
-                    center_anchor_map[:, :, 2] = size * anchor_scale / float(anchor_aspect_ratio) ** 0.5
-                    center_anchor_map[:, :, 3] = size * anchor_scale * float(anchor_aspect_ratio) ** 0.5
+                    center_anchor_map[:, :, 2] = size * \
+                        anchor_scale / float(anchor_aspect_ratio) ** 0.5
+                    center_anchor_map[:, :, 3] = size * \
+                        anchor_scale * float(anchor_aspect_ratio) ** 0.5
 
                     edge_anchor_map = np.concatenate(
                         (center_anchor_map[:, :, :2] - center_anchor_map[:, :, 2:4] / 2.0,
                          center_anchor_map[:, :, :2] + center_anchor_map[:, :, 2:4] / 2.0),
                         axis=-1)
-                    anchor_area_map = center_anchor_map[:, :, 2] * center_anchor_map[:, :, 3]
-                    center_anchors = np.concatenate((center_anchors, center_anchor_map.reshape(-1, 4)))
-                    edge_anchors = np.concatenate((edge_anchors, edge_anchor_map.reshape(-1, 4)))
-                    anchor_areas = np.concatenate((anchor_areas, anchor_area_map.reshape(-1)))
+                    anchor_area_map = center_anchor_map[:,
+                                                        :, 2] * center_anchor_map[:, :, 3]
+                    center_anchors = np.concatenate(
+                        (center_anchors, center_anchor_map.reshape(-1, 4)))
+                    edge_anchors = np.concatenate(
+                        (edge_anchors, edge_anchor_map.reshape(-1, 4)))
+                    anchor_areas = np.concatenate(
+                        (anchor_areas, anchor_area_map.reshape(-1)))
 
         return center_anchors, edge_anchors, anchor_areas
 
@@ -344,7 +359,8 @@ def get_ntsnet(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

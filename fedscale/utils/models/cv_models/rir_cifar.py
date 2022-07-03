@@ -3,7 +3,8 @@
     Original paper: 'Resnet in Resnet: Generalizing Residual Architectures,' https://arxiv.org/abs/1603.08029.
 """
 
-__all__ = ['CIFARRiR', 'rir_cifar10', 'rir_cifar100', 'rir_svhn', 'RiRFinalBlock']
+__all__ = ['CIFARRiR', 'rir_cifar10',
+           'rir_cifar100', 'rir_svhn', 'RiRFinalBlock']
 
 import os
 import torch
@@ -21,6 +22,7 @@ class PostActivation(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(PostActivation, self).__init__()
@@ -46,6 +48,7 @@ class RiRUnit(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -108,6 +111,7 @@ class RiRInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -129,6 +133,7 @@ class RiRFinalBlock(nn.Module):
     """
     RiR final block.
     """
+
     def __init__(self):
         super(RiRFinalBlock, self).__init__()
 
@@ -156,6 +161,7 @@ class CIFARRiR(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -233,7 +239,8 @@ def get_rir_cifar(num_classes,
         Location for keeping the model parameters.
     """
 
-    channels = [[48, 48, 48, 48], [96, 96, 96, 96, 96, 96], [192, 192, 192, 192, 192, 192]]
+    channels = [[48, 48, 48, 48], [96, 96, 96, 96, 96, 96],
+                [192, 192, 192, 192, 192, 192]]
     init_block_channels = 48
     final_block_channels = 384
 
@@ -246,7 +253,8 @@ def get_rir_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

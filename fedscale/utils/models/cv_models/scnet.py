@@ -28,6 +28,7 @@ class ScDownBlock(nn.Module):
     pool_size: int or list/tuple of 2 ints, default 2
         Size of the average pooling windows.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -62,6 +63,7 @@ class ScConv(nn.Module):
     scale_factor : int
         Scale factor.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -112,6 +114,7 @@ class ScBottleneck(nn.Module):
     avg_downsample : bool, default False
         Whether to use average downsampling.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -183,6 +186,7 @@ class ScUnit(nn.Module):
     avg_downsample : bool, default False
         Whether to use average downsampling.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -243,6 +247,7 @@ class SCNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -272,7 +277,8 @@ class SCNet(nn.Module):
                     avg_downsample=avg_downsample))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+        self.features.add_module(
+            "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
 
         self.output = nn.Linear(
             in_features=in_channels,
@@ -340,7 +346,8 @@ def get_scnet(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported SCNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported SCNet with number of blocks: {}".format(blocks))
 
     assert (sum(layers) * 3 + 2 == blocks)
 
@@ -350,7 +357,8 @@ def get_scnet(blocks,
     init_block_channels *= init_block_channels_scale
 
     bottleneck_factor = 4
-    channels_per_layers = [ci * bottleneck_factor for ci in channels_per_layers]
+    channels_per_layers = [
+        ci * bottleneck_factor for ci in channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -368,7 +376,8 @@ def get_scnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1907.00837.
 """
 
-__all__ = ['SelecSLS', 'selecsls42', 'selecsls42b', 'selecsls60', 'selecsls60b', 'selecsls84']
+__all__ = ['SelecSLS', 'selecsls42', 'selecsls42b',
+           'selecsls60', 'selecsls60b', 'selecsls84']
 
 import os
 import torch
@@ -23,6 +24,7 @@ class SelecSLSBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -59,6 +61,7 @@ class SelecSLSUnit(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the branch convolution layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -68,7 +71,8 @@ class SelecSLSUnit(nn.Module):
         super(SelecSLSUnit, self).__init__()
         self.resize = (stride == 2)
         mid2_channels = mid_channels // 2
-        last_channels = 2 * mid_channels + (skip_channels if stride == 1 else 0)
+        last_channels = 2 * mid_channels + \
+            (skip_channels if stride == 1 else 0)
 
         self.branch1 = conv3x3_block(
             in_channels=in_channels,
@@ -120,6 +124,7 @@ class SelecSLS(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  skip_channels,
@@ -176,7 +181,8 @@ class SelecSLS(nn.Module):
     def _init_params(self):
         for module in self.named_modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_uniform_(module.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_uniform_(
+                    module.weight, mode="fan_out", nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.constant_(module.bias, 0)
             elif isinstance(module, nn.BatchNorm2d):
@@ -228,9 +234,12 @@ def get_selecsls(version,
         else:
             head_channels = [[756, 1024], [1280, 1024]]
     elif version == "84":
-        channels = [[64, 144], [144, 144, 144, 144, 304], [304, 304, 304, 304, 304, 512]]
-        skip_channels = [[0, 64], [0, 144, 144, 144, 144], [0, 304, 304, 304, 304, 304]]
-        mid_channels = [[64, 64], [144, 144, 144, 144, 144], [304, 304, 304, 304, 304, 304]]
+        channels = [[64, 144], [144, 144, 144, 144, 304],
+                    [304, 304, 304, 304, 304, 512]]
+        skip_channels = [[0, 64], [0, 144, 144, 144, 144],
+                         [0, 304, 304, 304, 304, 304]]
+        mid_channels = [[64, 64], [144, 144, 144, 144, 144],
+                        [304, 304, 304, 304, 304, 304]]
         kernels3 = [[1, 1], [1, 1]]
         head_channels = [[960, 1024], [1024, 1280]]
     else:
@@ -247,7 +256,8 @@ def get_selecsls(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

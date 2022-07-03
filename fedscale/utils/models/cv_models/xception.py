@@ -28,6 +28,7 @@ class DwsConv(nn.Module):
     padding : int or tuple/list of 2 int, default 0
         Padding value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -74,6 +75,7 @@ class DwsConvBlock(nn.Module):
     activate : bool
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -145,6 +147,7 @@ class XceptionUnit(nn.Module):
     grow_first : bool, default True
         Whether start from growing.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -204,6 +207,7 @@ class XceptionInitBlock(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(XceptionInitBlock, self).__init__()
@@ -228,6 +232,7 @@ class XceptionFinalBlock(nn.Module):
     """
     Xception specific final block.
     """
+
     def __init__(self):
         super(XceptionFinalBlock, self).__init__()
         self.conv1 = dws_conv3x3_block(
@@ -267,6 +272,7 @@ class Xception(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  in_channels=3,
@@ -339,7 +345,8 @@ def get_xception(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

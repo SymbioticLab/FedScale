@@ -36,6 +36,7 @@ class SimplePose(nn.Module):
     keypoints : int, default 17
         Number of keypoints.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels,
@@ -124,7 +125,8 @@ def get_simplepose(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -315,7 +317,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, return_heatmap=return_heatmap)
+        net = model(pretrained=pretrained, in_size=in_size,
+                    return_heatmap=return_heatmap)
 
         # net.train()
         net.eval()
@@ -334,7 +337,8 @@ def _test():
         y = net(x)
         assert ((y.shape[0] == batch) and (y.shape[1] == keypoints))
         if return_heatmap:
-            assert ((y.shape[2] == x.shape[2] // 4) and (y.shape[3] == x.shape[3] // 4))
+            assert ((y.shape[2] == x.shape[2] // 4)
+                    and (y.shape[3] == x.shape[3] // 4))
         else:
             assert (y.shape[2] == 3)
 

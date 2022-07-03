@@ -40,6 +40,7 @@ class InvDwsConvBlock(nn.Module):
     dw_activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function after the depthwise convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -145,6 +146,7 @@ class HarDUnit(nn.Module):
     activation : str
         Name of activation function.
     """
+
     def __init__(self,
                  in_channels_list,
                  out_channels_list,
@@ -236,6 +238,7 @@ class HarDInitBlock(nn.Module):
     activation : str
         Name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -300,6 +303,7 @@ class HarDNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  init_block_channels,
                  unit_in_channels,
@@ -328,7 +332,8 @@ class HarDNet(nn.Module):
                                                                                 out_channels_list_i)):
                 use_dropout = ((j == len(in_channels_list_i) - 1) and (i == len(unit_in_channels) - 1) and
                                use_last_dropout)
-                downsampling = ((j == len(in_channels_list_i) - 1) and (i != len(unit_in_channels) - 1))
+                downsampling = ((j == len(in_channels_list_i) - 1)
+                                and (i != len(unit_in_channels) - 1))
                 stage.add_module("unit{}".format(j + 1), HarDUnit(
                     in_channels_list=in_channels_list_ij,
                     out_channels_list=out_channels_list_ij,
@@ -354,7 +359,8 @@ class HarDNet(nn.Module):
     def _init_params(self):
         for module in self.named_modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_uniform_(module.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_uniform_(
+                    module.weight, mode="fan_out", nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.constant_(module.bias, 0)
             elif isinstance(module, nn.BatchNorm2d):
@@ -418,7 +424,8 @@ def get_hardnet(blocks,
         downsamples = [1, 0, 1, 0, 1, 0]
         use_dropout = True
     else:
-        raise ValueError("Unsupported HarDNet version with number of layers {}".format(blocks))
+        raise ValueError(
+            "Unsupported HarDNet version with number of layers {}".format(blocks))
 
     assert (downsamples[-1] == 0)
 
@@ -512,7 +519,8 @@ def get_hardnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

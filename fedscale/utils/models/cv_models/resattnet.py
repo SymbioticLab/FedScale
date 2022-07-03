@@ -26,6 +26,7 @@ class PreResBottleneck(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -65,6 +66,7 @@ class ResBlock(nn.Module):
     stride : int or tuple/list of 2 int, default 1
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -100,6 +102,7 @@ class InterpolationBlock(nn.Module):
     scale_factor : float
         Multiplier for spatial size.
     """
+
     def __init__(self,
                  scale_factor):
         super(InterpolationBlock, self).__init__()
@@ -124,6 +127,7 @@ class DoubleSkipBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -150,6 +154,7 @@ class ResBlockSequence(nn.Module):
     length : int
         Length of sequence.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -179,6 +184,7 @@ class DownAttBlock(nn.Module):
     length : int
         Length of residual blocks list.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -214,6 +220,7 @@ class UpAttBlock(nn.Module):
     scale_factor : float
         Multiplier for spatial size.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -241,6 +248,7 @@ class MiddleAttBlock(nn.Module):
     channels : int
         Number of input/output channels.
     """
+
     def __init__(self,
                  channels):
         super(MiddleAttBlock, self).__init__()
@@ -274,6 +282,7 @@ class AttBlock(nn.Module):
     att_scales : list of int
         Attention block specific scales.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -342,6 +351,7 @@ class ResAttInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -370,6 +380,7 @@ class PreActivation(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(PreActivation, self).__init__()
@@ -403,6 +414,7 @@ class ResAttNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -438,7 +450,8 @@ class ResAttNet(nn.Module):
                         stride=stride))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("post_activ", PreActivation(in_channels=in_channels))
+        self.features.add_module(
+            "post_activ", PreActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -504,12 +517,14 @@ def get_resattnet(blocks,
         att_layers = [5, 6, 7]
         att_scales = [2, 4, 3]
     else:
-        raise ValueError("Unsupported ResAttNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported ResAttNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
     channels_per_layers = [256, 512, 1024, 2048]
     layers = att_layers + [2]
-    channels = [[ci] * (li + 1) for (ci, li) in zip(channels_per_layers, layers)]
+    channels = [[ci] * (li + 1)
+                for (ci, li) in zip(channels_per_layers, layers)]
     attentions = [[0] + [1] * li for li in att_layers] + [[0] * 3]
 
     net = ResAttNet(
@@ -521,7 +536,8 @@ def get_resattnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

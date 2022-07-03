@@ -32,6 +32,7 @@ class LwopResBottleneck(nn.Module):
     squeeze_out : bool, default False
         Whether to squeeze the output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -85,6 +86,7 @@ class LwopResUnit(nn.Module):
     activate : bool, default False
         Whether to activate the sum.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -137,6 +139,7 @@ class LwopEncoderFinalBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -179,6 +182,7 @@ class LwopRefinementBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -219,6 +223,7 @@ class LwopDecoderBend(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -251,6 +256,7 @@ class LwopDecoderInitBlock(nn.Module):
     keypoints : int
         Number of keypoints.
     """
+
     def __init__(self,
                  in_channels,
                  keypoints):
@@ -294,6 +300,7 @@ class LwopDecoderUnit(nn.Module):
     keypoints : int
         Number of keypoints.
     """
+
     def __init__(self,
                  in_channels,
                  keypoints):
@@ -339,6 +346,7 @@ class LwopDecoderFeaturesBend(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -376,6 +384,7 @@ class LwopDecoderFinalBlock(nn.Module):
     calc_3d_features : bool
         Whether to calculate 3D features.
     """
+
     def __init__(self,
                  in_channels,
                  keypoints,
@@ -438,6 +447,7 @@ class LwOpenPose(nn.Module):
     keypoints : int, default 19
         Number of keypoints.
     """
+
     def __init__(self,
                  encoder_channels,
                  encoder_paddings,
@@ -538,7 +548,8 @@ def get_lwopenpose(calc_3d_features,
     root : str, default '~/.torch/models'
         Location for keeping the model parameters.
     """
-    encoder_channels = [[64], [128, 128], [256, 256, 512, 512, 512, 512, 512, 512]]
+    encoder_channels = [[64], [128, 128], [
+        256, 256, 512, 512, 512, 512, 512, 512]]
     encoder_paddings = [[1], [1, 1], [1, 1, 1, 2, 1, 1, 1, 1]]
     encoder_init_block_channels = 32
     encoder_final_block_channels = 128
@@ -556,7 +567,8 @@ def get_lwopenpose(calc_3d_features,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -624,7 +636,8 @@ def _test():
 
     for model, model_dim in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, return_heatmap=return_heatmap)
+        net = model(pretrained=pretrained, in_size=in_size,
+                    return_heatmap=return_heatmap)
 
         # net.train()
         net.eval()
@@ -638,9 +651,11 @@ def _test():
         y = net(x)
         # y.sum().backward()
         if model_dim == "2d":
-            assert (tuple(y.size()) == (batch, 3 * keypoints, in_size[0] // 8, in_size[0] // 8))
+            assert (tuple(y.size()) == (batch, 3 * keypoints,
+                    in_size[0] // 8, in_size[0] // 8))
         else:
-            assert (tuple(y.size()) == (batch, 6 * keypoints, in_size[0] // 8, in_size[0] // 8))
+            assert (tuple(y.size()) == (batch, 6 * keypoints,
+                    in_size[0] // 8, in_size[0] // 8))
 
 
 if __name__ == "__main__":

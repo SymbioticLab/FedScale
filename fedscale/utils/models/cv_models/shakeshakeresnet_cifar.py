@@ -27,7 +27,8 @@ class ShakeShake(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, dy):
-        beta = torch.rand(dy.size(0), dtype=dy.dtype, device=dy.device).view(-1, 1, 1, 1)
+        beta = torch.rand(dy.size(0), dtype=dy.dtype,
+                          device=dy.device).view(-1, 1, 1, 1)
         return beta * dy, (1 - beta) * dy, None
 
 
@@ -44,6 +45,7 @@ class ShakeShakeShortcut(nn.Module):
     stride : int or tuple/list of 2 int
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -91,6 +93,7 @@ class ShakeShakeResUnit(nn.Module):
     bottleneck : bool
         Whether to use a bottleneck or simple block in units.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -124,7 +127,8 @@ class ShakeShakeResUnit(nn.Module):
         x1 = self.branch1(x)
         x2 = self.branch2(x)
         if self.training:
-            alpha = torch.rand(x1.size(0), dtype=x1.dtype, device=x1.device).view(-1, 1, 1, 1)
+            alpha = torch.rand(x1.size(0), dtype=x1.dtype,
+                               device=x1.device).view(-1, 1, 1, 1)
             x = self.shake_shake(x1, x2, alpha)
         else:
             x = 0.5 * (x1 + x2)
@@ -152,6 +156,7 @@ class CIFARShakeShakeResNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -243,7 +248,8 @@ def get_shakeshakeresnet_cifar(classes,
     init_block_channels = 16
 
     from functools import reduce
-    channels_per_layers = reduce(lambda x, y: x + [x[-1] * 2], range(2), [first_stage_channels])
+    channels_per_layers = reduce(
+        lambda x, y: x + [x[-1] * 2], range(2), [first_stage_channels])
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -259,7 +265,8 @@ def get_shakeshakeresnet_cifar(classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

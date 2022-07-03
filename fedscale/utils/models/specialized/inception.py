@@ -7,7 +7,8 @@ import torch.nn.functional as F
 from torch import Tensor
 
 
-__all__ = ['Inception3', 'inception_v3', 'InceptionOutputs', '_InceptionOutputs']
+__all__ = ['Inception3', 'inception_v3',
+           'InceptionOutputs', '_InceptionOutputs']
 kernel_size = 1
 
 model_urls = {
@@ -45,7 +46,6 @@ def inception_v3(pretrained=False, progress=True, **kwargs):
     return Inception3(**kwargs)
 
 
-
 class Inception3(nn.Module):
 
     def __init__(self, num_classes=1000, aux_logits=True, transform_input=False,
@@ -67,7 +67,8 @@ class Inception3(nn.Module):
 
         self.aux_logits = aux_logits
         self.transform_input = transform_input
-        self.Conv2d_1a_3x3 = conv_block(3, 32, kernel_size=kernel_size, stride=2)
+        self.Conv2d_1a_3x3 = conv_block(
+            3, 32, kernel_size=kernel_size, stride=2)
         self.Conv2d_2a_3x3 = conv_block(32, 32, kernel_size=kernel_size)
         self.Conv2d_2b_3x3 = conv_block(32, 64, kernel_size=kernel_size)
         self.Conv2d_3b_1x1 = conv_block(64, 80, kernel_size=kernel_size)
@@ -92,7 +93,8 @@ class Inception3(nn.Module):
                 import scipy.stats as stats
                 stddev = m.stddev if hasattr(m, 'stddev') else 0.1
                 X = stats.truncnorm(-2, 2, scale=stddev)
-                values = torch.as_tensor(X.rvs(m.weight.numel()), dtype=m.weight.dtype)
+                values = torch.as_tensor(
+                    X.rvs(m.weight.numel()), dtype=m.weight.dtype)
                 values = values.view(m.weight.size())
                 with torch.no_grad():
                     m.weight.copy_(values)
@@ -102,9 +104,12 @@ class Inception3(nn.Module):
 
     def _transform_input(self, x):
         if self.transform_input:
-            x_ch0 = torch.unsqueeze(x[:, 0], 1) * (0.229 / 0.5) + (0.485 - 0.5) / 0.5
-            x_ch1 = torch.unsqueeze(x[:, 1], 1) * (0.224 / 0.5) + (0.456 - 0.5) / 0.5
-            x_ch2 = torch.unsqueeze(x[:, 2], 1) * (0.225 / 0.5) + (0.406 - 0.5) / 0.5
+            x_ch0 = torch.unsqueeze(x[:, 0], 1) * \
+                (0.229 / 0.5) + (0.485 - 0.5) / 0.5
+            x_ch1 = torch.unsqueeze(x[:, 1], 1) * \
+                (0.224 / 0.5) + (0.456 - 0.5) / 0.5
+            x_ch2 = torch.unsqueeze(x[:, 2], 1) * \
+                (0.225 / 0.5) + (0.406 - 0.5) / 0.5
             x = torch.cat((x_ch0, x_ch1, x_ch2), 1)
         return x
 
@@ -163,7 +168,7 @@ class Inception3(nn.Module):
         # N x 1000 (num_classes)
         return x, aux
 
-    #@torch.jit.unused
+    # @torch.jit.unused
     def eager_outputs(self, x, aux):
         # type: (Tensor, Optional[Tensor]) -> InceptionOutputs
         if self.training and self.aux_logits:
@@ -180,7 +185,7 @@ class Inception3(nn.Module):
         #         warnings.warn("Scripted Inception3 always returns Inception3 Tuple")
         #     return InceptionOutputs(x, aux)
         # else:
-        return x #self.eager_outputs(x, aux)
+        return x  # self.eager_outputs(x, aux)
 
 
 class InceptionA(nn.Module):
@@ -194,11 +199,13 @@ class InceptionA(nn.Module):
         self.branch5x5_1 = conv_block(in_channels, 48, kernel_size=kernel_size)
         self.branch5x5_2 = conv_block(48, 64, kernel_size=kernel_size)
 
-        self.branch3x3dbl_1 = conv_block(in_channels, 64, kernel_size=kernel_size)
+        self.branch3x3dbl_1 = conv_block(
+            in_channels, 64, kernel_size=kernel_size)
         self.branch3x3dbl_2 = conv_block(64, 96, kernel_size=kernel_size)
         self.branch3x3dbl_3 = conv_block(96, 96, kernel_size=kernel_size)
 
-        self.branch_pool = conv_block(in_channels, pool_features, kernel_size=kernel_size)
+        self.branch_pool = conv_block(
+            in_channels, pool_features, kernel_size=kernel_size)
 
     def _forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -227,11 +234,14 @@ class InceptionB(nn.Module):
         super(InceptionB, self).__init__()
         if conv_block is None:
             conv_block = BasicConv2d
-        self.branch3x3 = conv_block(in_channels, 384, kernel_size=kernel_size, stride=2)
+        self.branch3x3 = conv_block(
+            in_channels, 384, kernel_size=kernel_size, stride=2)
 
-        self.branch3x3dbl_1 = conv_block(in_channels, 64, kernel_size=kernel_size)
+        self.branch3x3dbl_1 = conv_block(
+            in_channels, 64, kernel_size=kernel_size)
         self.branch3x3dbl_2 = conv_block(64, 96, kernel_size=kernel_size)
-        self.branch3x3dbl_3 = conv_block(96, 96, kernel_size=kernel_size, stride=2)
+        self.branch3x3dbl_3 = conv_block(
+            96, 96, kernel_size=kernel_size, stride=2)
 
     def _forward(self, x):
         branch3x3 = self.branch3x3(x)
@@ -260,16 +270,24 @@ class InceptionC(nn.Module):
 
         c7 = channels_7x7
         self.branch7x7_1 = conv_block(in_channels, c7, kernel_size=kernel_size)
-        self.branch7x7_2 = conv_block(c7, c7, kernel_size=(kernel_size, kernel_size))
-        self.branch7x7_3 = conv_block(c7, 192, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7_2 = conv_block(
+            c7, c7, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7_3 = conv_block(
+            c7, 192, kernel_size=(kernel_size, kernel_size))
 
-        self.branch7x7dbl_1 = conv_block(in_channels, c7, kernel_size=kernel_size)
-        self.branch7x7dbl_2 = conv_block(c7, c7, kernel_size=(kernel_size, kernel_size))
-        self.branch7x7dbl_3 = conv_block(c7, c7, kernel_size=(kernel_size, kernel_size))
-        self.branch7x7dbl_4 = conv_block(c7, c7, kernel_size=(kernel_size, kernel_size))
-        self.branch7x7dbl_5 = conv_block(c7, 192, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7dbl_1 = conv_block(
+            in_channels, c7, kernel_size=kernel_size)
+        self.branch7x7dbl_2 = conv_block(
+            c7, c7, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7dbl_3 = conv_block(
+            c7, c7, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7dbl_4 = conv_block(
+            c7, c7, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7dbl_5 = conv_block(
+            c7, 192, kernel_size=(kernel_size, kernel_size))
 
-        self.branch_pool = conv_block(in_channels, 192, kernel_size=kernel_size)
+        self.branch_pool = conv_block(
+            in_channels, 192, kernel_size=kernel_size)
 
     def _forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -301,13 +319,18 @@ class InceptionD(nn.Module):
         super(InceptionD, self).__init__()
         if conv_block is None:
             conv_block = BasicConv2d
-        self.branch3x3_1 = conv_block(in_channels, 192, kernel_size=kernel_size)
-        self.branch3x3_2 = conv_block(192, 320, kernel_size=kernel_size, stride=2)
+        self.branch3x3_1 = conv_block(
+            in_channels, 192, kernel_size=kernel_size)
+        self.branch3x3_2 = conv_block(
+            192, 320, kernel_size=kernel_size, stride=2)
 
         self.branch7x7x3_1 = conv_block(in_channels, 192, kernel_size=1)
-        self.branch7x7x3_2 = conv_block(192, 192, kernel_size=(kernel_size, kernel_size))
-        self.branch7x7x3_3 = conv_block(192, 192, kernel_size=(kernel_size, kernel_size))
-        self.branch7x7x3_4 = conv_block(192, 192, kernel_size=kernel_size, stride=2)
+        self.branch7x7x3_2 = conv_block(
+            192, 192, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7x3_3 = conv_block(
+            192, 192, kernel_size=(kernel_size, kernel_size))
+        self.branch7x7x3_4 = conv_block(
+            192, 192, kernel_size=kernel_size, stride=2)
 
     def _forward(self, x):
         branch3x3 = self.branch3x3_1(x)
@@ -335,16 +358,23 @@ class InceptionE(nn.Module):
             conv_block = BasicConv2d
         self.branch1x1 = conv_block(in_channels, 320, kernel_size=kernel_size)
 
-        self.branch3x3_1 = conv_block(in_channels, 384, kernel_size=kernel_size)
-        self.branch3x3_2a = conv_block(384, 384, kernel_size=(kernel_size, kernel_size))
-        self.branch3x3_2b = conv_block(384, 384, kernel_size=(kernel_size, kernel_size))
+        self.branch3x3_1 = conv_block(
+            in_channels, 384, kernel_size=kernel_size)
+        self.branch3x3_2a = conv_block(
+            384, 384, kernel_size=(kernel_size, kernel_size))
+        self.branch3x3_2b = conv_block(
+            384, 384, kernel_size=(kernel_size, kernel_size))
 
-        self.branch3x3dbl_1 = conv_block(in_channels, 448, kernel_size=kernel_size)
+        self.branch3x3dbl_1 = conv_block(
+            in_channels, 448, kernel_size=kernel_size)
         self.branch3x3dbl_2 = conv_block(448, 384, kernel_size=kernel_size)
-        self.branch3x3dbl_3a = conv_block(384, 384, kernel_size=(kernel_size, kernel_size))
-        self.branch3x3dbl_3b = conv_block(384, 384, kernel_size=(kernel_size, kernel_size))
+        self.branch3x3dbl_3a = conv_block(
+            384, 384, kernel_size=(kernel_size, kernel_size))
+        self.branch3x3dbl_3b = conv_block(
+            384, 384, kernel_size=(kernel_size, kernel_size))
 
-        self.branch_pool = conv_block(in_channels, 192, kernel_size=kernel_size)
+        self.branch_pool = conv_block(
+            in_channels, 192, kernel_size=kernel_size)
 
     def _forward(self, x):
         branch1x1 = self.branch1x1(x)

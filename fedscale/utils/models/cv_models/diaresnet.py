@@ -27,6 +27,7 @@ class FirstLSTMAmp(nn.Module):
     out_features : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_features,
                  out_features):
@@ -63,6 +64,7 @@ class DIALSTMCell(nn.Module):
     dropout_rate : float, default 0.1
         Parameter of Dropout layer. Faction of the input units to drop.
     """
+
     def __init__(self,
                  in_x_features,
                  in_h_features,
@@ -118,6 +120,7 @@ class DIAAttention(nn.Module):
     num_layers : int, default 1
         Number of amplifiers.
     """
+
     def __init__(self,
                  in_x_features,
                  in_h_features,
@@ -168,6 +171,7 @@ class DIAResUnit(nn.Module):
     attention : nn.Module, default None
         Attention module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -235,6 +239,7 @@ class DIAResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -352,7 +357,8 @@ def get_diaresnet(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported DIA-ResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported DIA-ResNet with number of blocks: {}".format(blocks))
 
     if bottleneck:
         assert (sum(layers) * 3 + 2 == blocks)
@@ -364,7 +370,8 @@ def get_diaresnet(blocks,
 
     if bottleneck:
         bottleneck_factor = 4
-        channels_per_layers = [ci * bottleneck_factor for ci in channels_per_layers]
+        channels_per_layers = [
+            ci * bottleneck_factor for ci in channels_per_layers]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -382,7 +389,8 @@ def get_diaresnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -9,6 +9,7 @@ import h5py as h5
 import torch.nn.functional as F
 #import logging
 
+
 class stackoverflow():
     """
     Args:
@@ -60,7 +61,8 @@ class stackoverflow():
         self.vocab_tags_size = 500
 
         # load data and targets
-        self.raw_data, self.raw_targets, self.dict = self.load_file(self.root, self.train)
+        self.raw_data, self.raw_targets, self.dict = self.load_file(
+            self.root, self.train)
         # temp_raw_data, temp_raw_targets, temp_dict = self.load_file(self.root, self.train)
 
         # self.raw_data, self.raw_targets, self.dict = [], [], {}
@@ -144,10 +146,9 @@ class stackoverflow():
     def create_tag_vocab(self, vocab_size, path):
         """Creates vocab from `vocab_size` most common tags in Stackoverflow."""
         tags_file = "vocab_tags.txt"
-        with open(os.path.join(path,tags_file), 'rb') as f:
+        with open(os.path.join(path, tags_file), 'rb') as f:
             tags = pickle.load(f)
         return tags[:vocab_size]
-
 
     def create_token_vocab(self, vocab_size, path):
         """Creates vocab from `vocab_size` most common words in Stackoverflow."""
@@ -176,7 +177,8 @@ class stackoverflow():
             print("====Load {} from scratch".format(file_name))
             # Mapping from sample id to target tag
             # First, get the token and tag dict
-            vocab_tokens = self.create_token_vocab(self.vocab_tokens_size, path)
+            vocab_tokens = self.create_token_vocab(
+                self.vocab_tokens_size, path)
             vocab_tags = self.create_tag_vocab(self.vocab_tags_size, path)
 
             vocab_tokens_dict = {k: v for v, k in enumerate(vocab_tokens)}
@@ -200,11 +202,13 @@ class stackoverflow():
                 title_list = list(train_file['examples'][client]['title'])
 
                 for tags, tokens, title in zip(tags_list, tokens_list, title_list):
-                    tags_list = [vocab_tags_dict[s] for s in tags.decode("utf-8").split('|') if s in vocab_tags_dict]
+                    tags_list = [vocab_tags_dict[s] for s in tags.decode(
+                        "utf-8").split('|') if s in vocab_tags_dict]
                     if not tags_list:
                         continue
 
-                    tokens_list = [vocab_tokens_dict[s] for s in (tokens.decode("utf-8").split()+title.decode("utf-8").split()) if s in vocab_tokens_dict]
+                    tokens_list = [vocab_tokens_dict[s] for s in (tokens.decode(
+                        "utf-8").split()+title.decode("utf-8").split()) if s in vocab_tokens_dict]
                     if not tokens_list:
                         continue
 

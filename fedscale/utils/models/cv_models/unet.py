@@ -25,6 +25,7 @@ class UNetBlock(nn.Module):
     bias : bool
         Whether the layer uses a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -58,6 +59,7 @@ class UNetDownStage(nn.Module):
     bias : bool
         Whether the layer uses a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -88,6 +90,7 @@ class UNetUpStage(nn.Module):
     bias : bool
         Whether the layer uses a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -120,6 +123,7 @@ class UNetHead(nn.Module):
     bias : bool
         Whether the layer uses a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -163,6 +167,7 @@ class UNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -263,7 +268,8 @@ def get_unet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -311,7 +317,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()

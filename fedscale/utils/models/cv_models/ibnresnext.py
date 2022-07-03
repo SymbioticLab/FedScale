@@ -3,7 +3,8 @@
     Original paper: 'Aggregated Residual Transformations for Deep Neural Networks,' http://arxiv.org/abs/1611.05431.
 """
 
-__all__ = ['IBNResNeXt', 'ibn_resnext50_32x4d', 'ibn_resnext101_32x4d', 'ibn_resnext101_64x4d']
+__all__ = ['IBNResNeXt', 'ibn_resnext50_32x4d',
+           'ibn_resnext101_32x4d', 'ibn_resnext101_64x4d']
 
 import os
 import math
@@ -33,6 +34,7 @@ class IBNResNeXtBottleneck(nn.Module):
     conv1_ibn : bool
         Whether to use IBN normalization in the first convolution layer of the block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -85,6 +87,7 @@ class IBNResNeXtUnit(nn.Module):
     conv1_ibn : bool
         Whether to use IBN normalization in the first convolution layer of the block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -143,6 +146,7 @@ class IBNResNeXt(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -229,7 +233,8 @@ def get_ibnresnext(blocks,
     elif blocks == 101:
         layers = [3, 4, 23, 3]
     else:
-        raise ValueError("Unsupported IBN-ResNeXt with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported IBN-ResNeXt with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
     channels_per_layers = [256, 512, 1024, 2048]
@@ -245,7 +250,8 @@ def get_ibnresnext(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

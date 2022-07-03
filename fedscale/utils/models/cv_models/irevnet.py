@@ -3,7 +3,8 @@
     Original paper: 'i-RevNet: Deep Invertible Networks,' https://arxiv.org/abs/1802.07088.
 """
 
-__all__ = ['IRevNet', 'irevnet301', 'IRevDownscale', 'IRevSplitBlock', 'IRevMergeBlock']
+__all__ = ['IRevNet', 'irevnet301', 'IRevDownscale',
+           'IRevSplitBlock', 'IRevMergeBlock']
 
 import os
 import torch
@@ -32,12 +33,14 @@ class IRevDualPathSequential(DualPathSequential):
     last_noninvertible : int, default 0
         Number of the final modules skipped during inverse.
     """
+
     def __init__(self,
                  return_two=True,
                  first_ordinals=0,
                  last_ordinals=0,
                  dual_path_scheme=(lambda module, x1, x2: module(x1, x2)),
-                 dual_path_scheme_ordinal=(lambda module, x1, x2: (module(x1), x2)),
+                 dual_path_scheme_ordinal=(
+                     lambda module, x1, x2: (module(x1), x2)),
                  last_noninvertible=0):
         super(IRevDualPathSequential, self).__init__(
             return_two=return_two,
@@ -71,6 +74,7 @@ class IRevDownscale(nn.Module):
     scale : int
         Scale (downscale) value.
     """
+
     def __init__(self, scale):
         super(IRevDownscale, self).__init__()
         self.scale = scale
@@ -83,7 +87,8 @@ class IRevDownscale(nn.Module):
 
         y = x.permute(0, 2, 3, 1)
         d2_split_seq = y.split(split_size=self.scale, dim=2)
-        d2_split_seq = [t.contiguous().view(batch, y_height, y_channels) for t in d2_split_seq]
+        d2_split_seq = [t.contiguous().view(batch, y_height, y_channels)
+                        for t in d2_split_seq]
         y = torch.stack(d2_split_seq, dim=1)
         y = y.permute(0, 3, 2, 1)
         return y.contiguous()
@@ -99,9 +104,11 @@ class IRevDownscale(nn.Module):
         x = y.permute(0, 2, 3, 1)
         x = x.contiguous().view(batch, y_height, y_width, scale_sqr, x_channels)
         d3_split_seq = x.split(split_size=self.scale, dim=3)
-        d3_split_seq = [t.contiguous().view(batch, y_height, x_width, x_channels) for t in d3_split_seq]
+        d3_split_seq = [t.contiguous().view(
+            batch, y_height, x_width, x_channels) for t in d3_split_seq]
         x = torch.stack(d3_split_seq, dim=0)
-        x = x.transpose(0, 1).permute(0, 2, 1, 3, 4).contiguous().view(batch, x_height, x_width, x_channels)
+        x = x.transpose(0, 1).permute(0, 2, 1, 3, 4).contiguous().view(
+            batch, x_height, x_width, x_channels)
         x = x.permute(0, 3, 1, 2)
         return x.contiguous()
 
@@ -115,6 +122,7 @@ class IRevInjectivePad(nn.Module):
     padding : int
         Size of the padding.
     """
+
     def __init__(self, padding):
         super(IRevInjectivePad, self).__init__()
         self.padding = padding
@@ -133,6 +141,7 @@ class IRevSplitBlock(nn.Module):
     """
     iRevNet split block.
     """
+
     def __init__(self):
         super(IRevSplitBlock, self).__init__()
 
@@ -149,6 +158,7 @@ class IRevMergeBlock(nn.Module):
     """
     iRevNet merge block.
     """
+
     def __init__(self):
         super(IRevMergeBlock, self).__init__()
 
@@ -176,6 +186,7 @@ class IRevBottleneck(nn.Module):
     preactivate : bool
         Whether use pre-activation for the first convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -223,6 +234,7 @@ class IRevUnit(nn.Module):
     preactivate : bool
         Whether use pre-activation for the first convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -281,6 +293,7 @@ class IRevPostActivation(nn.Module):
     in_channels : int
         Number of input channels.
     """
+
     def __init__(self,
                  in_channels):
         super(IRevPostActivation, self).__init__()
@@ -316,6 +329,7 @@ class IRevNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -349,7 +363,8 @@ class IRevNet(nn.Module):
             self.features.add_module("stage{}".format(i + 1), stage)
         in_channels = final_block_channels
         self.features.add_module("final_merge", IRevMergeBlock())
-        self.features.add_module("final_postactiv", IRevPostActivation(in_channels=in_channels))
+        self.features.add_module(
+            "final_postactiv", IRevPostActivation(in_channels=in_channels))
         self.features.add_module("final_pool", nn.AvgPool2d(
             kernel_size=7,
             stride=1))
@@ -404,7 +419,8 @@ def get_irevnet(blocks,
     if blocks == 301:
         layers = [6, 16, 72, 6]
     else:
-        raise ValueError("Unsupported i-RevNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported i-RevNet with number of blocks: {}".format(blocks))
 
     assert (sum(layers) * 3 + 1 == blocks)
 
@@ -422,7 +438,8 @@ def get_irevnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

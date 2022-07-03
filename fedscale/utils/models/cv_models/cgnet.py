@@ -32,6 +32,7 @@ class CGBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -63,7 +64,8 @@ class CGBlock(nn.Module):
                 activation=(lambda: nn.PReLU(mid1_channels)))
 
         self.branches = Concurrent()
-        self.branches.add_module("branches1", depthwise_conv3x3(channels=mid1_channels))
+        self.branches.add_module(
+            "branches1", depthwise_conv3x3(channels=mid1_channels))
         self.branches.add_module("branches2", depthwise_conv3x3(
             channels=mid1_channels,
             padding=dilation,
@@ -117,6 +119,7 @@ class CGUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -147,7 +150,8 @@ class CGUnit(nn.Module):
     def forward(self, x):
         x = self.down(x)
         y = self.blocks(x)
-        x = torch.cat((y, x), dim=1)  # NB: This differs from the original implementation.
+        # NB: This differs from the original implementation.
+        x = torch.cat((y, x), dim=1)
         return x
 
 
@@ -172,6 +176,7 @@ class CGStage(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  x_channels,
                  y_in_channels,
@@ -227,6 +232,7 @@ class CGInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -288,6 +294,7 @@ class CGNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  layers,
                  channels,
@@ -391,7 +398,8 @@ def get_cgnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -439,7 +447,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()

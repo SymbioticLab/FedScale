@@ -53,6 +53,7 @@ class VGGOutputBlock(nn.Module):
     classes : int
         Number of classification classes.
     """
+
     def __init__(self,
                  in_channels,
                  classes):
@@ -96,6 +97,7 @@ class VGG(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  bias=True,
@@ -177,7 +179,8 @@ def get_vgg(blocks,
     elif blocks == 19:
         layers = [2, 2, 4, 4, 4]
     else:
-        raise ValueError("Unsupported VGG with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported VGG with number of blocks: {}".format(blocks))
 
     channels_per_layers = [64, 128, 256, 512, 512]
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
@@ -190,7 +193,8 @@ def get_vgg(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

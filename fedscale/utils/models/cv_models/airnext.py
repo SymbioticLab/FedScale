@@ -4,7 +4,8 @@
     https://ieeexplore.ieee.org/document/8510896.
 """
 
-__all__ = ['AirNeXt', 'airnext50_32x4d_r2', 'airnext101_32x4d_r2', 'airnext101_32x4d_r16']
+__all__ = ['AirNeXt', 'airnext50_32x4d_r2',
+           'airnext101_32x4d_r2', 'airnext101_32x4d_r16']
 
 import os
 import math
@@ -33,6 +34,7 @@ class AirNeXtBottleneck(nn.Module):
     ratio: int
         Air compression ratio.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -95,6 +97,7 @@ class AirNeXtUnit(nn.Module):
     ratio: int
         Air compression ratio.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -155,6 +158,7 @@ class AirNeXt(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -247,11 +251,13 @@ def get_airnext(blocks,
     elif blocks == 101:
         layers = [3, 4, 23, 3]
     else:
-        raise ValueError("Unsupported AirNeXt with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported AirNeXt with number of blocks: {}".format(blocks))
 
     bottleneck_expansion = 4
     init_block_channels = base_channels
-    channels_per_layers = [base_channels * (2 ** i) * bottleneck_expansion for i in range(len(layers))]
+    channels_per_layers = [
+        base_channels * (2 ** i) * bottleneck_expansion for i in range(len(layers))]
 
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
 
@@ -265,7 +271,8 @@ def get_airnext(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

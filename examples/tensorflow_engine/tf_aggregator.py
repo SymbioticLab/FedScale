@@ -1,7 +1,7 @@
 import sys, os
 
-from fedscale.core.aggregator import Aggregator
-from fedscale.core.fl_aggregator_libs import *
+from fedscale.core.aggregation.aggregator import Aggregator
+from fedscale.core.logger.aggragation import *
 import tensorflow as tf
 
 class Customized_Aggregator(Aggregator):

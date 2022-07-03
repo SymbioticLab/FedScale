@@ -3,39 +3,45 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # no color
-DIR="./data"
+DIR="$(dirname $0)/data"
+ARGS=${@: 2};
 
 # Download and decompress datasets
 
 Help()
 {
    # Display Help
-   echo "FedScale provides a large suite of FL datasets "
-   echo "to evaluate today's FL performance"
+   echo 
+   echo "FedScale provides a large suite of FL datasets to evaluate today's FL performance"
    echo
-   echo "Syntax: ./download.sh [--dataset_name]"
+   echo "Syntax: download/remove [dataset_name]"
    echo "options:"
-   echo "--help                         Print this Help."
-   echo "--speech                       Download Speech Commands dataset (about 2.3GB)"
-   echo "--open_images                  Download Open Images dataset (about 66GB)"
-   echo "--amazon_review                Download Amazon Review dataset (about 11G)"
-   echo "--charades                     Download Charades dataset (about 15G)"
-   echo "--europarl                     Download Europarl dataset (about 458M)"
-   echo "--go                           Download Go dataset (about 1.7G)"
-   echo "--inaturalist                  Download Inaturalist 2019 dataset meta file (about 11M)"
-   echo "--libriTTS                     Download LibriTTS dataset (about 78G)"
-   echo "--open_images_detection        Download Open Images for detection (about 451M)"
-   echo "--reddit                       Download Reddit dataset (about 25G)"
-   echo "--taobao                       Download Taobao dataset (about 185M)"
-   echo "--taxi                         Download Taxi Trajectory dataset (about 504M)"
-   echo "--waymo                        Download Waymo Motion dataset meta file (about 74M)"
-   echo "--femnist                      Download FEMNIST dataset (about 327M)"
-   echo "--stackoverflow                Download StackOverflow dataset (about 13G)"
-   echo "--blog                         Download Blog dataset (about 833M)"
-   echo "--common_voice                 Download Common Voice dataset (about 87G)"
-   echo "--coqa                         Download CoQA dataset (about 7.9M)"
-   echo "--puffer                       Download Puffer dataset (about 2.0G)"
-   echo "--landmark                     Download Puffer dataset (about 954M)"
+   echo "help                         Print this Help."
+   echo "download                     Download  dataset"
+   echo "remove                       Remove dataset"
+
+   echo
+   echo "======= Available datasets ======="
+   echo "speech                       Speech Commands dataset (about 2.3GB)"
+   echo "open_images                  Open Images dataset (about 66GB)"
+   echo "amazon_review                Amazon Review dataset (about 11G)"
+   echo "charades                     Charades dataset (about 15G)"
+   echo "europarl                     Europarl dataset (about 458M)"
+   echo "go                           Go dataset (about 1.7G)"
+   echo "inaturalist                  Inaturalist 2019 dataset meta file (about 11M)"
+   echo "libriTTS                     LibriTTS dataset (about 78G)"
+   echo "open_images_detection        Open Images for detection (about 451M)"
+   echo "reddit                       Reddit dataset (about 25G)"
+   echo "taobao                       Taobao dataset (about 185M)"
+   echo "taxi                         Taxi Trajectory dataset (about 504M)"
+   echo "waymo                        Waymo Motion dataset meta file (about 74M)"
+   echo "femnist                      FEMNIST dataset (about 327M)"
+   echo "stackoverflow                StackOverflow dataset (about 13G)"
+   echo "blog                         Blog dataset (about 833M)"
+   echo "common_voice                 Common Voice dataset (about 87G)"
+   echo "coqa                         CoQA dataset (about 7.9M)"
+   echo "puffer                       Puffer dataset (about 2.0G)"
+   echo "landmark                     Puffer dataset (about 954M)"
 }
 
 speech()
@@ -420,98 +426,161 @@ coqa()
 fi
 }
 
-while true; do
-   case "$1" in
-      --help ) # display Help
-         Help
-         shift
-         exit;;
-      --open_images )
-         open_images
-         shift
-         ;;
-      --speech )
-         speech
-         shift
-         ;;
-      --amazon_review )
-         amazon_review
-         shift
-         ;;
-      --charades )
-         charades
-         shift
-         ;;
-      --europarl )
-         europarl
-         shift
-         ;;
-      --go )
-         go
-         shift
-         ;;
-      --inaturalist )
-         inaturalist
-         shift
-         ;;
-      --libriTTS )
-         libriTTS
-         shift
-         ;;
-      --open_images_detection )
-         open_images_detection
-         shift
-         ;;
-      --reddit )
-         reddit
-         shift
-         ;;
-      --taobao )
-         taobao
-         shift
-         ;;
-      --taxi )
-         taxi
-         shift
-         ;;
-      --waymo )
-         waymo
-         shift
-         ;;
-      --femnist )
-         femnist
-         shift
-         ;;
-      --blog )
-         blog
-         shift
-         ;;
-      --stackoverflow )
-         stackoverflow
-         shift
-         ;;
-      --common_voice )
-         common_voice
-         shift
-         ;;
-      --puffer )
-        puffer
-        shift
+Download() {
+    for data in $ARGS
+    do  
+        echo "Downloading ${data}"
+        case $data in
+            open_images )
+                open_images
+                ;;
+            speech )
+                speech
+                ;;
+            amazon_review )
+                amazon_review
+                ;;
+            charades )
+                charades
+                ;;
+            europarl )
+                europarl
+                ;;
+            go )
+                go
+                ;;
+            inaturalist )
+                inaturalist
+                ;;
+            libriTTS )
+                libriTTS
+                ;;
+            open_images_detection )
+                open_images_detection
+                ;;
+            reddit )
+                reddit
+                ;;
+            taobao )
+                taobao
+                ;;
+            taxi )
+                taxi
+                ;;
+            waymo )
+                waymo
+                ;;
+            femnist )
+                femnist
+                ;;
+            blog )
+                blog
+                ;;
+            stackoverflow )
+                stackoverflow
+                ;;
+            common_voice )
+                common_voice
+                ;;
+            puffer )
+                puffer
+                ;;
+            landmark )
+                landmark
+                ;;
+            coqa )
+                coqa
+                ;;
+        esac
+    done
+}
+
+Remove() {
+    # Here we assume the folder name is the same to the dataset name
+    for data in $ARGS
+    do  
+        echo "Removing ${data}"
+        case $data in
+            open_images )
+                rm -rf  ${DIR}/$data;
+                ;;
+            speech )
+                rm -rf  ${DIR}/$data;
+                ;;
+            amazon_review )
+                rm -rf  ${DIR}/$data;
+                ;;
+            charades )
+                rm -rf  ${DIR}/$data;
+                ;;
+            europarl )
+                rm -rf  ${DIR}/$data;
+                ;;
+            go )
+                rm -rf  ${DIR}/$data;
+                ;;
+            inaturalist )
+                rm -rf  ${DIR}/$data;
+                ;;
+            libriTTS )
+                rm -rf  ${DIR}/$data;
+                ;;
+            open_images_detection )
+                rm -rf  ${DIR}/$data;
+                ;;
+            reddit )
+                rm -rf  ${DIR}/$data;
+                ;;
+            taobao )
+                rm -rf  ${DIR}/$data;
+                ;;
+            taxi )
+                rm -rf  ${DIR}/$data;
+                ;;
+            waymo )
+                rm -rf  ${DIR}/$data;
+                ;;
+            femnist )
+                rm -rf  ${DIR}/$data;
+                ;;
+            blog )
+                rm -rf  ${DIR}/$data;
+                ;;
+            stackoverflow )
+                rm -rf  ${DIR}/$data;
+                ;;
+            common_voice )
+                rm -rf  ${DIR}/$data;
+                ;;
+            puffer )
+                rm -rf  ${DIR}/$data;
+                ;;
+            landmark )
+                rm -rf  ${DIR}/$data;
+                ;;
+            coqa )
+                rm -rf  ${DIR}/$data;
+                ;;
+        esac
+    done
+}
+
+case "$1" in
+    help ) # display Help
+        Help
         ;;
-      --landmark )
-         landmark
-         shift
-         ;;
-      --coqa )
-         coqa
-         shift
-         ;;
-      + )
-         echo "${RED}Usage: check --help${NC}"
-         break
-         ;;
-      * )
-        exit
+    download )
+        Download
         ;;
-   esac
-done
+    remove )
+        Remove 
+        ;;
+    + )
+        echo "${RED}Usage: check --help${NC}"
+        Help
+        ;;
+    * )
+        echo "${RED}Usage: check --help${NC}"
+        Help
+    ;;
+esac

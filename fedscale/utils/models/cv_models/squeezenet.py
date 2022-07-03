@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1602.07360.
 """
 
-__all__ = ['SqueezeNet', 'squeezenet_v1_0', 'squeezenet_v1_1', 'squeezeresnet_v1_0', 'squeezeresnet_v1_1']
+__all__ = ['SqueezeNet', 'squeezenet_v1_0', 'squeezenet_v1_1',
+           'squeezeresnet_v1_0', 'squeezeresnet_v1_1']
 
 import os
 import torch
@@ -27,6 +28,7 @@ class FireConv(nn.Module):
     padding : int or tuple/list of 2 int
         Padding value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -63,6 +65,7 @@ class FireUnit(nn.Module):
     residual : bool
         Whether use residual connection.
     """
+
     def __init__(self,
                  in_channels,
                  squeeze_channels,
@@ -113,6 +116,7 @@ class SqueezeInitBlock(nn.Module):
     kernel_size : int or tuple/list of 2 int
         Convolution window size.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -153,6 +157,7 @@ class SqueezeNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  residuals,
@@ -267,7 +272,8 @@ def get_squeezenet(version,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -25,6 +25,7 @@ class CenterNetDecoderUnit(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -57,6 +58,7 @@ class CenterNetHeadBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -90,6 +92,7 @@ class CenterNetHeatmapBlock(nn.Module):
     do_nms : bool
         Whether do NMS (or simply clip for training otherwise).
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -130,6 +133,7 @@ class CenterNetHeatmapMaxDet(nn.Module):
     scale : int, default is 4
         Downsampling scale factor.
     """
+
     def __init__(self,
                  topk=40,
                  scale=4):
@@ -157,7 +161,8 @@ class CenterNetHeatmapMaxDet(nn.Module):
         h = torch.gather(wh[:, :, 1], dim=-1, index=topk_indices)
         half_w = 0.5 * w
         half_h = 0.5 * h
-        bboxes = torch.stack((topk_xs - half_w, topk_ys - half_h, topk_xs + half_w, topk_ys + half_h), dim=-1)
+        bboxes = torch.stack((topk_xs - half_w, topk_ys -
+                             half_h, topk_xs + half_w, topk_ys + half_h), dim=-1)
 
         bboxes = bboxes * self.scale
         topk_classes = topk_classes.unsqueeze(dim=-1)
@@ -202,6 +207,7 @@ class CenterNet(nn.Module):
     num_classes : int, default 80
         Number of classification classes.
     """
+
     def __init__(self,
                  backbone,
                  backbone_out_channels,
@@ -302,7 +308,8 @@ def get_centernet(backbone,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -470,7 +477,8 @@ def _test():
 
     for model, classes in models:
 
-        net = model(pretrained=pretrained, topk=topk, in_size=in_size, return_heatmap=return_heatmap)
+        net = model(pretrained=pretrained, topk=topk,
+                    in_size=in_size, return_heatmap=return_heatmap)
 
         # net.train()
         net.eval()
@@ -488,7 +496,8 @@ def _test():
         y = net(x)
         assert (y.shape[0] == batch)
         if return_heatmap:
-            assert (y.shape[1] == classes + 4) and (y.shape[2] == x.shape[2] // 4) and (y.shape[3] == x.shape[3] // 4)
+            assert (y.shape[1] == classes + 4) and (y.shape[2] ==
+                                                    x.shape[2] // 4) and (y.shape[3] == x.shape[3] // 4)
         else:
             assert (y.shape[1] == topk) and (y.shape[2] == 6)
 

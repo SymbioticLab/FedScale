@@ -37,7 +37,8 @@ def round_channels(channels,
     int
         Weighted number of channels.
     """
-    rounded_channels = max(int(channels + divisor / 2.0) // divisor * divisor, divisor)
+    rounded_channels = max(int(channels + divisor / 2.0) //
+                           divisor * divisor, divisor)
     if float(rounded_channels) < 0.9 * channels:
         rounded_channels += divisor
     return rounded_channels
@@ -47,6 +48,7 @@ class Identity(nn.Module):
     """
     Identity block.
     """
+
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -61,6 +63,7 @@ class BreakBlock(nn.Module):
     """
     Break coonnection block for hourglass.
     """
+
     def __init__(self):
         super(BreakBlock, self).__init__()
 
@@ -75,6 +78,7 @@ class Swish(nn.Module):
     """
     Swish activation function from 'Searching for Activation Functions,' https://arxiv.org/abs/1710.05941.
     """
+
     def forward(self, x):
         return x * torch.sigmoid(x)
 
@@ -84,6 +88,7 @@ class HSigmoid(nn.Module):
     Approximated sigmoid function, so-called hard-version of sigmoid from 'Searching for MobileNetV3,'
     https://arxiv.org/abs/1905.02244.
     """
+
     def forward(self, x):
         return F.relu6(x + 3.0, inplace=True) / 6.0
 
@@ -97,6 +102,7 @@ class HSwish(nn.Module):
     inplace : bool
         Whether to use inplace version of the module.
     """
+
     def __init__(self, inplace=False):
         super(HSwish, self).__init__()
         self.inplace = inplace
@@ -159,6 +165,7 @@ class SelectableDense(nn.Module):
     num_options : int, default 1
         Number of selectable options.
     """
+
     def __init__(self,
                  in_features,
                  out_features,
@@ -169,7 +176,8 @@ class SelectableDense(nn.Module):
         self.out_features = out_features
         self.use_bias = bias
         self.num_options = num_options
-        self.weight = Parameter(torch.Tensor(num_options, out_features, in_features))
+        self.weight = Parameter(torch.Tensor(
+            num_options, out_features, in_features))
         if bias:
             self.bias = Parameter(torch.Tensor(num_options, out_features))
         else:
@@ -209,6 +217,7 @@ class DenseBlock(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_features,
                  out_features,
@@ -269,6 +278,7 @@ class ConvBlock1d(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -439,6 +449,7 @@ class ConvBlock(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -454,7 +465,8 @@ class ConvBlock(nn.Module):
         super(ConvBlock, self).__init__()
         self.activate = (activation is not None)
         self.use_bn = use_bn
-        self.use_pad = (isinstance(padding, (list, tuple)) and (len(padding) == 4))
+        self.use_pad = (isinstance(padding, (list, tuple))
+                        and (len(padding) == 4))
 
         if self.use_pad:
             self.pad = nn.ZeroPad2d(padding=padding)
@@ -847,6 +859,7 @@ class DwsConvBlock(nn.Module):
     pw_activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function after the pointwise convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -961,6 +974,7 @@ class PreConvBlock(nn.Module):
     activate : bool, default True
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -1118,6 +1132,7 @@ class AsymConvBlock(nn.Module):
     rw_activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function after the rightwise convolution block.
     """
+
     def __init__(self,
                  channels,
                  kernel_size,
@@ -1229,6 +1244,7 @@ class DeconvBlock(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -1331,6 +1347,7 @@ class NormActivation(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps=1e-5,
@@ -1364,6 +1381,7 @@ class InterpolationBlock(nn.Module):
     up : bool, default True
         Whether to upsample or downsample.
     """
+
     def __init__(self,
                  scale_factor,
                  out_size=None,
@@ -1401,7 +1419,7 @@ class InterpolationBlock(nn.Module):
             return tuple(s // self.scale_factor for s in x.shape[2:])
 
     def __repr__(self):
-        s = '{name}(scale_factor={scale_factor}, out_size={out_size}, mode={mode}, align_corners={align_corners}, up={up})' # noqa
+        s = '{name}(scale_factor={scale_factor}, out_size={out_size}, mode={mode}, align_corners={align_corners}, up={up})'  # noqa
         return s.format(
             name=self.__class__.__name__,
             scale_factor=self.scale_factor,
@@ -1458,6 +1476,7 @@ class ChannelShuffle(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  channels,
                  groups):
@@ -1516,6 +1535,7 @@ class ChannelShuffle2(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  channels,
                  groups):
@@ -1550,6 +1570,7 @@ class SEBlock(nn.Module):
     out_activation : function, or str, or nn.Module, default 'sigmoid'
         Activation function after the last convolution.
     """
+
     def __init__(self,
                  channels,
                  reduction=16,
@@ -1561,7 +1582,8 @@ class SEBlock(nn.Module):
         super(SEBlock, self).__init__()
         self.use_conv = use_conv
         if mid_channels is None:
-            mid_channels = channels // reduction if not round_mid else round_channels(float(channels) / reduction)
+            mid_channels = channels // reduction if not round_mid else round_channels(
+                float(channels) / reduction)
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         if use_conv:
@@ -1620,6 +1642,7 @@ class SABlock(nn.Module):
     bn_eps : float, default 1e-5
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  out_channels,
                  groups,
@@ -1717,6 +1740,7 @@ class SAConvBlock(nn.Module):
     use_conv : bool, default True
         Whether to convolutional layers instead of fully-connected ones.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -1803,6 +1827,7 @@ class DucBlock(nn.Module):
     scale_factor : int
         Multiplier for spatial size.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -1835,6 +1860,7 @@ class IBN(nn.Module):
     inst_first : bool, default True
         Whether instance normalization be on the first part of channels.
     """
+
     def __init__(self,
                  channels,
                  first_fraction=0.5,
@@ -1857,7 +1883,8 @@ class IBN(nn.Module):
                 affine=True)
 
     def forward(self, x):
-        x1, x2 = torch.split(x, split_size_or_sections=self.split_sections, dim=1)
+        x1, x2 = torch.split(
+            x, split_size_or_sections=self.split_sections, dim=1)
         if self.inst_first:
             x1 = self.inst_norm(x1.contiguous())
             x2 = self.batch_norm(x2.contiguous())
@@ -1886,6 +1913,7 @@ class DualPathSequential(nn.Sequential):
     dual_path_scheme_ordinal : function
         Scheme of dual path response for an ordinal module.
     """
+
     def __init__(self,
                  return_two=True,
                  first_ordinals=0,
@@ -1925,6 +1953,7 @@ class Concurrent(nn.Sequential):
     merge_type : str, default None
         Type of branch merging.
     """
+
     def __init__(self,
                  axis=1,
                  stack=False,
@@ -1966,6 +1995,7 @@ class SequentialConcurrent(nn.Sequential):
     cat_input : bool, default True
         Whether to concatenate input tensor.
     """
+
     def __init__(self,
                  axis=1,
                  stack=False,
@@ -1992,6 +2022,7 @@ class ParametricSequential(nn.Sequential):
     A sequential container for modules with parameters.
     Modules will be executed in the order they are added.
     """
+
     def __init__(self, *args):
         super(ParametricSequential, self).__init__(*args)
 
@@ -2010,6 +2041,7 @@ class ParametricConcurrent(nn.Sequential):
     axis : int, default 1
         The axis on which to concatenate the outputs.
     """
+
     def __init__(self, axis=1):
         super(ParametricConcurrent, self).__init__()
         self.axis = axis
@@ -2039,6 +2071,7 @@ class Hourglass(nn.Module):
     return_first_skip : bool, default False
         Whether return the first skip connection output. Used in ResAttNet.
     """
+
     def __init__(self,
                  down_seq,
                  up_seq,
@@ -2109,6 +2142,7 @@ class SesquialteralHourglass(nn.Module):
     merge_type : str, default 'cat'
         Type of concatenation of up and skip outputs.
     """
+
     def __init__(self,
                  down1_seq,
                  skip1_seq,
@@ -2177,6 +2211,7 @@ class MultiOutputSequential(nn.Sequential):
     return_last : bool, default True
         Whether to forcibly return last value.
     """
+
     def __init__(self,
                  multi_output=True,
                  dual_output=False,
@@ -2216,11 +2251,13 @@ class ParallelConcurent(nn.Sequential):
     merge_type : str, default 'list'
         Type of branch merging.
     """
+
     def __init__(self,
                  axis=1,
                  merge_type="list"):
         super(ParallelConcurent, self).__init__()
-        assert (merge_type is None) or (merge_type in ["list", "cat", "stack", "sum"])
+        assert (merge_type is None) or (
+            merge_type in ["list", "cat", "stack", "sum"])
         self.axis = axis
         self.merge_type = merge_type
 
@@ -2253,11 +2290,13 @@ class DualPathParallelConcurent(nn.Sequential):
     merge_type : str, default 'list'
         Type of branch merging.
     """
+
     def __init__(self,
                  axis=1,
                  merge_type="list"):
         super(DualPathParallelConcurent, self).__init__()
-        assert (merge_type is None) or (merge_type in ["list", "cat", "stack", "sum"])
+        assert (merge_type is None) or (
+            merge_type in ["list", "cat", "stack", "sum"])
         self.axis = axis
         self.merge_type = merge_type
 
@@ -2297,6 +2336,7 @@ class HeatmapMaxDetBlock(nn.Module):
     """
     Heatmap maximum detector block (for human pose estimation task).
     """
+
     def __init__(self):
         super(HeatmapMaxDetBlock, self).__init__()
 
@@ -2318,8 +2358,10 @@ class HeatmapMaxDetBlock(nn.Module):
                 px = int(pts[b, k, 0])
                 py = int(pts[b, k, 1])
                 if (0 < px < in_size[1] - 1) and (0 < py < in_size[0] - 1):
-                    pts[b, k, 0] += (hm[py, px + 1] - hm[py, px - 1]).sign() * 0.25
-                    pts[b, k, 1] += (hm[py + 1, px] - hm[py - 1, px]).sign() * 0.25
+                    pts[b, k, 0] += (hm[py, px + 1] -
+                                     hm[py, px - 1]).sign() * 0.25
+                    pts[b, k, 1] += (hm[py + 1, px] -
+                                     hm[py - 1, px]).sign() * 0.25
         return pts
 
     @staticmethod

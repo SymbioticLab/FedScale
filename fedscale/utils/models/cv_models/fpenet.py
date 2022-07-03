@@ -21,6 +21,7 @@ class FPEBlock(nn.Module):
     channels : int
         Number of input/output channels.
     """
+
     def __init__(self,
                  channels):
         super(FPEBlock, self).__init__()
@@ -66,6 +67,7 @@ class FPEUnit(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -126,6 +128,7 @@ class FPEStage(nn.Module):
     use_se : bool
         Whether to use SE-module.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -178,6 +181,7 @@ class MEUBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels_high,
                  in_channels_low,
@@ -254,6 +258,7 @@ class FPENet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  layers,
                  channels,
@@ -361,7 +366,8 @@ def get_fpenet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -31,6 +31,7 @@ class SEBlock(nn.Module):
     out_activation : function, or str, or nn.Module, default 'sigmoid'
         Activation function after the last convolution.
     """
+
     def __init__(self,
                  channels,
                  reduction=16,
@@ -39,7 +40,8 @@ class SEBlock(nn.Module):
                  out_activation=(lambda: nn.Sigmoid())):
         super(SEBlock, self).__init__()
         self.use_conv2 = (reduction > 1)
-        mid_channels = channels // reduction if not round_mid else round_channels(float(channels) / reduction)
+        mid_channels = channels // reduction if not round_mid else round_channels(
+            float(channels) / reduction)
 
         self.pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.fc1 = nn.Linear(
@@ -98,6 +100,7 @@ class DwsConvBlock(nn.Module):
     se_reduction : int, default 0
         Squeeze reduction value (0 means no-se).
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -276,6 +279,7 @@ class FDWConvBlock(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function after the each convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -432,6 +436,7 @@ class SBBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -495,6 +500,7 @@ class PreActivation(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  bn_eps):
@@ -529,6 +535,7 @@ class ESPBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -554,7 +561,8 @@ class ESPBlock(nn.Module):
 
         self.branches = Concurrent()
         for i in range(groups):
-            out_channels_i = (mid_channels + res_channels) if i == 0 else mid_channels
+            out_channels_i = (
+                mid_channels + res_channels) if i == 0 else mid_channels
             self.branches.add_module("branch{}".format(i + 1), SBBlock(
                 in_channels=mid_channels,
                 out_channels=out_channels_i,
@@ -604,6 +612,7 @@ class SBStage(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  down_channels,
@@ -666,6 +675,7 @@ class SBEncoderInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -719,6 +729,7 @@ class SBEncoder(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -782,6 +793,7 @@ class SBDecodeBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  channels,
                  bn_eps):
@@ -816,6 +828,7 @@ class SBDecoder(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  dim2,
                  num_classes,
@@ -883,6 +896,7 @@ class SINet(nn.Module):
     num_classes : int, default 21
         Number of segmentation classes.
     """
+
     def __init__(self,
                  down_channels_list,
                  channels_list,
@@ -975,7 +989,8 @@ def get_sinet(model_name=None,
     q = len(kernel_sizes_list[1])
 
     channels_list = [[dim2] * p, ([dim3] * (q // 2)) + ([dim4] * (q - q // 2))]
-    use_residual_list = [[0] + ([1] * (p - 1)), [0] + ([1] * (q // 2 - 1)) + [0] + ([1] * (q - q // 2 - 1))]
+    use_residual_list = [[0] + ([1] * (p - 1)), [0] +
+                         ([1] * (q // 2 - 1)) + [0] + ([1] * (q - q // 2 - 1))]
 
     down_channels_list = [dim1, dim2]
 
@@ -990,7 +1005,8 @@ def get_sinet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

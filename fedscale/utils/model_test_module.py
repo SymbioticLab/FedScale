@@ -7,7 +7,7 @@ import numpy as np
 import logging
 
 # libs from fedscale
-from fedscale.core.arg_parser import args
+from fedscale.core.config_parser import args
 from fedscale.dataloaders.nlp import mask_tokens
 
 if args.task == "detection":
@@ -46,6 +46,7 @@ def cal_accuracy(targets, outputs):
 
     return temp_acc, temp_all_or_false, temp_len
 
+
 def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tokenizer=None):
 
     test_loss = 0
@@ -58,7 +59,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
     total_cer, total_wer, num_tokens, num_chars = 0, 0, 0, 0
 
-    model = model.to(device=device) # load by pickle
+    model = model.to(device=device)  # load by pickle
     model.eval()
     targets_list = []
     preds = []
@@ -66,21 +67,23 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     decoder = None
 
     if args.task == 'voice':
-        decoder = GreedyDecoder(model.labels, blank_index=model.labels.index('_'))
+        decoder = GreedyDecoder(
+            model.labels, blank_index=model.labels.index('_'))
 
     with torch.no_grad():
 
         if args.task == 'detection':
-            imdb, _, _, _ = combined_roidb("voc_2007_test", ['DATA_DIR', args.data_dir], server=True)
+            imdb, _, _, _ = combined_roidb(
+                "voc_2007_test", ['DATA_DIR', args.data_dir], server=True)
             data_iter = iter(test_data)
             num_images = len(test_data.dataset)
             num_classes = len(readClass(args.data_dir + "/class.txt"))
-        
+
             all_boxes = [[[] for _ in range(num_images)]
-               for _ in range(num_classes)]
+                         for _ in range(num_classes)]
             max_per_image = 100
             thresh = 0.0
-            empty_array = np.transpose(np.array([[],[],[],[],[]]), (1,0))
+            empty_array = np.transpose(np.array([[], [], [], [], []]), (1, 0))
             for i in range(num_images):
                 data = next(data_iter)
                 im_data = Variable(torch.FloatTensor(1).to(device))
@@ -94,18 +97,18 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                 num_boxes.resize_(data[3].size()).copy_(data[3])
 
                 rois, cls_prob, bbox_pred, \
-                rpn_loss_cls, rpn_loss_box, \
-                RCNN_loss_cls, RCNN_loss_bbox, \
-                rois_label = model(im_data, im_info, gt_boxes, num_boxes)
+                    rpn_loss_cls, rpn_loss_box, \
+                    RCNN_loss_cls, RCNN_loss_bbox, \
+                    rois_label = model(im_data, im_info, gt_boxes, num_boxes)
                 scores = cls_prob.data
                 boxes = rois.data[:, :, 1:5]
 
                 if cfg.TEST.BBOX_REG:
-                # Apply bounding-box regression deltas
+                    # Apply bounding-box regression deltas
                     box_deltas = bbox_pred.data
                     if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
                         box_deltas = box_deltas.view(-1, 4) * torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_STDS).to(device=device) \
-                                + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).to(device=device)
+                            + torch.FloatTensor(cfg.TRAIN.BBOX_NORMALIZE_MEANS).to(device=device)
                         box_deltas = box_deltas.view(1, -1, 4 * num_classes)
 
                     pred_boxes = bbox_transform_inv(boxes, box_deltas, 1)
@@ -114,25 +117,25 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     # Simply repeat the boxes, once for each class
                     pred_boxes = np.tile(boxes, (1, scores.shape[1]))
 
-
                 pred_boxes /= data[1][0][2].item()
 
                 scores = scores.squeeze()
                 pred_boxes = pred_boxes.squeeze()
 
-
                 for j in range(1, num_classes):
-                    inds = torch.nonzero(scores[:,j]>thresh).view(-1)
+                    inds = torch.nonzero(scores[:, j] > thresh).view(-1)
                     # if there is det
                     if inds.numel() > 0:
-                        cls_scores = scores[:,j][inds]
+                        cls_scores = scores[:, j][inds]
                         _, order = torch.sort(cls_scores, 0, True)
                         cls_boxes = pred_boxes[inds][:, j * 4:(j + 1) * 4]
 
-                        cls_dets = torch.cat((cls_boxes, cls_scores.unsqueeze(1)), 1)
+                        cls_dets = torch.cat(
+                            (cls_boxes, cls_scores.unsqueeze(1)), 1)
                         # cls_dets = torch.cat((cls_boxes, cls_scores), 1)
                         cls_dets = cls_dets[order]
-                        keep = nms(cls_boxes[order, :], cls_scores[order], cfg.TEST.NMS)
+                        keep = nms(cls_boxes[order, :],
+                                   cls_scores[order], cfg.TEST.NMS)
                         cls_dets = cls_dets[keep.view(-1).long()]
                         all_boxes[j][i] = cls_dets.cpu().numpy()
                     else:
@@ -141,96 +144,109 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                 # Limit to max_per_image detections *over all classes*
                 if max_per_image > 0:
                     image_scores = np.hstack([all_boxes[j][i][:, -1]
-                                                for j in range(1, num_classes)])
+                                              for j in range(1, num_classes)])
                     if len(image_scores) > max_per_image:
                         image_thresh = np.sort(image_scores)[-max_per_image]
                         for j in range(1, num_classes):
-                            keep = np.where(all_boxes[j][i][:, -1] >= image_thresh)[0]
+                            keep = np.where(
+                                all_boxes[j][i][:, -1] >= image_thresh)[0]
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
 
                 imdb._reset_index(test_data.dataset.index)
-                output_dir = args.test_output_dir + "/learner/" + str(args.this_rank)
-                _, mean_ap = imdb.evaluate_detections(all_boxes, output_dir, args.this_rank)
-                return 0, mean_ap, mean_ap, {'top_1':mean_ap, 'top_5':mean_ap, 'test_loss': 0, 'test_len':num_images}
+                output_dir = args.test_output_dir + \
+                    "/learner/" + str(args.this_rank)
+                _, mean_ap = imdb.evaluate_detections(
+                    all_boxes, output_dir, args.this_rank)
+                return 0, mean_ap, mean_ap, {'top_1': mean_ap, 'top_5': mean_ap, 'test_loss': 0, 'test_len': num_images}
 
         for data, target in test_data:
             try:
                 if args.task == 'nlp':
-    
-                    data, target = mask_tokens(data, tokenizer, args, device=device)# if args.mlm else (data, data)
-                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
-    
-                    outputs = model(data, labels=target)# if args.mlm else model(data, labels=target)
-    
+
+                    # if args.mlm else (data, data)
+                    data, target = mask_tokens(
+                        data, tokenizer, args, device=device)
+                    data, target = Variable(data).to(
+                        device=device), Variable(target).to(device=device)
+
+                    # if args.mlm else model(data, labels=target)
+                    outputs = model(data, labels=target)
+
                     loss = outputs[0]
                     test_loss += loss.data.item()
                     perplexity_loss += loss.data.item()
-    
-                    acc = accuracy(outputs[1].reshape(-1, outputs[1].shape[2]), target.reshape(-1), topk=(1, 5))
-    
+
+                    acc = accuracy(
+                        outputs[1].reshape(-1, outputs[1].shape[2]), target.reshape(-1), topk=(1, 5))
+
                     correct += acc[0].item()
                     top_5 += acc[1].item()
-    
+
                 elif args.task == 'tag':
-                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
+                    data, target = Variable(data).to(
+                        device=device), Variable(target).to(device=device)
                     output = model(data)
                     loss = criterion(output, target)
-    
+
                     # we have to scan the sample one by one
                     for idx, sample in enumerate(output):
-                        target_index = torch.nonzero(target[idx]).flatten().cpu().numpy().tolist()
+                        target_index = torch.nonzero(
+                            target[idx]).flatten().cpu().numpy().tolist()
                         maxk = len(target_index)
                         preds += [sample.topk(maxk)[1].cpu().numpy().tolist()]
                         targets_list += [target_index]
-    
+
                     test_loss += loss.data.item()
-    
+
                 elif args.task == 'speech':
-                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
+                    data, target = Variable(data).to(
+                        device=device), Variable(target).to(device=device)
                     data = torch.unsqueeze(data, 1)
-    
+
                     output = model(data)
                     loss = criterion(output, target)
-    
+
                     test_loss += loss.data.item()  # Variable.data
                     acc = accuracy(output, target, topk=(1, 5))
-    
+
                     correct += acc[0].item()
                     top_5 += acc[1].item()
-    
+
                 elif args.task == 'text_clf' and args.model == 'albert-base-v2':
                     (inputs, masks) = data
-                    (inputs, masks, target) = (Variable(inputs).to(device=device), 
-                        Variable(masks).to(device=device), Variable(target).to(device=device))
-                    outputs = model(inputs, token_type_ids=None, attention_mask=masks, labels=target)
-            
+                    (inputs, masks, target) = (Variable(inputs).to(device=device),
+                                               Variable(masks).to(device=device), Variable(target).to(device=device))
+                    outputs = model(inputs, token_type_ids=None,
+                                    attention_mask=masks, labels=target)
+
                     loss = outputs.loss
                     output = outputs.logits
-    
+
                     test_loss += loss.item()  # Variable.data
                     acc = accuracy(output, target, topk=(1, 2))
-    
+
                     correct += acc[0].item()
                     top_5 += acc[1].item()
-    
+
                 elif args.task == 'voice':
                     (inputs, target, input_percentages, target_sizes) = data
-    
-                    input_sizes = input_percentages.mul_(int(inputs.size(3))).int()
+
+                    input_sizes = input_percentages.mul_(
+                        int(inputs.size(3))).int()
                     inputs = Variable(inputs).to(device=device)
-    
+
                     # unflatten targets
                     split_targets = []
                     offset = 0
                     for size in target_sizes:
                         split_targets.append(target[offset:offset + size])
                         offset += size
-    
+
                     out, output_sizes = model(inputs, input_sizes)
-    
+
                     decoded_output, _ = decoder.decode(out, output_sizes)
                     target_strings = decoder.convert_to_strings(split_targets)
-    
+
                     for x in range(len(target_strings)):
                         transcript, reference = decoded_output[x][0], target_strings[x][0]
                         wer_inst = decoder.wer(transcript, reference)
@@ -239,31 +255,34 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                         total_cer += cer_inst
                         num_tokens += len(reference.split())
                         num_chars += len(reference.replace(' ', ''))
-    
+
                     outputs = out.transpose(0, 1)
                     outputs = outputs.float()
-                    loss = criterion(outputs, target, output_sizes, target_sizes)
+                    loss = criterion(
+                        outputs, target, output_sizes, target_sizes)
                     test_loss += loss.data.item()
                 else:
-                    data, target = Variable(data).to(device=device), Variable(target).to(device=device)
-    
+                    data, target = Variable(data).to(
+                        device=device), Variable(target).to(device=device)
+
                     output = model(data)
 
                     loss = criterion(output, target)
                     test_loss += loss.data.item()  # Variable.data
                     acc = accuracy(output, target, topk=(1, 5))
-    
+
                     correct += acc[0].item()
                     top_5 += acc[1].item()
-            
+
             except Exception as ex:
                 logging.info(f"Testing of failed as {ex}")
                 break
             test_len += len(target)
 
     if args.task == 'voice':
-        correct,  top_5, test_len = float(total_wer), float(total_cer), float(num_tokens)
-    
+        correct,  top_5, test_len = float(
+            total_wer), float(total_cer), float(num_tokens)
+
     test_len = max(test_len, 1)
     # loss function averages over batch size
     test_loss /= len(test_data)
@@ -281,11 +300,13 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
         top_5, correct, test_len = cal_accuracy(targets_list, preds)
 
     logging.info('Rank {}: Test set: Average loss: {}, Top-1 Accuracy: {}/{} ({}), Top-5 Accuracy: {}'
-          .format(rank, test_loss, correct, len(test_data.dataset), acc, acc_5))
+                 .format(rank, test_loss, correct, len(test_data.dataset), acc, acc_5))
 
-    testRes = {'top_1':correct, 'top_5':top_5, 'test_loss':sum_loss, 'test_len':test_len}
+    testRes = {'top_1': correct, 'top_5': top_5,
+               'test_loss': sum_loss, 'test_len': test_len}
 
     return test_loss, acc, acc_5, testRes
+
 
 def accuracy(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""

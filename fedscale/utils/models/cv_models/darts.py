@@ -34,6 +34,7 @@ class DwsConv(nn.Module):
     bias : bool, default False
         Whether the layers use a bias vector.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -82,6 +83,7 @@ class DartsConv(nn.Module):
     activate : bool, default True
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -178,6 +180,7 @@ class DartsDwsConv(nn.Module):
     dilation : int or tuple/list of 2 int
         Dilation value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -221,6 +224,7 @@ class DartsDwsBranch(nn.Module):
     padding : int or tuple/list of 2 int
         Padding value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -264,6 +268,7 @@ class DartsReduceBranch(nn.Module):
     stride : int or tuple/list of 2 int, default 2
         Strides of the convolution.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -304,6 +309,7 @@ class Stem1Unit(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -448,6 +454,7 @@ class DartsMainBlock(nn.Module):
     reduction : bool
         Whether use reduction.
     """
+
     def __init__(self,
                  genotype,
                  channels,
@@ -502,6 +509,7 @@ class DartsUnit(nn.Module):
     prev_reduction : bool
         Whether use previous reduction.
     """
+
     def __init__(self,
                  in_channels,
                  prev_in_channels,
@@ -554,6 +562,7 @@ class DARTS(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  stem_blocks_channels,
@@ -584,7 +593,8 @@ class DARTS(nn.Module):
             stage = nasnet_dual_path_sequential()
             for j, out_channels in enumerate(channels_per_stage):
                 reduction = (i != 0) and (j == 0)
-                prev_reduction = ((i == 0) and (j == 0)) or ((i != 0) and (j == 1))
+                prev_reduction = ((i == 0) and (j == 0)) or (
+                    (i != 0) and (j == 1))
                 genotype = reduce_genotype if reduction else normal_genotype
                 stage.add_module("unit{}".format(j + 1), DartsUnit(
                     in_channels=in_channels,
@@ -670,7 +680,8 @@ def get_darts(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

@@ -7,7 +7,7 @@ import numpy as np
 import sys, os
 from clip_norm import clip_grad_norm_
 
-from fedscale.core.client import Client
+from fedscale.core.execution.client import Client
 
 class Customized_Client(Client):
     """

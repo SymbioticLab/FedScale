@@ -29,6 +29,7 @@ class WRNConv(nn.Module):
     activate : bool
         Whether activate the convolution block.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -125,6 +126,7 @@ class WRNBottleneck(nn.Module):
     width_factor : float
         Wide scale factor for width of layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -171,6 +173,7 @@ class WRNUnit(nn.Module):
     width_factor : float
         Wide scale factor for width of layers.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -214,6 +217,7 @@ class WRNInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -255,6 +259,7 @@ class WRN(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -337,7 +342,8 @@ def get_wrn(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported WRN with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported WRN with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
     channels_per_layers = [256, 512, 1024, 2048]
@@ -352,7 +358,8 @@ def get_wrn(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

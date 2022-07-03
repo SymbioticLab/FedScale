@@ -27,6 +27,7 @@ class CtxShallowNet(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  mid1_channels,
@@ -73,6 +74,7 @@ class LinearBottleneck(nn.Module):
     expansion : bool
         Whether do expansion of channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -118,6 +120,7 @@ class CtxDeepNet(nn.Module):
     init_block_channels : int
         Number of channels for init block.
     """
+
     def __init__(self,
                  in_channels,
                  init_block_channels):
@@ -164,6 +167,7 @@ class FeatureFusion(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels_high,
                  in_channels_low,
@@ -210,6 +214,7 @@ class CtxHead(nn.Module):
     num_classes : int
         Number of output channels/classes.
     """
+
     def __init__(self,
                  in_channels,
                  num_classes):
@@ -245,6 +250,7 @@ class CtxAuxHead(nn.Module):
     num_classes : int
         Number of output channels/classes.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -284,6 +290,7 @@ class ContextNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  aux=False,
                  fixed_size=False,
@@ -367,7 +374,8 @@ def get_ctxnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -416,7 +424,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, aux=aux, fixed_size=fixed_size)
+        net = model(pretrained=pretrained, in_size=in_size,
+                    aux=aux, fixed_size=fixed_size)
 
         # net.train()
         net.eval()
@@ -434,7 +443,8 @@ def _test():
         # y.sum().backward()
         assert (tuple(y.size()) == (batch, classes, in_size[0], in_size[1]))
         if aux:
-            assert (tuple(ys[1].size()) == (batch, classes, in_size[0], in_size[1]))
+            assert (tuple(ys[1].size()) == (
+                batch, classes, in_size[0], in_size[1]))
 
 
 if __name__ == "__main__":

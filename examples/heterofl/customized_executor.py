@@ -1,8 +1,8 @@
 import sys, os
 from customized_client import Customized_Client
 from customized_fllibs import init_model
-from fedscale.core.executor import Executor
-from fedscale.core.arg_parser import args
+from fedscale.core.execution.executor import Executor
+from fedscale.core.config_parser import args
 
 class Customized_Executor(Executor):
 

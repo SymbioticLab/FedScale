@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import math
 from transformers import BertModel
 
+
 class MnistCNN(nn.Module):
     """ CNN Network architecture. """
 
@@ -24,7 +25,7 @@ class MnistCNN(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
-        return x #F.log_softmax(x, dim=1)
+        return x  # F.log_softmax(x, dim=1)
 
 
 # Linear Regression Model
@@ -56,6 +57,7 @@ class LeNetForMNIST(nn.Module):
         x = self.fc3(x)
         return x
 
+
 class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
@@ -79,30 +81,37 @@ class LeNet(nn.Module):
 
 class AlexNetForMnist(nn.Module):
     def __init__(self, output_dim):
-        super(AlexNetForMnist,self).__init__()
+        super(AlexNetForMnist, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1) #AlexCONV1(3,96, k=11,s=4,p=0)
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)#AlexPool1(k=3, s=2)
+        # AlexCONV1(3,96, k=11,s=4,p=0)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.pool1 = nn.MaxPool2d(
+            kernel_size=2, stride=2)  # AlexPool1(k=3, s=2)
         self.relu1 = nn.ReLU()
 
         # self.conv2 = nn.Conv2d(96, 256, kernel_size=5,stride=1,padding=2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)#AlexCONV2(96, 256,k=5,s=1,p=2)
-        self.pool2 = nn.MaxPool2d(kernel_size=2,stride=2)#AlexPool2(k=3,s=2)
+        # AlexCONV2(96, 256,k=5,s=1,p=2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.pool2 = nn.MaxPool2d(
+            kernel_size=2, stride=2)  # AlexPool2(k=3,s=2)
         self.relu2 = nn.ReLU()
 
-
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)#AlexCONV3(256,384,k=3,s=1,p=1)
+        # AlexCONV3(256,384,k=3,s=1,p=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
         # self.conv4 = nn.Conv2d(384, 384, kernel_size=3, stride=1, padding=1)
-        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)#AlexCONV4(384, 384, k=3,s=1,p=1)
-        self.conv5 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)#AlexCONV5(384, 256, k=3, s=1,p=1)
-        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)#AlexPool3(k=3,s=2)
+        # AlexCONV4(384, 384, k=3,s=1,p=1)
+        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        # AlexCONV5(384, 256, k=3, s=1,p=1)
+        self.conv5 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+        self.pool3 = nn.MaxPool2d(
+            kernel_size=2, stride=2)  # AlexPool3(k=3,s=2)
         self.relu3 = nn.ReLU()
 
-        self.fc6 = nn.Linear(256*3*3, 1024)  #AlexFC6(256*6*6, 4096)
-        self.fc7 = nn.Linear(1024, 512) #AlexFC6(4096,4096)
-        self.fc8 = nn.Linear(512, output_dim)  #AlexFC6(4096,1000)
+        self.fc6 = nn.Linear(256*3*3, 1024)  # AlexFC6(256*6*6, 4096)
+        self.fc7 = nn.Linear(1024, 512)  # AlexFC6(4096,4096)
+        self.fc8 = nn.Linear(512, output_dim)  # AlexFC6(4096,1000)
 
-    def forward(self,x):
+    def forward(self, x):
         x = self.conv1(x)
         x = self.pool1(x)
         x = self.relu1(x)
@@ -114,13 +123,14 @@ class AlexNetForMnist(nn.Module):
         x = self.conv5(x)
         x = self.pool3(x)
         x = self.relu3(x)
-        x = x.view(-1, 256 * 3 * 3)#Alex: x = x.view(-1, 256*6*6)
+        x = x.view(-1, 256 * 3 * 3)  # Alex: x = x.view(-1, 256*6*6)
         x = self.fc6(x)
         x = F.relu(x)
         x = self.fc7(x)
         x = F.relu(x)
         x = self.fc8(x)
         return x
+
 
 class AlexNet(nn.Module):
     def __init__(self, num_classes=10):
@@ -157,6 +167,8 @@ class AlexNet(nn.Module):
         return x
 
 # ========================= VGG ========================= #
+
+
 def cfg(depth):
     depth_lst = [11, 13, 16, 19]
     assert (depth in depth_lst), "Error : VGGnet depth should be either 11, 13, 16, 19"
@@ -173,27 +185,29 @@ def cfg(depth):
             256, 256, 'mp',
             512, 512, 'mp',
             512, 512, 'mp'
-            ],
+        ],
         '16': [
             64, 64, 'mp',
             128, 128, 'mp',
             256, 256, 256, 'mp',
             512, 512, 512, 'mp',
             512, 512, 512, 'mp'
-            ],
+        ],
         '19': [
             64, 64, 'mp',
             128, 128, 'mp',
             256, 256, 256, 256, 'mp',
             512, 512, 512, 512, 'mp',
             512, 512, 512, 512, 'mp'
-            ],
+        ],
     }
 
     return cf_dict[str(depth)]
 
+
 def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True)
+
 
 class VGG(nn.Module):
     def __init__(self, depth, num_classes=10):
@@ -216,7 +230,8 @@ class VGG(nn.Module):
             if x == 'mp':
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             else:
-                layers += [conv3x3(in_planes, x), nn.BatchNorm2d(x), nn.ReLU(inplace=True)]
+                layers += [conv3x3(in_planes, x),
+                           nn.BatchNorm2d(x), nn.ReLU(inplace=True)]
                 in_planes = x
 
         # After cfg convolution
@@ -227,16 +242,18 @@ class VGG(nn.Module):
 # ==================== ResNet ===================== #
 def cfgRes(depth):
     depth_lst = [18, 34, 50, 101, 152]
-    assert (depth in depth_lst), "Error : Resnet depth should be either 18, 34, 50, 101, 152"
+    assert (
+        depth in depth_lst), "Error : Resnet depth should be either 18, 34, 50, 101, 152"
     cf_dict = {
-        '18': (BasicBlock, [2,2,2,2]),
-        '34': (BasicBlock, [3,4,6,3]),
-        '50': (Bottleneck, [3,4,6,3]),
-        '101':(Bottleneck, [3,4,23,3]),
-        '152':(Bottleneck, [3,8,36,3]),
+        '18': (BasicBlock, [2, 2, 2, 2]),
+        '34': (BasicBlock, [3, 4, 6, 3]),
+        '50': (Bottleneck, [3, 4, 6, 3]),
+        '101': (Bottleneck, [3, 4, 23, 3]),
+        '152': (Bottleneck, [3, 8, 36, 3]),
     }
 
     return cf_dict[str(depth)]
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -251,7 +268,8 @@ class BasicBlock(nn.Module):
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=True),
+                nn.Conv2d(in_planes, self.expansion*planes,
+                          kernel_size=1, stride=stride, bias=True),
                 nn.BatchNorm2d(self.expansion*planes)
             )
 
@@ -263,6 +281,7 @@ class BasicBlock(nn.Module):
 
         return out
 
+
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -270,15 +289,18 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=True)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=True)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
+                               stride=stride, padding=1, bias=True)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion*planes, kernel_size=1, bias=True)
+        self.conv3 = nn.Conv2d(planes, self.expansion *
+                               planes, kernel_size=1, bias=True)
         self.bn3 = nn.BatchNorm2d(self.expansion*planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion*planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=True),
+                nn.Conv2d(in_planes, self.expansion*planes,
+                          kernel_size=1, stride=stride, bias=True),
                 nn.BatchNorm2d(self.expansion*planes)
             )
 
@@ -291,6 +313,7 @@ class Bottleneck(nn.Module):
 
         return out
 
+
 class ResNet(nn.Module):
     def __init__(self, depth, num_classes=10):
         super(ResNet, self).__init__()
@@ -298,7 +321,7 @@ class ResNet(nn.Module):
 
         block, num_blocks = cfgRes(depth)
 
-        self.conv1 = conv3x3(3,16)
+        self.conv1 = conv3x3(3, 16)
         self.bn1 = nn.BatchNorm2d(16)
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
@@ -327,6 +350,8 @@ class ResNet(nn.Module):
         return out
 
 # =================== GoogleNet =====================
+
+
 class Inception(nn.Module):
     def __init__(self, in_planes, kernel_1_x, kernel_3_in, kernel_3_x, kernel_5_in, kernel_5_x, pool_planes):
         super(Inception, self).__init__()
@@ -373,7 +398,7 @@ class Inception(nn.Module):
         y2 = self.b2(x)
         y3 = self.b3(x)
         y4 = self.b4(x)
-        return torch.cat([y1,y2,y3,y4], 1)
+        return torch.cat([y1, y2, y3, y4], 1)
 
 
 class GoogLeNet(nn.Module):
@@ -431,14 +456,17 @@ class RNNModel(nn.Module):
         self.drop = nn.Dropout(dropout)
         self.encoder = nn.Embedding(ntoken, ninp)
         if rnn_type in ['LSTM', 'GRU']:
-            self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
+            self.rnn = getattr(nn, rnn_type)(
+                ninp, nhid, nlayers, dropout=dropout)
         else:
             try:
-                nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
+                nonlinearity = {'RNN_TANH': 'tanh',
+                                'RNN_RELU': 'relu'}[rnn_type]
             except KeyError:
                 raise ValueError("""An invalid option for `--model` was supplied,
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
-            self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+            self.rnn = nn.RNN(ninp, nhid, nlayers,
+                              nonlinearity=nonlinearity, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
 
         # Optionally tie weights as in:
@@ -449,7 +477,8 @@ class RNNModel(nn.Module):
         # https://arxiv.org/abs/1611.01462
         if tie_weights:
             if nhid != ninp:
-                raise ValueError('When using the tied flag, nhid must be equal to emsize')
+                raise ValueError(
+                    'When using the tied flag, nhid must be equal to emsize')
             self.decoder.weight = self.encoder.weight
 
         self.init_weights()
@@ -469,7 +498,8 @@ class RNNModel(nn.Module):
         emb = self.drop(self.encoder(input))
         output, hidden = self.rnn(emb, hidden)
         output = self.drop(output)
-        decoded = self.decoder(output.view(output.size(0) * output.size(1), output.size(2)))
+        decoded = self.decoder(output.view(
+            output.size(0) * output.size(1), output.size(2)))
         return decoded.view(output.size(0), output.size(1), decoded.size(1)), hidden
 
     def init_hidden(self, bsz):
@@ -481,6 +511,8 @@ class RNNModel(nn.Module):
             return weight.new_zeros(self.nlayers, bsz, self.nhid)
 
 # ============================= Linear Regression ==============================
+
+
 class linearRegression(nn.Module):
     def __init__(self, inputSize, outputSize):
         super(linearRegression, self).__init__()
@@ -489,7 +521,6 @@ class linearRegression(nn.Module):
     def forward(self, x):
         out = self.linear(x)
         return out
-
 
 
 # ============================= LogisticRegression Regression ==============================
@@ -506,6 +537,8 @@ class LogisticRegression(nn.Module):
         return output
 
 # ============================= SVM ==============================
+
+
 class LinearSVM(nn.Module):
     """Support Vector Machine"""
 
@@ -537,10 +570,11 @@ def Conv_1x1(inp, oup):
         nn.ReLU6(inplace=True)
     )
 
-def SepConv_3x3(inp, oup): #input=32, output=16
+
+def SepConv_3x3(inp, oup):  # input=32, output=16
     return nn.Sequential(
         # dw
-        nn.Conv2d(inp, inp , 3, 1, 1, groups=inp, bias=False),
+        nn.Conv2d(inp, inp, 3, 1, 1, groups=inp, bias=False),
         nn.BatchNorm2d(inp),
         nn.ReLU6(inplace=True),
         # pw-linear
@@ -563,7 +597,8 @@ class InvertedResidual(nn.Module):
             nn.BatchNorm2d(inp * expand_ratio),
             nn.ReLU6(inplace=True),
             # dw
-            nn.Conv2d(inp * expand_ratio, inp * expand_ratio, kernel, stride, kernel // 2, groups=inp * expand_ratio, bias=False),
+            nn.Conv2d(inp * expand_ratio, inp * expand_ratio, kernel,
+                      stride, kernel // 2, groups=inp * expand_ratio, bias=False),
             nn.BatchNorm2d(inp * expand_ratio),
             nn.ReLU6(inplace=True),
             # pw-linear
@@ -595,10 +630,12 @@ class MnasNet(nn.Module):
 
         assert input_size % 32 == 0
         input_channel = int(32 * width_mult)
-        self.last_channel = int(1280 * width_mult) if width_mult > 1.0 else 1280
+        self.last_channel = int(
+            1280 * width_mult) if width_mult > 1.0 else 1280
 
         # building first two layer
-        self.features = [Conv_3x3(3, input_channel, 2), SepConv_3x3(input_channel, 16)]
+        self.features = [Conv_3x3(3, input_channel, 2),
+                         SepConv_3x3(input_channel, 16)]
         input_channel = 16
 
         # building inverted residual blocks (MBConv)
@@ -606,9 +643,11 @@ class MnasNet(nn.Module):
             output_channel = int(c * width_mult)
             for i in range(n):
                 if i == 0:
-                    self.features.append(InvertedResidual(input_channel, output_channel, s, t, k))
+                    self.features.append(InvertedResidual(
+                        input_channel, output_channel, s, t, k))
                 else:
-                    self.features.append(InvertedResidual(input_channel, output_channel, 1, t, k))
+                    self.features.append(InvertedResidual(
+                        input_channel, output_channel, 1, t, k))
                 input_channel = output_channel
 
         # building last several layers
@@ -667,14 +706,13 @@ class SentimentClassifier(nn.Module):
             -attn_masks : Tensor of shape [B, T] containing attention masks to be used to avoid contribution of PAD tokens
         '''
 
-        #Feeding the input to BERT model to obtain contextualized representations
-        cont_reps, _ = self.bert_layer(seq, attention_mask = attn_masks)
+        # Feeding the input to BERT model to obtain contextualized representations
+        cont_reps, _ = self.bert_layer(seq, attention_mask=attn_masks)
 
-        #Obtaining the representation of [CLS] head
+        # Obtaining the representation of [CLS] head
         cls_rep = cont_reps[:, 0]
 
-        #Feeding cls_rep to the classifier layer
+        # Feeding cls_rep to the classifier layer
         logits = self.cls_layer(cls_rep)
 
         return self.m(logits)
-

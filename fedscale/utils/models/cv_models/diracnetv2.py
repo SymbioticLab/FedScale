@@ -82,6 +82,7 @@ class DiracInitBlock(nn.Module):
     out_channels : int
         Number of output channels.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels):
@@ -122,6 +123,7 @@ class DiracNetV2(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -199,7 +201,8 @@ def get_diracnetv2(blocks,
     elif blocks == 34:
         layers = [6, 8, 12, 6]
     else:
-        raise ValueError("Unsupported DiracNetV2 with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported DiracNetV2 with number of blocks: {}".format(blocks))
 
     channels_per_layers = [64, 128, 256, 512]
     channels = [[ci] * li for (ci, li) in zip(channels_per_layers, layers)]
@@ -213,7 +216,8 @@ def get_diracnetv2(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

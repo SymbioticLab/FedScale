@@ -4,7 +4,7 @@
 """
 
 __all__ = ['CIFARResNet', 'resnet14_cifar10',
-            'resnet20_cifar10', 'resnet20_cifar100', 'resnet20_svhn',
+           'resnet20_cifar10', 'resnet20_cifar100', 'resnet20_svhn',
            'resnet56_cifar10', 'resnet56_cifar100', 'resnet56_svhn',
            'resnet110_cifar10', 'resnet110_cifar100', 'resnet110_svhn',
            'resnet164bn_cifar10', 'resnet164bn_cifar100', 'resnet164bn_svhn',
@@ -39,6 +39,7 @@ class CIFARResNet(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -143,7 +144,8 @@ def get_resnet_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -151,7 +153,6 @@ def get_resnet_cifar(num_classes,
             local_model_store_dir_path=root)
 
     return net
-
 
 
 def resnet14_cifar10(num_classes=10, **kwargs):
@@ -694,5 +695,3 @@ def _test():
 
 if __name__ == "__main__":
     _test()
-
-

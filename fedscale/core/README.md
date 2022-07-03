@@ -7,7 +7,7 @@ It evolved from our prior system, Oort [Oort project](https://github.com/Symbiot
 
 ## Architecture
 
-<img src="fedscale-sim-mode.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
+<img src="../../docs/fedscale-sim-mode.png" alt="FAR enables the developer to benchmark various FL efforts with practical FL data and metrics">
 
 During benchmarking, FedScale relies on a distributed setting of GPUs/CPUs via the Parameter-Server (PS) architecture. 
 We have evaluated it using up to 68 GPUs to simulate FL aggregation of 1300 participants in each round. 
@@ -39,13 +39,13 @@ Please assure that these paths are consistent across all nodes so that FedScale 
 
 ### Setting Up Job Configuration
 
-We provide an example of submitting a training job in ```FedScale/benchmark/manager.py```, whereby the user can submit jobs on the master node. 
+We provide an example of submitting a training job, whereby the user can submit jobs on the master node. 
 
-- ```python manager.py submit [conf.yml]``` will submit a job with parameters specified in conf.yml on both the PS and worker nodes. 
+- `fedscale driver submit [conf.yml]` (or `python docker/driver.py submit [conf.yml]`) will submit a job with parameters specified in conf.yml on both the PS and worker nodes. 
 We provide some example ```conf.yml``` in ```FedScale/benchmark/configs``` for each dataset. 
 Comments in our example will help you quickly understand how to specify these parameters. 
 
-- ```python manager.py stop [job_name]``` will terminate the running ```job_name``` (specified in yml) on the used nodes. 
+- `fedscale driver stop [job_name]` (or `python docker/driver.py stop [job_name]`)  will terminate the running ```job_name``` (specified in yml) on the used nodes. 
 
 **Note**: FedScale are supporting 20+ [datasets](https://github.com/SymbioticLab/FedScale/blob/master/benchmark/dataset/README.md) and 70+ [models](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/utils/models/cv_models/README.md).
 

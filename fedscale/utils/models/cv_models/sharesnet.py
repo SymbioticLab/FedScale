@@ -44,6 +44,7 @@ class ShaConvBlock(nn.Module):
     shared_conv : Module, default None
         Shared convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -159,6 +160,7 @@ class ShaResBlock(nn.Module):
     shared_conv : Module, default None
         Shared convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -201,6 +203,7 @@ class ShaResBottleneck(nn.Module):
     shared_conv : Module, default None
         Shared convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -209,7 +212,8 @@ class ShaResBottleneck(nn.Module):
                  bottleneck_factor=4,
                  shared_conv=None):
         super(ShaResBottleneck, self).__init__()
-        assert (conv1_stride or not ((stride > 1) and (shared_conv is not None)))
+        assert (conv1_stride or not (
+            (stride > 1) and (shared_conv is not None)))
         mid_channels = out_channels // bottleneck_factor
 
         self.conv1 = conv1x1_block(
@@ -252,6 +256,7 @@ class ShaResUnit(nn.Module):
     shared_conv : Module, default None
         Shared convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -316,6 +321,7 @@ class ShaResNet(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -410,7 +416,8 @@ def get_sharesnet(blocks,
     elif blocks == 200:
         layers = [3, 24, 36, 3]
     else:
-        raise ValueError("Unsupported ShaResNet with number of blocks: {}".format(blocks))
+        raise ValueError(
+            "Unsupported ShaResNet with number of blocks: {}".format(blocks))
 
     init_block_channels = 64
 
@@ -432,7 +439,8 @@ def get_sharesnet(blocks,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

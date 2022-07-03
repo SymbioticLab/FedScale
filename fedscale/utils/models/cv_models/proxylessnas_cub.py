@@ -4,7 +4,8 @@
     https://arxiv.org/abs/1812.00332.
 """
 
-__all__ = ['proxylessnas_cpu_cub', 'proxylessnas_gpu_cub', 'proxylessnas_mobile_cub', 'proxylessnas_mobile14_cub']
+__all__ = ['proxylessnas_cpu_cub', 'proxylessnas_gpu_cub',
+           'proxylessnas_mobile_cub', 'proxylessnas_mobile14_cub']
 
 from .proxylessnas import get_proxylessnas
 

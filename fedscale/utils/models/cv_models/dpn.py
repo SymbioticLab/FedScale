@@ -21,6 +21,7 @@ class GlobalAvgMaxPool2D(nn.Module):
     output_size : int, default 1
         The target output size.
     """
+
     def __init__(self,
                  output_size=1):
         super(GlobalAvgMaxPool2D, self).__init__()
@@ -57,6 +58,7 @@ class PreActivation(nn.Module):
     channels : int
         Number of channels.
     """
+
     def __init__(self,
                  channels):
         super(PreActivation, self).__init__()
@@ -88,6 +90,7 @@ class DPNConv(nn.Module):
     groups : int
         Number of groups.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -188,6 +191,7 @@ class DPNUnit(nn.Module):
     b_case : bool, default False
         Whether to use B-case model.
     """
+
     def __init__(self,
                  in_channels,
                  mid_channels,
@@ -270,6 +274,7 @@ class DPNInitBlock(nn.Module):
     padding : int or tuple/list of 2 int
         Padding value for convolution layer.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -307,6 +312,7 @@ class DPNFinalBlock(nn.Module):
     channels : int
         Number of channels.
     """
+
     def __init__(self,
                  channels):
         super(DPNFinalBlock, self).__init__()
@@ -354,6 +360,7 @@ class DPN(nn.Module):
     num_classes : int, default 1000
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -402,11 +409,13 @@ class DPN(nn.Module):
                     b_case=b_case))
                 in_channels = out_channels
             self.features.add_module("stage{}".format(i + 1), stage)
-        self.features.add_module("final_block", DPNFinalBlock(channels=in_channels))
+        self.features.add_module(
+            "final_block", DPNFinalBlock(channels=in_channels))
 
         self.output = nn.Sequential()
         if for_training or not test_time_pool:
-            self.output.add_module("final_pool", nn.AdaptiveAvgPool2d(output_size=1))
+            self.output.add_module(
+                "final_pool", nn.AdaptiveAvgPool2d(output_size=1))
             self.output.add_module("classifier", conv1x1(
                 in_channels=in_channels,
                 out_channels=num_classes,
@@ -504,7 +513,8 @@ def get_dpn(num_layers,
         incs = (16, 32, 32, 128)
         test_time_pool = True
     else:
-        raise ValueError("Unsupported DPN version with number of layers {}".format(num_layers))
+        raise ValueError(
+            "Unsupported DPN version with number of layers {}".format(num_layers))
 
     channels = [[0] * li for li in k_sec]
     rs = [0 * li for li in k_sec]
@@ -533,7 +543,8 @@ def get_dpn(num_layers,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

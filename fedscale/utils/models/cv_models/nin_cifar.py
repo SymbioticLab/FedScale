@@ -67,6 +67,7 @@ class CIFARNIN(nn.Module):
     num_classes : int, default 10
         Number of classification classes.
     """
+
     def __init__(self,
                  channels,
                  first_kernel_sizes,
@@ -92,7 +93,8 @@ class CIFARNIN(nn.Module):
                             kernel_size=3,
                             stride=2,
                             padding=1))
-                    stage.add_module("dropout{}".format(i + 1), nn.Dropout(p=0.5))
+                    stage.add_module("dropout{}".format(
+                        i + 1), nn.Dropout(p=0.5))
                 kernel_size = first_kernel_sizes[i] if j == 0 else 1
                 padding = (kernel_size - 1) // 2
                 stage.add_module("unit{}".format(j + 1), NINConv(
@@ -159,7 +161,8 @@ def get_nin_cifar(num_classes,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,

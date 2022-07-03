@@ -38,6 +38,7 @@ class DwaConvBlock(nn.Module):
     activation : function or str or None, default nn.ReLU(inplace=True)
         Activation function or name of activation function.
     """
+
     def __init__(self,
                  channels,
                  kernel_size,
@@ -135,6 +136,7 @@ class DABBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  channels,
                  dilation,
@@ -201,6 +203,7 @@ class DownBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -248,6 +251,7 @@ class DABUnit(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -291,6 +295,7 @@ class DABStage(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  x_channels,
                  y_in_channels,
@@ -339,6 +344,7 @@ class DABInitBlock(nn.Module):
     bn_eps : float
         Small float added to variance in Batch norm.
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -394,6 +400,7 @@ class DABNet(nn.Module):
     num_classes : int, default 19
         Number of segmentation classes.
     """
+
     def __init__(self,
                  channels,
                  init_block_channels,
@@ -486,7 +493,8 @@ def get_dabnet(model_name=None,
 
     if pretrained:
         if (model_name is None) or (not model_name):
-            raise ValueError("Parameter `model_name` should be properly initialized for loading pretrained model.")
+            raise ValueError(
+                "Parameter `model_name` should be properly initialized for loading pretrained model.")
         from .model_store import download_model
         download_model(
             net=net,
@@ -534,7 +542,8 @@ def _test():
 
     for model in models:
 
-        net = model(pretrained=pretrained, in_size=in_size, fixed_size=fixed_size)
+        net = model(pretrained=pretrained,
+                    in_size=in_size, fixed_size=fixed_size)
 
         # net.train()
         net.eval()
