@@ -1,5 +1,13 @@
 class ServerOptimizer(object):
+    """This is a abstract server optimizer class
+    
+    Args:
+        mode (string): mode of gradient aggregation policy
+        args (distionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
+        device (string): Runtime device type
+        sample_seed (int): Random seed
 
+    """
     def __init__(self, mode, args, device, sample_seed=233):
 
         self.mode = mode
@@ -12,7 +20,14 @@ class ServerOptimizer(object):
                 eta=args.yogi_eta, tau=args.yogi_tau, beta=args.yogi_beta, beta2=args.yogi_beta2)
 
     def update_round_gradient(self, last_model, current_model, target_model):
-
+        """ update global model based on different policy
+        
+        Args:
+            last_model (list of tensor weight): A list of global model weight in last round.
+            current_model (list of tensor weight): A list of global model weight in this round.
+            target_model (PyTorch or TensorFlow nn module): Aggregated model.
+        
+        """
         if self.mode == 'fed-yogi':
             """
             "Adaptive Federated Optimizations", 

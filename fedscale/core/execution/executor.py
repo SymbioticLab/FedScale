@@ -15,9 +15,12 @@ import fedscale.core.channels.job_api_pb2 as job_api_pb2
 
 
 class Executor(object):
-    """Each executor takes certain resource to run real training.
-       Each run simulates the execution of an individual client"""
+    """Abstract class for FedScale executor.
 
+    Args:
+        args (dictionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
+
+    """
     def __init__(self, args):
 
         self.args = args
@@ -48,15 +51,24 @@ class Executor(object):
         super(Executor, self).__init__()
 
     def setup_env(self):
+        """Set up experiments environment
+        """
         logging.info(f"(EXECUTOR:{self.this_rank}) is setting up environ ...")
         self.setup_seed(seed=1)
 
     def setup_communication(self):
+        """Set up grpc connection
+        """
         self.init_control_communication()
         self.init_data_communication()
 
     def setup_seed(self, seed=1):
-        """Set random seed for reproducibility"""
+        """Set random seed for reproducibility
+
+        Args:
+            seed (int): random seed
+
+        """
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         np.random.seed(seed)
@@ -65,7 +77,8 @@ class Executor(object):
 
     def init_control_communication(self):
         """Create communication channel between coordinator and executor.
-        This channel serves control messages."""
+        This channel serves control messages.
+        """
         self.aggregator_communicator.connect_to_server()
 
     def init_data_communication(self):
@@ -74,14 +87,24 @@ class Executor(object):
         pass
 
     def init_model(self):
-        """Return the model architecture used in training"""
+        """Get the model architecture used in training
+
+        Returns: 
+            PyTorch or TensorFlow module: Based on the executor's machine learning framework, initialize and return the model for training
+        
+        """
         assert self.args.engine == commons.PYTORCH, "Please override this function to define non-PyTorch models"
         model = init_model()
         model = model.to(device=self.device)
         return model
 
     def init_data(self):
-        """Return the training and testing dataset"""
+        """Return the training and testing dataset
+
+        Returns:
+            Tuple of DataPartitioner class: The partioned dataset class for training and testing
+
+        """
         train_dataset, test_dataset = init_dataset()
         if self.task == "rl":
             return train_dataset, test_dataset
@@ -107,6 +130,8 @@ class Executor(object):
         return training_sets, testing_sets
 
     def run(self):
+        """Start running the executor by setting up execution and communication environment, and monitoring the grpc message.
+        """
         self.setup_env()
         self.model = self.init_model()
         self.training_sets, self.testing_sets = self.init_data()
@@ -114,21 +139,57 @@ class Executor(object):
         self.event_monitor()
 
     def dispatch_worker_events(self, request):
-        """Add new events to worker queues"""
+        """Add new events to worker queues
+        
+        Args:
+            request (string): Add grpc request from server (e.g. MODEL_TEST, MODEL_TRAIN) to event_queue.
+        
+        """
         self.event_queue.append(request)
 
     def deserialize_response(self, responses):
+        """Deserialize the response from server
+
+        Args:
+            responses (byte stream): Serialized response from server.
+
+        Returns:
+            ServerResponse defined at job_api.proto: The deserialized response object from server.
+        
+        """
         return pickle.loads(responses)
 
     def serialize_response(self, responses):
+        """Serialize the response to send to server upon assigned job completion
+
+        Args:
+            responses (string, bool, or bytes): Client responses after job completion.
+
+        Returns:
+            bytes stream: The serialized response object to server.
+        
+        """
         return pickle.dumps(responses)
 
     def UpdateModel(self, config):
-        """Receive the broadcasted global model for current round"""
+        """Receive the broadcasted global model for current round
+
+        Args:
+            config (PyTorch or TensorFlow model): The broadcasted global model config
+        
+        """
         self.update_model_handler(model=config)
 
     def Train(self, config):
-        """Load train config and data to start training on client """
+        """Load train config and data to start training on that client
+
+        Args:
+            config (dictionary): The client training config.
+
+        Returns:     
+            tuple (int, dictionary): The client id and train result
+
+        """
         client_id, train_config = config['client_id'], config['task_config']
 
         model = None
@@ -152,8 +213,12 @@ class Executor(object):
         return client_id, train_res
 
     def Test(self, config):
-        """Model Testing. By default, we test the accuracy on all data of clients in the test group"""
-
+        """Model Testing. By default, we test the accuracy on all data of clients in the test group
+        
+        Args:
+            config (dictionary): The client testing config.
+        
+        """
         test_res = self.testing_handler(args=self.args)
         test_res = {'executorId': self.this_rank, 'results': test_res}
 
@@ -168,17 +233,27 @@ class Executor(object):
         self.dispatch_worker_events(response)
 
     def Stop(self):
-        """Stop the current executor"""
-
+        """Stop the current executor
+        """
         self.aggregator_communicator.close_sever_connection()
         self.received_stop_request = True
 
     def report_executor_info_handler(self):
-        """Return the statistics of training dataset"""
+        """Return the statistics of training dataset
+
+        Returns:
+            int: Return the statistics of training dataset, in simulation return the number of clients
+
+        """
         return self.training_sets.getSize()
 
     def update_model_handler(self, model):
-        """Update the model copy on this executor"""
+        """Update the model copy on this executor
+
+        Args:
+            config (PyTorch or TensorFlow model): The broadcasted global model
+
+        """
         self.model = model
         self.round += 1
 
@@ -187,12 +262,26 @@ class Executor(object):
             pickle.dump(self.model, model_out)
 
     def load_global_model(self):
-        # load last global model
+        """ Load last global model
+
+        Returns:
+            PyTorch or TensorFlow model: The lastest global model
+
+        """
         with open(self.temp_model_path, 'rb') as model_in:
             model = pickle.load(model_in)
         return model
 
     def override_conf(self, config):
+        """ Override the variable arguments for different client
+
+        Args:
+            config (dictionary): The client runtime config.
+
+        Returns:
+            dictionary: Variable arguments for client runtime config.
+
+        """
         default_conf = vars(self.args).copy()
 
         for key in config:
@@ -201,15 +290,28 @@ class Executor(object):
         return Namespace(**default_conf)
 
     def get_client_trainer(self, conf):
-        """Developer can redefine to this function to customize the training:
-           API:
-            - train(client_data=client_data, model=client_model, conf=conf)
+        """A abstract base class for client with training handler, developer can redefine to this function to customize the client training:
+
+        Args:
+            config (dictionary): The client runtime config.
+
+        Returns:
+            Client: A abstract base client class with runtime config conf.
+
         """
         return Client(conf)
 
     def training_handler(self, clientId, conf, model=None):
-        """Train model given client ids"""
+        """Train model given client id
+        
+        Args:
+            clientId (int): The client id.
+            conf (dictionary): The client runtime config.
 
+        Returns:
+            dictionary: The train result
+        
+        """
         # load last global model
         client_model = self.load_global_model() if model is None else model
 
@@ -233,7 +335,15 @@ class Executor(object):
         return train_res
 
     def testing_handler(self, args):
-        """Test model"""
+        """Test model
+        
+        Args:
+            args (dictionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
+
+        Returns:
+            dictionary: The test result
+
+        """
         evalStart = time.time()
         device = self.device
         model = self.load_global_model()
@@ -267,7 +377,8 @@ class Executor(object):
         return testResults
 
     def client_register(self):
-        """Register the executor information to the aggregator"""
+        """Register the executor information to the aggregator
+        """
         start_time = time.time()
         while time.time() - start_time < 180:
             try:
@@ -286,7 +397,8 @@ class Executor(object):
                 time.sleep(5)
 
     def client_ping(self):
-        """Ping the aggregator for new task"""
+        """Ping the aggregator for new task
+        """
         response = self.aggregator_communicator.stub.CLIENT_PING(job_api_pb2.PingRequest(
             client_id=self.executor_id,
             executor_id=self.executor_id
@@ -294,7 +406,8 @@ class Executor(object):
         self.dispatch_worker_events(response)
 
     def event_monitor(self):
-        """Activate event handler once receiving new message"""
+        """Activate event handler once receiving new message
+        """
         logging.info("Start monitoring events ...")
         self.client_register()
 
