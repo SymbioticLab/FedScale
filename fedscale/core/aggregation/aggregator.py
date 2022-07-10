@@ -494,7 +494,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     last_model, current_grad_weights, self.model)
 
     def round_completion_handler(self):
-        """Triggered upon the round completion, it register the last round execution info,
+        """Triggered upon the round completion, it registers the last round execution info,
         broadcast new tasks for executors and select clients for next round.
         """
         self.global_virtual_clock += self.round_duration
@@ -716,10 +716,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """Issue a new client training task to specific executor
         
         :param executorId: Executor Id.
-        :type executorId: Isnt
+        :type executorId: Int
 
         :return: Training config for new task.
-        :rtype: train_config (Dictionary), model(PyTorch or TensorFlow module)
+        :rtype: train_config (Dictionary), model (PyTorch or TensorFlow module)
         """
         next_clientId = self.resource_manager.get_next_task(executorId)
         train_config = None
