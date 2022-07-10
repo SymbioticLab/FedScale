@@ -1,4 +1,19 @@
 from __future__ import print_function
+
+import os
+import pdb
+import pickle
+import subprocess
+import sys
+import xml.dom.minidom as minidom
+
+import datasets
+import datasets.imagenet
+import numpy as np
+import scipy.io as sio
+import scipy.sparse
+from datasets.imdb import imdb
+
 # --------------------------------------------------------
 # Fast R-CNN
 # Copyright (c) 2015 Microsoft
@@ -6,18 +21,6 @@ from __future__ import print_function
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-import datasets
-import datasets.imagenet
-import os
-import sys
-from datasets.imdb import imdb
-import xml.dom.minidom as minidom
-import numpy as np
-import scipy.sparse
-import scipy.io as sio
-import subprocess
-import pdb
-import pickle
 try:
     xrange          # Python 2
 except NameError:

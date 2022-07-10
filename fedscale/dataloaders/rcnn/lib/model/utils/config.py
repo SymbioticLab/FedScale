@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-import pdb
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import os
 import os.path as osp
+import pdb
+
 import numpy as np
 # `pip install easydict` if you don't have it
 from easydict import EasyDict as edict

@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 __author__ = 'tylin'
 __version__ = '1.0.1'
 # Interface for accessing the Microsoft COCO dataset.
@@ -46,19 +46,22 @@ __version__ = '1.0.1'
 # Code written by Piotr Dollar and Tsung-Yi Lin, 2014.
 # Licensed under the Simplified BSD License [see bsd.txt]
 
-import json
+import copy
 import datetime
+import itertools
+import json
+import os
 import time
-import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Polygon
-import numpy as np
 # from skimage.draw import polygon
 import urllib
-import copy
-import itertools
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon
+
 from . import mask
-import os
+
 try:
     unicode        # Python 2
 except NameError:

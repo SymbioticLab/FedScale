@@ -8,7 +8,9 @@ __all__ = ['MobileNet', 'mobilenet_w1', 'mobilenet_w3d4',
            'mobilenet_wd2', 'mobilenet_wd4', 'get_mobilenet']
 
 import os
+
 import torch.nn as nn
+
 from .common import conv3x3_block, dwsconv3x3_block
 
 

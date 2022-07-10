@@ -29,7 +29,7 @@ cd FedScale
 
 # Please replace ~/.bashrc with ~/.bash_profile for MacOS
 echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
-echo "alias fedscale='bash $FEDSCALE_HOME/fedscale.sh'" >> ~/.bashrc 
+echo alias fedscale=\'bash $FEDSCALE_HOME/fedscale.sh\' >> ~/.bashrc 
 conda init bash
 . ~/.bashrc
 

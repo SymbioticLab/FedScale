@@ -7,9 +7,12 @@
 __all__ = ['FBNet', 'fbnet_cb']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1_block, conv3x3_block, dwconv3x3_block, dwconv5x5_block
+
+from .common import (conv1x1_block, conv3x3_block, dwconv3x3_block,
+                     dwconv5x5_block)
 
 
 class FBNetUnit(nn.Module):

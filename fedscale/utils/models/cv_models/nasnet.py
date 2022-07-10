@@ -8,10 +8,12 @@ __all__ = ['NASNet', 'nasnet_4a1056',
            'nasnet_6a4032', 'nasnet_dual_path_sequential']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1, DualPathSequential
+
+from .common import DualPathSequential, conv1x1
 
 
 class NasDualPathScheme(object):

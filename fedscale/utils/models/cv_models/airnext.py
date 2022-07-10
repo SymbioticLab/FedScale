@@ -7,12 +7,14 @@
 __all__ = ['AirNeXt', 'airnext50_32x4d_r2',
            'airnext101_32x4d_r2', 'airnext101_32x4d_r16']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1_block, conv3x3_block
+
 from .airnet import AirBlock, AirInitBlock
+from .common import conv1x1_block, conv3x3_block
 
 
 class AirNeXtBottleneck(nn.Module):

@@ -8,9 +8,11 @@ __all__ = ['OctResNet', 'octresnet10_ad2', 'octresnet50b_ad2', 'OctResUnit']
 
 import os
 from inspect import isfunction
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+
 from .common import DualPathSequential
 from .resnet import ResInitBlock
 

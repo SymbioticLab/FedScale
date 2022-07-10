@@ -8,9 +8,11 @@ __all__ = ['FCN8sd', 'fcn8sd_resnetd50b_voc', 'fcn8sd_resnetd101b_voc', 'fcn8sd_
            'fcn8sd_resnetd50b_cityscapes', 'fcn8sd_resnetd101b_cityscapes']
 
 import os
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+
 from .common import conv1x1, conv3x3_block
 from .resnetd import resnetd50b, resnetd101b
 

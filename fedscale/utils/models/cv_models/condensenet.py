@@ -7,10 +7,12 @@
 __all__ = ['CondenseNet', 'condensenet74_c4_g4', 'condensenet74_c8_g8']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torch.autograd import Variable
+
 from .common import ChannelShuffle
 
 

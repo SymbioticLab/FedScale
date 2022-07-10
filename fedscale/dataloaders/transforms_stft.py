@@ -4,9 +4,8 @@ __author__ = 'Erdene-Ochir Tuguldur'
 
 import random
 
-import numpy as np
 import librosa
-
+import numpy as np
 from torch.utils.data import Dataset
 
 from .transforms_wav import should_apply_transform

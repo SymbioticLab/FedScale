@@ -1,5 +1,21 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import gzip
+import json
+import os
+import pdb
+import pickle
+import xml.etree.ElementTree as ET
+
+import datasets.ds_utils as ds_utils
+import numpy as np
+import PIL
+import scipy.sparse
+from datasets.imdb import imdb
+from model.utils.config import cfg
+
+from .vg_eval import vg_eval
+
 # --------------------------------------------------------
 # Fast R-CNN
 # Copyright (c) 2015 Microsoft
@@ -7,19 +23,6 @@ from __future__ import absolute_import
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-import os
-from datasets.imdb import imdb
-import datasets.ds_utils as ds_utils
-import xml.etree.ElementTree as ET
-import numpy as np
-import scipy.sparse
-import gzip
-import PIL
-import json
-from .vg_eval import vg_eval
-from model.utils.config import cfg
-import pickle
-import pdb
 try:
     xrange          # Python 2
 except NameError:

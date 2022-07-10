@@ -1,6 +1,5 @@
-from torch import nn
 import torch.utils.model_zoo as model_zoo
-
+from torch import nn
 
 __all__ = ['MobileNetV2', 'mobilenet_v2']
 

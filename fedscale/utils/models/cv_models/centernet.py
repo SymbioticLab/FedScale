@@ -8,9 +8,11 @@ __all__ = ['CenterNet', 'centernet_resnet18_voc', 'centernet_resnet18_coco', 'ce
            'CenterNetHeatmapMaxDet']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import conv1x1, conv3x3_block, DeconvBlock, Concurrent
+
+from .common import Concurrent, DeconvBlock, conv1x1, conv3x3_block
 from .resnet import resnet18, resnet50b, resnet101b
 
 

@@ -13,8 +13,10 @@ __all__ = ['CIFARSEPreResNet', 'sepreresnet20_cifar10', 'sepreresnet20_cifar100'
            'sepreresnet1202_cifar10', 'sepreresnet1202_cifar100', 'sepreresnet1202_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3_block
 from .sepreresnet import SEPreResUnit
 

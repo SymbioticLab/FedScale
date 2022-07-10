@@ -7,10 +7,13 @@
 __all__ = ['ENet', 'enet_cityscapes', 'ENetMixDownBlock']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .common import conv3x3, ConvBlock, AsymConvBlock, DeconvBlock, NormActivation, conv1x1_block
+
+from .common import (AsymConvBlock, ConvBlock, DeconvBlock, NormActivation,
+                     conv1x1_block, conv3x3)
 
 
 class ENetMaxDownBlock(nn.Module):

@@ -8,9 +8,11 @@ __all__ = ['CIFARShakeShakeResNet', 'shakeshakeresnet20_2x16d_cifar10', 'shakesh
            'shakeshakeresnet26_2x32d_svhn']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1, conv3x3_block
 from .resnet import ResBlock, ResBottleneck
 

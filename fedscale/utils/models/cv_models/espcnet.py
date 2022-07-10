@@ -7,9 +7,12 @@
 __all__ = ['ESPCNet', 'espcnet_cityscapes', 'ESPBlock']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import NormActivation, conv1x1, conv3x3, conv3x3_block, DualPathSequential, InterpolationBlock
+
+from .common import (DualPathSequential, InterpolationBlock, NormActivation,
+                     conv1x1, conv3x3, conv3x3_block)
 
 
 class HierarchicalConcurrent(nn.Sequential):

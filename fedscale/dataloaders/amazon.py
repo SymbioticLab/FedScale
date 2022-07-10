@@ -1,7 +1,8 @@
-from torch.utils.data import Dataset
-import torch
 import os
+
 import pandas as pd
+import torch
+from torch.utils.data import Dataset
 
 # This loader works for Amazon Review
 # task : text_clf

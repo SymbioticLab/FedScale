@@ -1,80 +1,90 @@
 # Standard libs
-import os
-import re
-import sys
-import time
-import datetime
-import logging
-import pickle
-import json
-import socket
-import random
-import math
-import gc
-import copy
-from collections import OrderedDict
-import threading
-import numpy as np
 import collections
-import numpy
+import copy
+import datetime
+import gc
+import json
+import logging
+import math
+import os
+import pickle
+import random
+import re
+import socket
+import sys
+import threading
+import time
+from collections import OrderedDict
 
+import numpy
+import numpy as np
+# PyTorch libs
+import torch
+import torch.distributed as dist
+import torchvision.models as tormodels
+from torch.autograd import Variable
+from torch.multiprocessing import Process, Queue
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+from fedscale.core.aggregation.optimizers import ServerOptimizer
+from fedscale.core.client_manager import clientManager
 # libs from fedscale
 from fedscale.core.config_parser import args
+from fedscale.dataloaders.divide_data import DataPartitioner, select_dataset
 from fedscale.dataloaders.utils_data import get_data_transform
 from fedscale.utils.model_test_module import test_model
-from fedscale.dataloaders.divide_data import select_dataset, DataPartitioner
-from fedscale.core.client_manager import clientManager
-from fedscale.core.aggregation.optimizers import ServerOptimizer
-
 # FedScale model libs
 from fedscale.utils.models.model_provider import get_cv_model
 
-# PyTorch libs
-import torch
-from torch.multiprocessing import Process
-from torch.multiprocessing import Queue
-from torch.utils.data import DataLoader
-import torch.distributed as dist
-from torch.autograd import Variable
-from torchvision import datasets, transforms
-import torchvision.models as tormodels
-
 tokenizer = None
 if args.task == 'nlp' or args.task == 'text_clf':
-    from fedscale.dataloaders.nlp import mask_tokens, load_and_cache_examples
-    from transformers import (
-        AdamW,
-        AutoConfig,
-        AlbertTokenizer,
-        AutoTokenizer,
-        MobileBertForPreTraining,
-        AutoModelWithLMHead
-    )
+    from transformers import (AdamW, AlbertTokenizer, AutoConfig,
+                              AutoModelWithLMHead, AutoTokenizer,
+                              MobileBertForPreTraining)
+
+    from fedscale.dataloaders.nlp import load_and_cache_examples, mask_tokens
     tokenizer = AlbertTokenizer.from_pretrained(
         'albert-base-v2', do_lower_case=True)
 elif args.task == 'speech':
     import numba
-    from fedscale.dataloaders.speech import SPEECH
-    from fedscale.dataloaders.transforms_wav import ChangeSpeedAndPitchAudio, ChangeAmplitude, FixAudioLength, ToMelSpectrogram, LoadAudio, ToTensor
-    from fedscale.dataloaders.transforms_stft import ToSTFT, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, FixSTFTDimension, ToMelSpectrogramFromSTFT, DeleteSTFT, AddBackgroundNoiseOnSTFT
-    from fedscale.dataloaders.speech import BackgroundNoiseDataset
+
+    from fedscale.dataloaders.speech import SPEECH, BackgroundNoiseDataset
+    from fedscale.dataloaders.transforms_stft import (AddBackgroundNoiseOnSTFT,
+                                                      DeleteSTFT,
+                                                      FixSTFTDimension,
+                                                      StretchAudioOnSTFT,
+                                                      TimeshiftAudioOnSTFT,
+                                                      ToMelSpectrogramFromSTFT,
+                                                      ToSTFT)
+    from fedscale.dataloaders.transforms_wav import (ChangeAmplitude,
+                                                     ChangeSpeedAndPitchAudio,
+                                                     FixAudioLength, LoadAudio,
+                                                     ToMelSpectrogram,
+                                                     ToTensor)
 elif args.task == 'detection':
     import pickle
-    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roidb import combined_roidb
+
     from fedscale.dataloaders.rcnn.lib.datasets.factory import get_imdb
     from fedscale.dataloaders.rcnn.lib.datasets.pascal_voc import readClass
-    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roibatchLoader import roibatchLoader
-    from fedscale.dataloaders.rcnn.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-    from fedscale.dataloaders.rcnn.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
-        adjust_learning_rate, save_checkpoint, clip_gradient
     from fedscale.dataloaders.rcnn.lib.model.faster_rcnn.resnet import resnet
-    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import clip_boxes
     from fedscale.dataloaders.rcnn.lib.model.roi_layers import nms
-    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
+    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import (
+        bbox_transform_inv, clip_boxes)
+    from fedscale.dataloaders.rcnn.lib.model.utils.config import (
+        cfg, cfg_from_file, cfg_from_list, get_output_dir)
+    from fedscale.dataloaders.rcnn.lib.model.utils.net_utils import (
+        adjust_learning_rate, clip_gradient, load_net, save_checkpoint,
+        save_net, weights_normal_init)
+    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roibatchLoader import \
+        roibatchLoader
+    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roidb import \
+        combined_roidb
 elif args.task == 'voice':
     from torch_baidu_ctc import CTCLoss
 elif args.task == 'rl':
     import gym
+
     from fedscale.dataloaders.dqn import *
 
 # shared functions of aggregator and clients
@@ -110,8 +120,8 @@ def init_model():
     elif args.task == 'text_clf':
 
         if args.model == 'albert':
-            from transformers import AlbertForSequenceClassification
-            from transformers import AutoConfig
+            from transformers import (AlbertForSequenceClassification,
+                                      AutoConfig)
             config = AutoConfig.from_pretrained(os.path.join(
                 args.log_path, 'albert-small-config.json'))
             config.num_labels = outputClass[args.data_set]
@@ -125,26 +135,32 @@ def init_model():
         model = LogisticRegression(args.vocab_token_size, args.vocab_tag_size)
     elif args.task == 'speech':
         if args.model == 'mobilenet':
-            from fedscale.utils.models.specialized.resnet_speech import mobilenet_v2
+            from fedscale.utils.models.specialized.resnet_speech import \
+                mobilenet_v2
             model = mobilenet_v2(num_classes=outputClass[args.data_set])
         elif args.model == "resnet18":
-            from fedscale.utils.models.specialized.resnet_speech import resnet18
+            from fedscale.utils.models.specialized.resnet_speech import \
+                resnet18
             model = resnet18(
                 num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet34":
-            from fedscale.utils.models.specialized.resnet_speech import resnet34
+            from fedscale.utils.models.specialized.resnet_speech import \
+                resnet34
             model = resnet34(
                 num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet50":
-            from fedscale.utils.models.specialized.resnet_speech import resnet50
+            from fedscale.utils.models.specialized.resnet_speech import \
+                resnet50
             model = resnet50(
                 num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet101":
-            from fedscale.utils.models.specialized.resnet_speech import resnet101
+            from fedscale.utils.models.specialized.resnet_speech import \
+                resnet101
             model = resnet101(
                 num_classes=outputClass[args.data_set], in_channels=1)
         elif args.model == "resnet152":
-            from fedscale.utils.models.specialized.resnet_speech import resnet152
+            from fedscale.utils.models.specialized.resnet_speech import \
+                resnet152
             model = resnet152(
                 num_classes=outputClass[args.data_set], in_channels=1)
         else:
@@ -153,7 +169,8 @@ def init_model():
             sys.exit(-1)
 
     elif args.task == 'voice':
-        from fedscale.utils.models.specialized.voice_model import DeepSpeech, supported_rnns
+        from fedscale.utils.models.specialized.voice_model import (
+            DeepSpeech, supported_rnns)
 
         # Initialise new model training
         with open(os.path.join(args.data_dir, "labels.json")) as label_file:
@@ -331,7 +348,8 @@ def init_dataset():
                                                                 FixAudioLength(),
                                                                 valid_feature_transform]))
         elif args.data_set == 'common_voice':
-            from fedscale.dataloaders.voice_data_loader import SpectrogramDataset
+            from fedscale.dataloaders.voice_data_loader import \
+                SpectrogramDataset
             train_dataset = SpectrogramDataset(audio_conf=model.audio_conf,
                                                data_dir=args.data_dir,
                                                labels=model.labels,

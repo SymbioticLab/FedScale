@@ -8,9 +8,10 @@
 # Reorganized and modified by Jianwei Yang and Jiasen Lu
 # --------------------------------------------------------
 
-import torch
-import numpy as np
 import pdb
+
+import numpy as np
+import torch
 
 
 def bbox_transform(ex_rois, gt_rois):

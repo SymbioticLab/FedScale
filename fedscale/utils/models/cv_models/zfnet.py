@@ -6,6 +6,7 @@
 __all__ = ['zfnet', 'zfnetb']
 
 import os
+
 from .alexnet import AlexNet
 
 

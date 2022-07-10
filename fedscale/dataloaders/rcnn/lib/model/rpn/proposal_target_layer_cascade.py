@@ -1,4 +1,15 @@
 from __future__ import absolute_import
+
+import pdb
+
+import numpy as np
+import numpy.random as npr
+import torch
+import torch.nn as nn
+
+from ..utils.config import cfg
+from .bbox_transform import bbox_overlaps_batch, bbox_transform_batch
+
 # --------------------------------------------------------
 # Faster R-CNN
 # Copyright (c) 2015 Microsoft
@@ -9,13 +20,6 @@ from __future__ import absolute_import
 # Reorganized and modified by Jianwei Yang and Jiasen Lu
 # --------------------------------------------------------
 
-import torch
-import torch.nn as nn
-import numpy as np
-import numpy.random as npr
-from ..utils.config import cfg
-from .bbox_transform import bbox_overlaps_batch, bbox_transform_batch
-import pdb
 
 
 class _ProposalTargetLayer(nn.Module):

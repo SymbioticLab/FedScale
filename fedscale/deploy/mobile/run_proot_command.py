@@ -1,8 +1,8 @@
 # To be placed in Termux $HOME
-import sys
-import os
-import time
 import datetime
+import os
+import sys
+import time
 
 # Get arg
 print(sys.argv)

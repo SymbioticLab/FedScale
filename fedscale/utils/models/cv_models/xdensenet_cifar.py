@@ -9,13 +9,15 @@ __all__ = ['CIFARXDenseNet', 'xdensenet40_2_k24_bc_cifar10', 'xdensenet40_2_k24_
            'xdensenet40_2_k36_bc_svhn']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3
-from .preresnet import PreResActivation
 from .densenet import TransitionBlock
-from .xdensenet import pre_xconv3x3_block, XDenseUnit
+from .preresnet import PreResActivation
+from .xdensenet import XDenseUnit, pre_xconv3x3_block
 
 
 class XDenseSimpleUnit(nn.Module):

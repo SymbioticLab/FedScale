@@ -1,12 +1,14 @@
-import torch
 import logging
 import math
-import numpy as np
+import os
+import sys
 
-import sys, os
+import numpy as np
+import tensorflow as tf
+import torch
 
 from fedscale.core.execution.client import Client
-import tensorflow as tf 
+
 
 class Customized_Client(Client):
     """Inherit default client to use tensorflow engine"""

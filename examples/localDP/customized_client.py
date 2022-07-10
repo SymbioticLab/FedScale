@@ -1,16 +1,17 @@
-import torch
 import logging
 import math
-from torch.autograd import Variable
+import os
+import sys
+
 import numpy as np
-
-import sys, os
-
+import torch
 from opacus import PrivacyEngine
 from opacus.validators import ModuleValidator
+from torch.autograd import Variable
 
 from fedscale.core.execution.client import Client
 from fedscale.core.execution.optimizers import ClientOptimizer
+
 
 class Customized_Client(Client):
     """

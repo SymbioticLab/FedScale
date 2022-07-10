@@ -7,9 +7,11 @@
 __all__ = ['ERFNet', 'erfnet_cityscapes', 'FCU']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import deconv3x3_block, AsymConvBlock
+
+from .common import AsymConvBlock, deconv3x3_block
 from .enet import ENetMixDownBlock
 
 

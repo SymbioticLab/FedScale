@@ -1,15 +1,14 @@
 """Transform a roidb into a trainable roidb by adding a bunch of metadata."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
+import logging
+import pdb
 
 import datasets
 import numpy as np
-from model.utils.config import cfg, cfg_from_list
-from datasets.factory import get_imdb
 import PIL
-import pdb
-import logging
+from datasets.factory import get_imdb
+from model.utils.config import cfg, cfg_from_list
 
 
 def read_sizes(size_file):

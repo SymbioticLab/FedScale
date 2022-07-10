@@ -8,9 +8,11 @@ __all__ = ['InceptionResNetV1', 'inceptionresnetv1', 'InceptionAUnit', 'Inceptio
            'ReductionAUnit', 'ReductionBUnit']
 
 import os
+
 import torch.nn as nn
-from .common import conv1x1, conv1x1_block, conv3x3_block, Concurrent
-from .inceptionv3 import MaxPoolBranch, Conv1x1Branch, ConvSeqBranch
+
+from .common import Concurrent, conv1x1, conv1x1_block, conv3x3_block
+from .inceptionv3 import Conv1x1Branch, ConvSeqBranch, MaxPoolBranch
 
 
 class InceptionAUnit(nn.Module):

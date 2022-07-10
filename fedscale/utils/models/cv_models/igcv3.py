@@ -7,9 +7,12 @@
 __all__ = ['IGCV3', 'igcv3_w1', 'igcv3_w3d4', 'igcv3_wd2', 'igcv3_wd4']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1_block, conv3x3_block, dwconv3x3_block, ChannelShuffle
+
+from .common import (ChannelShuffle, conv1x1_block, conv3x3_block,
+                     dwconv3x3_block)
 
 
 class InvResUnit(nn.Module):

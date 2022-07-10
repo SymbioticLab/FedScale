@@ -7,8 +7,10 @@
 __all__ = ['IBNbResNet', 'ibnb_resnet50', 'ibnb_resnet101', 'ibnb_resnet152']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block
 from .resnet import ResBottleneck
 

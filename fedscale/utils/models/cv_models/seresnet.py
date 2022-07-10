@@ -8,9 +8,11 @@ __all__ = ['SEResNet', 'seresnet10', 'seresnet12', 'seresnet14', 'seresnet16', '
            'seresnet152', 'seresnet152b', 'seresnet200', 'seresnet200b', 'SEResUnit', 'get_seresnet']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1_block, SEBlock
+
+from .common import SEBlock, conv1x1_block
 from .resnet import ResBlock, ResBottleneck, ResInitBlock
 
 

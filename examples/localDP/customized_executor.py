@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import sys, os
-from customized_client import Customized_Client
+import os
+import sys
 
+from customized_client import Customized_Client
 from opacus.validators import ModuleValidator
 
 from fedscale.core.execution.executor import Executor

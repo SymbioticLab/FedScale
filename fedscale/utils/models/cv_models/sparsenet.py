@@ -6,14 +6,16 @@
 __all__ = ['SparseNet', 'sparsenet121', 'sparsenet161',
            'sparsenet169', 'sparsenet201', 'sparsenet264']
 
-import os
 import math
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import pre_conv1x1_block, pre_conv3x3_block
-from .preresnet import PreResInitBlock, PreResActivation
 from .densenet import TransitionBlock
+from .preresnet import PreResActivation, PreResInitBlock
 
 
 def sparsenet_exponential_fetch(lst):

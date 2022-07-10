@@ -7,6 +7,7 @@ __all__ = ['DRN', 'drnc26', 'drnc42', 'drnc58',
            'drnd22', 'drnd38', 'drnd54', 'drnd105']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
 

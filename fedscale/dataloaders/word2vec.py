@@ -5,17 +5,17 @@ Created on Mon Nov 22 19:20:05 2021
 
 @author: liujiachen
 """
-from torch.utils.data import Dataset
-from nltk import word_tokenize
-from nltk.corpus import stopwords
-import pandas as pd
-from tqdm import tqdm
-import numpy as np
-import nltk
 import os
-
 # https://www.kaggle.com/eswarbabu88/toxic-comment-glove-logistic-regression
 from collections import defaultdict
+
+import nltk
+import numpy as np
+import pandas as pd
+from nltk import word_tokenize
+from nltk.corpus import stopwords
+from torch.utils.data import Dataset
+from tqdm import tqdm
 
 
 class AmazonReview_word2vec(Dataset):

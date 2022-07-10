@@ -7,10 +7,11 @@
 __all__ = ['ESPNet', 'espnet_cityscapes']
 
 import os
+
 import torch
 import torch.nn as nn
-from common import conv1x1, conv3x3_block, NormActivation, DeconvBlock
-from espcnet import ESPCNet, ESPBlock
+from common import DeconvBlock, NormActivation, conv1x1, conv3x3_block
+from espcnet import ESPBlock, ESPCNet
 
 
 class ESPFinalBlock(nn.Module):

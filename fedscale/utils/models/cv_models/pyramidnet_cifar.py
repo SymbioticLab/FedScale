@@ -12,8 +12,10 @@ __all__ = ['CIFARPyramidNet', 'pyramidnet110_a48_cifar10', 'pyramidnet110_a48_ci
            'pyramidnet272_a200_bn_cifar10', 'pyramidnet272_a200_bn_cifar100', 'pyramidnet272_a200_bn_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3_block
 from .preresnet import PreResActivation
 from .pyramidnet import PyrUnit

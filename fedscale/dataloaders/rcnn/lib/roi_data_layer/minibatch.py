@@ -6,16 +6,15 @@
 # --------------------------------------------------------
 
 """Compute minibatch blobs for training a Fast R-CNN network."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
+import pdb
 
 import numpy as np
 import numpy.random as npr
 from matplotlib.pyplot import imread
+from model.utils.blob import im_list_to_blob, prep_im_for_blob
 from model.utils.config import cfg
-from model.utils.blob import prep_im_for_blob, im_list_to_blob
-import pdb
 
 
 def get_minibatch(roidb, num_classes):

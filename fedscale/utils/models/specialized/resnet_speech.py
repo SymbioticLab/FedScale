@@ -5,15 +5,15 @@ Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun: Deep Residual Learning for Im
 https://arxiv.org/abs/1512.03385
 """
 
-import torch.nn as nn
 import math
-import torch.utils.model_zoo as model_zoo
-
 from functools import partial
-from torch import nn, Tensor
-from torch.nn import functional as F
 from typing import Any, Callable, Dict, List, Optional, Sequence
+
 import torch
+import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
+from torch import Tensor, nn
+from torch.nn import functional as F
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']

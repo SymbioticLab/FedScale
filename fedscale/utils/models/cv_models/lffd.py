@@ -6,10 +6,13 @@
 __all__ = ['LFFD', 'lffd20x5s320v2_widerface', 'lffd25x8s560v1_widerface']
 
 import os
+
 import torch.nn as nn
-from .common import conv3x3, conv1x1_block, conv3x3_block, Concurrent, MultiOutputSequential, ParallelConcurent
-from .resnet import ResUnit
+
+from .common import (Concurrent, MultiOutputSequential, ParallelConcurent,
+                     conv1x1_block, conv3x3, conv3x3_block)
 from .preresnet import PreResUnit
+from .resnet import ResUnit
 
 
 class LffdDetectionBranch(nn.Module):

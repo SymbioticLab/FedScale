@@ -1,4 +1,19 @@
 from __future__ import absolute_import
+
+import math
+import pdb
+
+import numpy as np
+import torch
+import torch.nn as nn
+import yaml
+# from model.nms.nms_wrapper import nms
+from model.roi_layers import nms
+from model.utils.config import cfg
+
+from .bbox_transform import bbox_transform_inv, clip_boxes, clip_boxes_batch
+from .generate_anchors import generate_anchors
+
 # --------------------------------------------------------
 # Faster R-CNN
 # Copyright (c) 2015 Microsoft
@@ -9,17 +24,6 @@ from __future__ import absolute_import
 # Reorganized and modified by Jianwei Yang and Jiasen Lu
 # --------------------------------------------------------
 
-import torch
-import torch.nn as nn
-import numpy as np
-import math
-import yaml
-from model.utils.config import cfg
-from .generate_anchors import generate_anchors
-from .bbox_transform import bbox_transform_inv, clip_boxes, clip_boxes_batch
-# from model.nms.nms_wrapper import nms
-from model.roi_layers import nms
-import pdb
 
 DEBUG = False
 

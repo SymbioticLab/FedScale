@@ -7,8 +7,10 @@ __all__ = ['MobileNetV2', 'mobilenetv2_w1', 'mobilenetv2_w3d4', 'mobilenetv2_wd2
            'mobilenetv2b_w3d4', 'mobilenetv2b_wd2', 'mobilenetv2b_wd4']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1, conv1x1_block, conv3x3_block, dwconv3x3_block
 
 

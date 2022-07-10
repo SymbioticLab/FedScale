@@ -7,7 +7,9 @@ __all__ = ['ResNetA', 'resneta10', 'resnetabc14b',
            'resneta18', 'resneta50b', 'resneta101b', 'resneta152b']
 
 import os
+
 import torch.nn as nn
+
 from .common import conv1x1_block
 from .resnet import ResBlock, ResBottleneck
 from .senet import SEInitBlock

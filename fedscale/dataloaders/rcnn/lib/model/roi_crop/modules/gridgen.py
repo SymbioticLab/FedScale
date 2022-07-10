@@ -1,10 +1,11 @@
-from torch.nn.modules.module import Module
+import numpy as np
+import pyximport
 import torch
 from torch.autograd import Variable
-import numpy as np
+from torch.nn.modules.module import Module
+
 from ..functions.gridgen import AffineGridGenFunction
 
-import pyximport
 pyximport.install(setup_args={"include_dirs": np.get_include()},
                   reload_support=True)
 

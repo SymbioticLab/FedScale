@@ -1,7 +1,9 @@
-import customized_fllibs
+import os
+import sys
+
 import config
+import customized_fllibs
 from customized_fllibs import make_param_idx
-import sys, os
 
 from fedscale.core.aggregation.aggregator import Aggregator
 from fedscale.core.logger.aggragation import *

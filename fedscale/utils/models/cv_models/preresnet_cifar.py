@@ -13,10 +13,12 @@ __all__ = ['CIFARPreResNet', 'preresnet20_cifar10', 'preresnet20_cifar100', 'pre
            'preresnet1202_cifar10', 'preresnet1202_cifar100', 'preresnet1202_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3
-from .preresnet import PreResUnit, PreResActivation
+from .preresnet import PreResActivation, PreResUnit
 
 
 class CIFARPreResNet(nn.Module):

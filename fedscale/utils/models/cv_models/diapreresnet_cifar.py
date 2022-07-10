@@ -11,12 +11,14 @@ __all__ = ['CIFARDIAPreResNet', 'diapreresnet20_cifar10', 'diapreresnet20_cifar1
            'diapreresnet1202_cifar100', 'diapreresnet1202_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv3x3, DualPathSequential
-from .preresnet import PreResActivation
-from .diaresnet import DIAAttention
+
+from .common import DualPathSequential, conv3x3
 from .diapreresnet import DIAPreResUnit
+from .diaresnet import DIAAttention
+from .preresnet import PreResActivation
 
 
 class CIFARDIAPreResNet(nn.Module):

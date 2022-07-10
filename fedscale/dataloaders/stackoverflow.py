@@ -1,12 +1,15 @@
 from __future__ import print_function
-import warnings
+
 import os
 import os.path
-import torch
-import time
 import pickle
+import time
+import warnings
+
 import h5py as h5
+import torch
 import torch.nn.functional as F
+
 #import logging
 
 

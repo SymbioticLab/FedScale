@@ -9,8 +9,10 @@ __all__ = ['ShaResNet', 'sharesnet18', 'sharesnet34', 'sharesnet50', 'sharesnet5
 
 import os
 from inspect import isfunction
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
 from .resnet import ResInitBlock
 

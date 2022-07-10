@@ -7,8 +7,11 @@
 __all__ = ['PRNet', 'prnet']
 
 import os
+
 import torch.nn as nn
-from .common import ConvBlock, DeconvBlock, conv1x1, conv1x1_block, NormActivation
+
+from .common import (ConvBlock, DeconvBlock, NormActivation, conv1x1,
+                     conv1x1_block)
 
 
 def conv4x4_block(in_channels,

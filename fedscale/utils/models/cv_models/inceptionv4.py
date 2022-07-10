@@ -7,10 +7,13 @@
 __all__ = ['InceptionV4', 'inceptionv4']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import ConvBlock, conv3x3_block, Concurrent
-from .inceptionv3 import MaxPoolBranch, AvgPoolBranch, Conv1x1Branch, ConvSeqBranch
+
+from .common import Concurrent, ConvBlock, conv3x3_block
+from .inceptionv3 import (AvgPoolBranch, Conv1x1Branch, ConvSeqBranch,
+                          MaxPoolBranch)
 
 
 class Conv3x3Branch(nn.Module):

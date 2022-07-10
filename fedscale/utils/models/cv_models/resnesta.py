@@ -7,7 +7,9 @@ __all__ = ['ResNeStA', 'resnestabc14', 'resnesta18', 'resnestabc26', 'resnesta50
            'resnesta200', 'resnesta269', 'ResNeStADownBlock']
 
 import os
+
 import torch.nn as nn
+
 from .common import conv1x1_block, conv3x3_block, saconv3x3_block
 from .senet import SEInitBlock
 

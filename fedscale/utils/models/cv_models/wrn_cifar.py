@@ -7,10 +7,12 @@ __all__ = ['CIFARWRN', 'wrn16_10_cifar10', 'wrn16_10_cifar100', 'wrn16_10_svhn',
            'wrn28_10_cifar100', 'wrn28_10_svhn', 'wrn40_8_cifar10', 'wrn40_8_cifar100', 'wrn40_8_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3
-from .preresnet import PreResUnit, PreResActivation
+from .preresnet import PreResActivation, PreResUnit
 
 
 class CIFARWRN(nn.Module):

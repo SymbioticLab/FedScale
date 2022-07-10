@@ -1,13 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
+import pdb
+
 import torch
+from model import _C
 from torch import nn
 from torch.autograd import Function
 from torch.autograd.function import once_differentiable
 from torch.nn.modules.utils import _pair
-
-from model import _C
-
-import pdb
 
 
 class _ROIAlign(Function):

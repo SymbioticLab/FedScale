@@ -14,12 +14,14 @@ __all__ = ['CIFARDenseNet', 'densenet40_k12_cifar10', 'densenet40_k12_cifar100',
            'densenet250_k24_bc_cifar10', 'densenet250_k24_bc_cifar100', 'densenet250_k24_bc_svhn']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3, pre_conv3x3_block
-from .preresnet import PreResActivation
 from .densenet import DenseUnit, TransitionBlock
+from .preresnet import PreResActivation
 
 
 class DenseSimpleUnit(nn.Module):

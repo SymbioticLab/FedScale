@@ -13,8 +13,9 @@ __author__ = 'tsungyi'
 # import both Python-level and C-level symbols of Numpy
 # the API uses Numpy to interface C and Python
 import numpy as np
+
 cimport numpy as np
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free, malloc
 
 # intialized Numpy. must do.
 np.import_array()

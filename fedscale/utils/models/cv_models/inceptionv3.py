@@ -8,9 +8,11 @@ __all__ = ['InceptionV3', 'inceptionv3', 'MaxPoolBranch',
            'AvgPoolBranch', 'Conv1x1Branch', 'ConvSeqBranch']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import ConvBlock, conv1x1_block, conv3x3_block, Concurrent
+
+from .common import Concurrent, ConvBlock, conv1x1_block, conv3x3_block
 
 
 class MaxPoolBranch(nn.Module):

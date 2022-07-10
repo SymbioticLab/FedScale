@@ -1,4 +1,9 @@
 from __future__ import print_function
+
+import pdb
+
+import numpy as np
+
 # --------------------------------------------------------
 # Faster R-CNN
 # Copyright (c) 2015 Microsoft
@@ -6,8 +11,6 @@ from __future__ import print_function
 # Written by Ross Girshick and Sean Bell
 # --------------------------------------------------------
 
-import numpy as np
-import pdb
 
 # Verify that we compute the same anchors as Shaoqing's matlab implementation:
 #

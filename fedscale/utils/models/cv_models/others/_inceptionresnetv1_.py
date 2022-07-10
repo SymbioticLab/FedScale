@@ -1,8 +1,8 @@
 __all__ = ['inceptionresnetv1']
 
 import torch
+from common import Concurrent, ConvBlock, conv1x1, conv1x1_block, conv3x3_block
 from torch import nn
-from common import conv1x1, ConvBlock, conv1x1_block, conv3x3_block, Concurrent
 
 
 class MaxPoolBranch(nn.Module):

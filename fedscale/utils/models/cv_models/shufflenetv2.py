@@ -8,10 +8,13 @@ __all__ = ['ShuffleNetV2', 'shufflenetv2_wd2',
            'shufflenetv2_w1', 'shufflenetv2_w3d2', 'shufflenetv2_w2']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1, depthwise_conv3x3, conv1x1_block, conv3x3_block, ChannelShuffle, SEBlock
+
+from .common import (ChannelShuffle, SEBlock, conv1x1, conv1x1_block,
+                     conv3x3_block, depthwise_conv3x3)
 
 
 class ShuffleUnit(nn.Module):

@@ -8,8 +8,10 @@ __all__ = ['hrnet_w18_small_v1', 'hrnet_w18_small_v2', 'hrnetv2_w18', 'hrnetv2_w
            'hrnetv2_w44', 'hrnetv2_w48', 'hrnetv2_w64']
 
 import os
+
 import torch.nn as nn
-from .common import conv1x1_block, conv3x3_block, Identity
+
+from .common import Identity, conv1x1_block, conv3x3_block
 from .resnet import ResUnit
 
 

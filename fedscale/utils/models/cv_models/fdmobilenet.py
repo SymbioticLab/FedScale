@@ -8,6 +8,7 @@ __all__ = ['fdmobilenet_w1', 'fdmobilenet_w3d4',
            'fdmobilenet_wd2', 'fdmobilenet_wd4', 'get_fdmobilenet']
 
 import os
+
 from .mobilenet import MobileNet
 
 

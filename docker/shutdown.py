@@ -1,6 +1,6 @@
+import argparse
 import os
 import sys
-import argparse
 
 job_name = sys.argv[1]
 

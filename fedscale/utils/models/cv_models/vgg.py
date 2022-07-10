@@ -8,8 +8,10 @@ __all__ = ['VGG', 'vgg11', 'vgg13', 'vgg16', 'vgg19', 'bn_vgg11', 'bn_vgg13', 'b
            'bn_vgg13b', 'bn_vgg16b', 'bn_vgg19b']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3_block
 
 

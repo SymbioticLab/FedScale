@@ -7,11 +7,14 @@ __all__ = ['PNASNet', 'pnasnet5large']
 
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1
-from .nasnet import nasnet_dual_path_sequential, nasnet_batch_norm, NasConv, NasDwsConv, NasPathBlock, NASNetInitBlock
+from .nasnet import (NasConv, NasDwsConv, NASNetInitBlock, NasPathBlock,
+                     nasnet_batch_norm, nasnet_dual_path_sequential)
 
 
 class PnasMaxPoolBlock(nn.Module):

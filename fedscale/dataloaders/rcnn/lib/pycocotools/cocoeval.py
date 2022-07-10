@@ -1,13 +1,15 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 __author__ = 'tsungyi'
 
-import numpy as np
+import copy
 import datetime
 import time
 from collections import defaultdict
+
+import numpy as np
+
 from . import mask
-import copy
 
 try:
     string_types = (str, unicode)  # Python 2

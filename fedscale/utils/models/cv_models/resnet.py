@@ -9,7 +9,9 @@ __all__ = ['ResNet', 'resnet10', 'resnet12', 'resnet14', 'resnetbc14b', 'resnet1
            'ResUnit', 'ResInitBlock']
 
 import os
+
 import torch.nn as nn
+
 from .common import conv1x1_block, conv3x3_block, conv7x7_block
 
 

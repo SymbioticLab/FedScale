@@ -8,9 +8,11 @@ __all__ = ['AirNet', 'airnet50_1x64d_r2', 'airnet50_1x64d_r16',
            'airnet101_1x64d_r2', 'AirBlock', 'AirInitBlock']
 
 import os
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
 
 

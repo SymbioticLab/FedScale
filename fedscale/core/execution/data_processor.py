@@ -1,6 +1,8 @@
-from fedscale.core.fllibs import *
-from torch.nn.utils.rnn import pad_sequence
 import os
+
+from torch.nn.utils.rnn import pad_sequence
+
+from fedscale.core.fllibs import *
 
 
 def collate(examples):

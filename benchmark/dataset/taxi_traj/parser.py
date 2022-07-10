@@ -1,6 +1,9 @@
-import pandas
-import collections, os
+import collections
 import csv
+import os
+
+import pandas
+
 
 def parse_file(csv_file, is_train=True):
     dataset = pandas.read_csv(csv_file)

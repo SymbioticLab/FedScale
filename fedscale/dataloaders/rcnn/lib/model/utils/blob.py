@@ -7,9 +7,9 @@
 
 """Blob helper functions."""
 
-import numpy as np
 # from scipy.misc import imread, imresize
 import cv2
+import numpy as np
 
 try:
     xrange          # Python 2

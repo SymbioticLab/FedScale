@@ -7,12 +7,14 @@
 __all__ = ['EfficientNetEdge', 'efficientnet_edge_small_b',
            'efficientnet_edge_medium_b', 'efficientnet_edge_large_b']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import round_channels, conv1x1_block, conv3x3_block, SEBlock
-from .efficientnet import EffiInvResUnit, EffiInitBlock
+
+from .common import SEBlock, conv1x1_block, conv3x3_block, round_channels
+from .efficientnet import EffiInitBlock, EffiInvResUnit
 
 
 class EffiEdgeResUnit(nn.Module):

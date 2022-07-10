@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from fedscale.core.logger.execution import *
 import pickle
 
 from fedscale.core.execution.executor import Executor
 from fedscale.core.execution.rlclient import RLClient
+from fedscale.core.logger.execution import *
 
 
 class AsyncExecutor(Executor):

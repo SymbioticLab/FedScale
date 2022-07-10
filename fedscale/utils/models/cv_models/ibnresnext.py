@@ -6,13 +6,15 @@
 __all__ = ['IBNResNeXt', 'ibn_resnext50_32x4d',
            'ibn_resnext101_32x4d', 'ibn_resnext101_64x4d']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
-from .resnet import ResInitBlock
 from .ibnresnet import ibn_conv1x1_block
+from .resnet import ResInitBlock
 
 
 class IBNResNeXtBottleneck(nn.Module):

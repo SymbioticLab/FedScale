@@ -1,5 +1,7 @@
 import logging
+
 import grpc
+
 import fedscale.core.channels.job_api_pb2_grpc as job_api_pb2_grpc
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
