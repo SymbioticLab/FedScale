@@ -1,14 +1,11 @@
 class ServerOptimizer(object):
     """This is a abstract server optimizer class
     
-    :param mode: mode of gradient aggregation policy
-    :type mode: String
-    :param args: Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
-    :type args: Dictionary
-    :param device: Runtime device type
-    :type device: String
-    :param sample_seed: Random seed
-    :type sample_seed: Int
+    Args:
+        mode (string): mode of gradient aggregation policy
+        args (distionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
+        device (string): Runtime device type
+        sample_seed (int): Random seed
 
     """
     def __init__(self, mode, args, device, sample_seed=233):
@@ -24,13 +21,11 @@ class ServerOptimizer(object):
 
     def update_round_gradient(self, last_model, current_model, target_model):
         """ update global model based on different policy
-
-        :param last_model: A list of global model weight in last round.
-        :type last_model: List
-        :param current_model: A list of global model weight in this round.
-        :type current_model: List 
-        :param target_model: Aggregated model
-        :type target_model: PyTorch or TensorFlow nn module
+        
+        Args
+            last_model (list of tensor weight): A list of global model weight in last round.
+            current_model (list of tensor weight): A list of global model weight in this round.
+            target_model (PyTorch or TensorFlow nn module): Aggregated model.
         
         """
         if self.mode == 'fed-yogi':

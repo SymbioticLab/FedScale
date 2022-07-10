@@ -17,8 +17,8 @@ import fedscale.core.channels.job_api_pb2 as job_api_pb2
 class Executor(object):
     """Abstract class for FedScale executor.
 
-    :param args: Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
-    :type args: Dictionary
+    Args:
+        args (dictionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
 
     """
     def __init__(self, args):
@@ -65,8 +65,8 @@ class Executor(object):
     def setup_seed(self, seed=1):
         """Set random seed for reproducibility
 
-        :param seed: random seed
-        :type seed: Int
+        Args:
+            seed (int): random seed
 
         """
         torch.manual_seed(seed)
@@ -89,8 +89,8 @@ class Executor(object):
     def init_model(self):
         """Get the model architecture used in training
 
-        :return: Based on the executor's machine learning framework, initialize and return the model for training
-        :rtype: PyTorch or TensorFlow module
+        Returns: 
+            PyTorch or TensorFlow module: Based on the executor's machine learning framework, initialize and return the model for training
         
         """
         assert self.args.engine == commons.PYTORCH, "Please override this function to define non-PyTorch models"
@@ -101,8 +101,8 @@ class Executor(object):
     def init_data(self):
         """Return the training and testing dataset
 
-        :return: Return the partioned dataset class for training and testing
-        :rtype: Tuple of DataPartitioner class
+        Returns:
+            Tuple of DataPartitioner class: The partioned dataset class for training and testing
 
         """
         train_dataset, test_dataset = init_dataset()
@@ -141,8 +141,8 @@ class Executor(object):
     def dispatch_worker_events(self, request):
         """Add new events to worker queues
         
-        :param request: Add grpc request from server (e.g. MODEL_TEST, MODEL_TRAIN) to event_queue.
-        :type request: string, defined at events.py
+        Args:
+            request (string): Add grpc request from server (e.g. MODEL_TEST, MODEL_TRAIN) to event_queue.
         
         """
         self.event_queue.append(request)
@@ -150,11 +150,11 @@ class Executor(object):
     def deserialize_response(self, responses):
         """Deserialize the response from server
 
-        :param responses: Serialized response from server
-        :type responses: Byte stream
-        
-        :return: The deserialized response object from server.
-        :rtype: ServerResponse defined at job_api.proto
+        Args:
+            responses (byte stream): Serialized response from server.
+
+        Returns:
+            ServerResponse defined at job_api.proto: The deserialized response object from server.
         
         """
         return pickle.loads(responses)
@@ -162,11 +162,11 @@ class Executor(object):
     def serialize_response(self, responses):
         """Serialize the response to send to server upon assigned job completion
 
-        :param responses: Client responses after job completion
-        :type responses:  Could be string, bool, and bytes. Defined in CompleteRequest at job_api.proto,
-        
-        :return: The serialized response object to server.
-        :rtype: Bytes
+        Args:
+            responses (string, bool, or bytes): Client responses after job completion.
+
+        Returns:
+            bytes stream: The serialized response object to server.
         
         """
         return pickle.dumps(responses)
@@ -174,8 +174,8 @@ class Executor(object):
     def UpdateModel(self, config):
         """Receive the broadcasted global model for current round
 
-        :param config: The broadcasted global model config
-        :type config: PyTorch or TensorFlow model
+        Args:
+            config (PyTorch or TensorFlow model): The broadcasted global model config
         
         """
         self.update_model_handler(model=config)
@@ -183,11 +183,11 @@ class Executor(object):
     def Train(self, config):
         """Load train config and data to start training on that client
 
-        :param config: the client training config.
-        :type config: Dictionary.
-        
-        :return: Return the client id and train result
-        :rtype: A tuple (client_id(int), train_res(dictionary))
+        Args:
+            config (dictionary): The client training config.
+
+        Returns:     
+            tuple (int, dictionary): The client id and train result
 
         """
         client_id, train_config = config['client_id'], config['task_config']
@@ -215,8 +215,8 @@ class Executor(object):
     def Test(self, config):
         """Model Testing. By default, we test the accuracy on all data of clients in the test group
         
-        :param config: the client testing config.
-        :type config: Dictionary.
+        Args:
+            config (dictionary): The client testing config.
         
         """
         test_res = self.testing_handler(args=self.args)
@@ -241,8 +241,8 @@ class Executor(object):
     def report_executor_info_handler(self):
         """Return the statistics of training dataset
 
-        :return: Return the statistics of training dataset, in simulation return the number of clients
-        :rtype: Int
+        Returns:
+            int: Return the statistics of training dataset, in simulation return the number of clients
 
         """
         return self.training_sets.getSize()
@@ -250,8 +250,8 @@ class Executor(object):
     def update_model_handler(self, model):
         """Update the model copy on this executor
 
-        :param config: The broadcasted global model
-        :type config: PyTorch or TensorFlow model
+        Args:
+            config (PyTorch or TensorFlow model): The broadcasted global model
 
         """
         self.model = model
@@ -264,8 +264,8 @@ class Executor(object):
     def load_global_model(self):
         """ Load last global model
 
-        :return: Return the lastest global model
-        :rtype: PyTorch or TensorFlow model
+        Returns:
+            PyTorch or TensorFlow model: The lastest global model
 
         """
         with open(self.temp_model_path, 'rb') as model_in:
@@ -275,11 +275,11 @@ class Executor(object):
     def override_conf(self, config):
         """ Override the variable arguments for different client
 
-        :param config: the client runtime config.
-        :type config: Dictionary.
+        Args:
+            config (dictionary): The client runtime config.
 
-        :return: variable arguments for client runtime config.
-        :rtype: Dictionary
+        Returns:
+            dictionary: Variable arguments for client runtime config.
 
         """
         default_conf = vars(self.args).copy()
@@ -292,25 +292,24 @@ class Executor(object):
     def get_client_trainer(self, conf):
         """A abstract base class for client with training handler, developer can redefine to this function to customize the client training:
 
-        :param config: the client runtime config.
-        :type config: Dictionary.
+        Args:
+            config (dictionary): The client runtime config.
 
-        :return: A abstract base client class with runtime config conf.
-        :rtype: Client class
+        Returns:
+            Client: A abstract base client class with runtime config conf.
 
         """
         return Client(conf)
 
     def training_handler(self, clientId, conf, model=None):
         """Train model given client id
+        
+        Args:
+            clientId (int): The client id.
+            conf (dictionary): The client runtime config.
 
-        :param clientId: the client id.
-        :type clientId: Int.
-        :param conf: the client runtime config.
-        :type conf: Dictionary.
-
-        :return: Return the train result
-        :rtype: Dictionary
+        Returns:
+            dictionary: The train result
         
         """
         # load last global model
@@ -338,11 +337,11 @@ class Executor(object):
     def testing_handler(self, args):
         """Test model
         
-        :param args: variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
-        :type args: dictionary
+        Args:
+            args (dictionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
 
-        :return: Return the test result
-        :rtype: Dictionary
+        Returns:
+            dictionary: The test result
 
         """
         evalStart = time.time()
