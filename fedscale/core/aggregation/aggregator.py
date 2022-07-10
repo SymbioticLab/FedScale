@@ -278,7 +278,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             sampled_clients (list of int): Sampled clients from client manager
             num_clients_to_collect (int): The number of clients actually needed for next round.
 
-        Returns
+        Returns:
             tuple: Return the sampled clients and client execution information in the last round.
 
         """
@@ -364,7 +364,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """We may need to keep all updates from clients, 
         if so, we need to append results to the cache
         
-        Args
+        Args:
             results (dictionary): client's training result
         
         """
@@ -804,7 +804,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         Args:
             request (PingRequest): Ping request info from executor.
 
-        Returns
+        Returns:
             ServerResponse: Server response to ping request
 
         """

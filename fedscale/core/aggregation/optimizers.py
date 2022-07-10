@@ -22,7 +22,7 @@ class ServerOptimizer(object):
     def update_round_gradient(self, last_model, current_model, target_model):
         """ update global model based on different policy
         
-        Args
+        Args:
             last_model (list of tensor weight): A list of global model weight in last round.
             current_model (list of tensor weight): A list of global model weight in this round.
             target_model (PyTorch or TensorFlow nn module): Aggregated model.
