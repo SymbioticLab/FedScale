@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
-from fedscale.core.logger.execution import *
-from argparse import Namespace
-import gc
 import collections
-import torch
+import gc
 import pickle
+from argparse import Namespace
 
-from fedscale.core.execution.client import Client
-from fedscale.core.execution.rlclient import RLClient
-from fedscale.core.execution.data_processor import collate, voice_collate_fn
+import torch
+
+import fedscale.core.channels.job_api_pb2 as job_api_pb2
 from fedscale.core import commons
 from fedscale.core.channels.channel_context import ClientConnections
-import fedscale.core.channels.job_api_pb2 as job_api_pb2
+from fedscale.core.execution.client import Client
+from fedscale.core.execution.data_processor import collate, voice_collate_fn
+from fedscale.core.execution.rlclient import RLClient
+from fedscale.core.logger.execution import *
 
 
 class Executor(object):

@@ -1,7 +1,7 @@
-import math
-from random import Random
-import pickle
 import logging
+import math
+import pickle
+from random import Random
 
 from fedscale.core.internal.client import Client
 
@@ -18,12 +18,13 @@ class clientManager(object):
         self.ucbSampler = None
 
         if self.mode == 'oort':
-            import sys
             import os
+            import sys
             current = os.path.dirname(os.path.realpath(__file__))
             parent = os.path.dirname(current)
             sys.path.append(parent)
             from thirdparty.oort.oort import create_training_selector
+
             # sys.path.append(current)
             self.ucbSampler = create_training_selector(args=args)
         self.feasibleClients = []

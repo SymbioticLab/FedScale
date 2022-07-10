@@ -7,9 +7,11 @@
 __all__ = ['AlexNet', 'alexnet', 'alexnetb']
 
 import os
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+
 from .common import ConvBlock
 
 

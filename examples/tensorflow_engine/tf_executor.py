@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import sys, os
+import os
+import sys
+
+import tensorflow as tf
 from tf_client import Customized_Client
 
 from fedscale.core.execution.executor import Executor
 from fedscale.core.logger.execution import *
-import tensorflow as tf 
 
 """In this example, we only need to change the Client Component we need to import"""
 

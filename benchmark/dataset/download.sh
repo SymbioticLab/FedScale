@@ -17,7 +17,7 @@ Help()
    echo "Syntax: download/remove [dataset_name]"
    echo "options:"
    echo "help                         Print this Help."
-   echo "download                     Download  dataset"
+   echo "download                     Download dataset"
    echo "remove                       Remove dataset"
 
    echo

@@ -8,11 +8,13 @@ __all__ = ['iSQRTCOVResNet', 'isqrtcovresnet18', 'isqrtcovresnet34', 'isqrtcovre
            'isqrtcovresnet101', 'isqrtcovresnet101b']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block
-from .resnet import ResUnit, ResInitBlock
+from .resnet import ResInitBlock, ResUnit
 
 
 class CovPool(torch.autograd.Function):

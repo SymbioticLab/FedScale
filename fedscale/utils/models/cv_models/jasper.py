@@ -7,11 +7,13 @@ __all__ = ['Jasper', 'jasper5x3', 'jasper10x4', 'jasper10x5', 'get_jasper', 'Mas
            'NemoMelSpecExtractor', 'CtcDecoder']
 
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .common import DualPathSequential, DualPathParallelConcurent
+
+from .common import DualPathParallelConcurent, DualPathSequential
 
 
 def outmask_fill(x, x_len, value=0.0):

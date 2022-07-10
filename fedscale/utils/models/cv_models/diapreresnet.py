@@ -9,11 +9,14 @@ __all__ = ['DIAPreResNet', 'diapreresnet10', 'diapreresnet12', 'diapreresnet14',
            'diapreresnet152b', 'diapreresnet200', 'diapreresnet200b', 'diapreresnet269b', 'DIAPreResUnit']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1, DualPathSequential
-from .preresnet import PreResBlock, PreResBottleneck, PreResInitBlock, PreResActivation
+
+from .common import DualPathSequential, conv1x1
 from .diaresnet import DIAAttention
+from .preresnet import (PreResActivation, PreResBlock, PreResBottleneck,
+                        PreResInitBlock)
 
 
 class DIAPreResUnit(nn.Module):

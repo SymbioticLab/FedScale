@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import math
 from transformers import BertModel
 
 

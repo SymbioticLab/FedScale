@@ -6,10 +6,12 @@
 __all__ = ['DARTS', 'darts']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1, Identity
+
+from .common import Identity, conv1x1
 from .nasnet import nasnet_dual_path_sequential
 
 

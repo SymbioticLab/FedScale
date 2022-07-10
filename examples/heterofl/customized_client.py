@@ -1,10 +1,14 @@
+import os
+import sys
+
 import config
-import sys, os
-from resnet_heterofl import resnet18
 from customized_fllibs import split_model
+from resnet_heterofl import resnet18
+
 from fedscale.core.execution.client import Client
-from fedscale.core.fllibs import Variable, os, math, torch, logging, np
- 
+from fedscale.core.fllibs import Variable, logging, math, np, os, torch
+
+
 class Customized_Client(Client):
     def __init__(self, conf):
         super().__init__(conf)

@@ -21,22 +21,23 @@ using a masked language modeling (MLM) loss.
 
 
 import argparse
+import collections
+import csv
+import gc
 import glob
 import logging
 import os
-import gc
 import pickle
 import random
 import re
 import shutil
-from typing import Dict, List, Tuple
-import numpy as np
-import torch
-import collections
-import csv
-from torch.utils.data import DataLoader, Dataset
 import time
 from multiprocessing import Pool, cpu_count
+from typing import Dict, List, Tuple
+
+import numpy as np
+import torch
+from torch.utils.data import DataLoader, Dataset
 
 N_JOBS = cpu_count()
 logger = logging.getLogger(__name__)

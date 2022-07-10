@@ -6,6 +6,7 @@
 __all__ = ['CIFARNIN', 'nin_cifar10', 'nin_cifar100', 'nin_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
 

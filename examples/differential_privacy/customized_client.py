@@ -1,13 +1,15 @@
-import torch
 import logging
 import math
-from torch.autograd import Variable
-import numpy as np
+import os
+import sys
 
-import sys, os
+import numpy as np
+import torch
 from clip_norm import clip_grad_norm_
+from torch.autograd import Variable
 
 from fedscale.core.execution.client import Client
+
 
 class Customized_Client(Client):
     """

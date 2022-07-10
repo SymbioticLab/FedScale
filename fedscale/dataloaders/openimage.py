@@ -1,9 +1,11 @@
 from __future__ import print_function
-import warnings
-from PIL import Image
+
+import csv
 import os
 import os.path
-import csv
+import warnings
+
+from PIL import Image
 
 
 class OpenImage():

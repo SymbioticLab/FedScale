@@ -12,12 +12,15 @@ __all__ = ['EfficientNet', 'calc_tf_padding', 'EffiInvResUnit', 'EffiInitBlock',
            'efficientnet_b0c', 'efficientnet_b1c', 'efficientnet_b2c', 'efficientnet_b3c', 'efficientnet_b4c',
            'efficientnet_b5c', 'efficientnet_b6c', 'efficientnet_b7c', 'efficientnet_b8c']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-from .common import round_channels, conv1x1_block, conv3x3_block, dwconv3x3_block, dwconv5x5_block, SEBlock
+
+from .common import (SEBlock, conv1x1_block, conv3x3_block, dwconv3x3_block,
+                     dwconv5x5_block, round_channels)
 
 
 def calc_tf_padding(x,

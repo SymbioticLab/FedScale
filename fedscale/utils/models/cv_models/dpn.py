@@ -6,10 +6,12 @@
 __all__ = ['DPN', 'dpn68', 'dpn68b', 'dpn98', 'dpn107', 'dpn131']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1, DualPathSequential
+
+from .common import DualPathSequential, conv1x1
 
 
 class GlobalAvgMaxPool2D(nn.Module):

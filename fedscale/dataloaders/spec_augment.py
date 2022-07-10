@@ -34,14 +34,17 @@ SM : Switchboard mild
 SS : Switchboard strong
 """
 
-import torch
-from .sparse_image_warp import sparse_image_warp
-import matplotlib.pyplot as plt
+import random
+
 import librosa
 import librosa.display
-import numpy as np
-import random
 import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
+from .sparse_image_warp import sparse_image_warp
+
 matplotlib.use('Agg')
 
 

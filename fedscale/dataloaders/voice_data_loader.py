@@ -1,3 +1,5 @@
+import collections
+import csv
 import math
 import os
 from tempfile import NamedTemporaryFile
@@ -8,11 +10,9 @@ import scipy.signal
 import soundfile as sf
 import sox
 import torch
-from torch.utils.data import Dataset, Sampler, DistributedSampler, DataLoader
+from torch.utils.data import DataLoader, Dataset, DistributedSampler, Sampler
 
-import csv
 from fedscale.dataloaders.spec_augment import spec_augment
-import collections
 
 windows = {
     'hamming': scipy.signal.hamming,

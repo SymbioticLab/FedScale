@@ -7,9 +7,12 @@
 __all__ = ['UNet', 'unet_cityscapes']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import conv1x1, conv3x3_block, InterpolationBlock, Hourglass, Identity
+
+from .common import (Hourglass, Identity, InterpolationBlock, conv1x1,
+                     conv3x3_block)
 
 
 class UNetBlock(nn.Module):

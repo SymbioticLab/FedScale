@@ -8,6 +8,7 @@ __all__ = ['SqueezeNet', 'squeezenet_v1_0', 'squeezenet_v1_1',
            'squeezeresnet_v1_0', 'squeezeresnet_v1_1']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init

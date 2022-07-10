@@ -6,9 +6,11 @@
 __all__ = ['AlphaPose', 'alphapose_fastseresnet101b_coco']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import conv3x3, DucBlock, HeatmapMaxDetBlock
+
+from .common import DucBlock, HeatmapMaxDetBlock, conv3x3
 from .fastseresnet import fastseresnet101b
 
 

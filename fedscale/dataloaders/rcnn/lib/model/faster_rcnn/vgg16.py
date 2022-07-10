@@ -3,18 +3,17 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Xinlei Chen
 # --------------------------------------------------------
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
+import math
+import pdb
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-import math
 import torchvision.models as models
 from model.faster_rcnn.faster_rcnn import _fasterRCNN
-import pdb
+from torch.autograd import Variable
 
 
 class vgg16(_fasterRCNN):

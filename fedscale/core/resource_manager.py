@@ -1,5 +1,6 @@
-from fedscale.core import commons
 import threading
+
+from fedscale.core import commons
 
 
 class ResourceManager(object):

@@ -1,11 +1,11 @@
-from collections import namedtuple
 import warnings
+from collections import namedtuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 #from torch.jit.annotations import Optional
 from torch import Tensor
-
 
 __all__ = ['Inception3', 'inception_v3',
            'InceptionOutputs', '_InceptionOutputs']

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import sys, os
+import os
+import sys
+
 from customized_client import Customized_Client
 
 from fedscale.core.execution.executor import Executor

@@ -6,12 +6,14 @@
 
 __all__ = ['CIFAR10MSDNet', 'msdnet22_cifar10']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv3x3_block
-from .msdnet import MultiOutputSequential, MSDFeatureBlock
+from .msdnet import MSDFeatureBlock, MultiOutputSequential
 
 
 class CIFAR10MSDInitLayer(nn.Module):

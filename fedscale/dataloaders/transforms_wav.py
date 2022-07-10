@@ -3,9 +3,9 @@
 __author__ = 'Yuan Xu'
 
 import random
-import numpy as np
-import librosa
 
+import librosa
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 

@@ -7,12 +7,14 @@
 __all__ = ['SCNet', 'scnet50', 'scnet101', 'scneta50', 'scneta101']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import conv1x1_block, conv3x3_block, InterpolationBlock
+
+from .common import InterpolationBlock, conv1x1_block, conv3x3_block
+from .resnesta import ResNeStADownBlock
 from .resnet import ResInitBlock
 from .senet import SEInitBlock
-from .resnesta import ResNeStADownBlock
 
 
 class ScDownBlock(nn.Module):

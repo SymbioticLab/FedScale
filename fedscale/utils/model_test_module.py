@@ -1,26 +1,29 @@
 # -*- coding: utf-8 -*-
+import logging
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
-import numpy as np
-import logging
 
 # libs from fedscale
 from fedscale.core.config_parser import args
 from fedscale.dataloaders.nlp import mask_tokens
 
 if args.task == "detection":
-    from torch.autograd import Variable
+    import numpy as np
     import torch.nn as nn
     import torch.optim as optim
-    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roidb import combined_roidb
-    from fedscale.dataloaders.rcnn.lib.model.utils.config import cfg
-    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import clip_boxes
-    from fedscale.dataloaders.rcnn.lib.model.roi_layers import nms
+    from torch.autograd import Variable
+
     from fedscale.dataloaders.rcnn.lib.datasets.pascal_voc import readClass
-    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import bbox_transform_inv
-    import numpy as np
+    from fedscale.dataloaders.rcnn.lib.model.roi_layers import nms
+    from fedscale.dataloaders.rcnn.lib.model.rpn.bbox_transform import (
+        bbox_transform_inv, clip_boxes)
+    from fedscale.dataloaders.rcnn.lib.model.utils.config import cfg
+    from fedscale.dataloaders.rcnn.lib.roi_data_layer.roidb import \
+        combined_roidb
 
 
 def cal_accuracy(targets, outputs):

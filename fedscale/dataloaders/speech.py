@@ -1,10 +1,12 @@
 from __future__ import print_function
-import warnings
-import os
-import numpy as np
-import numba
-import librosa
+
 import csv
+import os
+import warnings
+
+import librosa
+import numba
+import numpy as np
 
 CLASSES = ['up', 'two', 'sheila', 'zero', 'yes', 'five', 'one', 'happy', 'marvin', 'no', 'go', 'seven', 'eight', 'tree', 'stop', 'down', 'forward',
            'learn', 'house', 'three', 'six', 'backward', 'dog', 'cat', 'wow', 'left', 'off', 'on', 'four', 'visual', 'nine', 'bird', 'right', 'follow', 'bed']

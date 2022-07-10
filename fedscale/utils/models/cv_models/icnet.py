@@ -7,8 +7,11 @@
 __all__ = ['ICNet', 'icnet_resnetd50b_cityscapes']
 
 import os
+
 import torch.nn as nn
-from .common import conv1x1, conv1x1_block, conv3x3_block, InterpolationBlock, MultiOutputSequential
+
+from .common import (InterpolationBlock, MultiOutputSequential, conv1x1,
+                     conv1x1_block, conv3x3_block)
 from .pspnet import PyramidPooling
 from .resnetd import resnetd50b
 

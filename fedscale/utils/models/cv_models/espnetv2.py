@@ -7,12 +7,14 @@
 __all__ = ['ESPNetv2', 'espnetv2_wd2', 'espnetv2_w1',
            'espnetv2_w5d4', 'espnetv2_w3d2', 'espnetv2_w2']
 
-import os
 import math
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv3x3, conv1x1_block, conv3x3_block, DualPathSequential
+
+from .common import DualPathSequential, conv1x1_block, conv3x3, conv3x3_block
 
 
 class PreActivation(nn.Module):

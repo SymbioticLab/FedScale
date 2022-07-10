@@ -6,9 +6,11 @@
 __all__ = ['DarkNet', 'darknet_ref', 'darknet_tiny', 'darknet19']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
 
 

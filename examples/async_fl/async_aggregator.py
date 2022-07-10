@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from fedscale.core.logger.aggragation import *
-from fedscale.core.aggregation.aggregator import Aggregator
-from fedscale.core import commons
-from fedscale.core.channels import job_api_pb2
+import os
+import sys
 
 import torch
-import sys, os
+
+from fedscale.core import commons
+from fedscale.core.aggregation.aggregator import Aggregator
+from fedscale.core.channels import job_api_pb2
+from fedscale.core.logger.aggragation import *
 
 logging.info(f"===={os.path.dirname(os.path.abspath(__file__))}")
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

@@ -6,9 +6,11 @@
 __all__ = ['VOCA', 'voca8flame']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .common import ConvBlock
 
 

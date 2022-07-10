@@ -7,11 +7,13 @@ __all__ = ['DANet', 'danet_resnetd50b_cityscapes',
            'danet_resnetd101b_cityscapes', 'ScaleBlock']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 from torch.nn.parameter import Parameter
+
 from .common import conv1x1, conv3x3_block
 from .resnetd import resnetd50b, resnetd101b
 

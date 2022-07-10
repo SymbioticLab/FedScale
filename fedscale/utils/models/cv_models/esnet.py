@@ -7,9 +7,11 @@
 __all__ = ['ESNet', 'esnet_cityscapes']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import AsymConvBlock, deconv3x3_block, Concurrent
+
+from .common import AsymConvBlock, Concurrent, deconv3x3_block
 from .enet import ENetMixDownBlock
 from .erfnet import FCU
 

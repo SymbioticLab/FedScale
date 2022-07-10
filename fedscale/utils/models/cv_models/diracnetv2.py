@@ -7,6 +7,7 @@
 __all__ = ['DiracNetV2', 'diracnet18v2', 'diracnet34v2']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
 

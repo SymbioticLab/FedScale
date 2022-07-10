@@ -7,8 +7,10 @@ __all__ = ['SqueezeNext', 'sqnxt23_w1', 'sqnxt23_w3d2',
            'sqnxt23_w2', 'sqnxt23v5_w1', 'sqnxt23v5_w3d2', 'sqnxt23v5_w2']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import ConvBlock, conv1x1_block, conv7x7_block
 
 

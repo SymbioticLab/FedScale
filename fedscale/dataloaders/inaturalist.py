@@ -1,13 +1,15 @@
 from __future__ import print_function
-import warnings
-from PIL import Image
+
+import codecs
 import os
 import os.path
-import numpy as np
-import torch
-import codecs
 import string
 import time
+import warnings
+
+import numpy as np
+import torch
+from PIL import Image
 
 
 class INATURALIST():

@@ -7,10 +7,13 @@
 __all__ = ['CGNet', 'cgnet_cityscapes']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import NormActivation, conv1x1, conv1x1_block, conv3x3_block, depthwise_conv3x3, SEBlock, Concurrent,\
-    DualPathSequential, InterpolationBlock
+
+from .common import (Concurrent, DualPathSequential, InterpolationBlock,
+                     NormActivation, SEBlock, conv1x1, conv1x1_block,
+                     conv3x3_block, depthwise_conv3x3)
 
 
 class CGBlock(nn.Module):

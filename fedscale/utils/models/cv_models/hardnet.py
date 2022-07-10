@@ -6,8 +6,10 @@
 __all__ = ['HarDNet', 'hardnet39ds', 'hardnet68ds', 'hardnet68', 'hardnet85']
 
 import os
+
 import torch
 import torch.nn as nn
+
 from .common import conv1x1_block, conv3x3_block, dwconv3x3_block, dwconv_block
 
 

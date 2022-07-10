@@ -6,8 +6,10 @@
 __all__ = ['VisemeNet', 'visemenet20']
 
 import os
+
 import torch
 import torch.nn as nn
+
 from .common import DenseBlock
 
 

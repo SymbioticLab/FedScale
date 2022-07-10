@@ -10,9 +10,11 @@ __all__ = ['PreResNet', 'preresnet10', 'preresnet12', 'preresnet14', 'preresnetb
            'PreResUnit', 'PreResInitBlock', 'PreResActivation']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import pre_conv1x1_block, pre_conv3x3_block, conv1x1
+
+from .common import conv1x1, pre_conv1x1_block, pre_conv3x3_block
 
 
 class PreResBlock(nn.Module):

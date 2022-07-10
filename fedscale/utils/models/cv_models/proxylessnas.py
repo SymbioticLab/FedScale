@@ -8,8 +8,10 @@ __all__ = ['ProxylessNAS', 'proxylessnas_cpu', 'proxylessnas_gpu', 'proxylessnas
            'ProxylessUnit', 'get_proxylessnas']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import ConvBlock, conv1x1_block, conv3x3_block
 
 

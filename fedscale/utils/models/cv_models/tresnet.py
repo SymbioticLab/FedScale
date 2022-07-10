@@ -8,10 +8,12 @@
 __all__ = ['TResNet', 'tresnet_m', 'tresnet_l', 'tresnet_xl']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .common import conv1x1_block, conv3x3_block, SEBlock
+
+from .common import SEBlock, conv1x1_block, conv3x3_block
 
 
 def anti_aliased_downsample(x):

@@ -7,9 +7,11 @@ __all__ = ['CIFARResDropResNet', 'resdropresnet20_cifar10',
            'resdropresnet20_cifar100', 'resdropresnet20_svhn']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
 from .resnet import ResBlock, ResBottleneck
 

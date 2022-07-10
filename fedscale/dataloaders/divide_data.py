@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-from random import Random
-from torch.utils.data import DataLoader
-import numpy as np
-import logging
-import time
-import random
 import csv
+import logging
+import random
+import time
 from collections import defaultdict
+from random import Random
+
+import numpy as np
+from torch.utils.data import DataLoader
+
 #from argParser import args
 
 

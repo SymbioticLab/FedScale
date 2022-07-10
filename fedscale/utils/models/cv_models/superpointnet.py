@@ -7,10 +7,12 @@
 __all__ = ['SuperPointNet', 'superpointnet']
 
 import os
+
 import torch
 import torch.nn as nn
-import torch.nn.init as init
 import torch.nn.functional as F
+import torch.nn.init as init
+
 from .common import conv1x1, conv3x3_block
 
 

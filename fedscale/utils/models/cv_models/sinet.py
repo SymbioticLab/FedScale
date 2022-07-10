@@ -7,10 +7,13 @@
 __all__ = ['SINet', 'sinet_cityscapes']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import conv1x1, get_activation_layer, conv1x1_block, conv3x3_block, round_channels, dwconv_block,\
-    Concurrent, InterpolationBlock, ChannelShuffle
+
+from .common import (ChannelShuffle, Concurrent, InterpolationBlock, conv1x1,
+                     conv1x1_block, conv3x3_block, dwconv_block,
+                     get_activation_layer, round_channels)
 
 
 class SEBlock(nn.Module):

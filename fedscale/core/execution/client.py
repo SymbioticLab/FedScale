@@ -1,9 +1,11 @@
-import torch
 import logging
 import math
-from fedscale.dataloaders.nlp import mask_tokens
+
+import torch
 from torch.autograd import Variable
+
 from fedscale.core.execution.optimizers import ClientOptimizer
+from fedscale.dataloaders.nlp import mask_tokens
 
 
 class Client(object):

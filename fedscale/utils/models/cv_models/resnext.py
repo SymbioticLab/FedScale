@@ -7,10 +7,12 @@ __all__ = ['ResNeXt', 'resnext14_16x4d', 'resnext14_32x2d', 'resnext14_32x4d', '
            'resnext26_32x4d', 'resnext38_32x4d', 'resnext50_32x4d', 'resnext101_32x4d', 'resnext101_64x4d',
            'ResNeXtBottleneck', 'ResNeXtUnit']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
 from .resnet import ResInitBlock
 

@@ -1,11 +1,16 @@
-import sys, os, logging
-from resnet_heterofl import resnet18
+import copy
+import logging
+import os
+import sys
+from collections import OrderedDict
+
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
-import copy
-from collections import OrderedDict
+from resnet_heterofl import resnet18
+
 from fedscale.core.config_parser import args
+
 
 def init_model():
     global tokenizer

@@ -6,13 +6,12 @@
 # --------------------------------------------------------
 
 """Factory method for easily getting imdbs by name."""
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+
 import numpy as np
-from datasets.vg import vg
 from datasets.imagenet import imagenet
 from datasets.pascal_voc import pascal_voc
-from __future__ import division
-from __future__ import print_function
+from datasets.vg import vg
 
 __sets = {}
 # from datasets.coco import coco

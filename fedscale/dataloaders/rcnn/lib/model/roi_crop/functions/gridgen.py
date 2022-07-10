@@ -1,7 +1,7 @@
 # functions/add.py
+import numpy as np
 import torch
 from torch.autograd import Function
-import numpy as np
 
 
 class AffineGridGenFunction(Function):

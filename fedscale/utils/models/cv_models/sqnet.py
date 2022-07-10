@@ -7,9 +7,12 @@
 __all__ = ['SQNet', 'sqnet_cityscapes']
 
 import os
+
 import torch
 import torch.nn as nn
-from .common import conv1x1_block, conv3x3_block, deconv3x3_block, Concurrent, Hourglass
+
+from .common import (Concurrent, Hourglass, conv1x1_block, conv3x3_block,
+                     deconv3x3_block)
 
 
 class FireBlock(nn.Module):

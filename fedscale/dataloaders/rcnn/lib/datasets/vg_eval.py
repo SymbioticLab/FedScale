@@ -1,14 +1,18 @@
 from __future__ import absolute_import
+
+import os
+import xml.etree.ElementTree as ET
+
+import numpy as np
+
+from .voc_eval import voc_ap
+
 # --------------------------------------------------------
 # Fast/er R-CNN
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Bharath Hariharan
 # --------------------------------------------------------
 
-import xml.etree.ElementTree as ET
-import os
-import numpy as np
-from .voc_eval import voc_ap
 
 
 def vg_eval(detpath,

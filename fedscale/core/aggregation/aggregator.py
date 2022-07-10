@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from fedscale.core.logger.aggragation import *
-from fedscale.core.resource_manager import ResourceManager
-from fedscale.core import commons
-from fedscale.core.channels import job_api_pb2
-import fedscale.core.channels.job_api_pb2_grpc as job_api_pb2_grpc
+import pickle
+import threading
+from concurrent import futures
 
+import grpc
 import torch
 from torch.utils.tensorboard import SummaryWriter
-import threading
-import pickle
-import grpc
-from concurrent import futures
+
+import fedscale.core.channels.job_api_pb2_grpc as job_api_pb2_grpc
+from fedscale.core import commons
+from fedscale.core.channels import job_api_pb2
+from fedscale.core.logger.aggragation import *
+from fedscale.core.resource_manager import ResourceManager
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 

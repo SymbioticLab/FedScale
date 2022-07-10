@@ -7,9 +7,11 @@
 __all__ = ['BNInception', 'bninception']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1_block, conv3x3_block, conv7x7_block, Concurrent
+
+from .common import Concurrent, conv1x1_block, conv3x3_block, conv7x7_block
 
 
 class Inception3x3Branch(nn.Module):

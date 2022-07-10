@@ -6,12 +6,14 @@
 __all__ = ['NTSNet', 'ntsnet_cub']
 
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-from .common import conv1x1, conv3x3, Flatten
+
+from .common import Flatten, conv1x1, conv3x3
 from .resnet import resnet50b
 
 

@@ -1,23 +1,23 @@
+import pdb
 import random
+import time
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 import torchvision.models as models
-from torch.autograd import Variable
-import numpy as np
-from model.utils.config import cfg
-from model.rpn.rpn import _RPN
-
 from model.roi_layers import ROIAlign, ROIPool
+from model.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
+from model.rpn.rpn import _RPN
+from model.utils.config import cfg
+from model.utils.net_utils import (_affine_grid_gen, _affine_theta,
+                                   _crop_pool_layer, _smooth_l1_loss)
+from torch.autograd import Variable
 
 # from model.roi_pooling.modules.roi_pool import _RoIPooling
 # from model.roi_align.modules.roi_align import RoIAlignAvg
 
-from model.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
-import time
-import pdb
-from model.utils.net_utils import _smooth_l1_loss, _crop_pool_layer, _affine_grid_gen, _affine_theta
 
 
 class _fasterRCNN(nn.Module):

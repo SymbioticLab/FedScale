@@ -9,10 +9,13 @@ __all__ = ['SEPreResNet', 'sepreresnet10', 'sepreresnet12', 'sepreresnet14', 'se
            'sepreresnet200b', 'SEPreResUnit']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1, SEBlock
-from .preresnet import PreResBlock, PreResBottleneck, PreResInitBlock, PreResActivation
+
+from .common import SEBlock, conv1x1
+from .preresnet import (PreResActivation, PreResBlock, PreResBottleneck,
+                        PreResInitBlock)
 
 
 class SEPreResUnit(nn.Module):

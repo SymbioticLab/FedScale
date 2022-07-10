@@ -8,12 +8,14 @@ __all__ = ['RevNet', 'revnet38', 'revnet110', 'revnet164']
 
 import os
 from contextlib import contextmanager
+
 import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torch.autograd import Variable
-from .common import conv1x1, conv3x3, conv1x1_block, conv3x3_block, pre_conv1x1_block, pre_conv3x3_block
 
+from .common import (conv1x1, conv1x1_block, conv3x3, conv3x3_block,
+                     pre_conv1x1_block, pre_conv3x3_block)
 
 use_context_mans = int(
     torch.__version__[0]) * 100 + int(torch.__version__[2]) - (1 if 'a' in torch.__version__ else 0) > 3

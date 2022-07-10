@@ -4,24 +4,24 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick and Xinlei Chen
 # --------------------------------------------------------
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import os
-from datasets.imdb import imdb
-import datasets.ds_utils as ds_utils
-import xml.etree.ElementTree as ET
-import numpy as np
-import scipy.sparse
-import scipy.io as sio
+import pdb
 # import model.utils.cython_bbox
 import pickle
 import subprocess
 import uuid
-from .voc_eval import voc_eval
+import xml.etree.ElementTree as ET
+
+import datasets.ds_utils as ds_utils
+import numpy as np
+import scipy.io as sio
+import scipy.sparse
+from datasets.imdb import imdb
 from model.utils.config import cfg
-import pdb
+
+from .voc_eval import voc_eval
 
 
 class pascal_voc(imdb):

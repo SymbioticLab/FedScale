@@ -1,5 +1,8 @@
-import time, sys
-import pickle, math
+import math
+import pickle
+import sys
+import time
+
 import numpy as np
 from gurobipy import *
 

@@ -1,8 +1,11 @@
-import sys, os
+import os
+import sys
+
+import tensorflow as tf
 
 from fedscale.core.aggregation.aggregator import Aggregator
 from fedscale.core.logger.aggragation import *
-import tensorflow as tf
+
 
 class Customized_Aggregator(Aggregator):
     """Feed aggregator using tensorflow models"""

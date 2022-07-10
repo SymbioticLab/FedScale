@@ -6,13 +6,16 @@
 __all__ = ['DiceNet', 'dicenet_wd5', 'dicenet_wd2', 'dicenet_w3d4', 'dicenet_w1', 'dicenet_w5d4', 'dicenet_w3d2',
            'dicenet_w7d8', 'dicenet_w2']
 
-import os
 import math
+import os
+
 import torch
-from torch.nn import init
-from torch import nn
 import torch.nn.functional as F
-from .common import conv1x1, conv3x3, conv1x1_block, conv3x3_block, NormActivation, ChannelShuffle, Concurrent
+from torch import nn
+from torch.nn import init
+
+from .common import (ChannelShuffle, Concurrent, NormActivation, conv1x1,
+                     conv1x1_block, conv3x3, conv3x3_block)
 
 
 class SpatialDiceBranch(nn.Module):

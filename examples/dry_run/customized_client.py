@@ -1,12 +1,14 @@
-import torch
 import logging
 import math
-from torch.autograd import Variable
-import numpy as np
+import os
+import sys
 
-import sys, os
+import numpy as np
+import torch
+from torch.autograd import Variable
 
 from fedscale.core.execution.client import Client
+
 
 class Customized_Client(Client):
     """Basic client component in Federated Learning"""

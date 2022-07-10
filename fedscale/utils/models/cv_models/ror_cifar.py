@@ -8,8 +8,10 @@ __all__ = ['CIFARRoR', 'ror3_56_cifar10', 'ror3_56_cifar100', 'ror3_56_svhn', 'r
            'ror3_110_svhn', 'ror3_164_cifar10', 'ror3_164_cifar100', 'ror3_164_svhn']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
+
 from .common import conv1x1_block, conv3x3_block
 
 

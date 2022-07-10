@@ -1,13 +1,14 @@
 # Submit job to the remote cluster
 
-import yaml
+import datetime
+import os
+import pickle
+import random
+import subprocess
 import sys
 import time
-import random
-import os
-import subprocess
-import pickle
-import datetime
+
+import yaml
 
 
 def flatten(d):

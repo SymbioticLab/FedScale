@@ -6,11 +6,13 @@
 __all__ = ['SENet', 'senet16', 'senet28', 'senet40',
            'senet52', 'senet103', 'senet154', 'SEInitBlock']
 
-import os
 import math
+import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import conv1x1_block, conv3x3_block, SEBlock
+
+from .common import SEBlock, conv1x1_block, conv3x3_block
 
 
 class SENetBottleneck(nn.Module):

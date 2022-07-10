@@ -5,12 +5,15 @@
 
 __all__ = ['GhostNet', 'ghostnet']
 
-import os
 import math
+import os
+
 import torch
 import torch.nn as nn
-from .common import round_channels, conv1x1, conv1x1_block, conv3x3_block, dwconv3x3_block, dwconv5x5_block,\
-    dwsconv3x3_block, SEBlock
+
+from .common import (SEBlock, conv1x1, conv1x1_block, conv3x3_block,
+                     dwconv3x3_block, dwconv5x5_block, dwsconv3x3_block,
+                     round_channels)
 
 
 class GhostHSigmoid(nn.Module):

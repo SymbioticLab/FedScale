@@ -6,9 +6,12 @@
 __all__ = ['MnasNet', 'mnasnet_b1', 'mnasnet_a1', 'mnasnet_small']
 
 import os
+
 import torch.nn as nn
 import torch.nn.init as init
-from .common import round_channels, conv1x1_block, conv3x3_block, dwconv3x3_block, dwconv5x5_block, SEBlock
+
+from .common import (SEBlock, conv1x1_block, conv3x3_block, dwconv3x3_block,
+                     dwconv5x5_block, round_channels)
 
 
 class DwsExpSEResUnit(nn.Module):

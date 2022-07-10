@@ -8,12 +8,14 @@ __all__ = ['XDenseNet', 'xdensenet121_2', 'xdensenet161_2', 'xdensenet169_2', 'x
            'XDenseUnit']
 
 import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-from .preresnet import PreResInitBlock, PreResActivation
+
 from .densenet import TransitionBlock
+from .preresnet import PreResActivation, PreResInitBlock
 
 
 class XConv2d(nn.Conv2d):
