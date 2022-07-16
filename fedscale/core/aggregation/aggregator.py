@@ -13,7 +13,6 @@ from fedscale.core import commons
 from fedscale.core.channels import job_api_pb2
 from fedscale.core.logger.aggragation import *
 from fedscale.core.resource_manager import ResourceManager
-from fedscale.utils.test_utils import *
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
