@@ -13,6 +13,7 @@ from fedscale.core import commons
 from fedscale.core.channels import job_api_pb2
 from fedscale.core.logger.aggragation import *
 from fedscale.core.resource_manager import ResourceManager
+from fedscale.utils.test_utils import *
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
@@ -623,40 +624,12 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.test_result_accumulator.append(results)
 
         # Have collected all testing results
+
         if len(self.test_result_accumulator) == len(self.executors):
-            accumulator = self.test_result_accumulator[0]
-            for i in range(1, len(self.test_result_accumulator)):
-                if self.args.task == "detection":
-                    for key in accumulator:
-                        if key == "boxes":
-                            for j in range(self.imdb.num_classes):
-                                accumulator[key][j] = accumulator[key][j] + \
-                                    self.test_result_accumulator[i][key][j]
-                        else:
-                            accumulator[key] += self.test_result_accumulator[i][key]
-                else:
-                    for key in accumulator:
-                        accumulator[key] += self.test_result_accumulator[i][key]
-            if self.args.task == "detection":
-                self.testing_history['perf'][self.round] = {'round': self.round, 'clock': self.global_virtual_clock,
-                                                            'top_1': round(accumulator['top_1']*100.0/len(self.test_result_accumulator), 4),
-                                                            'top_5': round(accumulator['top_5']*100.0/len(self.test_result_accumulator), 4),
-                                                            'loss': accumulator['test_loss'],
-                                                            'test_len': accumulator['test_len']
-                                                            }
-            else:
-                self.testing_history['perf'][self.round] = {'round': self.round, 'clock': self.global_virtual_clock,
-                                                            'top_1': round(accumulator['top_1']/accumulator['test_len']*100.0, 4),
-                                                            'top_5': round(accumulator['top_5']/accumulator['test_len']*100.0, 4),
-                                                            'loss': accumulator['test_loss']/accumulator['test_len'],
-                                                            'test_len': accumulator['test_len']
-                                                            }
-
-            logging.info("FL Testing in round: {}, virtual_clock: {}, top_1: {} %, top_5: {} %, test loss: {:.4f}, test len: {}"
-                         .format(self.round, self.global_virtual_clock, self.testing_history['perf'][self.round]['top_1'],
-                                 self.testing_history['perf'][self.round]['top_5'], self.testing_history['perf'][self.round]['loss'],
-                                 self.testing_history['perf'][self.round]['test_len']))
-
+            
+            aggregate_test_result(
+                self.test_result_accumulator, self.args.task, \
+                self.round, self.global_virtual_clock, self.testing_history)
             # Dump the testing result
             with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
