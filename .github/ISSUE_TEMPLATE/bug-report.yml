@@ -1,6 +1,6 @@
 name: Bug report
 title: "[<FedScale component: Core|Dataloader|etc...>] "
-description: Problems and issues with code of 
+description: Problems and issues with code of FedScale
 labels: [bug]
 body:
   - type: markdown
