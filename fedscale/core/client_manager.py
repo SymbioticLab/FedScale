@@ -2,6 +2,7 @@ import logging
 import math
 import pickle
 from random import Random
+from typing import Dict, List
 
 from fedscale.core.internal.client import Client
 
@@ -41,7 +42,19 @@ class clientManager(object):
             self.user_trace_keys = list(self.user_trace.keys())
 
     def registerClient(self, hostId, clientId, size, speed, duration=1):
+        self.register_client(hostId, clientId, size, speed, duration)
 
+    def register_client(self, hostId: int, clientId: int, size: int, speed: Dict[str, float], duration: float=1) -> None:
+        """Register client information to the client manager.
+
+        Args: 
+            hostId (int): executor Id.
+            clientId (int): client Id.
+            size (int): number of samples on this client.
+            speed (Dict[str, float]): device speed (e.g., compuutation and communication).
+            duration (float): execution latency.
+
+        """
         uniqueId = self.getUniqueId(hostId, clientId)
         user_trace = None if self.user_trace is None else self.user_trace[self.user_trace_keys[int(
             clientId) % len(self.user_trace)]]
@@ -60,7 +73,7 @@ class clientManager(object):
                 self.ucbSampler.register_client(clientId, feedbacks=feedbacks)
         else:
             del self.Clients[uniqueId]
-
+            
     def getAllClients(self):
         return self.feasibleClients
 
@@ -80,7 +93,6 @@ class clientManager(object):
                 clientId, exe_cost['computation']+exe_cost['communication'])
 
     def getCompletionTime(self, clientId, batch_size, upload_step, upload_size, download_size):
-
         return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
             batch_size=batch_size, upload_step=upload_step,
             upload_size=upload_size, download_size=download_size
@@ -91,6 +103,20 @@ class clientManager(object):
         self.Clients[uniqueId].speed = speed
 
     def registerScore(self, clientId, reward, auxi=1.0, time_stamp=0, duration=1., success=True):
+        self.register_feedback(clientId, reward, auxi=auxi, time_stamp=time_stamp, duration=duration, success=success)
+
+    def register_feedback(self, clientId: int, reward: float, auxi: float=1.0, time_stamp: float=0, duration: float=1., success: bool=True) -> None:
+        """Collect client execution feedbacks of last round.
+
+        Args: 
+            clientId (int): client Id.
+            reward (float): execution utilities (processed feedbacks).
+            auxi (float): unprocessed feedbacks.
+            time_stamp (float): current wall clock time.
+            duration (float): system execution duration.
+            success (bool): whether this client runs successfully. 
+
+        """
         # currently, we only use distance as reward
         if self.mode == "oort":
             feedbacks = {
@@ -180,12 +206,22 @@ class clientManager(object):
     def isClientActive(self, clientId, cur_time):
         return self.Clients[self.getUniqueId(0, clientId)].isActive(cur_time)
 
-    def resampleClients(self, numOfClients, cur_time=0):
+    def select_participants(self, num_of_clients: int, cur_time: float=0) -> List[int]:
+        """Select participating clients for current execution task.
+
+        Args: 
+            num_of_clients (int): number of participants to select.
+            cur_time (float): current wall clock time. 
+
+        Returns:
+            List[int]: indices of selected clients.
+    
+        """
         self.count += 1
 
         clients_online = self.getFeasibleClients(cur_time)
 
-        if len(clients_online) <= numOfClients:
+        if len(clients_online) <= num_of_clients:
             return clients_online
 
         pickled_clients = None
@@ -193,13 +229,16 @@ class clientManager(object):
 
         if self.mode == "oort" and self.count > 1:
             pickled_clients = self.ucbSampler.select_participant(
-                numOfClients, feasible_clients=clients_online_set)
+                num_of_clients, feasible_clients=clients_online_set)
         else:
             self.rng.shuffle(clients_online)
-            client_len = min(numOfClients, len(clients_online) - 1)
+            client_len = min(num_of_clients, len(clients_online) - 1)
             pickled_clients = clients_online[:client_len]
 
         return pickled_clients
+
+    def resampleClients(self, numOfClients, cur_time=0):
+        return self.select_participants(numOfClients, cur_time)
 
     def getAllMetrics(self):
         if self.mode == "oort":

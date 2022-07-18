@@ -236,7 +236,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
             clientId = (
                 self.num_of_clients+1) if self.experiment_mode == commons.SIMULATION_MODE else executorId
-            self.client_manager.registerClient(
+            self.client_manager.register_client(
                 executorId, clientId, size=_size, speed=systemProfile)
             self.client_manager.registerDuration(clientId, batch_size=self.args.batch_size,
                                                  upload_step=self.args.local_steps, upload_size=self.model_update_size, download_size=self.model_update_size)
@@ -356,7 +356,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             list of int: The list of sampled clients id.
 
         """
-        return sorted(self.client_manager.resampleClients(
+        return sorted(self.client_manager.select_participants(
             int(select_num_participants*overcommitment),
             cur_time=self.global_virtual_clock),
         )
@@ -379,7 +379,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.stats_util_accumulator.append(results['utility'])
         self.loss_accumulator.append(results['moving_loss'])
 
-        self.client_manager.registerScore(results['clientId'], results['utility'],
+        self.client_manager.register_feedback(results['clientId'], results['utility'],
                                           auxi=math.sqrt(
                                               results['moving_loss']),
                                           time_stamp=self.round,
@@ -508,7 +508,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             max(1, len(self.stats_util_accumulator))
         # assign avg reward to explored, but not ran workers
         for clientId in self.round_stragglers:
-            self.client_manager.registerScore(clientId, avgUtilLastround,
+            self.client_manager.register_feedback(clientId, avgUtilLastround,
                                               time_stamp=self.round,
                                               duration=self.virtual_client_clock[clientId]['computation'] +
                                               self.virtual_client_clock[clientId]['communication'],

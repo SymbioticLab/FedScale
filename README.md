@@ -33,6 +33,7 @@ If you have [Anaconda](https://www.anaconda.com/products/distribution#download-s
 cd FedScale
 
 # Please replace ~/.bashrc with ~/.bash_profile for MacOS
+FEDSCALE_HOME=$(pwd)
 echo export FEDSCALE_HOME=$(pwd) >> ~/.bashrc 
 echo alias fedscale=\'bash $FEDSCALE_HOME/fedscale.sh\' >> ~/.bashrc 
 conda init bash
