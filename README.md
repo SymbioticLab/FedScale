@@ -1,12 +1,17 @@
+<p align="center">
+<img src="./docs/imgs/FedScale-logo.png" width="340" height="63"/>
+</p>
 
-# FedScale
+[![](https://img.shields.io/badge/FedScale-Homepage-orange)](https://fedscale.github.io/)
+[![](https://img.shields.io/badge/Benchmark-Submit%20Results-brightgreen)](https://fedscale.github.io/docs/leader_overview)
+[![](https://img.shields.io/badge/FedScale-Join%20Slack-blue)](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw)
 
-FedScale is a scalable and extensible open-source federated learning (FL) engine. 
-It provides high-level APIs to implement FL algorithms, deploy them at scale across diverse hardware and software backends, and evaluate them at scale.
+**FedScale is a scalable and extensible open-source federated learning (FL) engine and benchmark**. 
+
+FedScale ([fedscale.ai](https://fedscale.github.io/)) provides high-level APIs to implement FL algorithms, deploy and evaluate them at scale across diverse hardware and software backends. 
 FedScale also includes the largest FL benchmark that contains FL tasks ranging from image classification and object detection to language modeling and speech recognition. 
 Moreover, it provides datasets to faithfully emulate FL training environments where FL will realistically be deployed.
 
-[http://fedscale.ai](http://fedscale.ai)
 
 ## Getting Started
 
