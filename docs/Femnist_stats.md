@@ -5,7 +5,7 @@
 Follow the download instruction in `./benchmark/dataset/download.sh` to download the FEMNIST dataset.
 
 ```{code-cell}
-bash download.sh download open_images
+bash download.sh download femnist
 ```
 [Install](../README.md) fedscale and import related libraries:
 
