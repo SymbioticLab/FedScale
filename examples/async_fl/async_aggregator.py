@@ -222,7 +222,7 @@ class AsyncAggregator(Aggregator):
         # update select participants
         if self.round % self.args.checkin_period == 1:  # num_participantsants > buffer_size * sample_interval
             self.sampled_participants = self.select_participants(
-                select_num_participants=self.args.num_participantsants, overcommitment=self.args.overcommitment)
+                select_num_participants=self.args.num_participants, overcommitment=self.args.overcommitment)
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
                 self.sampled_participants, len(self.sampled_participants))
 

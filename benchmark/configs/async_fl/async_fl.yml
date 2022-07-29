@@ -54,7 +54,7 @@ job_conf:
     - decay_round: 50
     - overcommitment: 1.0
     - async_buffer: 10
-    - checkin_period: 50
+    - checkin_period: 30
     - arrival_interval: 3
 
 
