@@ -1,13 +1,13 @@
 import threading
 
 from fedscale.core import commons
+from fedscale.core.resource_manager import ResourceManager as DefaultManager
 
-
-class ResourceManager(object):
+class ResourceManager(DefaultManager):
     """Schedule training tasks across GPUs/CPUs"""
 
     def __init__(self, experiment_mode):
-
+        super().__init__(experiment_mode)
         self.client_run_queue = []
         self.experiment_mode = experiment_mode
         self.update_lock = threading.Lock()
