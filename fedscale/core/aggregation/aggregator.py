@@ -799,8 +799,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 if response_msg is None:
                     current_event = commons.DUMMY_EVENT
                     if self.experiment_mode != commons.SIMULATION_MODE:
-                        self.individual_client_events[executor_id].appendleft(
-                            commons.CLIENT_TRAIN)
+                        self.individual_client_events[executor_id].append(
+                                commons.CLIENT_TRAIN)
             elif current_event == commons.MODEL_TEST:
                 response_msg = self.get_test_config(client_id)
             elif current_event == commons.UPDATE_MODEL:
@@ -808,13 +808,15 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             elif current_event == commons.SHUT_DOWN:
                 response_msg = self.get_shutdown_config(executor_id)
 
-        if current_event != commons.DUMMY_EVENT:
-            logging.info(f"Issue EVENT ({current_event}) to EXECUTOR ({executor_id})")
         response_msg, response_data = self.serialize_response(
             response_msg), self.serialize_response(response_data)
         # NOTE: in simulation mode, response data is pickle for faster (de)serialization
-        return job_api_pb2.ServerResponse(event=current_event,
+        response = job_api_pb2.ServerResponse(event=current_event,
                                           meta=response_msg, data=response_data)
+        if current_event != commons.DUMMY_EVENT:
+            logging.info(f"Issue EVENT ({current_event}) to EXECUTOR ({executor_id})")
+        
+        return response
 
     def CLIENT_EXECUTE_COMPLETION(self, request, context):
         """FL clients complete the execution task.
@@ -839,8 +841,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             if self.resource_manager.has_next_task(executor_id):
                 # NOTE: we do not pop the train immediately in simulation mode,
                 # since the executor may run multiple clients
-                self.individual_client_events[executor_id].appendleft(
-                    commons.CLIENT_TRAIN)
+                self.individual_client_events[executor_id].append(
+                        commons.CLIENT_TRAIN)
 
         elif event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
             self.add_event_handler(
