@@ -1,5 +1,5 @@
 <p align="center">
-<img src="./docs/imgs/FedScale-logo.png" width="340" height="63"/>
+<img src="./docs/imgs/FedScale-logo.png" width="300" height="55"/>
 </p>
 
 [![](https://img.shields.io/badge/FedScale-Homepage-orange)](https://fedscale.ai/)
