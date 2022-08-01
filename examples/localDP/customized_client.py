@@ -94,7 +94,7 @@ class Customized_Client(Client):
         # recover model weights
         idx = 0
         for param in model.parameters():
-            param.data += delta_weight[idx]
+            param.data = last_model_params[idx] + delta_weight[idx]
             idx += 1
 
         state_dicts = model.state_dict()
