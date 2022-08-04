@@ -1,4 +1,4 @@
-name: fedscale
+name: fedscale-rd
 channels:
   - main
 dependencies:
