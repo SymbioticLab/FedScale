@@ -10,6 +10,8 @@ import time
 
 import yaml
 
+from fedscale.core.storage import redis_utils
+
 
 def flatten(d):
     out = {}
@@ -143,6 +145,10 @@ def terminate(job_name):
 print_help: bool = False
 if len(sys.argv) > 1:
     if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
+        redis_exec = '/usr/bin/redis-server'
+        fedscale_home = os.environ['FEDSCALE_HOME']
+        if not redis_utils.is_redis_server_online():
+            redis_utils.start_redis_server(redis_exec, fedscale_home)
         process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])

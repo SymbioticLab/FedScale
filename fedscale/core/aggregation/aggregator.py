@@ -14,6 +14,8 @@ from fedscale.core.channels import job_api_pb2
 from fedscale.core.logger.aggragation import *
 from fedscale.core.resource_manager import ResourceManager
 
+from fedscale.core.storage import redis_utils
+
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
 
@@ -31,6 +33,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.experiment_mode = args.experiment_mode
         self.device = args.cuda_device if args.use_cuda else torch.device(
             'cpu')
+
+        # ======== redis client ========
+        # <host, port, ...> should be specified in args
+        host = "127.0.0.1"
+        port = 6379
+        password = None
+        self.redis_cli = redis_utils.Redis_client(host=host, port=port, password=password)
 
         # ======== env information ========
         self.this_rank = 0
@@ -69,10 +78,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # because every participant is an executor. However, in simulation mode,
         # executors is the physical machines (VMs), thus:
         # |sampled_executors| << |sampled_participants| as an VM may run multiple participants
-        self.sampled_participants = []
-        self.sampled_executors = []
+        # self.sampled_participants = []
+        # self.sampled_executors = []
 
-        self.round_stragglers = []
+        # self.round_stragglers = []
         self.model_update_size = 0.
 
         self.collate_fn = None
@@ -82,13 +91,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.start_run_time = time.time()
         self.client_conf = {}
 
-        self.stats_util_accumulator = []
-        self.loss_accumulator = []
-        self.client_training_results = []
+        # self.stats_util_accumulator = []
+        # self.loss_accumulator = []
+        # self.client_training_results = []
 
         # number of registered executors
         self.registered_executor_info = set()
-        self.test_result_accumulator = []
+        # self.test_result_accumulator = []
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                                 'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
 
@@ -129,9 +138,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 for numexe in numgpu.strip()[1:-1].split(','):
                     for _ in range(int(numexe.strip())):
                         num_of_executors += 1
-            self.executors = list(range(num_of_executors))
+            # self.executors = list(range(num_of_executors))
+            self.redis_cli.update_list('executors', list(range(num_of_executors)), False)
         else:
-            self.executors = list(range(self.args.num_participants))
+            # self.executors = list(range(self.args.num_participants))
+            self.redis_cli.update_list('executors', list(range(self.args.num_participants)), False)
 
         # initiate a server process
         self.grpc_server = grpc.server(
@@ -255,20 +266,23 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         """
         self.registered_executor_info.add(executorId)
-        logging.info(f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
+        # logging.info(f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
+        logging.info(f"Received executor {executorId} information, {len(self.registered_executor_info)}/{self.redis_cli.list_len('executors')}")
 
         # In this simulation, we run data split on each worker, so collecting info from one executor is enough
         # Waiting for data information from executors, or timeout
         if self.experiment_mode == commons.SIMULATION_MODE:
 
-            if len(self.registered_executor_info) == len(self.executors):
+            # if len(self.registered_executor_info) == len(self.executors):
+            if len(self.registered_executor_info) == self.redis_cli.list_len('executors'):
                 self.client_register_handler(executorId, info)
                 # start to sample clients
                 self.round_completion_handler()
         else:
             # In real deployments, we need to register for each client
             self.client_register_handler(executorId, info)
-            if len(self.registered_executor_info) == len(self.executors):
+            # if len(self.registered_executor_info) == len(self.executors):
+            if len(self.registered_executor_info) == self.redis_cli.list_len('executors'):
                 self.round_completion_handler()
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
@@ -374,10 +388,15 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
 
         if self.args.gradient_policy in ['q-fedavg']:
-            self.client_training_results.append(results)
+            # self.client_training_results.append(results)
+            # should push bytes
+            self.redis_cli.rpush('client_training_results', results, True)
         # Feed metrics to client sampler
-        self.stats_util_accumulator.append(results['utility'])
-        self.loss_accumulator.append(results['moving_loss'])
+        # self.stats_util_accumulator.append(results['utility'])
+        self.redis_cli.rpush('stats_util_accumulator', results['utility'], False)
+        # self.loss_accumulator.append(results['moving_loss'])
+        self.redis_cli.rpush('loss_accumulator', results['moving_loss'], False)
+
 
         self.client_manager.register_feedback(results['clientId'], results['utility'],
                                           auxi=math.sqrt(
@@ -504,30 +523,48 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # handle the global update w/ current and last
         self.round_weight_handler(self.last_gradient_weights)
 
-        avgUtilLastround = sum(self.stats_util_accumulator) / \
-            max(1, len(self.stats_util_accumulator))
+        # avgUtilLastround = sum(self.stats_util_accumulator) / \
+        #     max(1, len(self.stats_util_accumulator))
+        # should read list[float]
+        stats_util_accumulator = self.redis_cli.get_list('stats_util_accumulator', 'float')
+        avgUtilLastround = sum(stats_util_accumulator) / \
+            max(1, len(stats_util_accumulator))
+
         # assign avg reward to explored, but not ran workers
-        for clientId in self.round_stragglers:
+        # for clientId in self.round_stragglers:
+        # should read list[int]
+        for clientId in self.redis_cli.get_list('round_stragglers', 'int'):
             self.client_manager.register_feedback(clientId, avgUtilLastround,
                                               time_stamp=self.round,
                                               duration=self.virtual_client_clock[clientId]['computation'] +
                                               self.virtual_client_clock[clientId]['communication'],
                                               success=False)
 
-        avg_loss = sum(self.loss_accumulator) / \
-            max(1, len(self.loss_accumulator))
+        # avg_loss = sum(self.loss_accumulator) / \
+        #     max(1, len(self.loss_accumulator))
+        loss_accumulator = self.redis_cli.get_list('loss_accumulator', 'float')
+        avg_loss = sum(loss_accumulator) / \
+            max(1, len(loss_accumulator))
+        # logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Planned participants: " +
+        #              f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
         logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Planned participants: " +
-                     f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
+                     f"{self.redis_cli.list_len('sampled_participants')}, Succeed participants: {len(stats_util_accumulator)}, Training loss: {avg_loss}")
 
         # dump round completion information to tensorboard
-        if len(self.loss_accumulator):
+        # if len(self.loss_accumulator):
+        if len(loss_accumulator):
             self.log_train_result(avg_loss)
 
         # update select participants
-        self.sampled_participants = self.select_participants(
+        # self.sampled_participants = self.select_participants(
+        #     select_num_participants=self.args.num_participants, overcommitment=self.args.overcommitment)
+        # (clientsToRun, round_stragglers, virtual_client_clock, round_duration, flatten_client_duration) = self.tictak_client_tasks(
+        #     self.sampled_participants, self.args.num_participants)
+        sampled_participants = self.select_participants(
             select_num_participants=self.args.num_participants, overcommitment=self.args.overcommitment)
+        self.redis_cli.update_list('sampled_participants', sampled_participants, False)
         (clientsToRun, round_stragglers, virtual_client_clock, round_duration, flatten_client_duration) = self.tictak_client_tasks(
-            self.sampled_participants, self.args.num_participants)
+            sampled_participants, self.args.num_participants)
 
         logging.info(f"Selected participants to run: {clientsToRun}")
 
@@ -537,21 +574,30 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # Update executors and participants
         if self.experiment_mode == commons.SIMULATION_MODE:
-            self.sampled_executors = list(
-                self.individual_client_events.keys())
+            # self.sampled_executors = list(
+            #     self.individual_client_events.keys())
+            self.redis_cli.update_list(
+                'sampled_executors', list(self.individual_client_events.keys()))
         else:
-            self.sampled_executors = [str(c_id)
-                                      for c_id in self.sampled_participants]
+            # self.sampled_executors = [str(c_id)
+            #                           for c_id in sampled_participants]
+            self.redis_cli.update_list(
+                'sampled_executors', [str(c_id) for c_id in sampled_participants])
+
 
         self.save_last_param()
-        self.round_stragglers = round_stragglers
+        # self.round_stragglers = round_stragglers
+        self.redis_cli.update_list('round_stragglers', round_stragglers, False)
         self.virtual_client_clock = virtual_client_clock
         self.flatten_client_duration = numpy.array(flatten_client_duration)
         self.round_duration = round_duration
         self.model_in_update = 0
-        self.test_result_accumulator = []
-        self.stats_util_accumulator = []
-        self.client_training_results = []
+        # self.test_result_accumulator = []
+        self.redis_cli.update_list('test_result_accumulator', [])
+        # self.stats_util_accumulator = []
+        self.redis_cli.update_list('stats_util_accumulator', [])
+        # self.client_training_results = []
+        self.redis_cli.update_list('client_training_results', [])
 
         if self.round >= self.args.rounds:
             self.broadcast_aggregator_events(commons.SHUT_DOWN)
@@ -620,20 +666,26 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         results = results['results']
 
         # List append is thread-safe
-        self.test_result_accumulator.append(results)
+        # self.test_result_accumulator.append(results)
+        self.redis_cli.rpush('test_result_accumulator', results)
 
         # Have collected all testing results
 
-        if len(self.test_result_accumulator) == len(self.executors):
+        # if len(self.test_result_accumulator) == len(self.executors):
+        if self.redis_cli.list_len('test_result_accumulator') == self.redis_cli.list_len('executors'):
             
+            # aggregate_test_result(
+            #     self.test_result_accumulator, self.args.task, \
+            #     self.round, self.global_virtual_clock, self.testing_history)
             aggregate_test_result(
-                self.test_result_accumulator, self.args.task, \
+                self.redis_cli.get_list('test_result_accumulator', 'bytes'), self.args.task, \
                 self.round, self.global_virtual_clock, self.testing_history)
             # Dump the testing result
             with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
 
-            if len(self.loss_accumulator):
+            # if len(self.loss_accumulator):
+            if self.redis_cli.list_len('loss_accumulator'):
                 self.log_test_result()
 
             self.broadcast_events_queue.append(commons.START_ROUND)
@@ -657,7 +709,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         
         """
         if clients is None:
-            clients = self.sampled_executors
+            # clients = self.sampled_executors
+            # should read list[str]
+            clients = self.redis_cli.get_list('sampled_executors', 'string')
 
         for client_id in clients:
             self.individual_client_events[client_id].append(event)
@@ -878,7 +932,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 if current_event == commons.UPLOAD_MODEL:
                     self.client_completion_handler(
                         self.deserialize_response(data))
-                    if len(self.stats_util_accumulator) == self.tasks_round:
+                    # if len(self.stats_util_accumulator) == self.tasks_round:
+                    if self.redis_cli.list_len('stats_util_accumulator') == self.tasks_round:
                         self.round_completion_handler()
 
                 elif current_event == commons.MODEL_TEST:

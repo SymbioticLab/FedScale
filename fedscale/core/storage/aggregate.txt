@@ -24,3 +24,18 @@ self.client_training_results = []   list[dict]                  write append / c
 self.test_result_accumulator = []   list[dict]                  write append and read / test completion, read / round completion
 
 event queues?                       deque[tuple]
+
+
+self.model = None                   object                      write at init, read and write / round completion                   
+
+self.executors = None               list[int]                   write at init, read at registration and / test completion *
+
+self.sampled_participants = []      list[int]                   write all and read / round completion *
+self.sampled_executors = []         list[str]                   read / event, write all / round completion *
+
+self.round_stragglers = []          list[int]                   write all and read / round completion *
+
+self.stats_util_accumulator = []    list[float]                 write append / client completion, read and clear / round completion *
+self.loss_accumulator = []          list[float]                 write append / client completion *
+self.client_training_results = []   list[dict]                  write append / client completion, clear / round completion *
+self.test_result_accumulator = []   list[dict]                  write append and read / test completion, read / round completion *
