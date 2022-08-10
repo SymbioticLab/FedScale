@@ -667,7 +667,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # List append is thread-safe
         # self.test_result_accumulator.append(results)
-        self.redis_cli.rpush('test_result_accumulator', results)
+        # should push bytes
+        self.redis_cli.rpush('test_result_accumulator', results, True)
 
         # Have collected all testing results
 

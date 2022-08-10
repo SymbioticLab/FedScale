@@ -196,11 +196,12 @@ def is_redis_server_online(
 def shutdown_server(
     host='127.0.0.1', 
     port=6379, 
-    password=None
+    password=None,
+    nosave=False
 ):
     client = redis.Redis(host=host, port=port, password=password)
     try:
-        client.shutdown()
+        client.shutdown(nosave=nosave)
         print(f'Successfully shutdown Redis server at {host}:{port}')
     except Exception:
         pass
