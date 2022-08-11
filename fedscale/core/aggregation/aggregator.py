@@ -467,9 +467,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if self.args.engine == commons.TENSORFLOW:
             self.last_gradient_weights = [
                 layer.get_weights() for layer in self.model.layers]
+            self.model_weights = copy.deepcopy(self.model.state_dict())
         else:
             self.last_gradient_weights = [
                 p.data.clone() for p in self.model.parameters()]
+            self.model_weights = copy.deepcopy(self.model.state_dict())
 
     def round_weight_handler(self, last_model):
         """Update model when the round completes
@@ -552,6 +554,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.test_result_accumulator = []
         self.stats_util_accumulator = []
         self.client_training_results = []
+        self.loss_accumulator = []
 
         if self.round >= self.args.rounds:
             self.broadcast_aggregator_events(commons.SHUT_DOWN)
@@ -785,7 +788,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # while multiple client_id may use the same executor_id (VMs) in simulations
         executor_id, client_id = request.executor_id, request.client_id
         response_data = response_msg = commons.DUMMY_RESPONSE
-
+        
         if len(self.individual_client_events[executor_id]) == 0:
             # send dummy response
             current_event = commons.DUMMY_EVENT

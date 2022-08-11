@@ -60,7 +60,8 @@ class Client(object):
         model_param = {p: state_dicts[p].data.cpu().numpy()
                        for p in state_dicts}
         results = {'clientId': clientId, 'moving_loss': self.epoch_train_loss,
-                   'trained_size': self.completed_steps*conf.batch_size, 'success': self.completed_steps > 0}
+                   'trained_size': self.completed_steps*conf.batch_size, 
+                   'success': self.completed_steps == conf.batch_size}
         results['utility'] = math.sqrt(
             self.loss_squre)*float(trained_unique_samples)
 

@@ -18,6 +18,11 @@ class ResourceManager(object):
         self.client_run_queue = clientsToRun.copy()
         self.client_run_queue_idx = 0
 
+    def get_remaining(self) -> int:
+        """Number of tasks left in the queue
+        """
+        return self.get_task_length()
+
     def get_task_length(self) -> int:
         """Number of tasks left in the queue
 
