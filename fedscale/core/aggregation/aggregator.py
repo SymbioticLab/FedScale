@@ -523,6 +523,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # handle the global update w/ current and last
         self.round_weight_handler(self.last_gradient_weights)
 
+        self.redis_cli.rpush('model', self.model, True)
+
         # avgUtilLastround = sum(self.stats_util_accumulator) / \
         #     max(1, len(self.stats_util_accumulator))
         # should read list[float]

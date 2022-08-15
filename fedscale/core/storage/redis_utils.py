@@ -139,11 +139,11 @@ def model_serialize(model):
 def model_deserialize(model_bytes):
     return pickle.loads(model_bytes)
 
-def save_model(red, key, model):
-    red.set(key, model_serialize(model))
+# def save_model(red, key, model):
+#     red.set(key, model_serialize(model))
 
-def load_model(red, key):
-    return model_deserialize(red.get(key))
+# def load_model(red, key):
+#     return model_deserialize(red.get(key))
 
 def start_redis_server(
     executable,
