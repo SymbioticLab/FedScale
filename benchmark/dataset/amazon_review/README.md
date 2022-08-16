@@ -19,3 +19,14 @@ amazon_review/
 # References
 The original location of this dataset is at
 [Amazon Review Dataset](https://jmcauley.ucsd.edu/data/amazon/).
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{amazon-review,
+  title={Image-based Recommendations on Styles and Substitutes}, 
+  author={Julian McAuley and Christopher Targett and Qinfeng Shi and Anton van den Hengel},
+  year={2015},
+  booktitle={SIGIR}
+}
+```

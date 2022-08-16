@@ -19,3 +19,32 @@ waymo/
 The original location of this dataset is at
 [Waymo Motion](https://waymo.com/intl/en_us/dataset-motion/).
 
+# Acknowledgement
+
+```bibtex
+@article{waymo-motion,
+  author    = {Scott Ettinger and
+               Shuyang Cheng and
+               Benjamin Caine and
+               Chenxi Liu and
+               Hang Zhao and
+               Sabeek Pradhan and
+               Yuning Chai and
+               Benjamin Sapp and
+               Charles Qi and
+               Yin Zhou and
+               Zoey Yang and
+               Aurelien Chouard and
+               Pei Sun and
+               Jiquan Ngiam and
+               Vijay Vasudevan and
+               Alexander McCauley and
+               Jonathon Shlens and
+               Dragomir Anguelov},
+  title     = {Large Scale Interactive Motion Forecasting for Autonomous Driving
+               : The Waymo Open Motion Dataset},
+  journal   = {CoRR},
+  volume    = {abs/2104.10133},
+  year      = {2021}
+}
+```
