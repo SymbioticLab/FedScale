@@ -425,11 +425,12 @@ class Executor(object):
                     client_id, train_res = self.Train(train_config)
 
                     # Upload model updates
-                    _ = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION.future(
+                    future_call = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION.future(
                         job_api_pb2.CompleteRequest(client_id=str(client_id), executor_id=self.executor_id,
                                                     event=commons.UPLOAD_MODEL, status=True, msg=None,
                                                     meta_result=None, data_result=self.serialize_response(train_res)
                                                     ))
+                    future_call.add_done_callback(lambda _response: self.dispatch_worker_events(_response.result()))
 
                 elif current_event == commons.MODEL_TEST:
                     self.Test(self.deserialize_response(request.meta))

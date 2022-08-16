@@ -10,7 +10,6 @@ from fedscale.core.aggregation.aggregator import Aggregator
 from fedscale.core.channels import job_api_pb2
 from fedscale.core.logger.aggragation import *
 
-logging.info(f"===={os.path.dirname(os.path.abspath(__file__))}")
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from resource_manager import ResourceManager
 
@@ -29,26 +28,7 @@ class AsyncAggregator(Aggregator):
         self.round_stamp = [0]
         self.client_model_version = {}
         self.virtual_client_clock = {}
-
-    def executor_info_handler(self, executorId, info):
-
-        self.registered_executor_info.add(executorId)
-        logging.info(
-            f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
-
-        # In this simulation, we run data split on each worker, so collecting info from one executor is enough
-        # Waiting for data information from executors, or timeout
-        if self.experiment_mode == commons.SIMULATION_MODE:
-
-            if len(self.registered_executor_info) == len(self.executors):
-                self.client_register_handler(executorId, info)
-                # start to sample clients
-                self.round_completion_handler()
-        else:
-            # In real deployments, we need to register for each client
-            self.client_register_handler(executorId, info)
-            if len(self.registered_executor_info) == len(self.executors):
-                self.round_completion_handler()
+        self.round_lock = threading.Lock()
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
 
@@ -61,7 +41,7 @@ class AsyncAggregator(Aggregator):
             completed_client_clock = {}
 
             start_time = self.global_virtual_clock
-            constant_checin_period = self.args.arrival_interval
+            constant_checkin_period = self.args.arrival_interval
             # 1. remove dummy clients that are not available to the end of training
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
@@ -74,7 +54,7 @@ class AsyncAggregator(Aggregator):
                 roundDuration = exe_cost['computation'] + \
                     exe_cost['communication']
                 # if the client is not active by the time of collection, we consider it is lost in this round
-                start_time += constant_checin_period
+                start_time += constant_checkin_period
                 if self.client_manager.isClientActive(client_to_run, roundDuration + start_time):
                     sampledClientsReal.append(client_to_run)
                     completed_client_clock[client_to_run] = exe_cost
@@ -101,38 +81,6 @@ class AsyncAggregator(Aggregator):
             return (sampled_clients, sampled_clients, completed_client_clock,
                     1, completionTimes)
 
-    def client_completion_handler(self, results):
-        """We may need to keep all updates from clients,
-        if so, we need to append results to the cache"""
-        # Format:
-        #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': round_train_loss,
-        #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
-
-        if self.args.gradient_policy in ['q-fedavg']:
-            self.client_training_results.append(results)
-        # Feed metrics to client sampler
-        self.stats_util_accumulator.append(results['utility'])
-        self.loss_accumulator.append(results['moving_loss'])
-
-        self.client_manager.registerScore(results['clientId'], results['utility'],
-                                          auxi=math.sqrt(
-                                              results['moving_loss']),
-                                          time_stamp=self.round,
-                                          duration=self.virtual_client_clock[results['clientId']]['computation'] +
-                                          self.virtual_client_clock[results['clientId']
-                                                                    ]['communication']
-                                          )
-
-        # ================== Aggregate weights ======================
-        self.update_lock.acquire()
-
-        self.model_in_update += 1
-        if self.using_group_params == True:
-            self.aggregate_client_group_weights(results)
-        else:
-            self.aggregate_client_weights(results)
-        self.update_lock.release()
-
     def aggregate_client_weights(self, results):
         """May aggregate client updates on the fly"""
         """
@@ -140,8 +88,8 @@ class AsyncAggregator(Aggregator):
             H. Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, Blaise Aguera y Arcas. AISTATS, 2017
         """
         # Start to take the average of updates, and we do not keep updates to save memory
-        # Importance of each update is 1/#_of_participants
-        # importance = 1./self.tasks_round
+        # Importance of each update is 1/#_of_participants * staleness
+        # importance = 1./self.tasks_round * staleness
         client_staleness = self.round - \
             self.client_model_version[results['clientId']]
         importance = 1. / math.sqrt(1 + client_staleness)
@@ -197,9 +145,7 @@ class AsyncAggregator(Aggregator):
                     ).to(dtype=d_type)
 
     def round_completion_handler(self):
-        # += self.round_duration
         self.global_virtual_clock = self.round_stamp[-1]
-        # self.round_stamp.append(self.global_virtual_clock)
         self.round += 1
 
         if self.round % self.args.decay_round == 0:
@@ -220,7 +166,7 @@ class AsyncAggregator(Aggregator):
             self.log_train_result(avg_loss)
 
         # update select participants
-        if self.round % self.args.checkin_period == 1:  # num_participantsants > buffer_size * sample_interval
+        if self.resource_manager.get_task_length() < self.async_buffer_size:
             self.sampled_participants = self.select_participants(
                 select_num_participants=self.args.num_participants, overcommitment=self.args.overcommitment)
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
@@ -256,14 +202,6 @@ class AsyncAggregator(Aggregator):
             self.broadcast_aggregator_events(commons.UPDATE_MODEL)
             self.broadcast_aggregator_events(commons.START_ROUND)
 
-    def log_train_result(self, avg_loss):
-        """Result will be post on TensorBoard"""
-        self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.round)
-        self.log_writer.add_scalar(
-            'FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
-        self.log_writer.add_scalar(
-            'FAR/round_duration (min)', self.round_duration / 60., self.round)
-
     def find_latest_model(self, start_time):
         for i, time_stamp in enumerate(reversed(self.round_stamp)):
             if start_time >= time_stamp:
@@ -291,31 +229,55 @@ class AsyncAggregator(Aggregator):
         train_config = None
         # NOTE: model = None then the executor will load the global model broadcasted in UPDATE_MODEL
         model = None
-        # TODO: useless model?
+
         if next_clientId != None:
             config = self.get_client_conf(next_clientId)
             train_config = {'client_id': next_clientId, 'task_config': config}
         return train_config, model
 
-    def CLIENT_REGISTER(self, request, context):
-        """FL Client register to the aggregator"""
+    def CLIENT_EXECUTE_COMPLETION(self, request, context):
+        """FL clients complete the execution task.
+        
+        Args:
+            request (CompleteRequest): Complete request info from executor.
 
-        # NOTE: client_id = executor_id in deployment,
-        # while multiple client_id uses the same executor_id (VMs) in simulations
-        executor_id = request.executor_id
-        executor_info = self.deserialize_response(request.executor_info)
-        if executor_id not in self.individual_client_events:
-            # logging.info(f"Detect new client: {executor_id}, executor info: {executor_info}")
-            self.individual_client_events[executor_id] = collections.deque()
+        Returns:
+            ServerResponse: Server response to job completion request
+
+        """
+
+        executor_id, client_id, event = request.executor_id, request.client_id, request.event
+        execution_status, execution_msg = request.status, request.msg
+        meta_result, data_result = request.meta_result, request.data_result
+        
+        if event == commons.CLIENT_TRAIN:
+            # Training results may be uploaded in CLIENT_EXECUTE_RESULT request later,
+            # so we need to specify whether to ask client to do so (in case of straggler/timeout in real FL).
+            if execution_status is False:
+                logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
+            
+            if self.resource_manager.has_next_task(executor_id):
+                # NOTE: we do not pop the train immediately in simulation mode,
+                # since the executor may run multiple clients
+                if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:
+                    self.individual_client_events[executor_id].append(
+                        commons.CLIENT_TRAIN)
+
+        elif event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
+            self.add_event_handler(
+                executor_id, event, meta_result, data_result)
         else:
-            logging.info(f"Previous client: {executor_id} resumes connecting")
+            logging.error(f"Received undefined event {event} from client {client_id}")
 
-        # We can customize whether to admit the clients here
-        self.executor_info_handler(executor_id, executor_info)
-        dummy_data = self.serialize_response(commons.DUMMY_RESPONSE)
+        return self.CLIENT_PING(request, context)
 
-        return job_api_pb2.ServerResponse(event=commons.DUMMY_EVENT,
-                                          meta=dummy_data, data=dummy_data)
+    def log_train_result(self, avg_loss):
+        """Result will be post on TensorBoard"""
+        self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.round)
+        self.log_writer.add_scalar(
+            'FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
+        self.log_writer.add_scalar(
+            'FAR/round_duration (min)', self.round_duration / 60., self.round)
 
     def event_monitor(self):
         logging.info("Start monitoring events ...")
@@ -358,11 +320,6 @@ class AsyncAggregator(Aggregator):
             else:
                 # execute every 100 ms
                 time.sleep(0.1)
-
-    def stop(self):
-        logging.info(f"Terminating the aggregator ...")
-        time.sleep(5)
-
 
 if __name__ == "__main__":
     aggregator = AsyncAggregator(args)
