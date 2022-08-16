@@ -15,3 +15,14 @@ waymo/
 # References
 The original location of this dataset is at
 [Puffer Dataset](https://puffer.stanford.edu/data-description/).
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{puffer,
+   author = {Francis Y. Yan and Hudson Ayers and et al.},
+   title =  {Learning in situ: a randomized experiment in video streaming},
+   booktitle =  {NSDI},
+   year = {2020},
+}
+```
