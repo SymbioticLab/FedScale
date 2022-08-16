@@ -15,3 +15,14 @@ data/
 # References
 The original location of this dataset is at
 [https://www.nist.gov/srd/nist-special-database-19](https://www.nist.gov/srd/nist-special-database-19).
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{FEMNIST,
+  author    = {Gregory Cohen and Saeed Afshar and Jonathan Tapson and Andr{\'{e}} van Schaik},
+  title     = {{EMNIST:} an extension of {MNIST} to handwritten letters},
+  booktitle = {arxiv.org/abs/1702.05373},
+  year      = {2017},
+}
+```

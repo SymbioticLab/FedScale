@@ -16,3 +16,12 @@ common_voice/
 # References
 The original location of this dataset is at
 [Common Voice Dataset](https://commonvoice.mozilla.org/en/datasets).
+
+# Acknowledgement
+
+```bibtex
+@misc{common-voice,
+  title = "{{Common Voice Data}}",
+  howpublished="\url{https://commonvoice.mozilla.org/en/datasets}"
+}
+```

@@ -27,3 +27,11 @@ data/
 The original location of this dataset is at
 [https://storage.googleapis.com/openimages/web/download_v5.html](https://storage.googleapis.com/openimages/web/download_v5.html).
 
+# Acknowledgement
+
+```bibtex
+@misc{openimg,
+  title = "{{Google Open Images Dataset}}",
+  howpublished="\url{https://storage.googleapis.com/openimages/web/index.html}"
+}
+```

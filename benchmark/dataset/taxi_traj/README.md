@@ -17,3 +17,11 @@ taxi_traj/
 The original location of this dataset is at
 [ECML/PKDD 15: Taxi Trajectory Prediction](https://www.kaggle.com/c/pkdd-15-predict-taxi-service-trajectory-i/overview).
 
+# Acknowledgement
+
+```bibtex
+@misc{taxi-trajs,
+  title = "{{Taxi Trajectory Dataset}}",
+  howpublished="\url{https://www.kaggle.com/c/pkdd-15-predict-taxi-service-trajectory-i/overview}"
+}
+```
