@@ -14,3 +14,14 @@ to each individual.
 # References
  This dataset is covered in more detail at [https://arxiv.org/abs/1804.03209](https://arxiv.org/abs/1804.03209) and Its original location is at
 [http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz](http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz).
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{google-speech,
+  title={Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition},
+  author={Pete Warden},
+  booktitle={arxiv.org/abs/1804.03209},
+  year={2018},
+}
+```

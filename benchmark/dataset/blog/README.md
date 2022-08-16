@@ -8,3 +8,14 @@ The Blog Corpus consists of the collected posts of 19,320 bloggers gathered from
 # References
 The original location of this dataset is at
 [Blog Corpus](https://www.kaggle.com/datasets/rtatman/blog-authorship-corpus).
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{blog-corpus,
+  title={Effects of Age and Gender on Blogging},
+  author={J. Schler and M. Koppel and S. Argamon and J. Pennebaker},
+  booktitle={Proceedings of AAAI Spring Symposium on Computational Approaches for Analyzing Weblogs},
+  year={2006},
+}
+```
