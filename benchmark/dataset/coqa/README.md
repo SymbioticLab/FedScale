@@ -17,3 +17,14 @@ coqa/
 # References
 The original location of this dataset is at
 [CoQA Dataset](https://stanfordnlp.github.io/coqa/).
+
+# Acknowledge
+
+```bibtex
+@article{coqa,
+  title={CoQA: A Conversational Question Answering Challenge}, 
+  author={Siva Reddy and Danqi Chen and Christopher D. Manning},
+  year={2019},
+  journal={arXiv preprint arXiv:1808.07042},
+}
+```

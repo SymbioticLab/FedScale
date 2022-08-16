@@ -47,7 +47,7 @@ class Client(object):
         criterion = self.get_criterion(conf)
         error_type = None
 
-        # TODO: One may hope to run fixed number of epochs, instead of iterations
+        # TODO: One may hope to run fixed number of epochs, instead of iterations, use conf.local_steps * len(client_data) instead
         while self.completed_steps < conf.local_steps:
 
             try:
