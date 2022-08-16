@@ -16,7 +16,7 @@ waymo/
 The original location of this dataset is at
 [Puffer Dataset](https://puffer.stanford.edu/data-description/).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{puffer,

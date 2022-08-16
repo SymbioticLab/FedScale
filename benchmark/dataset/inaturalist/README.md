@@ -17,7 +17,7 @@ You can download the raw data from [here](https://www.kaggle.com/c/inaturalist-2
 The original location of this dataset is at
 [https://sites.google.com/view/fgvc6/competitions/inaturalist-2019](https://sites.google.com/view/fgvc6/competitions/inaturalist-2019).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @misc{inatural,

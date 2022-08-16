@@ -22,7 +22,7 @@ The original location of this dataset is at
 [https://www.statmt.org/europarl/](https://www.statmt.org/europarl/).
 
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{europarl,

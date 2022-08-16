@@ -20,7 +20,7 @@ amazon_review/
 The original location of this dataset is at
 [Amazon Review Dataset](https://jmcauley.ucsd.edu/data/amazon/).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{amazon-review,

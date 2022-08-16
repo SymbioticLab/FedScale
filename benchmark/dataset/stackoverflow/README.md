@@ -12,7 +12,7 @@ This dataset is covered in more detail at [https://www.tensorflow.org/federated/
 [https://storage.googleapis.com/tff-datasets-public/stackoverflow.tar.bz2](https://storage.googleapis.com/tff-datasets-public/stackoverflow.tar.bz2).
 
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @misc{stack-overflow,

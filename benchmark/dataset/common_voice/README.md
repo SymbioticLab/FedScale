@@ -17,7 +17,7 @@ common_voice/
 The original location of this dataset is at
 [Common Voice Dataset](https://commonvoice.mozilla.org/en/datasets).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @misc{common-voice,

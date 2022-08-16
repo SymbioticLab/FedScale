@@ -19,7 +19,7 @@ waymo/
 The original location of this dataset is at
 [Waymo Motion](https://waymo.com/intl/en_us/dataset-motion/).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @article{waymo-motion,

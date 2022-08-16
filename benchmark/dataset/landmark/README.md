@@ -15,7 +15,7 @@ data/
 
 The dataset is splited into training and testing set. Random ids were assigned to each client.
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{landmark,

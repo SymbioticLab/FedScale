@@ -9,7 +9,7 @@ The Blog Corpus consists of the collected posts of 19,320 bloggers gathered from
 The original location of this dataset is at
 [Blog Corpus](https://www.kaggle.com/datasets/rtatman/blog-authorship-corpus).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{blog-corpus,

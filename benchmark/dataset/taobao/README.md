@@ -16,7 +16,7 @@ You can download the raw data from [here](https://www.kaggle.com/pavansanagapati
 The original location of this dataset is at
 [https://tianchi.aliyun.com/dataset/dataDetail?dataId=56](https://tianchi.aliyun.com/dataset/dataDetail?dataId=56).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @misc{taobao,

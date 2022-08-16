@@ -16,7 +16,7 @@ to each individual.
 [http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz](http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz).
 
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{google-speech,

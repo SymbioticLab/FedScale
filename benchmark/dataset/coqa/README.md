@@ -18,7 +18,7 @@ coqa/
 The original location of this dataset is at
 [CoQA Dataset](https://stanfordnlp.github.io/coqa/).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @article{coqa,

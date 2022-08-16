@@ -16,7 +16,7 @@ data/
 The original location of this dataset is at
 [https://www.nist.gov/srd/nist-special-database-19](https://www.nist.gov/srd/nist-special-database-19).
 
-# Acknowledge
+# Acknowledgement
 
 ```bibtex
 @inproceedings{FEMNIST,
