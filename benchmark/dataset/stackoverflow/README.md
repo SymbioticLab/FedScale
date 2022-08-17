@@ -10,3 +10,12 @@ The [dataset](stackoverflow_preprocessed.tar.gz) is splited into training and te
 # References
 This dataset is covered in more detail at [https://www.tensorflow.org/federated/api_docs/python/tff/simulation/datasets/stackoverflow/load_data](https://www.tensorflow.org/federated/api_docs/python/tff/simulation/datasets/stackoverflow/load_data) and Its original location is at
 [https://storage.googleapis.com/tff-datasets-public/stackoverflow.tar.bz2](https://storage.googleapis.com/tff-datasets-public/stackoverflow.tar.bz2).
+
+# Acknowledgement
+
+```bibtex
+@misc{stack-overflow,
+  title = "{{Stack Overflow Data}}",
+  howpublished="\url{https://cloud.google.com/bigquery/public-data/stackoverflow}"
+}
+```

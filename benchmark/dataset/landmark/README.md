@@ -14,3 +14,14 @@ data/
 ```
 
 The dataset is splited into training and testing set. Random ids were assigned to each client.
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{landmark,
+  title     = {Google Landmarks Dataset v2 A Large-Scale Benchmark for Instance-Level Recognition and Retrieval},
+  author    = {Tobias Weyand and Andre Araujo and Bingyi Cao and Jack Sim},
+  booktitle = {arxiv.org/abs/2004.01804},
+  year      = {2020},
+}
+```
