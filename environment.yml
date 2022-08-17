@@ -23,7 +23,7 @@ dependencies:
     - grpcio==1.40.0
     - gym
     - jupyter
-    - opacus
+#    - opacus
     - pillow==9
     - sentencepiece
     - gdown
