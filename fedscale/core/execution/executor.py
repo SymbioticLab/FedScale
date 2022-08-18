@@ -193,8 +193,8 @@ class Executor(object):
         client_id, train_config = config['client_id'], config['task_config']
 
         model = None
-        if 'model' in train_config and train_config['model'] is not None:
-            model = train_config['model']
+        if 'model' in config and config['model'] is not None:
+            model = config['model']
 
         client_conf = self.override_conf(train_config)
         train_res = self.training_handler(

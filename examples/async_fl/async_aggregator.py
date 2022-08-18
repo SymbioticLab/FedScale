@@ -15,6 +15,11 @@ from resource_manager import ResourceManager
 
 MAX_MESSAGE_LENGTH = 1 * 1024 * 1024 * 1024  # 1GB
 
+# NOTE: We are supporting and improving the following implementation (Async FL) in FedScale:
+    # - "PAPAYA: Practical, Private, and Scalable Federated Learning", MLSys, 2022
+    # - "Federated Learning with Buffered Asynchronous Aggregation", AISTATS, 2022
+
+# We appreciate you to contribute and/or report bugs. Thank you!
 
 class AsyncAggregator(Aggregator):
     """This centralized aggregator collects training/testing feedbacks from executors"""
@@ -29,8 +34,11 @@ class AsyncAggregator(Aggregator):
         self.client_model_version = {}
         self.virtual_client_clock = {}
         self.weight_tensor_type = {}
+
         # We need to keep the test model for specific round to avoid async mismatch
         self.test_model = None
+        self.aggregate_update = {}
+        self.importance_sum = 0
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
 
@@ -98,11 +106,14 @@ class AsyncAggregator(Aggregator):
             "PAPAYA: PRACTICAL, PRIVATE, AND SCALABLE FEDERATED LEARNING". MLSys, 2022
         """
         # Start to take the average of updates, and we do not keep updates to save memory
-        # Importance of each update is 1/#_of_participants * staleness
-        # importance = 1./self.tasks_round * staleness
-        client_staleness = self.round - \
-            self.client_model_version[results['clientId']]
-        importance = 1. / math.sqrt(1 + client_staleness)
+        # Importance of each update is 1/staleness
+        client_staleness = self.round - self.client_model_version[results['clientId']]
+        importance = 1. #/ (math.sqrt(1 + client_staleness))
+
+        new_round_aggregation = (self.model_in_update == 1)
+        if new_round_aggregation:
+            self.importance_sum = 0
+        self.importance_sum += importance
 
         for p in results['update_weight']:
             # Different to core/executor, update_weight here is (train_model_weight - untrained)
@@ -113,21 +124,27 @@ class AsyncAggregator(Aggregator):
             param_weight = torch.from_numpy(
                 param_weight).to(device=self.device)
 
-            if self.model_weights[p].data.dtype in (
-                torch.float, torch.double, torch.half, 	
-                torch.bfloat16, torch.chalf, torch.cfloat, torch.cdouble
-            ):
+            # if self.model_weights[p].data.dtype in (
+            #     torch.float, torch.double, torch.half, 	
+            #     torch.bfloat16, torch.chalf, torch.cfloat, torch.cdouble
+            # ):  
                 # Only assign importance to floats (trainable variables) 
-                self.model_weights[p].data += param_weight * importance
+            if new_round_aggregation:
+                self.aggregate_update[p] = param_weight * importance
             else:
-                # Non-floats (e.g., batches), no need to aggregate but need to track
-                self.model_weights[p].data += param_weight
+                self.aggregate_update[p] += param_weight * importance
+                
+                # self.model_weights[p].data += param_weight * importance
+            # else:
+            #     # Non-floats (e.g., num_batches), no need to aggregate but need to track
+            #     self.aggregate_update[p] = param_weight
 
         if self.model_in_update == self.async_buffer_size:
-            logging.info("Calibrating tensor type")
             for p in self.model_weights:
                 d_type = self.weight_tensor_type[p]
-                self.model_weights[p].data = (self.model_weights[p].data/float(self.async_buffer_size)).to(dtype=d_type)
+                self.model_weights[p].data = (
+                    self.model_weights[p].data + self.aggregate_update[p]/self.importance_sum
+                ).to(dtype=d_type)
 
     def round_completion_handler(self):
         self.global_virtual_clock = self.round_stamp[-1]
@@ -142,18 +159,19 @@ class AsyncAggregator(Aggregator):
 
         avg_loss = sum(self.loss_accumulator) / \
             max(1, len(self.loss_accumulator))
-        logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Remaining participants: " +
-                     f"{self.resource_manager.get_remaining()}, Succeed participants: " +
-                     f"{len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
+        logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, asyn running participants: " +
+                     f"{self.resource_manager.get_task_length()}, aggregating {len(self.stats_util_accumulator)} participants, " +
+                     f"training loss: {avg_loss}")
 
         # dump round completion information to tensorboard
         if len(self.loss_accumulator):
             self.log_train_result(avg_loss)
 
         # update select participants
+        # NOTE: we simulate async, while have to sync every 20 rounds to avoid large division to trace
         if self.resource_manager.get_task_length() < self.async_buffer_size:
             self.sampled_participants = self.select_participants(
-                select_num_participants=self.args.num_participants, overcommitment=self.args.overcommitment)
+                select_num_participants=self.async_buffer_size*2, overcommitment=self.args.overcommitment)
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
                 self.sampled_participants, len(self.sampled_participants))
 
@@ -216,19 +234,14 @@ class AsyncAggregator(Aggregator):
             straggler_round = min(
                 self.find_latest_model(self.client_start_time[client]), straggler_round)
 
-        return {'client_id': client_id, 'straggler_round': straggler_round, 'test_model': self.test_model}
+        return {'client_id': client_id, 
+                'straggler_round': straggler_round, 
+                'test_model': self.test_model}
 
     def get_client_conf(self, clientId):
         """Training configurations that will be applied on clients"""
-        start_time = self.client_start_time[clientId]
-        model_id = self.find_latest_model(start_time)
-        self.client_model_version[clientId] = model_id
-        end_time = self.client_round_duration[clientId] + start_time
-        logging.info(f"Client {clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
-
         conf = {
             'learning_rate': self.args.learning_rate,
-            'model': model_id  # none indicates we are using the global model
         }
         return conf
 
@@ -237,49 +250,22 @@ class AsyncAggregator(Aggregator):
 
         next_clientId = self.resource_manager.get_next_task(executorId)
         train_config = None
-        model_version = None
+        model = None
 
         if next_clientId != None:
             config = self.get_client_conf(next_clientId)
-            model_version = self.find_latest_model(self.client_start_time[next_clientId])
+            start_time = self.client_start_time[next_clientId]
+            model_id = self.find_latest_model(start_time)
+            self.client_model_version[next_clientId] = model_id
+            end_time = self.client_round_duration[next_clientId] + start_time
+
+            # The executor has already received the model, thus transfering id is enough
+            model = model_id
             train_config = {'client_id': next_clientId, 'task_config': config}
-        return train_config, model_version
 
-    def CLIENT_EXECUTE_COMPLETION(self, request, context):
-        """FL clients complete the execution task.
+            logging.info(f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
 
-        Args:
-            request (CompleteRequest): Complete request info from executor.
-
-        Returns:
-            ServerResponse: Server response to job completion request
-
-        """
-
-        executor_id, client_id, event = request.executor_id, request.client_id, request.event
-        execution_status, execution_msg = request.status, request.msg
-        meta_result, data_result = request.meta_result, request.data_result
-
-        if event == commons.CLIENT_TRAIN:
-            # Training results may be uploaded in CLIENT_EXECUTE_RESULT request later,
-            # so we need to specify whether to ask client to do so (in case of straggler/timeout in real FL).
-            if execution_status is False:
-                logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
-
-        elif event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
-            self.add_event_handler(
-                executor_id, event, meta_result, data_result)
-        else:
-            logging.error(f"Received undefined event {event} from client {client_id}")
-
-        if self.resource_manager.has_next_task(executor_id):
-            # NOTE: we do not pop the train immediately in simulation mode,
-            # since the executor may run multiple clients
-            if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:
-                self.individual_client_events[executor_id].append(
-                    commons.CLIENT_TRAIN)
-                    
-        return self.CLIENT_PING(request, context)
+        return train_config, model
 
     def log_train_result(self, avg_loss):
         """Result will be post on TensorBoard"""

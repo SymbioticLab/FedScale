@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
 import pickle
 
 import fedscale.core.channels.job_api_pb2 as job_api_pb2
@@ -107,10 +106,11 @@ class AsyncExecutor(Executor):
     def remove_stale_models(self, straggler_round):
         """Remove useless models kept for async execution in the past"""
         logging.info(f"Current straggler round is {straggler_round}")
-        for r in range(min(straggler_round-1, self.round)):
-            if self.check_model_version(r):
-                logging.info(f"Executor {self.this_rank} removes stale model version {r}")
-                os.remove(self.temp_model_path_version(r))
+        stale_version = straggler_round-1
+        while self.check_model_version(stale_version):
+            logging.info(f"Executor {self.this_rank} removes stale model version {stale_version}")
+            os.remove(self.temp_model_path_version(stale_version))
+            stale_version -= 1
 
     def event_monitor(self):
         """Activate event handler once receiving new message
