@@ -108,7 +108,7 @@ class AsyncAggregator(Aggregator):
         # Start to take the average of updates, and we do not keep updates to save memory
         # Importance of each update is 1/staleness
         client_staleness = self.round - self.client_model_version[results['clientId']]
-        importance = 1. #/ (math.sqrt(1 + client_staleness))
+        importance = 1./(math.sqrt(1 + client_staleness))
 
         new_round_aggregation = (self.model_in_update == 1)
         if new_round_aggregation:
@@ -171,7 +171,7 @@ class AsyncAggregator(Aggregator):
         # NOTE: we simulate async, while have to sync every 20 rounds to avoid large division to trace
         if self.resource_manager.get_task_length() < self.async_buffer_size:
             self.sampled_participants = self.select_participants(
-                select_num_participants=self.async_buffer_size*2, overcommitment=self.args.overcommitment)
+                select_num_participants=self.async_buffer_size*20, overcommitment=self.args.overcommitment)
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
                 self.sampled_participants, len(self.sampled_participants))
 
