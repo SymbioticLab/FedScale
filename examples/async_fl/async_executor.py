@@ -32,7 +32,7 @@ class AsyncExecutor(Executor):
 
     def load_global_model(self, round=None):
         # load last global model
-        logging.info(f"====Load global model with version {round}")
+        # logging.info(f"====Load global model with version {round}")
         round = min(round, self.round) if round is not None else self.round
         with open(self.temp_model_path_version(round), 'rb') as model_in:
             model = pickle.load(model_in)
@@ -70,7 +70,7 @@ class AsyncExecutor(Executor):
 
         evalStart = time.time()
         device = self.device
-        model = config['test_model']
+        model = self.load_global_model()# config['test_model']
         if self.task == 'rl':
             client = RLClient(args)
             test_res = client.test(args, self.this_rank, model, device=device)
@@ -129,6 +129,7 @@ class AsyncExecutor(Executor):
                     if train_model is not None and not self.check_model_version(train_model):
                         # The executor may have not received the model due to async grpc
                         self.event_queue.append(request)
+                        logging.error(f"Warning: Not receive model {train_model} for client {train_config['client_id'] }")
                         time.sleep(1)
                         continue
 

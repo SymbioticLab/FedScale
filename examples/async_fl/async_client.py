@@ -54,9 +54,9 @@ class Client(Client):
         results['utility'] = math.sqrt(
             self.loss_squre)*float(trained_unique_samples)
 
-        if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
-        else:
+        if error_type is not None:
+        #     logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
+        # else:
             logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
 
         results['update_weight'] = model_param
