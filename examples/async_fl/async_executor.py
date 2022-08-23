@@ -70,7 +70,7 @@ class AsyncExecutor(Executor):
 
         evalStart = time.time()
         device = self.device
-        model = self.load_global_model()# config['test_model']
+        model = self.load_global_model() # config['test_model']
         if self.task == 'rl':
             client = RLClient(args)
             test_res = client.test(args, self.this_rank, model, device=device)
@@ -128,6 +128,7 @@ class AsyncExecutor(Executor):
                     train_model = self.deserialize_response(request.data)
                     if train_model is not None and not self.check_model_version(train_model):
                         # The executor may have not received the model due to async grpc
+                        # TODO: server will lose track of scheduled but not executed task and remove the model
                         self.event_queue.append(request)
                         logging.error(f"Warning: Not receive model {train_model} for client {train_config['client_id'] }")
                         time.sleep(1)
@@ -147,7 +148,7 @@ class AsyncExecutor(Executor):
 
                 elif current_event == commons.MODEL_TEST:
                     test_configs = self.deserialize_response(request.meta)
-                    self.remove_stale_models(test_configs['straggler_round'])
+                    # self.remove_stale_models(test_configs['straggler_round'])
                     self.Test(test_configs)
 
                 elif current_event == commons.UPDATE_MODEL:

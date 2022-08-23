@@ -103,6 +103,7 @@ parser.add_argument('--malicious_factor', type=int, default=1e15)
 # for asynchronous FL buffer size
 parser.add_argument('--max_concurrency', type=int, default=100)
 parser.add_argument('--async_buffer', type=int, default=10)
+parser.add_argument('--max_staleness', type=int, default=5)
 parser.add_argument(
     '--checkin_period', type=int, default=50, help='number of rounds to sample async clients'
 )

@@ -384,8 +384,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                                               results['moving_loss']),
                                           time_stamp=self.round,
                                           duration=self.virtual_client_clock[results['clientId']]['computation'] +
-                                          self.virtual_client_clock[results['clientId']
-                                                                    ]['communication']
+                                          self.virtual_client_clock[results['clientId']]['communication']
                                           )
 
         # ================== Aggregate weights ======================
@@ -850,7 +849,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 executor_id, event, meta_result, data_result)
         else:
             logging.error(f"Received undefined event {event} from client {client_id}")
-        
+
+        # TODO: whether we should schedule tasks when client_ping or client_complete
         if self.resource_manager.has_next_task(executor_id):
             # NOTE: we do not pop the train immediately in simulation mode,
             # since the executor may run multiple clients
