@@ -149,6 +149,8 @@ if len(sys.argv) > 1:
         fedscale_home = os.environ['FEDSCALE_HOME']
         if not redis_utils.is_redis_server_online():
             redis_utils.start_redis_server(redis_exec, fedscale_home)
+        time.sleep(1) # wait for server to go online
+        redis_utils.clear_all_keys() # clear existing keys
         process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])

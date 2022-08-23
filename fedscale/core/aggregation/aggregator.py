@@ -49,7 +49,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.client_manager = self.init_client_manager(args=args)
 
         # ======== model and data ========
-        self.model = None
+        # self.model = None
         self.model_in_update = 0
         self.update_lock = threading.Lock()
         # all weights including bias/#_batch_tracked (e.g., state_dict)
@@ -171,10 +171,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         assert self.args.engine == commons.PYTORCH, "Please define model for non-PyTorch models"
 
-        self.model = init_model()
+        # self.model = init_model()
+        md = init_model()
+        self.redis_cli.set_val('model', md, True)
 
         # Initiate model parameters dictionary <param_name, param>
-        self.model_weights = self.model.state_dict()
+        # self.model_weights = self.model.state_dict()
+        self.model_weights = md.state_dict()
 
     def init_task_context(self):
         """Initiate execution context for specific tasks
@@ -352,8 +355,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         self.init_model()
         self.save_last_param()
+        # self.model_update_size = sys.getsizeof(
+        #     pickle.dumps(self.model))/1024.0*8.  # kbits
         self.model_update_size = sys.getsizeof(
-            pickle.dumps(self.model))/1024.0*8.  # kbits
+            pickle.dumps(self.redis_cli.get_val('model', 'bytes')))/1024.0*8.  # kbits
         self.client_profiles = self.load_client_profile(
             file_path=self.args.device_conf_file)
 
@@ -483,13 +488,20 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
     def save_last_param(self):
         """ Save the last model parameters
         """
+        # if self.args.engine == commons.TENSORFLOW:
+        #     self.last_gradient_weights = [
+        #         layer.get_weights() for layer in self.model.layers]
+        # else:
+        #     self.last_gradient_weights = [
+        #         p.data.clone() for p in self.model.parameters()]
+        md = self.redis_cli.get_val('model', 'bytes')
         if self.args.engine == commons.TENSORFLOW:
             self.last_gradient_weights = [
-                layer.get_weights() for layer in self.model.layers]
+                layer.get_weights() for layer in md.layers]
         else:
             self.last_gradient_weights = [
-                p.data.clone() for p in self.model.parameters()]
-
+                p.data.clone() for p in md.parameters()]
+                
     def round_weight_handler(self, last_model):
         """Update model when the round completes
         
@@ -497,17 +509,31 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             last_model (list): A list of global model weight in last round.
         
         """
+        # if self.round > 1:
+        #     if self.args.engine == commons.TENSORFLOW:
+        #         for layer in self.model.layers:
+        #             layer.set_weights([p.cpu().detach().numpy()
+        #                               for p in self.model_weights[layer.name]])
+        #     else:
+        #         self.model.load_state_dict(self.model_weights)
+        #         current_grad_weights = [param.data.clone()
+        #                                 for param in self.model.parameters()]
+        #         self.optimizer.update_round_gradient(
+        #             last_model, current_grad_weights, self.model)
+        md = self.redis_cli.get_val('model', 'bytes')
         if self.round > 1:
             if self.args.engine == commons.TENSORFLOW:
-                for layer in self.model.layers:
+                for layer in md.layers:
                     layer.set_weights([p.cpu().detach().numpy()
                                       for p in self.model_weights[layer.name]])
             else:
-                self.model.load_state_dict(self.model_weights)
+                md.load_state_dict(self.model_weights)
                 current_grad_weights = [param.data.clone()
-                                        for param in self.model.parameters()]
+                                        for param in md.parameters()]
                 self.optimizer.update_round_gradient(
-                    last_model, current_grad_weights, self.model)
+                    last_model, current_grad_weights, md)
+                # now save the calculated result 'md' to Redis server
+                self.redis_cli.set_val('model', md, True)
 
     def round_completion_handler(self):
         """Triggered upon the round completion, it registers the last round execution info,
@@ -523,7 +549,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # handle the global update w/ current and last
         self.round_weight_handler(self.last_gradient_weights)
 
-        self.redis_cli.rpush('model', self.model, True)
+        # self.redis_cli.rpush('model', self.model, True)
 
         # avgUtilLastround = sum(self.stats_util_accumulator) / \
         #     max(1, len(self.stats_util_accumulator))
@@ -774,7 +800,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             PyTorch or TensorFlow module: Based on the executor's machine learning framework, initialize and return the model for training.
 
         """
-        return self.model
+        # return self.model
+        return self.redis_cli.get_val('model', 'bytes')
 
     def get_shutdown_config(self, client_id):
         """Shutdown config for client, developers can further define personalized client config here.
