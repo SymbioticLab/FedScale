@@ -70,7 +70,7 @@ class AsyncExecutor(Executor):
 
         evalStart = time.time()
         device = self.device
-        model = self.load_global_model() # config['test_model']
+        model =   config['test_model']
         if self.task == 'rl':
             client = RLClient(args)
             test_res = client.test(args, self.this_rank, model, device=device)
