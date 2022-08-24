@@ -129,8 +129,9 @@ class AsyncExecutor(Executor):
                     if train_model is not None and not self.check_model_version(train_model):
                         # The executor may have not received the model due to async grpc
                         # TODO: server will lose track of scheduled but not executed task and remove the model
-                        self.event_queue.append(request)
                         logging.error(f"Warning: Not receive model {train_model} for client {train_config['client_id'] }")
+                        if self.round - train_model <= self.args.max_staleness:
+                            self.event_queue.append(request)
                         time.sleep(1)
                         continue
 
@@ -148,7 +149,7 @@ class AsyncExecutor(Executor):
 
                 elif current_event == commons.MODEL_TEST:
                     test_configs = self.deserialize_response(request.meta)
-                    # self.remove_stale_models(test_configs['straggler_round'])
+                    self.remove_stale_models(test_configs['straggler_round'])
                     self.Test(test_configs)
 
                 elif current_event == commons.UPDATE_MODEL:

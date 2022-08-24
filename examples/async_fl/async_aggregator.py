@@ -42,7 +42,7 @@ class AsyncAggregator(Aggregator):
         self.importance_sum = 0
         self.client_end = []
         self.round_staleness = []
-        self.model_concurrency = collections.defaultdict(int)
+        # self.model_concurrency = collections.defaultdict(int)
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
 
@@ -57,6 +57,10 @@ class AsyncAggregator(Aggregator):
             start_time = self.global_virtual_clock
             constant_checkin_period = self.args.arrival_interval
             # 1. remove dummy clients that are not available to the end of training
+            concurreny_count = 0
+
+            end_list = []
+            end_j = 0
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
                 exe_cost = self.client_manager.getCompletionTime(client_to_run,
@@ -69,13 +73,23 @@ class AsyncAggregator(Aggregator):
                     exe_cost['communication']
                 # if the client is not active by the time of collection, we consider it is lost in this round
                 start_time += constant_checkin_period
-                if self.client_manager.isClientActive(client_to_run, roundDuration + start_time):
+                end_time = roundDuration + start_time
+                end_list.append( end_time )
+                while start_time > end_list[end_j] :
+                    concurreny_count -= 1
+                    end_j += 1
+                if concurreny_count > self.max_concurrency:
+                    end_list.pop()
+                    continue
+
+                if self.client_manager.isClientActive(client_to_run, end_time):
+                    concurreny_count += 1
                     sampledClientsReal.append(client_to_run)
                     completed_client_clock[client_to_run] = exe_cost
                     startTimes.append(start_time)
                     self.client_start_time[client_to_run].append(start_time)
                     self.client_round_duration[client_to_run] = roundDuration
-                    endTimes.append(roundDuration + start_time)
+                    endTimes.append(end_time)
 
             num_clients_to_collect = min(
                 num_clients_to_collect, len(sampledClientsReal))
@@ -173,10 +187,10 @@ class AsyncAggregator(Aggregator):
 
         # update select participants
         # NOTE: we simulate async, while have to sync every 20 rounds to avoid large division to trace
-        if self.resource_manager.get_task_length() < self.async_buffer_size:
+        if self.resource_manager.get_task_length() < self.async_buffer_size*2:
 
             self.sampled_participants = self.select_participants(
-                select_num_participants=self.async_buffer_size*5, overcommitment=self.args.overcommitment)
+                select_num_participants=self.async_buffer_size*10, overcommitment=self.args.overcommitment)
             (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
                 self.sampled_participants, len(self.sampled_participants))
 
@@ -263,7 +277,7 @@ class AsyncAggregator(Aggregator):
                 start_time = self.client_start_time[next_clientId][0]
                 end_time = self.client_round_duration[next_clientId] + start_time
                 model_id = self.find_latest_model(start_time)
-                if end_time < self.round_stamp[-1] or self.model_concurrency[model_id] > self.max_concurrency + self.async_buffer_size:
+                if end_time < self.round_stamp[-1]: # or self.model_concurrency[model_id] > self.max_concurrency + self.async_buffer_size:
                     self.client_start_time[next_clientId].pop(0)
                     continue
 
@@ -274,7 +288,7 @@ class AsyncAggregator(Aggregator):
                 train_config = {'client_id': next_clientId, 'task_config': config, 'end_time': end_time}
                 logging.info(
                     f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
-                self.model_concurrency[model_id] += 1
+                #self.model_concurrency[model_id] += 1
                 break
             else:
                 break
@@ -305,11 +319,13 @@ class AsyncAggregator(Aggregator):
         if self.client_round_duration[results['clientId']] + self.client_start_time[results['clientId']][0] < self.round_stamp[-1]:
             # Ignore tasks that are issued earlier but finish late
             self.client_start_time[results['clientId']].pop(0)
+            self.client_model_version[results['clientId']].pop(0)
             logging.info(f"Warning: Ignore late-response client {results['clientId']}")
             return
         if self.round - self.client_model_version[results['clientId']][0] > self.args.max_staleness:
             logging.info(f"Warning: Ignore stale client {results['clientId']} with {self.round - self.client_model_version[results['clientId']][0]}")
             self.client_model_version[results['clientId']].pop(0)
+            self.client_start_time[results['clientId']].pop(0)
             return
 
         # [ASYNC] New checkin clients ID would overlap with previous unfinished clients

@@ -56,6 +56,6 @@ job_conf:
     - use_cuda: True
     - overcommitment: 1.0
     - arrival_interval: 10
-    - max_staleness: 0
+    - max_staleness: 3
     - max_concurrency: 50
     - async_buffer: 50                     # Number of updates need to be aggregated before generating new model version
