@@ -315,13 +315,6 @@ class AsyncAggregator(Aggregator):
         #       -results = {'clientId':clientId, 'update_weight': model_param, 'moving_loss': round_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
 
-        # [Async] some clients are scheduled earlier, which should be aggregated in previous round but receive the result late
-        if self.client_round_duration[results['clientId']] + self.client_start_time[results['clientId']][0] < self.round_stamp[-1]:
-            # Ignore tasks that are issued earlier but finish late
-            self.client_start_time[results['clientId']].pop(0)
-            self.client_model_version[results['clientId']].pop(0)
-            logging.info(f"Warning: Ignore late-response client {results['clientId']}")
-            return
         if self.round - self.client_model_version[results['clientId']][0] > self.args.max_staleness:
             logging.info(f"Warning: Ignore stale client {results['clientId']} with {self.round - self.client_model_version[results['clientId']][0]}")
             self.client_model_version[results['clientId']].pop(0)

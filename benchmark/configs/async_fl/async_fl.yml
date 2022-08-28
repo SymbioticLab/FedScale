@@ -35,7 +35,7 @@ setup_commands:
 # We appreciate you to contribute and/or report bugs. Thank you!
 
 job_conf:
-    - job_name: femnist                    # Generate logs under this folder: log_path/job_name/time_stamp
+    - job_name: async_femnist                    # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark   # Path of log files
     - data_set: femnist                    # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/femnist    # Path of the dataset
@@ -55,7 +55,7 @@ job_conf:
     - ps_port: 12345
     - use_cuda: True
     - overcommitment: 1.0
-    - arrival_interval: 10
+    - arrival_interval: 1
     - max_staleness: 3
-    - max_concurrency: 50
+    - max_concurrency: 100
     - async_buffer: 50                     # Number of updates need to be aggregated before generating new model version
