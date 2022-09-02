@@ -123,6 +123,7 @@ class AsyncExecutor(Executor):
                 request = self.event_queue.popleft()
                 current_event = request.event
 
+                logging.info(f"====Poping event {current_event}")
                 if current_event == commons.CLIENT_TRAIN:
                     train_config = self.deserialize_response(request.meta)
                     train_model = self.deserialize_response(request.data)
@@ -155,7 +156,6 @@ class AsyncExecutor(Executor):
                 elif current_event == commons.UPDATE_MODEL:
                     broadcast_config = self.deserialize_response(request.data)
                     self.UpdateModel(broadcast_config)
-                    time.sleep(5)
 
                 elif current_event == commons.SHUT_DOWN:
                     self.Stop()

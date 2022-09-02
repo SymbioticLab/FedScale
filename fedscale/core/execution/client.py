@@ -47,9 +47,9 @@ class Client(object):
         criterion = self.get_criterion(conf)
         error_type = None
 
-        # NOTE: If one may hope to run fixed number of epochs, instead of iterations, use `while self.completed_steps < conf.local_steps * len(client_data)` instead
+        # NOTE: If one may hope to run fixed number of epochs, instead of iterations, 
+        # use `while self.completed_steps < conf.local_steps * len(client_data)` instead
         while self.completed_steps < conf.local_steps:
-
             try:
                 self.train_step(client_data, conf, model, optimizer, criterion)
             except Exception as ex:
@@ -61,15 +61,15 @@ class Client(object):
                        for p in state_dicts}
         results = {'clientId': clientId, 'moving_loss': self.epoch_train_loss,
                    'trained_size': self.completed_steps*conf.batch_size, 
-                   'success': self.completed_steps == conf.batch_size}
-        results['utility'] = math.sqrt(
-            self.loss_squre)*float(trained_unique_samples)
+                   'success': self.completed_steps == conf.local_steps}
 
         if error_type is None:
             logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
         else:
             logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
 
+        results['utility'] = math.sqrt(
+            self.loss_squre)*float(trained_unique_samples)
         results['update_weight'] = model_param
         results['wall_duration'] = 0
 

@@ -42,6 +42,7 @@ class AsyncAggregator(Aggregator):
         self.importance_sum = 0
         self.client_end = []
         self.round_staleness = []
+        self.round_tasks_issued = 0
         # self.model_concurrency = collections.defaultdict(int)
 
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
@@ -64,18 +65,16 @@ class AsyncAggregator(Aggregator):
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
                 exe_cost = self.client_manager.getCompletionTime(client_to_run,
-                                                                 batch_size=client_cfg.batch_size,
-                                                                 upload_step=client_cfg.local_steps,
-                                                                 upload_size=self.model_update_size,
-                                                                 download_size=self.model_update_size)
+                            batch_size=client_cfg.batch_size, upload_step=client_cfg.local_steps,
+                            upload_size=self.model_update_size, download_size=self.model_update_size)
 
                 roundDuration = exe_cost['computation'] + \
                     exe_cost['communication']
                 # if the client is not active by the time of collection, we consider it is lost in this round
                 start_time += constant_checkin_period
                 end_time = roundDuration + start_time
-                end_list.append( end_time )
-                while start_time > end_list[end_j] :
+                end_list.append(end_time)
+                while start_time > end_list[end_j]:
                     concurreny_count -= 1
                     end_j += 1
                 if concurreny_count > self.max_concurrency:
@@ -144,11 +143,6 @@ class AsyncAggregator(Aggregator):
             param_weight = torch.from_numpy(
                 param_weight).to(device=self.device)
 
-            # if self.model_weights[p].data.dtype in (
-            #     torch.float, torch.double, torch.half, 	
-            #     torch.bfloat16, torch.chalf, torch.cfloat, torch.cdouble
-            # ):  
-                # Only assign importance to floats (trainable variables) 
             if new_round_aggregation:
                 self.aggregate_update[p] = param_weight * importance
             else:
@@ -186,8 +180,8 @@ class AsyncAggregator(Aggregator):
             self.log_train_result(avg_loss)
 
         # update select participants
-        # NOTE: we simulate async, while have to sync every 20 rounds to avoid large division to trace
-        if self.resource_manager.get_task_length() < self.async_buffer_size*2:
+        # NOTE: we simulate async, while have to sync every 10 rounds to avoid large division to trace
+        if self.resource_manager.get_task_length() < self.async_buffer_size * 2:
 
             self.sampled_participants = self.select_participants(
                 select_num_participants=self.async_buffer_size*10, overcommitment=self.args.overcommitment)
@@ -195,7 +189,7 @@ class AsyncAggregator(Aggregator):
                 self.sampled_participants, len(self.sampled_participants))
 
             logging.info(f"{len(clientsToRun)} clients with constant arrival following the order: {clientsToRun}")
-            logging.info(f"====Register {len(clientsToRun)} to queue")
+
             # Issue requests to the resource manager; Tasks ordered by the completion time
             self.resource_manager.register_tasks(clientsToRun)
             self.virtual_client_clock.update(virtual_client_clock)
@@ -270,28 +264,38 @@ class AsyncAggregator(Aggregator):
 
         train_config = None
         model = None
-        while True:
-            next_clientId = self.resource_manager.get_next_task(executorId)
-            if next_clientId != None:
-                config = self.get_client_conf(next_clientId)
-                start_time = self.client_start_time[next_clientId][0]
-                end_time = self.client_round_duration[next_clientId] + start_time
-                model_id = self.find_latest_model(start_time)
-                if end_time < self.round_stamp[-1]: # or self.model_concurrency[model_id] > self.max_concurrency + self.async_buffer_size:
-                    self.client_start_time[next_clientId].pop(0)
-                    continue
 
-                self.client_model_version[next_clientId].append(model_id)
+        # NOTE: in batch execution simulation (i.e., multiple executors), we need to stall task scheduling 
+        # to ensure clients in current async_buffer_size completes ahead of other tasks
+        with self.update_lock:
+            logging.info(f"====self.round_tasks_issued is {self.round_tasks_issued}, {self.async_buffer_size}")
+            if self.round_tasks_issued < self.async_buffer_size:
+                while True:
+                    next_clientId = self.resource_manager.get_next_task(executorId)
+                    if next_clientId != None:
+                        config = self.get_client_conf(next_clientId)
+                        start_time = self.client_start_time[next_clientId][0]
+                        end_time = self.client_round_duration[next_clientId] + start_time
+                        model_id = self.find_latest_model(start_time)
+                        if end_time < self.round_stamp[-1]: # or self.model_concurrency[model_id] > self.max_concurrency + self.async_buffer_size:
+                            self.client_start_time[next_clientId].pop(0)
+                            continue
 
-                # The executor has already received the model, thus transferring id is enough
-                model = model_id
-                train_config = {'client_id': next_clientId, 'task_config': config, 'end_time': end_time}
-                logging.info(
-                    f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
-                #self.model_concurrency[model_id] += 1
-                break
+                        self.client_model_version[next_clientId].append(model_id)
+
+                        # The executor has already received the model, thus sending id is enough
+                        model = model_id
+                        train_config = {'client_id': next_clientId, 'task_config': config, 'end_time': end_time}
+                        logging.info(
+                            f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
+                        #self.model_concurrency[model_id] += 1
+                        self.round_tasks_issued += 1
+                        break
+                    else:
+                        break
             else:
-                break
+                # We should insert the train request back, since we pop it earlier
+                self.individual_client_events[executorId].append(commons.CLIENT_TRAIN)
 
         return train_config, model
 
@@ -319,12 +323,15 @@ class AsyncAggregator(Aggregator):
             logging.info(f"Warning: Ignore stale client {results['clientId']} with {self.round - self.client_model_version[results['clientId']][0]}")
             self.client_model_version[results['clientId']].pop(0)
             self.client_start_time[results['clientId']].pop(0)
+            with self.update_lock: self.round_tasks_issued -= 1
             return
 
         # [ASYNC] New checkin clients ID would overlap with previous unfinished clients
-        logging.info(f"Client {results['clientId']} completes from {self.client_start_time[results['clientId']][0]} to {self.client_start_time[results['clientId']][0]+self.client_round_duration[results['clientId']]}")
+        logging.info(
+            f"Client {results['clientId']} completes from {self.client_start_time[results['clientId']][0]} " +
+            f"to {self.client_start_time[results['clientId']][0]+self.client_round_duration[results['clientId']]}")
 
-        self.client_end.append( self.client_round_duration[results['clientId']] + self.client_start_time[results['clientId']].pop(0) )
+        self.client_end.append(self.client_round_duration[results['clientId']] + self.client_start_time[results['clientId']].pop(0))
 
         if self.args.gradient_policy in ['q-fedavg']:
             self.client_training_results.append(results)
@@ -341,15 +348,12 @@ class AsyncAggregator(Aggregator):
                                               )
 
         # ================== Aggregate weights ======================
-        self.update_lock.acquire()
-
-        self.model_in_update += 1
-        if self.using_group_params == True:
-            self.aggregate_client_group_weights(results)
-        else:
-            self.aggregate_client_weights(results)
-
-        self.update_lock.release()
+        with self.update_lock:
+            self.model_in_update += 1
+            if self.using_group_params == True:
+                self.aggregate_client_group_weights(results)
+            else:
+                self.aggregate_client_weights(results)
 
     def CLIENT_EXECUTE_COMPLETION(self, request, context):
         """FL clients complete the execution task.
@@ -378,11 +382,12 @@ class AsyncAggregator(Aggregator):
         else:
             logging.error(f"Received undefined event {event} from client {client_id}")
 
-        # [ASYNC] Different from sync, only schedule tasks once previous training finish
+        # # [ASYNC] Different from sync that only schedule tasks once previous training finish
         if self.resource_manager.has_next_task(executor_id):
             # NOTE: we do not pop the train immediately in simulation mode,
             # since the executor may run multiple clients
-            if event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
+            if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:
+            # if event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
                 self.individual_client_events[executor_id].append(
                     commons.CLIENT_TRAIN)
 
@@ -400,7 +405,7 @@ class AsyncAggregator(Aggregator):
                     self.dispatch_client_events(current_event)
 
                 elif current_event == commons.START_ROUND:
-                    # [ASYNC] Only dispatch CLIENT_TRAIN on the first round
+                    # [ASYNC] Only dispatch CLIENT_TRAIN in the first round
                     if self.round == 1:
                         self.dispatch_client_events(commons.CLIENT_TRAIN)
 
@@ -419,11 +424,12 @@ class AsyncAggregator(Aggregator):
                     if self.model_in_update == self.async_buffer_size:
                         clientID = self.deserialize_response(data)['clientId']
                         logging.info(
-                            f"last client {clientID} at round {self.round} ")
+                            f"last client {clientID} in round {self.round} ")
                         # [ASYNC] handle different completion order
                         self.round_stamp.append(max(self.client_end))
                         self.client_end = []
                         self.round_completion_handler()
+                        with self.update_lock: self.round_tasks_issued = 0
 
                 elif current_event == commons.MODEL_TEST:
                     self.testing_completion_handler(
