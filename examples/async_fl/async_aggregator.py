@@ -268,34 +268,23 @@ class AsyncAggregator(Aggregator):
         # NOTE: in batch execution simulation (i.e., multiple executors), we need to stall task scheduling 
         # to ensure clients in current async_buffer_size completes ahead of other tasks
         with self.update_lock:
-            logging.info(f"====self.round_tasks_issued is {self.round_tasks_issued}, {self.async_buffer_size}")
+            # logging.info(f"====self.round_tasks_issued ({executorId}) is {self.round_tasks_issued}, {self.async_buffer_size}")
             if self.round_tasks_issued < self.async_buffer_size:
-                while True:
-                    next_clientId = self.resource_manager.get_next_task(executorId)
-                    if next_clientId != None:
-                        config = self.get_client_conf(next_clientId)
-                        start_time = self.client_start_time[next_clientId][0]
-                        end_time = self.client_round_duration[next_clientId] + start_time
-                        model_id = self.find_latest_model(start_time)
-                        if end_time < self.round_stamp[-1]: # or self.model_concurrency[model_id] > self.max_concurrency + self.async_buffer_size:
-                            self.client_start_time[next_clientId].pop(0)
-                            continue
+                next_clientId = self.resource_manager.get_next_task(executorId)
+                config = self.get_client_conf(next_clientId)
+                start_time = self.client_start_time[next_clientId][0]
+                end_time = self.client_round_duration[next_clientId] + start_time
+                model_id = self.find_latest_model(start_time)
 
-                        self.client_model_version[next_clientId].append(model_id)
+                self.client_model_version[next_clientId].append(model_id)
 
-                        # The executor has already received the model, thus sending id is enough
-                        model = model_id
-                        train_config = {'client_id': next_clientId, 'task_config': config, 'end_time': end_time}
-                        logging.info(
-                            f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
-                        #self.model_concurrency[model_id] += 1
-                        self.round_tasks_issued += 1
-                        break
-                    else:
-                        break
-            else:
-                # We should insert the train request back, since we pop it earlier
-                self.individual_client_events[executorId].append(commons.CLIENT_TRAIN)
+                # The executor has already received the model, thus sending id is enough
+                model = model_id
+                train_config = {'client_id': next_clientId, 'task_config': config, 'end_time': end_time}
+                logging.info(
+                    f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
+
+                self.round_tasks_issued += 1
 
         return train_config, model
 
@@ -382,7 +371,7 @@ class AsyncAggregator(Aggregator):
         else:
             logging.error(f"Received undefined event {event} from client {client_id}")
 
-        # # [ASYNC] Different from sync that only schedule tasks once previous training finish
+        # [ASYNC] Different from sync that only schedule tasks once previous training finish
         if self.resource_manager.has_next_task(executor_id):
             # NOTE: we do not pop the train immediately in simulation mode,
             # since the executor may run multiple clients
@@ -405,9 +394,7 @@ class AsyncAggregator(Aggregator):
                     self.dispatch_client_events(current_event)
 
                 elif current_event == commons.START_ROUND:
-                    # [ASYNC] Only dispatch CLIENT_TRAIN in the first round
-                    if self.round == 1:
-                        self.dispatch_client_events(commons.CLIENT_TRAIN)
+                    self.dispatch_client_events(commons.CLIENT_TRAIN)
 
                 elif current_event == commons.SHUT_DOWN:
                     self.dispatch_client_events(commons.SHUT_DOWN)

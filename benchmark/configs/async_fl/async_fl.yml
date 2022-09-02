@@ -8,7 +8,7 @@ ps_ip: localhost
 # Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
 # E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
 worker_ips:
-    - localhost:[4]
+    - localhost:[2,2,2,2]
 
 exp_path: $FEDSCALE_HOME/fedscale/core
 
@@ -52,10 +52,10 @@ job_conf:
     - learning_rate: 0.05
     - batch_size: 20
     - test_bsz: 20
-    - ps_port: 12345
+    - ps_port: 12342
     - use_cuda: True
     - overcommitment: 1.0
     - arrival_interval: 1
-    - max_staleness: 3
+    - max_staleness: 2
     - max_concurrency: 100
     - async_buffer: 50                     # Number of updates need to be aggregated before generating new model version
