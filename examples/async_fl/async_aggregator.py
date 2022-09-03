@@ -45,6 +45,25 @@ class AsyncAggregator(Aggregator):
         self.round_tasks_issued = 0
         # self.model_concurrency = collections.defaultdict(int)
 
+    def run(self):
+        """Start running the aggregator server by setting up execution
+        and communication environment, and monitoring the grpc message.
+        """
+        self.setup_env()
+        self.init_control_communication()
+        self.queue_lock = [threading.Lock() for _ in range(len(self.executors))]
+        self.init_data_communication()
+
+        self.init_model()
+        self.save_last_param()
+        self.model_update_size = sys.getsizeof(
+            pickle.dumps(self.model)) / 1024.0 * 8.  # kbits
+        self.client_profiles = self.load_client_profile(
+            file_path=self.args.device_conf_file)
+
+        self.event_monitor()
+
+
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
 
         if self.experiment_mode == commons.SIMULATION_MODE:
@@ -229,13 +248,13 @@ class AsyncAggregator(Aggregator):
 
     def get_test_config(self, client_id):
         """FL model testing on clients, developers can further define personalized client config here.
-        
+
         Args:
             client_id (int): The client id.
-        
+
         Returns:
             dictionary: The testing config for new task.
-        
+
         """
         # Get the straggler round-id
         client_tasks = self.resource_manager.client_run_queue
@@ -248,8 +267,8 @@ class AsyncAggregator(Aggregator):
             straggler_round = min(
                 self.find_latest_model(self.client_start_time[client][0]), straggler_round)
 
-        return {'client_id': client_id, 
-                'straggler_round': straggler_round, 
+        return {'client_id': client_id,
+                'straggler_round': straggler_round,
                 'test_model': self.test_model}
 
     def get_client_conf(self, clientId):
@@ -265,10 +284,10 @@ class AsyncAggregator(Aggregator):
         train_config = None
         model = None
 
-        # NOTE: in batch execution simulation (i.e., multiple executors), we need to stall task scheduling 
+        # NOTE: in batch execution simulation (i.e., multiple executors), we need to stall task scheduling
         # to ensure clients in current async_buffer_size completes ahead of other tasks
         with self.update_lock:
-            # logging.info(f"====self.round_tasks_issued ({executorId}) is {self.round_tasks_issued}, {self.async_buffer_size}")
+            logging.info(f"====self.round_tasks_issued ({executorId}) is {self.round_tasks_issued}, {self.async_buffer_size}")
             if self.round_tasks_issued < self.async_buffer_size:
                 next_clientId = self.resource_manager.get_next_task(executorId)
                 config = self.get_client_conf(next_clientId)
@@ -285,6 +304,7 @@ class AsyncAggregator(Aggregator):
                     f"Client {next_clientId} train on model {model_id} during {int(start_time)}-{int(end_time)}")
 
                 self.round_tasks_issued += 1
+
 
         return train_config, model
 
@@ -312,8 +332,10 @@ class AsyncAggregator(Aggregator):
             logging.info(f"Warning: Ignore stale client {results['clientId']} with {self.round - self.client_model_version[results['clientId']][0]}")
             self.client_model_version[results['clientId']].pop(0)
             self.client_start_time[results['clientId']].pop(0)
-            with self.update_lock: self.round_tasks_issued -= 1
-            return
+            with self.update_lock:
+                self.round_tasks_issued -= 1
+            # self.individual_client_events['1'].append( commons.CLIENT_TRAIN)
+            return -1
 
         # [ASYNC] New checkin clients ID would overlap with previous unfinished clients
         logging.info(
@@ -344,6 +366,8 @@ class AsyncAggregator(Aggregator):
             else:
                 self.aggregate_client_weights(results)
 
+        return 0
+
     def CLIENT_EXECUTE_COMPLETION(self, request, context):
         """FL clients complete the execution task.
 
@@ -372,15 +396,63 @@ class AsyncAggregator(Aggregator):
             logging.error(f"Received undefined event {event} from client {client_id}")
 
         # [ASYNC] Different from sync that only schedule tasks once previous training finish
-        if self.resource_manager.has_next_task(executor_id):
+        if self.resource_manager.has_next_task(executor_id) and self.round_tasks_issued < self.async_buffer_size:
             # NOTE: we do not pop the train immediately in simulation mode,
             # since the executor may run multiple clients
-            if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:
+            if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id] :
             # if event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
                 self.individual_client_events[executor_id].append(
                     commons.CLIENT_TRAIN)
 
         return self.CLIENT_PING(request, context)
+
+    def CLIENT_PING(self, request, context):
+        """Handle client ping requests
+
+        Args:
+            request (PingRequest): Ping request info from executor.
+
+        Returns:
+            ServerResponse: Server response to ping request
+
+        """
+        # NOTE: client_id = executor_id in deployment,
+        # while multiple client_id may use the same executor_id (VMs) in simulations
+        executor_id, client_id = request.executor_id, request.client_id
+        response_data = response_msg = commons.DUMMY_RESPONSE
+        with self.queue_lock[int(executor_id)-1]:
+            if len(self.individual_client_events[executor_id]) == 0:
+                # send dummy response
+                current_event = commons.DUMMY_EVENT
+                response_data = response_msg = commons.DUMMY_RESPONSE
+            else:
+                logging.info(f"====event queue {executor_id}, {self.individual_client_events[executor_id]}")
+                current_event = self.individual_client_events[executor_id].popleft()
+                if current_event == commons.CLIENT_TRAIN:
+                    response_msg, response_data = self.create_client_task(
+                        executor_id)
+                    if response_msg is None:
+                        current_event = commons.DUMMY_EVENT
+                        if self.experiment_mode != commons.SIMULATION_MODE:
+                            self.individual_client_events[executor_id].append(
+                                commons.CLIENT_TRAIN)
+                elif current_event == commons.MODEL_TEST:
+                    response_msg = self.get_test_config(client_id)
+                elif current_event == commons.UPDATE_MODEL:
+                    response_data = self.get_global_model()
+                elif current_event == commons.SHUT_DOWN:
+                    response_msg = self.get_shutdown_config(executor_id)
+
+        response_msg, response_data = self.serialize_response(
+            response_msg), self.serialize_response(response_data)
+        # NOTE: in simulation mode, response data is pickle for faster (de)serialization
+        response = job_api_pb2.ServerResponse(event=current_event,
+                                              meta=response_msg, data=response_data)
+        if current_event != commons.DUMMY_EVENT:
+            logging.info(f"Issue EVENT ({current_event}) to EXECUTOR ({executor_id})")
+
+        return response
+
 
     def event_monitor(self):
         logging.info("Start monitoring events ...")
@@ -405,13 +477,16 @@ class AsyncAggregator(Aggregator):
                 client_id, current_event, meta, data = self.sever_events_queue.popleft()
 
                 if current_event == commons.UPLOAD_MODEL:
-                    self.client_completion_handler(
+                    state = self.client_completion_handler(
                         self.deserialize_response(data))
+                    logging.info(
+                        f"Executor ({client_id}) finish client {self.deserialize_response(data)['clientId']} in round {self.round} [{self.model_in_update}/{ self.async_buffer_size}] ")
+                    if state == -1 :
+                        self.individual_client_events[client_id].append(commons.CLIENT_TRAIN)
 
-                    if self.model_in_update == self.async_buffer_size:
-                        clientID = self.deserialize_response(data)['clientId']
-                        logging.info(
-                            f"last client {clientID} in round {self.round} ")
+                    elif self.model_in_update == self.async_buffer_size:
+                        # clientID = self.deserialize_response(data)['clientId']
+
                         # [ASYNC] handle different completion order
                         self.round_stamp.append(max(self.client_end))
                         self.client_end = []
