@@ -12,16 +12,14 @@ class ResourceManager(DefaultManager):
         self.experiment_mode = experiment_mode
         self.update_lock = threading.Lock()
 
-    def get_remaining(self):
-        return len(self.client_run_queue)
+    def get_task_length(self):
+        self.update_lock.acquire()
+        remaining_task_num: int = len(self.client_run_queue)
+        self.update_lock.release()
+        return remaining_task_num
 
     def register_tasks(self, clientsToRun):
         self.client_run_queue += clientsToRun.copy()
-
-    def remove_client_task(self, client_id):
-        assert (client_id in self.client_run_queue,
-                f"client task {client_id} is not in task queue")
-        pass
 
     def has_next_task(self, client_id=None):
         exist_next_task = False

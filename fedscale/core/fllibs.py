@@ -209,7 +209,8 @@ def init_model():
         else:
             if args.model_zoo == "fedscale-zoo":
                 if args.task == "cv":
-                    model = get_cv_model()
+                    model = get_cv_model(name=args.model, 
+                        num_classes=outputClass[args.data_set])
                 else:
                     raise NameError(f"Model zoo {args.model_zoo} does not exist")
             elif args.model_zoo == "torchcv":

@@ -101,7 +101,9 @@ parser.add_argument('--backbone', type=str, default='./resnet50.pth')
 parser.add_argument('--malicious_factor', type=int, default=1e15)
 
 # for asynchronous FL buffer size
+parser.add_argument('--max_concurrency', type=int, default=100)
 parser.add_argument('--async_buffer', type=int, default=10)
+parser.add_argument('--max_staleness', type=int, default=5)
 parser.add_argument(
     '--checkin_period', type=int, default=50, help='number of rounds to sample async clients'
 )
@@ -174,9 +176,8 @@ parser.add_argument("--n_actions", type=int, default=2, help="action number")
 parser.add_argument("--n_states", type=int, default=4, help="state number")
 
 
-# for speech
 parser.add_argument("--num_classes", type=int, default=35,
-                    help="For number of classes in speech")
+                    help="For number of classes of the dataset")
 
 
 # for voice
@@ -231,7 +232,7 @@ model_factor = {'shufflenet': 0.0644/0.0554,
                 'resnet': 0.135/0.0554,
                 }
 
-args.num_class = datasetCategories.get(args.data_set, 10)
+args.num_class = datasetCategories.get(args.data_set, args.num_classes)
 for model_name in model_factor:
     if model_name in args.model:
         args.clock_factor = args.clock_factor * model_factor[model_name]

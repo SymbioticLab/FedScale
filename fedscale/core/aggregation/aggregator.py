@@ -384,8 +384,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                                               results['moving_loss']),
                                           time_stamp=self.round,
                                           duration=self.virtual_client_clock[results['clientId']]['computation'] +
-                                          self.virtual_client_clock[results['clientId']
-                                                                    ]['communication']
+                                          self.virtual_client_clock[results['clientId']]['communication']
                                           )
 
         # ================== Aggregate weights ======================
@@ -467,9 +466,18 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if self.args.engine == commons.TENSORFLOW:
             self.last_gradient_weights = [
                 layer.get_weights() for layer in self.model.layers]
+            self.model_weights = copy.deepcopy(self.model.state_dict())
         else:
             self.last_gradient_weights = [
                 p.data.clone() for p in self.model.parameters()]
+            self.model_weights = copy.deepcopy(self.model.state_dict())
+
+    def update_default_task_config(self):
+        """Update the default task configuration after each round
+        """
+        if self.round % self.args.decay_round == 0:
+            self.args.learning_rate = max(
+                self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
 
     def round_weight_handler(self, last_model):
         """Update model when the round completes
@@ -496,10 +504,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         self.global_virtual_clock += self.round_duration
         self.round += 1
-
-        if self.round % self.args.decay_round == 0:
-            self.args.learning_rate = max(
-                self.args.learning_rate*self.args.decay_factor, self.args.min_learning_rate)
 
         # handle the global update w/ current and last
         self.round_weight_handler(self.last_gradient_weights)
@@ -552,7 +556,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.test_result_accumulator = []
         self.stats_util_accumulator = []
         self.client_training_results = []
-
+        self.loss_accumulator = []
+        self.update_default_task_config()
+        
         if self.round >= self.args.rounds:
             self.broadcast_aggregator_events(commons.SHUT_DOWN)
         elif self.round % self.args.eval_interval == 0:
@@ -675,7 +681,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         conf = {
             'learning_rate': self.args.learning_rate,
-            'model': None  # none indicates we are using the global model
         }
         return conf
 
@@ -785,17 +790,17 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # while multiple client_id may use the same executor_id (VMs) in simulations
         executor_id, client_id = request.executor_id, request.client_id
         response_data = response_msg = commons.DUMMY_RESPONSE
-
+        
         if len(self.individual_client_events[executor_id]) == 0:
             # send dummy response
             current_event = commons.DUMMY_EVENT
             response_data = response_msg = commons.DUMMY_RESPONSE
         else:
-            current_event = self.individual_client_events[executor_id].popleft(
-            )
+            logging.info(f"====event queue {executor_id}, {self.individual_client_events[executor_id]}")
+            current_event = self.individual_client_events[executor_id].popleft()
             if current_event == commons.CLIENT_TRAIN:
                 response_msg, response_data = self.create_client_task(
-                    client_id)
+                    executor_id)
                 if response_msg is None:
                     current_event = commons.DUMMY_EVENT
                     if self.experiment_mode != commons.SIMULATION_MODE:
@@ -838,17 +843,21 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             # so we need to specify whether to ask client to do so (in case of straggler/timeout in real FL).
             if execution_status is False:
                 logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
-            if self.resource_manager.has_next_task(executor_id):
-                # NOTE: we do not pop the train immediately in simulation mode,
-                # since the executor may run multiple clients
-                self.individual_client_events[executor_id].append(
-                        commons.CLIENT_TRAIN)
 
         elif event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
             self.add_event_handler(
                 executor_id, event, meta_result, data_result)
         else:
             logging.error(f"Received undefined event {event} from client {client_id}")
+
+        # TODO: whether we should schedule tasks when client_ping or client_complete
+        if self.resource_manager.has_next_task(executor_id):
+            # NOTE: we do not pop the train immediately in simulation mode,
+            # since the executor may run multiple clients
+            if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:
+                self.individual_client_events[executor_id].append(
+                    commons.CLIENT_TRAIN)
+
         return self.CLIENT_PING(request, context)
 
     def event_monitor(self):
@@ -865,6 +874,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     self.dispatch_client_events(current_event)
 
                 elif current_event == commons.START_ROUND:
+
                     self.dispatch_client_events(commons.CLIENT_TRAIN)
 
                 elif current_event == commons.SHUT_DOWN:

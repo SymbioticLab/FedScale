@@ -7,6 +7,9 @@ from fedscale.core.execution.rlclient import RLClient
 from fedscale.core.logger.execution import *
 from fedscale.core import commons
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from async_client import Client as CustomizedClient
+
 class AsyncExecutor(Executor):
     """Each executor takes certain resource to run real training.
        Each run simulates the execution of an individual client"""
@@ -14,35 +17,35 @@ class AsyncExecutor(Executor):
     def __init__(self, args):
         super().__init__(args)
         self.temp_model_path_version = lambda round: os.path.join(
-            logDir, 'model_' + str(round) + '.pth.tar')
+            logDir, f'model_{self.this_rank}_{round}.pth.tar')
 
     def update_model_handler(self, model):
         """Update the model copy on this executor"""
-        self.model = model
         self.round += 1
 
         # Dump latest model to disk
         with open(self.temp_model_path_version(self.round), 'wb') as model_out:
-            logging.info(f"Received latest model saved at {self.temp_model_path_version(self.round)}")
-            pickle.dump(self.model, model_out)
+            logging.info(
+                f"Received latest model saved at {self.temp_model_path_version(self.round)}"
+            )
+            pickle.dump(model, model_out)
 
     def load_global_model(self, round=None):
         # load last global model
-        if round == -1:
-            with open(self.temp_model_path, 'rb') as model_in:
-                model = pickle.load(model_in)
-        else:
-            round = min(round, self.round) if round is not None else self.round
-            with open(self.temp_model_path_version(round), 'rb') as model_in:
-                model = pickle.load(model_in)
+        # logging.info(f"====Load global model with version {round}")
+        round = min(round, self.round) if round is not None else self.round
+        with open(self.temp_model_path_version(round), 'rb') as model_in:
+            model = pickle.load(model_in)
         return model
+
+    def get_client_trainer(self, conf):
+        return CustomizedClient(conf)
 
     def training_handler(self, clientId, conf, model=None):
         """Train model given client ids"""
 
         # Here model is model_id
-        client_model = self.load_global_model(-1) if model is None \
-            else self.load_global_model(model)
+        client_model = self.load_global_model(model)
 
         conf.clientId, conf.device = clientId, self.device
         conf.tokenizer = tokenizer
@@ -63,8 +66,51 @@ class AsyncExecutor(Executor):
 
         return train_res
 
+    def testing_handler(self, args, config=None):
+
+        evalStart = time.time()
+        device = self.device
+        model =   config['test_model']
+        if self.task == 'rl':
+            client = RLClient(args)
+            test_res = client.test(args, self.this_rank, model, device=device)
+            _, _, _, testResults = test_res
+        else:
+            data_loader = select_dataset(self.this_rank, self.testing_sets,
+                                         batch_size=args.test_bsz, args=args,
+                                         isTest=True, collate_fn=self.collate_fn
+                                         )
+
+            if self.task == 'voice':
+                criterion = CTCLoss(reduction='mean').to(device=device)
+            else:
+                criterion = torch.nn.CrossEntropyLoss().to(device=device)
+
+            if self.args.engine == commons.PYTORCH:
+                test_res = test_model(self.this_rank, model, data_loader,
+                                      device=device, criterion=criterion, tokenizer=tokenizer)
+            else:
+                raise Exception(f"Need customized implementation for model testing in {self.args.engine} engine")
+
+            test_loss, acc, acc_5, testResults = test_res
+            logging.info("After aggregation round {}, CumulTime {}, eval_time {}, test_loss {}, test_accuracy {:.2f}%, test_5_accuracy {:.2f}% \n"
+                         .format(self.round, round(time.time() - self.start_run_time, 4), round(time.time() - evalStart, 4), test_loss, acc*100., acc_5*100.))
+
+        gc.collect()
+
+        return testResults
+
     def check_model_version(self, model_id):
-        return os.path.exists(self.temp_model_path_version(round))
+        return os.path.exists(self.temp_model_path_version(model_id))
+
+    def remove_stale_models(self, straggler_round):
+        """Remove useless models kept for async execution in the past"""
+        logging.info(f"Current straggler round is {straggler_round}")
+        stale_version = straggler_round-1
+        while self.check_model_version(stale_version):
+            logging.info(f"Executor {self.this_rank} removes stale model version {stale_version}")
+            os.remove(self.temp_model_path_version(stale_version))
+            stale_version -= 1
 
     def event_monitor(self):
         """Activate event handler once receiving new message
@@ -77,12 +123,16 @@ class AsyncExecutor(Executor):
                 request = self.event_queue.popleft()
                 current_event = request.event
 
+                logging.info(f"====Poping event {current_event}")
                 if current_event == commons.CLIENT_TRAIN:
                     train_config = self.deserialize_response(request.meta)
                     train_model = self.deserialize_response(request.data)
                     if train_model is not None and not self.check_model_version(train_model):
                         # The executor may have not received the model due to async grpc
-                        self.event_queue.append(request)
+                        # TODO: server will lose track of scheduled but not executed task and remove the model
+                        logging.error(f"Warning: Not receive model {train_model} for client {train_config['client_id'] }")
+                        if self.round - train_model <= self.args.max_staleness:
+                            self.event_queue.append(request)
                         time.sleep(1)
                         continue
 
@@ -99,12 +149,13 @@ class AsyncExecutor(Executor):
                     future_call.add_done_callback(lambda _response: self.dispatch_worker_events(_response.result()))
 
                 elif current_event == commons.MODEL_TEST:
-                    self.Test(self.deserialize_response(request.meta))
+                    test_configs = self.deserialize_response(request.meta)
+                    self.remove_stale_models(test_configs['straggler_round'])
+                    self.Test(test_configs)
 
                 elif current_event == commons.UPDATE_MODEL:
                     broadcast_config = self.deserialize_response(request.data)
                     self.UpdateModel(broadcast_config)
-                    time.sleep(5)
 
                 elif current_event == commons.SHUT_DOWN:
                     self.Stop()
@@ -112,7 +163,7 @@ class AsyncExecutor(Executor):
                 elif current_event == commons.DUMMY_EVENT:
                     pass
             else:
-                time.sleep(10)
+                time.sleep(1)
                 self.client_ping()
 
 if __name__ == "__main__":
