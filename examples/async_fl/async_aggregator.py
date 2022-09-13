@@ -51,7 +51,6 @@ class AsyncAggregator(Aggregator):
         """
         self.setup_env()
         self.init_control_communication()
-        self.queue_lock = [threading.Lock() for _ in range(len(self.executors))]
         self.init_data_communication()
 
         self.init_model()
@@ -116,8 +115,9 @@ class AsyncAggregator(Aggregator):
                 range(len(endTimes)), key=lambda k: endTimes[k])
             top_k_index = sortedWorkersByCompletion[:num_clients_to_collect]
             clients_to_run = [sampledClientsReal[k] for k in top_k_index]
+            endTimes = [endTimes[k] for k in top_k_index]
             return (clients_to_run,
-                    start_time,
+                    endTimes,
                     completed_client_clock)  # dict : string the speed for each client
 
         else:
@@ -200,17 +200,17 @@ class AsyncAggregator(Aggregator):
 
         # update select participants
         # NOTE: we simulate async, while have to sync every 10 rounds to avoid large division to trace
-        if self.resource_manager.get_task_length() < self.async_buffer_size * 2:
+        if self.resource_manager.get_task_length() < self.async_buffer_size * 5:
 
             self.sampled_participants = self.select_participants(
                 select_num_participants=self.async_buffer_size*10, overcommitment=self.args.overcommitment)
-            (clientsToRun, clientsStartTime, virtual_client_clock) = self.tictak_client_tasks(
+            (clientsToRun, clientsEndTime, virtual_client_clock) = self.tictak_client_tasks(
                 self.sampled_participants, len(self.sampled_participants))
 
             logging.info(f"{len(clientsToRun)} clients with constant arrival following the order: {clientsToRun}")
 
             # Issue requests to the resource manager; Tasks ordered by the completion time
-            self.resource_manager.register_tasks(clientsToRun)
+            self.resource_manager.register_tasks(clientsToRun, clientsEndTime)
             self.virtual_client_clock.update(virtual_client_clock)
 
         # Update executors and participants
@@ -420,28 +420,27 @@ class AsyncAggregator(Aggregator):
         # while multiple client_id may use the same executor_id (VMs) in simulations
         executor_id, client_id = request.executor_id, request.client_id
         response_data = response_msg = commons.DUMMY_RESPONSE
-        with self.queue_lock[int(executor_id)-1]:
-            if len(self.individual_client_events[executor_id]) == 0:
-                # send dummy response
-                current_event = commons.DUMMY_EVENT
-                response_data = response_msg = commons.DUMMY_RESPONSE
-            else:
-                logging.info(f"====event queue {executor_id}, {self.individual_client_events[executor_id]}")
-                current_event = self.individual_client_events[executor_id].popleft()
-                if current_event == commons.CLIENT_TRAIN:
-                    response_msg, response_data = self.create_client_task(
-                        executor_id)
-                    if response_msg is None:
-                        current_event = commons.DUMMY_EVENT
-                        if self.experiment_mode != commons.SIMULATION_MODE:
-                            self.individual_client_events[executor_id].append(
-                                commons.CLIENT_TRAIN)
-                elif current_event == commons.MODEL_TEST:
-                    response_msg = self.get_test_config(client_id)
-                elif current_event == commons.UPDATE_MODEL:
-                    response_data = self.get_global_model()
-                elif current_event == commons.SHUT_DOWN:
-                    response_msg = self.get_shutdown_config(executor_id)
+        if len(self.individual_client_events[executor_id]) == 0:
+            # send dummy response
+            current_event = commons.DUMMY_EVENT
+            response_data = response_msg = commons.DUMMY_RESPONSE
+        else:
+            logging.info(f"====event queue {executor_id}, {self.individual_client_events[executor_id]}")
+            current_event = self.individual_client_events[executor_id].popleft()
+            if current_event == commons.CLIENT_TRAIN:
+                response_msg, response_data = self.create_client_task(
+                    executor_id)
+                if response_msg is None:
+                    current_event = commons.DUMMY_EVENT
+                    if self.experiment_mode != commons.SIMULATION_MODE:
+                        self.individual_client_events[executor_id].append(
+                            commons.CLIENT_TRAIN)
+            elif current_event == commons.MODEL_TEST:
+                response_msg = self.get_test_config(client_id)
+            elif current_event == commons.UPDATE_MODEL:
+                response_data = self.get_global_model()
+            elif current_event == commons.SHUT_DOWN:
+                response_msg = self.get_shutdown_config(executor_id)
 
         response_msg, response_data = self.serialize_response(
             response_msg), self.serialize_response(response_data)
