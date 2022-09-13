@@ -16,6 +16,12 @@ from fedscale.core.resource_manager import ResourceManager
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
+def decompress(tensors, ctx):
+    numel, shape = ctx
+    values, indices = tensors
+    tensor_decompressed = torch.zeros(numel, dtype=values.dtype, layout=values.layout, device=values.device)
+    tensor_decompressed.scatter_(0, indices, values)
+    return tensor_decompressed.view(shape)
 
 class Aggregator(job_api_pb2_grpc.JobServiceServicer):
     """This centralized aggregator collects training/testing feedbacks from executors
@@ -413,11 +419,12 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # importance = 1./self.tasks_round
 
         for p in results['update_weight']:
-            param_weight = results['update_weight'][p]
-            if isinstance(param_weight, list):
-                param_weight = np.asarray(param_weight, dtype=np.float32)
-            param_weight = torch.from_numpy(
-                param_weight).to(device=self.device)
+            tensors, ctx = results['update_weight'][p]
+            param_weight = decompress(tensors, ctx)
+            #if isinstance(param_weight, list):
+            #    param_weight = np.asarray(param_weight, dtype=np.float32)
+            #param_weight = torch.from_numpy(
+            #    param_weight).to(device=self.device)
 
             if self.model_in_update == 1:
                 self.model_weights[p].data = param_weight
@@ -484,11 +491,13 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     layer.set_weights([p.cpu().detach().numpy()
                                       for p in self.model_weights[layer.name]])
             else:
+                for i, param in enumerate(self.model_weights):
+                    param += self.last_gradient_weights[i]
                 self.model.load_state_dict(self.model_weights)
-                current_grad_weights = [param.data.clone()
-                                        for param in self.model.parameters()]
-                self.optimizer.update_round_gradient(
-                    last_model, current_grad_weights, self.model)
+                #current_grad_weights = [param.data.clone()
+                #                       for param in self.model_weights]
+                #self.optimizer.update_round_gradient(
+                #    last_model, current_grad_weights, self.model)
 
     def round_completion_handler(self):
         """Triggered upon the round completion, it registers the last round execution info,

@@ -1,12 +1,22 @@
 import logging
 import math
-
+import copy
 import torch
 from torch.autograd import Variable
 
 from fedscale.core.execution.optimizers import ClientOptimizer
 from fedscale.dataloaders.nlp import mask_tokens
 
+com_ratio = 0.6
+
+def compress(tensor, compress_ratio):
+    ctx = tensor.numel(), tensor.size()
+    tensor = tensor.flatten()
+    k = max(1, int(tensor.numel() * compress_ratio))
+    _, indices = torch.topk(tensor.abs(), k, sorted=False,)
+    values = torch.gather(tensor, 0, indices)
+    tensors = (values, indices)
+    return tensors, ctx
 
 class Client(object):
     """Basic client component in Federated Learning"""
@@ -34,6 +44,7 @@ class Client(object):
 
         model = model.to(device=device)
         model.train()
+        model_cpy = copy.deepcopy(model)
 
         trained_unique_samples = min(
             len(client_data.dataset), conf.local_steps * conf.batch_size)
@@ -57,8 +68,18 @@ class Client(object):
                 break
 
         state_dicts = model.state_dict()
-        model_param = {p: state_dicts[p].data.cpu().numpy()
-                       for p in state_dicts}
+        state_dicts_cpy = model_cpy.state_dict()
+        model_param ={}
+        for p in state_dicts:
+            #orisize = state_dicts[p].numel() * state_dicts[p].element_size()
+            diff = state_dicts[p] - state_dicts_cpy[p]
+            (values, indices), ctx = compress(diff, com_ratio)
+            #cursize = values.numel() * values.element_size() + indices.numel() * indices.element_size()
+            #size = size + cursize
+            #osize = osize + orisize
+            model_param[p] = ((values, indices), ctx)
+
+
         results = {'clientId': clientId, 'moving_loss': self.epoch_train_loss,
                    'trained_size': self.completed_steps*conf.batch_size, 'success': self.completed_steps > 0}
         results['utility'] = math.sqrt(
