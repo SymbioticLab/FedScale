@@ -167,6 +167,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         assert self.args.engine == commons.PYTORCH, "Please define model for non-PyTorch models"
 
         self.model = init_model()
+        self.model.to(torch.device('cuda:0'))
 
         # Initiate model parameters dictionary <param_name, param>
         self.model_weights = self.model.state_dict()
@@ -436,7 +437,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 d_type = self.model_weights[p].data.dtype
 
                 self.model_weights[p].data = (
-                    self.model_weights[p]/float(self.tasks_round)).to(dtype=d_type)
+                    self.model_weights[p]/float(self.tasks_round) + self.model.state_dict()[p].data).to(dtype=d_type)
 
     def aggregate_client_group_weights(self, results):
         """Streaming weight aggregation. Similar to aggregate_client_weights, 
@@ -491,9 +492,14 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     layer.set_weights([p.cpu().detach().numpy()
                                       for p in self.model_weights[layer.name]])
             else:
-                for i, param in enumerate(self.model_weights):
-                    param += self.last_gradient_weights[i]
                 self.model.load_state_dict(self.model_weights)
+                #for i, param in enumerate(self.model.parameters()):
+                #    param.data.to(torch.device('cuda:0'))
+                #    self.last_gradient_weights[i].to(torch.device('cuda:0'))
+                #    print(param.data.size())
+                #    print(self.last_gradient_weights[i].size())
+                #    param.data += self.last_gradient_weights[i]
+                #self.model.load_state_dict(self.model_weights)
                 #current_grad_weights = [param.data.clone()
                 #                       for param in self.model_weights]
                 #self.optimizer.update_round_gradient(
