@@ -91,6 +91,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.stats_util_accumulator = []
         self.loss_accumulator = []
         self.client_training_results = []
+        self.test_loss_cache = []
+        self.tolerance = 3
+        self.cur_idx = 0
+        self.com_ratio_inc_tol = 0.02
+        self.com_ratio = 0.05
 
         # number of registered executors
         self.registered_executor_info = set()
@@ -648,6 +653,24 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
 
+            print("testing information")
+            print(self.testing_history['perf'][self.round]['loss'])
+            print(self.cur_idx)
+
+            if len(self.test_loss_cache) < self.tolerance:
+                self.test_loss_cache.append(self.testing_history['perf'][self.round]['loss'])
+            else:
+                self.test_loss_cache[self.cur_idx] = self.testing_history['perf'][self.round]['loss']
+            
+            self.cur_idx = (self.cur_idx + 1) % self.tolerance
+
+            if len(self.test_loss_cache) == self.tolerance:
+                if (max(self.test_loss_cache) - min(self.test_loss_cache)) < self.com_ratio_inc_tol:
+                    self.com_ratio += 0.05
+            print(self.test_loss_cache)
+            print(self.com_ratio)
+            print("End of testing information")
+
             if len(self.loss_accumulator):
                 self.log_test_result()
 
@@ -690,7 +713,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         conf = {
             'learning_rate': self.args.learning_rate,
-            'model': None  # none indicates we are using the global model
+            'model': None,  # none indicates we are using the global model
+            'com_ratio': self.com_ratio
         }
         return conf
 

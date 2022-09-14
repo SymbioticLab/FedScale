@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from fedscale.core.execution.optimizers import ClientOptimizer
 from fedscale.dataloaders.nlp import mask_tokens
 
-com_ratio = 0.6
+#com_ratio = 0.03
 
 def compress(tensor, compress_ratio):
     ctx = tensor.numel(), tensor.size()
@@ -70,6 +70,8 @@ class Client(object):
         state_dicts = model.state_dict()
         state_dicts_cpy = model_cpy.state_dict()
         model_param ={}
+        com_ratio = conf.com_ratio
+        print(com_ratio)
         for p in state_dicts:
             #orisize = state_dicts[p].numel() * state_dicts[p].element_size()
             diff = state_dicts[p] - state_dicts_cpy[p]
