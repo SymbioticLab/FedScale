@@ -5,8 +5,11 @@ FROM python:3.7-buster
 
 WORKDIR /FedScale
 
+# Add custom environment variable
+ENV FEDSCALE_HOME = /FedScale
+
 # COPY context/...(source) WORKDIR/...(dest)
-COPY docker/install.sh install.sh
+COPY install.sh install.sh
 
 COPY environment.yml environment.yml
 
