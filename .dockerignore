@@ -1,0 +1,9 @@
+# Files to ignore when building docker image
+*.log
+logs/
+./benchmark
+.DS_Store
+*.egg-info
+*logging
+./docker/Dockerfile*
+Anaconda3-2020.11-Linux-x86_64.sh
