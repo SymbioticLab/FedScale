@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+# Dockerfile for FedScale Executor
+
+FROM yilegu/fedscale-base:v1.0
+
+WORKDIR /FedScale
+
+# COPY all source files execept ignored by .dockerignore
+COPY . .
+
+# Setup fedscale package
+# RUN /bin/bash -c 'pip install -e .'
+
+# Run aggregator
+# RUN /bin/bash -c 'conda activate fedscale; python3 fedscale/core/aggregation/aggregator.py'
+RUN /bin/bash -c 'chmod +x ./docker/run-exec.sh'
+ENV PATH="${PATH}:/root/anaconda3/bin:/root/anaconda3/condabin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+CMD ["/bin/bash", "-c", "./docker/run-exec.sh"]
+# CMD ["/bin/sh", "-c", "conda", "run", "-n", "fedscale", "--no-capture-output", "python3", "fedscale/core/aggregation/aggregator.py"]
+
+# $HOME is just root
+# RUN echo $HOME
