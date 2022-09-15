@@ -1,0 +1,18 @@
+# syntax=docker/dockerfile:1
+# Dockerfile for FedScale Base, this will be shared for aggregator and executor images
+
+FROM python:3.7-buster
+
+WORKDIR /FedScale
+
+# Add custom environment variable
+ENV FEDSCALE_HOME = /FedScale
+
+# COPY context/...(source) WORKDIR/...(dest)
+COPY install.sh install.sh
+
+COPY environment.yml environment.yml
+
+# RUN opens a process in WORKDIR
+RUN /bin/bash -c 'chmod +x install.sh; ./install.sh'
+
