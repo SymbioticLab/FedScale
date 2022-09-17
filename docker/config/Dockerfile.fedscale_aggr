@@ -13,5 +13,8 @@ RUN /bin/bash -c 'chmod +x ./docker/config/run-aggr.sh'
 # Config PATH
 ENV PATH="${PATH}:/root/anaconda3/bin:/root/anaconda3/condabin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+# Setup fedscale package
+RUN /bin/bash -c 'conda run -n fedscale --no-capture-output pip install -e .'
+
 # Run Aggregator
 CMD ["/bin/bash", "-c", "./docker/config/run-aggr.sh"]
