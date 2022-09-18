@@ -9,7 +9,6 @@ logDir = None
 def init_logging():
     global logDir
 
-    print(f"Logger-execution: parser.args.log_path {parser.args.log_path}")
     logDir = os.path.join(parser.args.log_path, "logs", parser.args.job_name,
                       parser.args.time_stamp, 'executor')
     logFile = os.path.join(logDir, 'log')

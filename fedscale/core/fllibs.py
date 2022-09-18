@@ -42,7 +42,6 @@ tokenizer = None
 def import_libs():
     global tokenizer
 
-    print(f"Filllibs: parser.parser.args.data_set: {parser.args.data_set}")
     if parser.args.task == 'nlp' or parser.args.task == 'text_clf':
         global AdamW, AlbertTokenizer, AutoConfig, AutoModelWithLMHead, AutoTokenizer, MobileBertForPreTraining, load_and_cache_examples, mask_tokens
 
@@ -138,8 +137,7 @@ def init_model():
     elif parser.args.task == 'text_clf':
 
         if parser.args.model == 'albert':
-            from transformers import (AlbertForSequenceClassification,
-                                      AutoConfig)
+            from transformers import AlbertForSequenceClassification
             config = AutoConfig.from_pretrained(os.path.join(
                 parser.args.log_path, 'albert-small-config.json'))
             config.num_labels = outputClass[parser.args.data_set]

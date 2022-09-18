@@ -15,8 +15,7 @@ container_network: fedscale-net
 
 # containers need a data-path mount to facilitate dataset reuse
 # We assume the same data-path is used on all host machines
-# data_path: $FEDSCALE_HOME/benchmark
-data_path: /users/yilegu/benchmark
+data_path: $FEDSCALE_HOME/benchmark
 
 # ========== Cluster configuration ========== 
 # ip address of the parameter server (need 1 GPU process)
@@ -36,8 +35,7 @@ executor_entry: executor_ctnr.py
 aggregator_entry: aggregator_ctnr.py
 
 auth:
-    # ssh_user: ""
-    ssh_user: "yilegu"
+    ssh_user: ""
     ssh_private_key: ~/.ssh/id_rsa
 
 # cmd to run before we can indeed run FAR (in order)
