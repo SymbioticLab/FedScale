@@ -16,7 +16,7 @@ class Aggregator_Wrapper(Aggregator):
             if key in args_dict:
                 args_dict[key] = new_args[key]
             else:
-                logging.info(f'Aggregator_Wrapper: Warning: unrecognized argument {key} in config')
+                print(f'Aggregator_Wrapper: Warning: unrecognized argument {key} in config')
         super().__init__(parser.args)
         
     def wait_for_config(self):
@@ -26,7 +26,7 @@ class Aggregator_Wrapper(Aggregator):
         listen_socket.bind((CONTAINER_IP, CONTAINER_PORT))
         listen_socket.settimeout(1)
         listen_socket.listen(5)
-        logging.info("Aggregator_Wrapper: Waiting to initialize")
+        print("Aggregator_Wrapper: Waiting to initialize")
         while True:
             # avoid busy waiting
             time.sleep(0.1)
@@ -53,11 +53,11 @@ class Aggregator_Wrapper(Aggregator):
             try:
                 msg = json.loads(message_str)
             except json.JSONDecodeError:
-                logging.info("Aggregator_Wrapper: Error decoding init message!")
+                print("Aggregator_Wrapper: Error decoding init message!")
                 listen_socket.close()
                 exit(1)
             if msg['type'] == 'aggr_init':
-                logging.info("Aggregator_Wrapper: Init success!")
+                print("Aggregator_Wrapper: Init success!")
                 new_args = msg['data']
                 # print(args)
                 listen_socket.close()

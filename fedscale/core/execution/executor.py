@@ -7,12 +7,14 @@ from argparse import Namespace
 import torch
 
 import fedscale.core.channels.job_api_pb2 as job_api_pb2
+import fedscale.core.logger.execution as logger
+import fedscale.core.config_parser as parser
 from fedscale.core import commons
 from fedscale.core.channels.channel_context import ClientConnections
 from fedscale.core.execution.client import Client
 from fedscale.core.execution.data_processor import collate, voice_collate_fn
 from fedscale.core.execution.rlclient import RLClient
-from fedscale.core.logger.execution import *
+from fedscale.core.fllibs import *
 
 
 class Executor(object):
@@ -23,6 +25,8 @@ class Executor(object):
 
     """
     def __init__(self, args):
+        # initiate the executor log path, and executor ips
+        logger.initiate_client_setting()
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device(
@@ -35,7 +39,7 @@ class Executor(object):
         # ======== model and data ========
         self.training_sets = self.test_dataset = None
         self.temp_model_path = os.path.join(
-            logDir, 'model_'+str(args.this_rank)+'.pth.tar')
+            logger.logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
         # ======== channels ========
         self.aggregator_communicator = ClientConnections(
@@ -448,5 +452,5 @@ class Executor(object):
 
 
 if __name__ == "__main__":
-    executor = Executor(args)
+    executor = Executor(parser.args)
     executor.run()
