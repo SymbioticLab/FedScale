@@ -57,34 +57,30 @@ To allow containers running in different host machines to communicate with each 
 	```
 	
 ## Containerized FedScale Demo
-This is a walkthrough to run `Femnist` benchmark on containerized Fedscale. Currently we only have `Aggregator` and `Executor` images ready-to-use, so running a FedScale task will take more manual efforts than in the standalone mode. Suppose for the `Femnist` benchmark task, we want to run `Aggregator` on `host1` and one `Executor` on `host2`:
+This is a walkthrough to run `Femnist` benchmark on containerized Fedscale. We have provided example containerized configs files under `$FEDSCALE_HOME/benchmark/configs` (e.g. `$FEDSCALE_HOME/benchmark/configs/femnist/conf_ctnr.yml`) for containrized jobs and integrated our `driver.py` with container support.  Suppose for the `Femnist` benchmark task, we want to run `Aggregator` on `host1` and one `Executor` on `host2`:
 
-- Make sure you have dataset ready on both host machines, you can download datasets by running `$FEDSCALE_HOME/benchmark/dataset/download.sh` 
+- Prepare dataset and specify `data_path` in your `conf_ctnr.yml`. This path will be mounted into the container so that datasets can be reused in future runs.
 
-- Spin up `Aggregator` image and `Executor` image on both host machines
+- Specify `container_network` as the docker network name you have configured (e.g. `fedscale-net`).
+
+- Each `Aggregator` or `Executor` will need a port for process communication, make sure you choose ports that are open and specify `ports` in your `conf_ctnr.yml`. Note that in our example we can choose the same port for `Aggregator` and `Executor` since they are on different host machines.
+
+
+- Submit job
 
 	```
-	# Run aggregator interactively with TTY support, name the container as fedscale-aggr, use network fedscale-net, map container port 30000 to host port 25000, mount data folder into container
-	host1$ docker run -ti --name fedscale-aggr --network fedscale-net -p 25000:30000 --mount type=bind,source=$FEDSCALE_HOME/benchmark,target=/FedScale/benchmark,readonly fedscale/fedscale-aggr
-	host2$ docker run -ti --name fedscale-exec --network fedscale-net -p 20000:32000 --mount type=bind,source=$FEDSCALE_HOME/benchmark,target=/FedScale/benchmark,readonly fedscale/fedscale-exec
+	cd $FEDSCALE_HOME/docker
+	python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/femnist/conf_ctnr.yml
 	```
-- Now we have to find two containers ip inside container network `fedscale-net` so that `Aggregator` and `Executor` can talk to each other
 
-	- On both host machines, run `docker network inspect fedscale-net`
-	- Look for container ip under `container` tag
-	
-		```
-		    "Containers": {
-            "...": {
-                "Name": "fedscale-aggr",
-                "IPv4Address": "10.0.1.6/24",
-                "IPv6Address": ""
-            },
-		```
-	- Record ips of `Aggregator` and `Executor`
-- Run `$FEDSCALE_HOME/docker/config/initialize-aggr.py` and `$FEDSCALE_HOME/docker/config/initialize-exec.py` to configure `Aggregator` and `Executor`. Make sure following changes are made:
-	- Change `HOST_IP` to the correct host ip
-	- Change `ps_ip` and `executor_config` to reflect correct container ip
+- Check logs: FedScale will generate logs under `data_path` you provided by default.
+
+- Stop job
+
+	```
+	cd $FEDSCALE_HOME/docker
+	python3 driver.py stop $YOUR_JOB
+	```
 
 	
 ## Contribute to FedScale Container Images
