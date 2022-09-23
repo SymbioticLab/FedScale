@@ -9,10 +9,12 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 import fedscale.core.channels.job_api_pb2_grpc as job_api_pb2_grpc
+import fedscale.core.logger.aggragation as logger
+import fedscale.core.config_parser as parser
 from fedscale.core import commons
 from fedscale.core.channels import job_api_pb2
-from fedscale.core.logger.aggragation import *
 from fedscale.core.resource_manager import ResourceManager
+from fedscale.core.fllibs import *
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
@@ -25,6 +27,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
     """
     def __init__(self, args):
+        # init aggregator loger
+        logger.initiate_aggregator_setting()
+
         logging.info(f"Job args {args}")
 
         self.args = args
@@ -92,7 +97,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
                                 'gradient_policy': args.gradient_policy, 'task': args.task, 'perf': collections.OrderedDict()}
 
-        self.log_writer = SummaryWriter(log_dir=logDir)
+        self.log_writer = SummaryWriter(log_dir=logger.logDir)
 
         # ======== Task specific ============
         self.init_task_context()
@@ -632,11 +637,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         if len(self.test_result_accumulator) == len(self.executors):
             
-            aggregate_test_result(
+            logger.aggregate_test_result(
                 self.test_result_accumulator, self.args.task, \
                 self.round, self.global_virtual_clock, self.testing_history)
             # Dump the testing result
-            with open(os.path.join(logDir, 'testing_perf'), 'wb') as fout:
+            with open(os.path.join(logger.logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
 
             if len(self.loss_accumulator):
@@ -910,5 +915,5 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
 
 if __name__ == "__main__":
-    aggregator = Aggregator(args)
+    aggregator = Aggregator(parser.args)
     aggregator.run()

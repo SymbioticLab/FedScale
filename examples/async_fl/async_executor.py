@@ -2,6 +2,7 @@
 import pickle
 
 import fedscale.core.channels.job_api_pb2 as job_api_pb2
+import fedscale.core.config_parser as parser
 from fedscale.core.execution.executor import Executor
 from fedscale.core.execution.rlclient import RLClient
 from fedscale.core.logger.execution import *
@@ -167,5 +168,5 @@ class AsyncExecutor(Executor):
                 self.client_ping()
 
 if __name__ == "__main__":
-    executor = AsyncExecutor(args)
+    executor = AsyncExecutor(parser.args)
     executor.run()

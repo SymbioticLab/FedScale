@@ -5,6 +5,7 @@ import sys
 
 import torch
 
+import fedscale.core.config_parser as parser
 from fedscale.core import commons
 from fedscale.core.aggregation.aggregator import Aggregator
 from fedscale.core.channels import job_api_pb2
@@ -504,5 +505,5 @@ class AsyncAggregator(Aggregator):
                 time.sleep(0.1)
 
 if __name__ == "__main__":
-    aggregator = AsyncAggregator(args)
+    aggregator = AsyncAggregator(parser.args)
     aggregator.run()
