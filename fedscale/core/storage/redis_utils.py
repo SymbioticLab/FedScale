@@ -60,6 +60,7 @@ def start_redis_server(
     if password != '':
         if ' ' in password:
             raise ValueError('Spaces not permitted in redis password.')
+        print("Password set")
         command += ['--requirepass', password]
     else:
         print("Disabled protected mode since no password is set")
@@ -140,15 +141,17 @@ def clear_all_keys(
 class Redis_client():
     '''Create a redis client connected to specified server.'''
 
-    def __init__(self, host='localhost', port=6379, password=''):
-        # Set decode_responses=False to get bytes response,
-        # now all values get from redis (including TYPE command) are bytes
+    def __init__(self, host='localhost', port=6379, password='', tag=''):
+        # Use tag after key to distinguish between jobs
+        self.tag = tag
         retry = 100
         while not is_redis_server_online(host, port, password, retry):
-            print("Waiting for redis server to get online")
+            print('Waiting for redis server to get online')
             time.sleep(1) # wait until server is online
+        # Set decode_responses=False to get bytes response,
+        # now all values get from redis (including TYPE command) are bytes
         self.r = redis.Redis(host=host, port=port, password=password, decode_responses=False)
-        print("Successfully created client object")
+        print('Successfully created client object')
 
     def __quit__(self):
         self.r.quit()
@@ -165,10 +168,11 @@ class Redis_client():
         Returns:
             bool | None: Status of the set operation.
         """
+        tagged_key = key + self.tag
         if not bytes:
-            return self.r.set(key, val)
+            return self.r.set(tagged_key, val)
         else:
-            return self.r.set(key, bytes_serialize(val))
+            return self.r.set(tagged_key, bytes_serialize(val))
 
     def get_val(self, key, type):
         """Get the value specified by key and decode it.
@@ -183,10 +187,11 @@ class Redis_client():
         Returns:
             string | int | float | Any: Decoded value.
         """
+        tagged_key = key + self.tag
         if type in ['bytes']:
-            return bytes_deserialize(self.r.get(key))
+            return bytes_deserialize(self.r.get(tagged_key))
         else:
-            ret_val = self.r.get(key).decode('utf-8')
+            ret_val = self.r.get(tagged_key).decode('utf-8')
             if type in ['string']:
                 return ret_val
             elif type in ['int']:
@@ -205,7 +210,8 @@ class Redis_client():
         Returns:
             bytes | None: Undecoded value.
         """
-        return self.r.get(key)
+        tagged_key = key + self.tag
+        return self.r.get(tagged_key)
 
     def delete_key(self, key):
         """Delete the value specified by key.
@@ -216,7 +222,8 @@ class Redis_client():
         Returns:
             int: Status of the delete operation.
         """
-        return self.r.delete(key)
+        tagged_key = key + self.tag
+        return self.r.delete(tagged_key)
 
     def dump_to_disk(self):
         """Save the current in-memory database into disk.
@@ -238,18 +245,19 @@ class Redis_client():
         Returns:
             int: Status of the push operation.
         """
-        if self.r.type(key) not in [b'list', b'none']:
+        tagged_key = key + self.tag
+        if self.r.type(tagged_key) not in [b'list', b'none']:
             raise ValueError(f'Key {key} is not a list')
         if len(lst) == 0:
             # update to an empty list
-            self.r.delete(key)
+            self.r.delete(tagged_key)
             return 1
         if not bytes:
-            self.r.delete(key)
-            return self.r.rpush(key, *lst)
+            self.r.delete(tagged_key)
+            return self.r.rpush(tagged_key, *lst)
         else:
-            self.r.delete(key)
-            return self.r.rpush(key, [bytes_serialize(s) for s in lst])
+            self.r.delete(tagged_key)
+            return self.r.rpush(tagged_key, [bytes_serialize(s) for s in lst])
 
     def get_list(self, key, type):
         """Get the list with specified value, and decode each element in it.
@@ -265,15 +273,16 @@ class Redis_client():
         Returns:
             list of string | list of int | list of float | list of Any: Decoded list.
         """
-        if self.r.type(key) in [b'none']:
+        tagged_key = key + self.tag
+        if self.r.type(tagged_key) in [b'none']:
             # return empty list if list length is 0
             return []
-        elif self.r.type(key) not in [b'list']:
+        elif self.r.type(tagged_key) not in [b'list']:
             raise ValueError(f'Key {key} is not a list')
         if type in ['bytes']:
-            return [bytes_deserialize(s) for s in self.r.lrange(key, 0, -1)]
+            return [bytes_deserialize(s) for s in self.r.lrange(tagged_key, 0, -1)]
         else:
-            ret_list = [s.decode('utf-8') for s in self.r.lrange(key, 0, -1)]
+            ret_list = [s.decode('utf-8') for s in self.r.lrange(tagged_key, 0, -1)]
             if type in ['string']:
                 return ret_list
             elif type in ['int']:
@@ -295,9 +304,10 @@ class Redis_client():
         Returns:
             list of bytes: Undecoded list.
         """
-        if self.r.type(key) not in [b'list', b'none']:
+        tagged_key = key + self.tag
+        if self.r.type(tagged_key) not in [b'list', b'none']:
             raise ValueError(f'Key {key} is not a list')
-        return self.r.lrange(key, 0, -1)
+        return self.r.lrange(tagged_key, 0, -1)
 
     def rpush(self, key, val, bytes=False):
         """Push the value to the right of the list.
@@ -314,12 +324,13 @@ class Redis_client():
         Returns:
             int: Status of the push operation.
         """
-        if self.r.type(key) not in [b'list', b'none']:
+        tagged_key = key + self.tag
+        if self.r.type(tagged_key) not in [b'list', b'none']:
             raise ValueError(f'Key {key} is not a list')
         if not bytes:
-            return self.r.rpush(key, val)
+            return self.r.rpush(tagged_key, val)
         else:
-            return self.r.rpush(key, bytes_serialize(val))
+            return self.r.rpush(tagged_key, bytes_serialize(val))
 
     def list_len(self, key):
         """Get the length of the list specified by key.
@@ -333,12 +344,13 @@ class Redis_client():
         Returns:
             int: Number of elements in the list.
         """
-        if self.r.type(key) in [b'none']:
+        tagged_key = key + self.tag
+        if self.r.type(tagged_key) in [b'none']:
             # return 0 if list length is 0, i.e. no list/empty list exists
             return 0
-        elif self.r.type(key) not in [b'list']:
+        elif self.r.type(tagged_key) not in [b'list']:
             raise ValueError(f'Key {key} is not a list')
-        return self.r.llen(key)
+        return self.r.llen(tagged_key)
 
     def exists_key(self, key):
         """Test if key exists in the database.
@@ -349,7 +361,8 @@ class Redis_client():
         Returns:
             int: 1 if key exists, 0 otherwise.
         """
-        return self.r.exists(key)
+        tagged_key = key + self.tag
+        return self.r.exists(tagged_key)
 
     def type(self, key):
         """Get the type of the key in string.
@@ -360,7 +373,8 @@ class Redis_client():
         Returns:
             string: Type of the queried key.
         """
-        return self.r.type(key).decode('utf-8')
+        tagged_key = key + self.tag
+        return self.r.type(tagged_key).decode('utf-8')
 
     def get_client(self):
         """Get a reference to the redis client object.

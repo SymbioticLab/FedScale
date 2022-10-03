@@ -57,4 +57,5 @@ redis_conf:
     redis_executable: /usr/bin/redis-server
     redis_host: 10.0.0.2
     redis_port: 6379
-    redis_password: abc
+    redis_password: abc # Use ~ to skip password
+    job_tag: _femnist_1

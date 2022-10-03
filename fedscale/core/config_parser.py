@@ -221,6 +221,8 @@ parser.add_argument('--no-bidirectional', dest='bidirectional', action='store_fa
 parser.add_argument('--redis_host', type=str, default='127.0.0.1')
 parser.add_argument('--redis_port', type=int, default=6379)
 parser.add_argument('--redis_password', type=str, default='')
+parser.add_argument('--job_tag', type=str, default='')
+
 
 args, unknown = parser.parse_known_args()
 args.use_cuda = eval(args.use_cuda)

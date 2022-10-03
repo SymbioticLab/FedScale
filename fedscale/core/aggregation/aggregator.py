@@ -14,7 +14,7 @@ from fedscale.core.channels import job_api_pb2
 from fedscale.core.logger.aggragation import *
 from fedscale.core.resource_manager import ResourceManager
 
-from fedscale.core.storage import redis_utils
+from fedscale.core.storage.redis_utils import Redis_client
 
 MAX_MESSAGE_LENGTH = 1*1024*1024*1024  # 1GB
 
@@ -38,7 +38,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.redis_host = args.redis_host
         self.redis_port = args.redis_port
         self.redis_password = args.redis_password
-        self.redis_cli = redis_utils.Redis_client(self.redis_host, self.redis_port, self.redis_password)
+        # generate a random tag to distinguish between jobs
+        # self.tag = b64encode(os.urandom(8)).decode('utf-8')
+        self.tag = args.job_tag
+        self.redis_cli = Redis_client(self.redis_host, self.redis_port, self.redis_password, self.tag)
 
         # ======== env information ========
         self.this_rank = 0
