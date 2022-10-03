@@ -3,6 +3,7 @@ import pickle
 import sys
 import os
 import subprocess
+import time
 
 def bytes_serialize(data):
     """Serialize input data into bytes.
@@ -31,7 +32,7 @@ def start_redis_server(
     fedscale_home, 
     host='127.0.0.1', 
     port=6379,
-    password=None,
+    password='',
 ):
     """Start the Redis server with specifications as a subprocess.
 
@@ -56,10 +57,13 @@ def start_redis_server(
     # Other configs
     command += ['--bind', host]
     command += ['--port', str(port), '--loglevel', 'warning']
-    if password:
+    if password != '':
         if ' ' in password:
             raise ValueError('Spaces not permitted in redis password.')
         command += ['--requirepass', password]
+    else:
+        print("Disabled protected mode since no password is set")
+        command += ['--protected-mode no'] # Not safe on public internet
     # start Redis Server as a subprocess
     print(f'Starting Redis server at at {host}:{port}')
     subprocess.Popen(command)
@@ -67,7 +71,7 @@ def start_redis_server(
 def is_redis_server_online(
     host='127.0.0.1', 
     port=6379, 
-    password=None, 
+    password='', 
     retry=10
 ):
     """Test if Redis server is online.
@@ -82,7 +86,6 @@ def is_redis_server_online(
         bool: True if Redis server is online, False otherwise.
     """
     client = redis.Redis(host=host, port=port, password=password)
-    import time
     for i in range(retry):
         try:
             # try a redis command to check connection
@@ -99,7 +102,7 @@ def is_redis_server_online(
 def shutdown_server(
     host='127.0.0.1', 
     port=6379, 
-    password=None,
+    password='',
 ):
     """Shutdown the Redis server.
 
@@ -118,7 +121,7 @@ def shutdown_server(
 def clear_all_keys(
     host='127.0.0.1', 
     port=6379, 
-    password=None,
+    password='',
 ):
     """Delete all keys in the Redis server.
 
@@ -140,13 +143,12 @@ class Redis_client():
     def __init__(self, host='localhost', port=6379, password=''):
         # Set decode_responses=False to get bytes response,
         # now all values get from redis (including TYPE command) are bytes
-        self.r = None
         retry = 100
-        if is_redis_server_online(retry=retry):
-            self.r = redis.Redis(host=host, port=port, password=password, decode_responses=False)
-        else:
-            print(f'Failed to reach Redis server at {host}:{port} after {retry} retries')
-            sys.exit(1)
+        while not is_redis_server_online(host, port, password, retry):
+            print("Waiting for redis server to get online")
+            time.sleep(1) # wait until server is online
+        self.r = redis.Redis(host=host, port=port, password=password, decode_responses=False)
+        print("Successfully created client object")
 
     def __quit__(self):
         self.r.quit()

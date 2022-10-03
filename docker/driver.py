@@ -37,6 +37,19 @@ def process_cmd(yaml_file, local=False):
 
     yaml_conf = load_yaml_conf(yaml_file)
 
+    # Start redis server
+    redis_conf = yaml_conf['redis_conf']
+    print(redis_conf)
+    redis_exec = redis_conf['redis_executable']
+    redis_host = redis_conf['redis_host']
+    redis_port = redis_conf['redis_port']
+    redis_password = redis_conf['redis_password']
+    fedscale_home = os.environ['FEDSCALE_HOME']
+    while not redis_utils.is_redis_server_online(redis_host, redis_port, redis_password):
+        redis_utils.start_redis_server(redis_exec, fedscale_home, redis_host, redis_port, redis_password)
+        time.sleep(1) # wait for server to go online
+    redis_utils.clear_all_keys(redis_host, redis_port, redis_password) # clear existing keys
+
     ps_ip = yaml_conf['ps_ip']
     worker_ips, total_gpus = [], []
     cmd_script_list = []
@@ -60,6 +73,10 @@ def process_cmd(yaml_file, local=False):
 
     for conf in yaml_conf['job_conf']:
         job_conf.update(conf)
+
+    for conf in yaml_conf['redis_conf'].items():
+        if conf[1] is not None: # skip empty password
+            job_conf.update({conf[0]: conf[1]})
 
     conf_script = ''
     setup_cmd = ''
@@ -145,12 +162,6 @@ def terminate(job_name):
 print_help: bool = False
 if len(sys.argv) > 1:
     if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
-        redis_exec = '/usr/bin/redis-server'
-        fedscale_home = os.environ['FEDSCALE_HOME']
-        if not redis_utils.is_redis_server_online():
-            redis_utils.start_redis_server(redis_exec, fedscale_home)
-        time.sleep(1) # wait for server to go online
-        redis_utils.clear_all_keys() # clear existing keys
         process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])

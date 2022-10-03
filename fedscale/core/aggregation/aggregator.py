@@ -35,11 +35,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             'cpu')
 
         # ======== redis client ========
-        # <host, port, ...> should be specified in args
-        host = "127.0.0.1"
-        port = 6379
-        password = None
-        self.redis_cli = redis_utils.Redis_client(host=host, port=port, password=password)
+        self.redis_host = args.redis_host
+        self.redis_port = args.redis_port
+        self.redis_password = args.redis_password
+        self.redis_cli = redis_utils.Redis_client(self.redis_host, self.redis_port, self.redis_password)
 
         # ======== env information ========
         self.this_rank = 0
