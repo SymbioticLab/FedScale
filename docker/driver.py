@@ -445,6 +445,7 @@ else:
     print_help = True
 
 if print_help:
+    # TODO: add support for reporting k8s job status
     print("\033[0;32mUsage:\033[0;0m\n")
     print("submit $PATH_TO_CONF_YML     # Submit a job")
     print("stop $JOB_NAME               # Terminate a job")
