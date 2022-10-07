@@ -48,7 +48,7 @@ setup_commands:
 
 # We use fixed paths in job_conf as they will be accessed inside containers
 job_conf: 
-    - job_name: femnist_ctnr                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - job_name: femnist_docker                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: /FedScale/benchmark # Path of log files
     - num_participants: 50                  # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow

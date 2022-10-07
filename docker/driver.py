@@ -263,6 +263,9 @@ def terminate(job_name):
         config.load_kube_config()
         core_api = client.CoreV1Api()
         for name, meta_dict in job_meta['k8s_dict'].items():
+            if os.path.exists(meta_dict["yaml_path"]):
+                os.remove(meta_dict["yaml_path"])
+                
             print(f"Shutting down container {name}...")
             core_api.delete_namespaced_pod(name, namespace="default")
 
@@ -328,12 +331,14 @@ def submit_to_k8s(yaml_conf):
             "data_path": yaml_conf["data_path"],
             "pod_name": exec_name
         }
-        k8s_dict[exec_name] = {
-            "type": "executor",
-            "rank_id": rank_id
-        }
+
         exec_yaml_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{exec_name}.yaml')
         generate_exec_template(exec_config, exec_yaml_path)
+        k8s_dict[exec_name] = {
+            "type": "executor",
+            "rank_id": rank_id,
+            "yaml_path": exec_yaml_path
+        }
         print(f'Submitting executor container {exec_name} to k8s...')
         # TODO: logging?
         utils.create_from_yaml(k8s_client, exec_yaml_path, namespace="default")
@@ -355,7 +360,8 @@ def submit_to_k8s(yaml_conf):
     k8s_dict[aggr_name] = {
         "type": "aggregator",
         "ip": aggr_ip,
-        "rank_id": 0
+        "rank_id": 0,
+        "yaml_path": aggr_yaml_path
     }
 
     # TODO: refactor the code so that docker/k8s version invoke the same init function

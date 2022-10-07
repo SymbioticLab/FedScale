@@ -6,7 +6,7 @@ use_container: k8s
 
 # containers need a data-path mount to facilitate dataset reuse
 # We assume the same data-path is used on all host machines
-data_path: /users/yilegu/benchmark
+data_path: $FEDSCALE_HOME/benchmark
 
 # ========== Cluster configuration ========== 
 # k8s-specific
@@ -20,7 +20,7 @@ num_executors: 2
 
 
 auth:
-    ssh_user: "yilegu"
+    ssh_user: ""
     ssh_private_key: ~/.ssh/id_rsa
 
 # cmd to run before we can indeed run FAR (in order)
@@ -32,7 +32,7 @@ setup_commands:
 
 # We use fixed paths in job_conf as they will be accessed inside containers
 job_conf: 
-    - job_name: femnist_ctnr                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - job_name: femnist_k8s                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: /FedScale/benchmark # Path of log files
     - num_participants: 5                  # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
