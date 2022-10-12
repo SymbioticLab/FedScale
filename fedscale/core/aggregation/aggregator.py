@@ -801,7 +801,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             current_event = commons.DUMMY_EVENT
             response_data = response_msg = commons.DUMMY_RESPONSE
         else:
-            logging.info(f"====event queue {executor_id}, {self.individual_client_events[executor_id]}")
             current_event = self.individual_client_events[executor_id].popleft()
             if current_event == commons.CLIENT_TRAIN:
                 response_msg, response_data = self.create_client_task(
