@@ -15,7 +15,7 @@ conda activate fedscale
 ```
 
 ## Create Your Experiment Profile
-Go to `benchmark/configs/femnist/` directory and modify/create your **[configuration file](../benchmark/configs/femnist/conf.yml)** to submit your job.
+Go to `benchmark/configs/default_deploy/` directory and modify/create your **[configuration file](../benchmark/configs/default_deploy/femnist.yml)** to submit your job.
 
 
 Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need.
@@ -34,12 +34,12 @@ fedscale driver stop [job_name]
 ### Test on Your Local Machine by Submitting Config
  
 It is more convenient to first test your code without a GPU cluster. 
-First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `benchmark/configs/femnist/conf.yml` if you are training without using any GPU.
+First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `benchmark/configs/default_deploy/femnist.yml` if you are training without using any GPU.
 
 Set `ps_ip` and `worker_ips` to be `localhost` and `localhost:[x]` by default, where x represent how many executors you want to run on your local machine.
 Then run the following command to start your FL job:
 ```
-python driver.py start benchmark/configs/femnist/conf.yml
+python driver.py start benchmark/configs/default_deploy/femnist.yml
 ```
 
 ### Test on Your Local Machine with Jupyter Notebook
@@ -63,7 +63,7 @@ Then run the following command to submit your FL job:
 
 ```
 fedscale driver submit [conf_yml_path] 
-# Or python docker/driver.py submit benchmark/configs/femnist/conf.yml
+# Or python docker/driver.py submit benchmark/configs/default_deploy/femnist.yml
 ```
 
 ## Monitor Your Training Progress
@@ -74,3 +74,6 @@ cat job_name_logging |grep 'Training loss'
 cat job_name_logging |grep 'FL Testing'
 ```
 You can also use [Tensorboard](../fedscale/core/README.md#experiment-dashboard) to better visualize the progress.
+
+## K8S/Docker Deployment
+We also support deploying FL experiments using k8s/docker, please follow instructions in  **[Containerized FedScale Tutorial](../docker/README.md)**.

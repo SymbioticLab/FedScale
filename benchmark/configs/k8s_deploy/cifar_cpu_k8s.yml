@@ -1,21 +1,20 @@
 # Configuration file of FAR training experiment using Aggregator & Executor containers and k8s for container deployment
+### Refer to $FEDSCALE_HOME/docker/README.md for k8s deployment tutorial
 
 # ========== Container configuration ========== 
-# whether to use container deployment
+### k8s-specific: whether to use k8s deployment
 use_container: k8s
 
-# containers need a data-path mount to facilitate dataset reuse
+### docker & k8s: containers need a data-path mount to facilitate dataset reuse
 # We assume the same data-path is used on all host machines
 data_path: $FEDSCALE_HOME/benchmark
 
 # ========== Cluster configuration ========== 
-# k8s-specific
-# number of aggregators, right now we only support a single aggregator
+### k8s-specific: number of aggregators, right now we only support a single aggregator
 # placeholder for supporting hierarchical aggregator in the future
 num_aggregators: 1
 
-# k8s-specific
-# number of executors
+### k8s-specific: number of executors
 num_executors: 2
 
 auth:
