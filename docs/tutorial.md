@@ -15,7 +15,7 @@ conda activate fedscale
 ```
 
 ## Create Your Experiment Profile
-Go to `benchmark/configs/default_deploy/` directory and modify/create your **[configuration file](../benchmark/configs/default_deploy/femnist.yml)** to submit your job.
+Go to `benchmark/configs/femnist/` directory and modify/create your **[configuration file](../benchmark/configs/femnist/conf.yml)** to submit your job.
 
 
 Modify the configurations such as the number of participants per round, the aggregation algorithm, the client optimizer, the training model, etc. based on your need.
@@ -34,12 +34,12 @@ fedscale driver stop [job_name]
 ### Test on Your Local Machine by Submitting Config
  
 It is more convenient to first test your code without a GPU cluster. 
-First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `benchmark/configs/default_deploy/femnist.yml` if you are training without using any GPU.
+First add an argument `- use_cuda:  False` under `job_conf` in your configuration file `benchmark/configs/femnist/conf.yml` if you are training without using any GPU.
 
 Set `ps_ip` and `worker_ips` to be `localhost` and `localhost:[x]` by default, where x represent how many executors you want to run on your local machine.
 Then run the following command to start your FL job:
 ```
-python driver.py start benchmark/configs/default_deploy/femnist.yml
+python driver.py start benchmark/configs/femnist/conf.yml
 ```
 
 ### Test on Your Local Machine with Jupyter Notebook
@@ -63,12 +63,12 @@ Then run the following command to submit your FL job:
 
 ```
 fedscale driver submit [conf_yml_path] 
-# Or python docker/driver.py submit benchmark/configs/default_deploy/femnist.yml
+# Or python docker/driver.py submit benchmark/configs/femnist/conf.yml
 ```
 
 ## Monitor Your Training Progress
  
-You can find the job logging `job_name` under the path `log_path` specified in the **[configuration file](../benchmark/configs/default_deploy/femnist.yml)**. To check the training loss or test accuracy, you can do:
+You can find the job logging `job_name` under the path `log_path` specified in the **[configuration file](../benchmark/configs/femnist/conf.yml)**. To check the training loss or test accuracy, you can do:
 ```
 cat job_name_logging |grep 'Training loss'
 cat job_name_logging |grep 'FL Testing'
