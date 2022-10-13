@@ -1,6 +1,6 @@
+import logging
 import redis
 import pickle
-import sys
 import os
 import subprocess
 import time
@@ -60,13 +60,13 @@ def start_redis_server(
     if password != '':
         if ' ' in password:
             raise ValueError('Spaces not permitted in redis password.')
-        print("Password set")
+        logging.info("Password set")
         command += ['--requirepass', password]
     else:
-        print("Disabled protected mode since no password is set")
+        logging.info("Disabled protected mode since no password is set")
         command += ['--protected-mode no'] # Not safe on public internet
     # start Redis Server as a subprocess
-    print(f'Starting Redis server at at {host}:{port}')
+    logging.info(f'Starting Redis server at at {host}:{port}')
     subprocess.Popen(command)
 
 def is_redis_server_online(
@@ -94,10 +94,10 @@ def is_redis_server_online(
         except Exception as e:
             time.sleep(0.1)
         else:
-            print(f'Connected to Redis server at {host}:{port} in {i + 1} attempts')
+            logging.info(f'Connected to Redis server at {host}:{port} in {i + 1} attempts')
             return True
     else:
-        print(f'Failed to reach Redis server at {host}:{port} after {retry} retries')
+        logging.info(f'Failed to reach Redis server at {host}:{port} after {retry} retries')
         return False
     
 def shutdown_server(
@@ -115,7 +115,7 @@ def shutdown_server(
     client = redis.Redis(host=host, port=port, password=password)
     try:
         client.shutdown()
-        print(f'Successfully shutdown Redis server at {host}:{port}')
+        logging.info(f'Successfully shutdown Redis server at {host}:{port}')
     except Exception:
         pass
 
@@ -134,7 +134,7 @@ def clear_all_keys(
     client = redis.Redis(host=host, port=port, password=password)
     try:
         client.flushall()
-        print(f'Successfully cleared all keys')
+        logging.info(f'Successfully cleared all keys')
     except Exception:
         pass
 
@@ -142,16 +142,25 @@ class Redis_client():
     '''Create a redis client connected to specified server.'''
 
     def __init__(self, host='localhost', port=6379, password='', tag=''):
+        """Initialize the redis client.
+        
+        Args:
+            host (string, optional): IP address of the Redis server. Defaults to '127.0.0.1'.
+            port (int, optional): Port of the Redis server. Defaults to 6379.
+            password (string, optional): Password for server side authentication. Defaults to None.
+            retry (int, optional): Number of retry times when connection to server fails. Defaults to 10.
+            tag (string, optional): Tag attached to the key to distinguish between jobs.
+        """
         # Use tag after key to distinguish between jobs
         self.tag = tag
         retry = 100
         while not is_redis_server_online(host, port, password, retry):
-            print('Waiting for redis server to get online')
+            logging.info('Client waiting for redis server to get online')
             time.sleep(1) # wait until server is online
         # Set decode_responses=False to get bytes response,
         # now all values get from redis (including TYPE command) are bytes
         self.r = redis.Redis(host=host, port=port, password=password, decode_responses=False)
-        print('Successfully created client object')
+        logging.info('Successfully created client object')
 
     def __quit__(self):
         self.r.quit()

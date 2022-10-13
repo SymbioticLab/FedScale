@@ -10,7 +10,7 @@ import time
 
 import yaml
 
-from fedscale.core.storage import redis_utils
+from fedscale.core.storage.redis_utils import is_redis_server_online, start_redis_server
 
 
 def flatten(d):
@@ -39,16 +39,14 @@ def process_cmd(yaml_file, local=False):
 
     # Start redis server
     redis_conf = yaml_conf['redis_conf']
-    print(redis_conf)
     redis_exec = redis_conf['redis_executable']
     redis_host = redis_conf['redis_host']
     redis_port = redis_conf['redis_port']
     redis_password = redis_conf['redis_password']
     fedscale_home = os.environ['FEDSCALE_HOME']
-    while not redis_utils.is_redis_server_online(redis_host, redis_port, redis_password):
-        redis_utils.start_redis_server(redis_exec, fedscale_home, redis_host, redis_port, redis_password)
+    while not is_redis_server_online(redis_host, redis_port, redis_password):
+        start_redis_server(redis_exec, fedscale_home, redis_host, redis_port, redis_password)
         time.sleep(1) # wait for server to go online
-    redis_utils.clear_all_keys(redis_host, redis_port, redis_password) # clear existing keys
 
     ps_ip = yaml_conf['ps_ip']
     worker_ips, total_gpus = [], []
