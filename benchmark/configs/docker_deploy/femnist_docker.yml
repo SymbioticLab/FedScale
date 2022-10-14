@@ -1,19 +1,20 @@
-# Configuration file of FAR training experiment using Aggregator & Executor containers
+# Configuration file of FAR training experiment using Aggregator & Executor containers and docker for container deployment
+### Refer to $FEDSCALE_HOME/docker/README.md for docker deployment tutorial
 
 # ========== Container configuration ========== 
-# whether to use container deployment
-use_container: True
+### docker-specific: whether to use docker deployment
+use_container: docker
 
-# containers need port-mapping to communicate with host machine
+### docker-specific: docker containers need port-mapping to communicate with host machine
 # E.g., 1 aggregator and 2 executor, ports: [Aggr, Exec1, Exec2]
 # Note for this example, we can use port 20000 on both Aggr and Exec1 because they locate on different host machines
 ports: [20000, 20000, 20001]
 
-# containers need a Docker network to communicate with each other
+### docker-specific: docker containers need a Docker network to communicate with each other
 # Create a network by: docker network create --driver=overlay --attachable fedscale-net
 container_network: fedscale-net
 
-# containers need a data-path mount to facilitate dataset reuse
+### docker & k8s: containers need a data-path mount to facilitate dataset reuse
 # We assume the same data-path is used on all host machines
 data_path: $FEDSCALE_HOME/benchmark
 
@@ -48,7 +49,7 @@ setup_commands:
 
 # We use fixed paths in job_conf as they will be accessed inside containers
 job_conf: 
-    - job_name: femnist_ctnr                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - job_name: femnist_docker                   # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: /FedScale/benchmark # Path of log files
     - num_participants: 50                  # Number of participants per round, we use K=100 in our paper, large K will be much slower
     - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow

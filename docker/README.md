@@ -1,7 +1,44 @@
-# Containerized FedScale Tentative Tutorial
-This is a tentative tutorial on how to configure a Linux node for Docker service, get FedScale running as container images under Docker's management and contribute to FedScale Docker images. It is written mostly for FedScale developers' reference. We assume the readers start with more than one Linux host machines running Ubuntu 16.04 or newer. 
+# Containerized FedScale Tutorial
+This is a tutorial on how to run FedScale jobs under k8s/docker's management service and contribute to FedScale Docker images. It is written mostly for FedScale developers' reference. We assume the readers start with more than one Linux host machines running Ubuntu 16.04 or newer. 
 
-## Install Docker and its dependencies
+## K8S Deployment (Recommended)
+Kubernetes (k8s) is a popular container management framework used in cloud applications. It is integrated with auto-configured network and offers features like load balancing, autoscaling, which is suitable for deploying FedScale framework. 
+
+### K8S Setup
+We provide scripts for setting up k8s master and worker nodes from a bare-metal cluster in [this repo](https://github.com/IKACE/k8s_setup). The rest part of k8s deployment tutorial assumes the user has set up a k8s network properly.
+
+### FedScale K8S Demo
+Example configs for submitting jobs to k8s cluster are provided under `$FEDSCALE_HOME/benchmark/configs` (e.g. `$FEDSCALE_HOME/benchmark/configs/femnist/conf_k8s.yml`). Suppose we want to run `Femnist` job with 1 aggregator and 2 executor, modify the config file `conf_k8s.yml` as following:
+
+- Specify parameter `use_container: k8s`, this indicates you want to submit job to k8s cluster.
+
+- Prepare dataset and specify `data_path` in your `conf_k8s.yml`. This path will be mounted into the container so that datasets can be reused in future runs. Note that we assume the same `data_path` will be used across all nodes in the cluster, so it is always good to make sure `data_path` exists on every k8s node.
+
+- Specify number of aggregators `num_aggregators: 1`, for now we only support a single aggregator for one job, but we are developing hierarchical aggregators feature that will be added in the future.
+
+- Specify number of executors `num_executors: 2`. 
+
+- Submit job
+
+	```
+	cd $FEDSCALE_HOME/docker
+	python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/femnist/conf_k8s.yml
+	```
+
+- Check logs: FedScale will generate logs under `data_path` you provided by default. Keep in mind that k8s may load balancing your job to any node on the cluster, so make sure you are checking the `data_path` on the correct node.
+
+- Stop job
+
+	```
+	cd $FEDSCALE_HOME/docker
+	python3 driver.py stop $YOUR_JOB
+	```
+
+
+## Docker Deployment
+Apart from k8s deployment, we also support deploying FedScale onto docker service. 
+
+### Install Docker and its dependencies
 
 The first step is to install Docker on all the available host machines.
 
@@ -36,8 +73,8 @@ The first step is to install Docker on all the available host machines.
 		
 	```
 	
-## Configure Container Network
-To allow containers running in different host machines to communicate with each other, we need to creater a container network. We assume there are two host machines: `host1` and `host2`, more could be added in a similar fashion.
+### Configure Docker Network
+To allow docker containers running in different host machines to communicate with each other, we need to creater a docker network. We assume there are two host machines: `host1` and `host2`, more could be added in a similar fashion.
 
 - First initialize a Docker swarm
 
@@ -56,21 +93,21 @@ To allow containers running in different host machines to communicate with each 
 	docker network create --driver=overlay --attachable fedscale-net
 	```
 	
-## Containerized FedScale Demo
-This is a walkthrough to run `Femnist` benchmark on containerized Fedscale. We have provided example containerized configs files under `$FEDSCALE_HOME/benchmark/configs` (e.g. `$FEDSCALE_HOME/benchmark/configs/femnist/conf_ctnr.yml`) for containrized jobs and integrated our `driver.py` with container support.  Suppose for the `Femnist` benchmark task, we want to run `Aggregator` on `host1` and one `Executor` on `host2`:
+### FedScale Docker Demo
+This is a walkthrough to run `Femnist` benchmark using docker. We have provided example containerized configs files under `$FEDSCALE_HOME/benchmark/configs` (e.g. `$FEDSCALE_HOME/benchmark/configs/femnist/conf_docker.yml`) for docker jobs and integrated our `driver.py` with docker support.  Suppose for the `Femnist` benchmark task, we want to run `Aggregator` on `host1` and one `Executor` on `host2`:
 
-- Prepare dataset and specify `data_path` in your `conf_ctnr.yml`. This path will be mounted into the container so that datasets can be reused in future runs.
+- Prepare dataset and specify `data_path` in your `conf_docker.yml`. This path will be mounted into the container so that datasets can be reused in future runs.
 
 - Specify `container_network` as the docker network name you have configured (e.g. `fedscale-net`).
 
-- Each `Aggregator` or `Executor` will need a port for process communication, make sure you choose ports that are open and specify `ports` in your `conf_ctnr.yml`. Note that in our example we can choose the same port for `Aggregator` and `Executor` since they are on different host machines.
+- Each `Aggregator` or `Executor` will need a port for process communication, make sure you choose ports that are open and specify `ports` in your `conf_docker.yml`. Note that in our example we can choose the same port for `Aggregator` and `Executor` since they are on different host machines.
 
 
 - Submit job
 
 	```
 	cd $FEDSCALE_HOME/docker
-	python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/femnist/conf_ctnr.yml
+	python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/femnist/conf_docker.yml
 	```
 
 - Check logs: FedScale will generate logs under `data_path` you provided by default.
