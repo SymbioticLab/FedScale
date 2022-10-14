@@ -5,8 +5,9 @@ import sys
 
 from customized_client import Customized_Client
 
+import fedscale.core.config_parser as parser
 from fedscale.core.execution.executor import Executor
-from fedscale.core.logger.execution import args
+
 
 """In this example, we only need to change the Client Component we need to import"""
 
@@ -21,6 +22,6 @@ class Customized_Executor(Executor):
         return Customized_Client(conf)
 
 if __name__ == "__main__":
-    executor = Customized_Executor(args)
+    executor = Customized_Executor(parser.args)
     executor.run()
 

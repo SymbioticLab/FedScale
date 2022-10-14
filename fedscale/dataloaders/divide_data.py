@@ -132,7 +132,10 @@ def select_dataset(rank, partition, batch_size, args, isTest=False, collate_fn=N
     """Load data given client Id"""
     partition = partition.use(rank - 1, isTest)
     dropLast = False if isTest else True
-    num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
+    if isTest:
+        num_loaders = 0
+    else:
+        num_loaders = min(int(len(partition)/args.batch_size/2), args.num_loaders)
     if num_loaders == 0:
         time_out = 0
     else:

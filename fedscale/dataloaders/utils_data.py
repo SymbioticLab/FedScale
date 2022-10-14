@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
 from torchvision import transforms
-
 
 def get_data_transform(data: str):
     if data == 'mnist':

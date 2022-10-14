@@ -8,10 +8,10 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 # libs from fedscale
-from fedscale.core.config_parser import args
+import fedscale.core.config_parser as parser
 from fedscale.dataloaders.nlp import mask_tokens
 
-if args.task == "detection":
+if parser.args.task == "detection":
     import numpy as np
     import torch.nn as nn
     import torch.optim as optim
@@ -69,18 +69,18 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
     decoder = None
 
-    if args.task == 'voice':
+    if parser.args.task == 'voice':
         decoder = GreedyDecoder(
             model.labels, blank_index=model.labels.index('_'))
 
     with torch.no_grad():
 
-        if args.task == 'detection':
+        if parser.args.task == 'detection':
             imdb, _, _, _ = combined_roidb(
-                "voc_2007_test", ['DATA_DIR', args.data_dir], server=True)
+                "voc_2007_test", ['DATA_DIR', parser.args.data_dir], server=True)
             data_iter = iter(test_data)
             num_images = len(test_data.dataset)
-            num_classes = len(readClass(args.data_dir + "/class.txt"))
+            num_classes = len(readClass(parser.args.data_dir + "/class.txt"))
 
             all_boxes = [[[] for _ in range(num_images)]
                          for _ in range(num_classes)]
@@ -156,23 +156,23 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                             all_boxes[j][i] = all_boxes[j][i][keep, :]
 
                 imdb._reset_index(test_data.dataset.index)
-                output_dir = args.test_output_dir + \
-                    "/learner/" + str(args.this_rank)
+                output_dir = parser.args.test_output_dir + \
+                    "/learner/" + str(parser.args.this_rank)
                 _, mean_ap = imdb.evaluate_detections(
-                    all_boxes, output_dir, args.this_rank)
+                    all_boxes, output_dir, parser.args.this_rank)
                 return 0, mean_ap, mean_ap, {'top_1': mean_ap, 'top_5': mean_ap, 'test_loss': 0, 'test_len': num_images}
 
         for data, target in test_data:
             try:
-                if args.task == 'nlp':
+                if parser.args.task == 'nlp':
 
-                    # if args.mlm else (data, data)
+                    # if parser.args.mlm else (data, data)
                     data, target = mask_tokens(
-                        data, tokenizer, args, device=device)
+                        data, tokenizer, parser.args, device=device)
                     data, target = Variable(data).to(
                         device=device), Variable(target).to(device=device)
 
-                    # if args.mlm else model(data, labels=target)
+                    # if parser.args.mlm else model(data, labels=target)
                     outputs = model(data, labels=target)
 
                     loss = outputs[0]
@@ -185,7 +185,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     correct += acc[0].item()
                     top_5 += acc[1].item()
 
-                elif args.task == 'tag':
+                elif parser.args.task == 'tag':
                     data, target = Variable(data).to(
                         device=device), Variable(target).to(device=device)
                     output = model(data)
@@ -201,7 +201,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
 
                     test_loss += loss.data.item()
 
-                elif args.task == 'speech':
+                elif parser.args.task == 'speech':
                     data, target = Variable(data).to(
                         device=device), Variable(target).to(device=device)
                     data = torch.unsqueeze(data, 1)
@@ -215,7 +215,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     correct += acc[0].item()
                     top_5 += acc[1].item()
 
-                elif args.task == 'text_clf' and args.model == 'albert-base-v2':
+                elif parser.args.task == 'text_clf' and parser.args.model == 'albert-base-v2':
                     (inputs, masks) = data
                     (inputs, masks, target) = (Variable(inputs).to(device=device),
                                                Variable(masks).to(device=device), Variable(target).to(device=device))
@@ -231,7 +231,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                     correct += acc[0].item()
                     top_5 += acc[1].item()
 
-                elif args.task == 'voice':
+                elif parser.args.task == 'voice':
                     (inputs, target, input_percentages, target_sizes) = data
 
                     input_sizes = input_percentages.mul_(
@@ -282,7 +282,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
                 break
             test_len += len(target)
 
-    if args.task == 'voice':
+    if parser.args.task == 'voice':
         correct,  top_5, test_len = float(
             total_wer), float(total_cer), float(num_tokens)
 
@@ -298,7 +298,7 @@ def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tok
     acc_5 = round(top_5 / test_len, 4)
     test_loss = round(test_loss, 4)
 
-    if args.task == 'tag':
+    if parser.args.task == 'tag':
         # precision, recall, f1, sup = precision_recall_fscore_support(targets_list, preds, average='samples')
         top_5, correct, test_len = cal_accuracy(targets_list, preds)
 

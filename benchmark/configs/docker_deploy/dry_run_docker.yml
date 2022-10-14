@@ -1,0 +1,66 @@
+# Configuration file of dry run experiment using Aggregator & Executor containers and docker for container deployment
+### Refer to $FEDSCALE_HOME/docker/README.md for docker deployment tutorial
+
+# ========== Container configuration ========== 
+### docker-specific: whether to use docker deployment
+use_container: docker
+
+### docker-specific: docker containers need port-mapping to communicate with host machine
+# E.g., 1 aggregator and 2 executor, ports: [Aggr, Exec1, Exec2]
+# Note for this example, we can use port 20011 on both Exec1 and Exec2 because they locate on different host machines
+ports: [20010, 20011, 20011]
+
+### docker-specific: docker containers need a Docker network to communicate with each other
+# Create a network by: docker network create --driver=overlay --attachable fedscale-net
+container_network: fedscale-net
+
+### docker & k8s: containers need a data-path mount to facilitate dataset reuse
+# We assume the same data-path is used on all host machines
+data_path: $FEDSCALE_HOME/benchmark
+
+# ========== Cluster configuration ========== 
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: 10.0.0.1
+
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
+worker_ips: 
+    - 10.0.0.1:[1] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes. 
+    - 10.0.0.2:[1]
+
+exp_path: $FEDSCALE_HOME/examples/containerization
+
+# Entry function of executor and aggregator under $exp_path
+executor_entry: executor_ctnr.py
+
+aggregator_entry: aggregator_ctnr.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+
+
+# ========== Additional job configuration ========== 
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
+
+# We use fixed paths in job_conf as they will be accessed inside containers
+job_conf: 
+    - job_name: dryrun_docker                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: /FedScale/benchmark # Path of log files
+    - num_participants: 4                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
+    - data_dir: /FedScale/benchmark/dataset/data/    # Path of the dataset
+    - model: resnet18                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2# - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
+    - eval_interval: 10                     # How many rounds to run a testing on the testing set
+    - rounds: 20                       # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 0                       # Remove clients w/ less than 21 samples
+    - num_loaders: 2
+    - local_steps: 20
+    - learning_rate: 0.001
+    - batch_size: 32
+    - test_bsz: 32
+    - use_cuda: False

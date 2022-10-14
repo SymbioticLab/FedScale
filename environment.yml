@@ -7,7 +7,6 @@ dependencies:
   - numba=0.48.0
   - pip=20.0.2
   - pip:
-#    - numba==0.50.0
     - torch_optimizer
     - torch
     - tensorflow
@@ -24,7 +23,6 @@ dependencies:
     - grpcio==1.40.0
     - gym
     - jupyter
-#    - opacus
     - pillow==9
     - sentencepiece
     - gdown
@@ -32,3 +30,4 @@ dependencies:
     - librosa==0.7.2
     - SoundFile
     - resampy==0.3.1
+    - kubernetes
