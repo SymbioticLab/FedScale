@@ -81,8 +81,10 @@ Repo Root
   |---- deploy          # Deployment backends (e.g., mobile)
   |---- dataloaders     # Data loaders of benchmarking dataset
 
+|---- docker            # FedScale docker and container deployment (e.g., Kubernetes)
 |---- benchmark         # FedScale datasets and configs
   |---- dataset         # Benchmarking datasets
+  |---- configs         # Example configurations
 
 |---- examples          # Examples of implementing new FL designs
 |---- docs              # FedScale tutorials and APIs
