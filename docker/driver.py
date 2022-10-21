@@ -267,7 +267,7 @@ def terminate(job_name):
                 os.remove(meta_dict["yaml_path"])
                 
             print(f"Shutting down container {name}...")
-            core_api.delete_namespaced_pod(name, namespace="default")
+            core_api.delete_namespaced_pod(name, namespace="fedscale")
 
     else:    
         for vm_ip in job_meta['vms']:
@@ -283,6 +283,15 @@ def submit_to_k8s(yaml_conf):
     config.load_kube_config()
     k8s_client = client.ApiClient()
     core_api = client.CoreV1Api()
+
+    # check fedscale namespace
+    field_selector = "metadata.name=fedscale"
+    namespaces = core_api.list_namespace(field_selector=field_selector).items
+    if len(namespaces) == 0:
+        print("Namespace 'fedscale' not found, creating new namespace...")
+        namespace_config = client.V1Namespace(
+            metadata=client.V1ObjectMeta(name="fedscale"))
+        core_api.create_namespace(namespace_config)
     
     time_stamp = datetime.datetime.fromtimestamp(
         time.time()).strftime('%m%d_%H%M%S')
@@ -319,7 +328,7 @@ def submit_to_k8s(yaml_conf):
     print(f"Submitting aggregator container {aggr_name} to k8s...")
 
     # TODO: logging?
-    utils.create_from_yaml(k8s_client, aggr_yaml_path, namespace="default")
+    utils.create_from_yaml(k8s_client, aggr_yaml_path, namespace="fedscale")
 
 
     time.sleep(5)
@@ -341,14 +350,14 @@ def submit_to_k8s(yaml_conf):
         }
         print(f'Submitting executor container {exec_name} to k8s...')
         # TODO: logging?
-        utils.create_from_yaml(k8s_client, exec_yaml_path, namespace="default")
+        utils.create_from_yaml(k8s_client, exec_yaml_path, namespace="fedscale")
     
     # a cold start would take 5-6min
     print(f'Waiting aggregator container {aggr_name} to be ready...')
     aggr_ip = -1
     start_time = time.time()
     while time.time() - start_time < 600:
-        resp = core_api.read_namespaced_pod(aggr_name, namespace="default")
+        resp = core_api.read_namespaced_pod(aggr_name, namespace="fedscale")
         if resp.status.container_statuses[0].ready:
             aggr_ip = resp.status.pod_ip
             break
@@ -394,7 +403,7 @@ def submit_to_k8s(yaml_conf):
         start_time = time.time()
         exec_ip = -1
         while time.time() - start_time < 600:
-            resp = core_api.read_namespaced_pod(name, namespace="default")
+            resp = core_api.read_namespaced_pod(name, namespace="fedscale")
             if resp.status.container_statuses[0].ready:
                 exec_ip = resp.status.pod_ip
                 break
@@ -431,6 +440,29 @@ def submit_to_k8s(yaml_conf):
         meta_data = {"user": submit_user, "k8s_dict": k8s_dict, "use_container": "k8s"}
         pickle.dump(meta_data, fout)
 
+def check_log(job_name):
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    job_meta_path = os.path.join(current_path, job_name)    
+    if not os.path.isfile(job_meta_path):
+        print(f"Error: fail to terminate {job_name}, as it does not exist")
+        exit(1)
+
+    with open(job_meta_path, 'rb') as fin:
+        job_meta = pickle.load(fin)
+    
+    if job_meta['use_container'] == 'k8s':
+        for name, meta_dict in job_meta['k8s_dict'].items():
+            if meta_dict['type'] != 'aggregator':
+                continue
+            config.load_kube_config()
+            core_api = client.CoreV1Api()
+            print(f"%%%%%%%%%% Start of {name} log %%%%%%%%%%")
+            res = core_api.read_namespaced_pod_log(name, "fedscale")
+            print(res)
+            print(f"%%%%%%%%%% End of {name} log %%%%%%%%%%")
+    else:
+        print("Error: only support checking job logs running in k8s mode!")
+        exit(1)
     
 
 print_help: bool = False
@@ -439,6 +471,8 @@ if len(sys.argv) > 1:
         process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])
+    elif sys.argv[1] == 'log':
+        check_log(sys.argv[2])
     else:
         print_help = True
 else:
@@ -448,5 +482,6 @@ if print_help:
     # TODO: add support for reporting k8s job status
     print("\033[0;32mUsage:\033[0;0m\n")
     print("submit $PATH_TO_CONF_YML     # Submit a job")
+    print("log $JOB_NAME               # Check the aggregator log of a job")
     print("stop $JOB_NAME               # Terminate a job")
     print()
