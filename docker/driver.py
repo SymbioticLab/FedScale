@@ -399,48 +399,6 @@ def submit_to_k8s(yaml_conf):
             print(f"Error: unrecognized type {meta_dict['type']}!")
             exit(1)
     
-    # a cold start would take 5-6min
-    # print(f'Waiting aggregator container {aggr_name} to be ready...')
-    # aggr_ip = -1
-    # start_time = time.time()
-    # while time.time() - start_time < 600:
-    #     resp = core_api.read_namespaced_pod(aggr_name, namespace="fedscale")
-    #     if resp.status.container_statuses[0].ready:
-    #         aggr_ip = resp.status.pod_ip
-    #         break
-    #     time.sleep(1)
-    # if aggr_ip == -1:
-    #     print(f"Error: aggregator {aggr_name} not ready after maximum waiting time allowed, aborting...")
-    #     exit(1)
-    
-    # k8s_dict[aggr_name] = {
-    #     "type": "aggregator",
-    #     "ip": aggr_ip,
-    #     "rank_id": 0,
-    #     "yaml_path": aggr_yaml_path
-    # }
-
-    # # TODO: refactor the code so that docker/k8s version invoke the same init function
-    # print(f'Initializing aggregator container {aggr_name}...')
-    # send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # start_time = time.time()
-    # while time.time() - start_time <= 10:
-    #     # avoid busy waiting
-    #     time.sleep(0.1)
-    #     try:
-    #         send_socket.connect((aggr_ip, 30000))
-    #     except socket.error:
-    #         continue
-    #     msg = {}
-    #     msg["type"] = "aggr_init"
-    #     msg['data'] = job_conf.copy()
-    #     msg['data']['this_rank'] = 0
-    #     msg['data']['num_executors'] = yaml_conf["num_executors"]
-    #     msg = json.dumps(msg)
-    #     send_socket.sendall(msg.encode('utf-8'))
-    #     send_socket.close()
-    #     break
-    # time.sleep(10)
 
     # TODO: make executors init multi-threaded to boost performance
     for name, meta_dict in k8s_dict.items():
