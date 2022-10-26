@@ -20,3 +20,14 @@ data/
 # References
 The original location of this dataset is at
 [https://www.statmt.org/europarl/](https://www.statmt.org/europarl/).
+
+# Acknowledgement
+
+```bibtex
+@inproceedings{europarl,
+  author = {Koehn, Philipp},
+  title = {{Europarl: A Parallel Corpus for Statistical Machine Translation}},
+  booktitle = {{Conference Proceedings: the tenth Machine Translation Summit}},
+  year = {2005}
+}
+```

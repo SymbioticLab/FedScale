@@ -6,7 +6,6 @@ from typing import Dict, List
 
 from fedscale.core.internal.client import Client
 
-
 class clientManager(object):
 
     def __init__(self, mode, args, sample_seed=233):
@@ -19,15 +18,9 @@ class clientManager(object):
         self.ucbSampler = None
 
         if self.mode == 'oort':
-            import os
-            import sys
-            current = os.path.dirname(os.path.realpath(__file__))
-            parent = os.path.dirname(current)
-            sys.path.append(parent)
             from thirdparty.oort.oort import create_training_selector
-
-            # sys.path.append(current)
             self.ucbSampler = create_training_selector(args=args)
+            
         self.feasibleClients = []
         self.rng = Random()
         self.rng.seed(sample_seed)

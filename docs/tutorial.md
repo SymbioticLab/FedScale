@@ -68,9 +68,12 @@ fedscale driver submit [conf_yml_path]
 
 ## Monitor Your Training Progress
  
-You can find the job logging `job_name` under the path `log_path` specified in the `conf.yml` file. To check the training loss or test accuracy, you can do:
+You can find the job logging `job_name` under the path `log_path` specified in the **[configuration file](../benchmark/configs/femnist/conf.yml)**. To check the training loss or test accuracy, you can do:
 ```
 cat job_name_logging |grep 'Training loss'
 cat job_name_logging |grep 'FL Testing'
 ```
 You can also use [Tensorboard](../fedscale/core/README.md#experiment-dashboard) to better visualize the progress.
+
+## K8S/Docker Deployment
+We also support deploying FL experiments using k8s/docker, please follow instructions in  **[Containerized FedScale Tutorial](../docker/README.md)**.

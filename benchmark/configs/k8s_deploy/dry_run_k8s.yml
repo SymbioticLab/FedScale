@@ -1,0 +1,47 @@
+# Configuration file of dry run experiment using Aggregator & Executor containers and k8s for container deployment
+### Refer to $FEDSCALE_HOME/docker/README.md for k8s deployment tutorial
+
+# ========== Container configuration ========== 
+### k8s-specific: whether to use k8s deployment
+use_container: k8s
+
+### docker & k8s: containers need a data-path mount to facilitate dataset reuse
+# We assume the same data-path is used on all host machines
+data_path: $FEDSCALE_HOME/benchmark
+
+# ========== Cluster configuration ========== 
+### k8s-specific: number of aggregators, right now we only support a single aggregator
+# placeholder for supporting hierarchical aggregator in the future
+num_aggregators: 1
+
+### k8s-specific: number of executors
+num_executors: 2
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+
+
+# ========== Additional job configuration ========== 
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
+
+# We use fixed paths in job_conf as they will be accessed inside containers
+job_conf: 
+    - job_name: dryrun_k8s                   # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: /FedScale/benchmark # Path of log files
+    - num_participants: 4                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: cifar10                     # Dataset: openImg, google_speech, stackoverflow
+    - data_dir: /FedScale/benchmark/dataset/data/    # Path of the dataset
+    - model: resnet18                            # Models: e.g., shufflenet_v2_x2_0, mobilenet_v2, resnet34, albert-base-v2# - gradient_policy: yogi                 # {"fed-yogi", "fed-prox", "fed-avg"}, "fed-avg" by default
+    - eval_interval: 10                     # How many rounds to run a testing on the testing set
+    - rounds: 21                       # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 0                       # Remove clients w/ less than 21 samples
+    - num_loaders: 2
+    - local_steps: 20
+    - learning_rate: 0.001
+    - batch_size: 32
+    - test_bsz: 32
+    - use_cuda: False

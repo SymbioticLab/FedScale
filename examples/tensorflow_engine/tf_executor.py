@@ -6,6 +6,7 @@ import sys
 import tensorflow as tf
 from tf_client import Customized_Client
 
+import fedscale.core.config_parser as parser
 from fedscale.core.execution.executor import Executor
 from fedscale.core.logger.execution import *
 
@@ -35,6 +36,6 @@ class Customized_Executor(Executor):
 
 
 if __name__ == "__main__":
-    executor = Customized_Executor(args)
+    executor = Customized_Executor(parser.args)
     executor.run()
 

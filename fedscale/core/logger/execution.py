@@ -2,13 +2,16 @@
 import os
 
 from fedscale.core.fllibs import *
+import fedscale.core.config_parser as parser
 
-logDir = os.path.join(args.log_path, "logs", args.job_name,
-                      args.time_stamp, 'executor')
-logFile = os.path.join(logDir, 'log')
-
+logDir = None
 
 def init_logging():
+    global logDir
+
+    logDir = os.path.join(parser.args.log_path, "logs", parser.args.job_name,
+                      parser.args.time_stamp, 'executor')
+    logFile = os.path.join(logDir, 'log')
     if not os.path.isdir(logDir):
         os.makedirs(logDir, exist_ok=True)
 
@@ -26,5 +29,3 @@ def initiate_client_setting():
     init_logging()
 
 
-# initiate the log path, and executor ips
-initiate_client_setting()

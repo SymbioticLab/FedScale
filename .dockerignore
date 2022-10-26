@@ -1,0 +1,9 @@
+# Files to ignore when building docker image
+*.log
+logs/
+./benchmark
+.DS_Store
+*.egg-info
+*logging
+./docker/Dockerfile*
+Anaconda*.sh

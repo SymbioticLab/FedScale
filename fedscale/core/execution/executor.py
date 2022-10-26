@@ -7,12 +7,14 @@ from argparse import Namespace
 import torch
 
 import fedscale.core.channels.job_api_pb2 as job_api_pb2
+import fedscale.core.logger.execution as logger
+import fedscale.core.config_parser as parser
 from fedscale.core import commons
 from fedscale.core.channels.channel_context import ClientConnections
 from fedscale.core.execution.client import Client
 from fedscale.core.execution.data_processor import collate, voice_collate_fn
 from fedscale.core.execution.rlclient import RLClient
-from fedscale.core.logger.execution import *
+from fedscale.core.fllibs import *
 
 
 class Executor(object):
@@ -23,6 +25,8 @@ class Executor(object):
 
     """
     def __init__(self, args):
+        # initiate the executor log path, and executor ips
+        logger.initiate_client_setting()
 
         self.args = args
         self.device = args.cuda_device if args.use_cuda else torch.device(
@@ -33,9 +37,9 @@ class Executor(object):
         self.executor_id = str(self.this_rank)
 
         # ======== model and data ========
-        self.model = self.training_sets = self.test_dataset = None
+        self.training_sets = self.test_dataset = None
         self.temp_model_path = os.path.join(
-            logDir, 'model_'+str(args.this_rank)+'.pth.tar')
+            logger.logDir, 'model_'+str(args.this_rank)+'.pth.tar')
 
         # ======== channels ========
         self.aggregator_communicator = ClientConnections(
@@ -134,7 +138,6 @@ class Executor(object):
         """Start running the executor by setting up execution and communication environment, and monitoring the grpc message.
         """
         self.setup_env()
-        self.model = self.init_model()
         self.training_sets, self.testing_sets = self.init_data()
         self.setup_communication()
         self.event_monitor()
@@ -194,8 +197,8 @@ class Executor(object):
         client_id, train_config = config['client_id'], config['task_config']
 
         model = None
-        if 'model' in train_config and train_config['model'] is not None:
-            model = train_config['model']
+        if 'model' in config and config['model'] is not None:
+            model = config['model']
 
         client_conf = self.override_conf(train_config)
         train_res = self.training_handler(
@@ -220,7 +223,7 @@ class Executor(object):
             config (dictionary): The client testing config.
         
         """
-        test_res = self.testing_handler(args=self.args)
+        test_res = self.testing_handler(args=self.args, config=config)
         test_res = {'executorId': self.this_rank, 'results': test_res}
 
         # Report execution completion information
@@ -255,12 +258,11 @@ class Executor(object):
             config (PyTorch or TensorFlow model): The broadcasted global model
 
         """
-        self.model = model
         self.round += 1
 
         # Dump latest model to disk
         with open(self.temp_model_path, 'wb') as model_out:
-            pickle.dump(self.model, model_out)
+            pickle.dump(model, model_out)
 
     def load_global_model(self):
         """ Load last global model
@@ -335,12 +337,12 @@ class Executor(object):
 
         return train_res
 
-    def testing_handler(self, args):
+    def testing_handler(self, args, config=None):
         """Test model
         
         Args:
             args (dictionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
-
+            config (dictionary): Variable arguments from coordinator.
         Returns:
             dictionary: The test result
 
@@ -450,5 +452,5 @@ class Executor(object):
 
 
 if __name__ == "__main__":
-    executor = Executor(args)
+    executor = Executor(parser.args)
     executor.run()
