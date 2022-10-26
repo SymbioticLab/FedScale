@@ -316,6 +316,10 @@ def submit_to_k8s(yaml_conf):
 
     # =========== Submit aggregator to k8s ============
     # generate aggregator yaml
+    if yaml_conf["num_aggregators"] != 1:
+        print("Error: currently only support single aggregator!")
+        exit(1)
+
     aggr_name = f'fedscale-aggr-{time_stamp}'.replace("_", "-")
     print(f"Generating yaml for aggregator container {aggr_name}...")
     aggr_config = {
@@ -324,7 +328,12 @@ def submit_to_k8s(yaml_conf):
     }
     aggr_yaml_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{aggr_name}.yaml')
     generate_aggr_template(aggr_config, aggr_yaml_path)
-
+    k8s_dict[aggr_name] = {
+        "type": "aggregator",
+        "rank_id": 0,
+        "yaml_path": aggr_yaml_path
+    }
+    
     print(f"Submitting aggregator container {aggr_name} to k8s...")
 
     # TODO: logging?
@@ -351,89 +360,139 @@ def submit_to_k8s(yaml_conf):
         print(f'Submitting executor container {exec_name} to k8s...')
         # TODO: logging?
         utils.create_from_yaml(k8s_client, exec_yaml_path, namespace="fedscale")
+    # =========== Wait for containers to be ready ===========
+    executor_configs = []
+    for name, meta_dict in k8s_dict.items():
+        if meta_dict['type'] == 'aggregator':
+            print(f'Waiting aggregator container {name} to be ready...')
+            aggr_ip = -1
+            start_time = time.time()
+            # a cold start would take 5-6min, depends on network status
+            while time.time() - start_time < 600:
+                resp = core_api.read_namespaced_pod(name, namespace="fedscale")
+                if resp.status.container_statuses[0].ready:
+                    aggr_ip = resp.status.pod_ip
+                    break
+                time.sleep(1)
+            if aggr_ip == -1:
+                print(f"Error: aggregator {name} not ready after maximum waiting time allowed, aborting...")
+                exit(1)      
+            meta_dict["ip"] = aggr_ip
+        elif meta_dict['type'] == 'executor':
+            print(f'Waiting executor container {name} to be ready...')
+            exec_ip = -1
+            start_time = time.time()
+            while time.time() - start_time < 600:
+                resp = core_api.read_namespaced_pod(name, namespace="fedscale")
+                if resp.status.container_statuses[0].ready:
+                    exec_ip = resp.status.pod_ip
+                    break
+                time.sleep(1)
+            if exec_ip == -1:
+                print(f"Error: executor {name} not ready after maximum waiting time allowed, aborting...")
+                exit(1)
+            # update meta data
+            meta_dict["ip"] = exec_ip
+            # for now, assume only 1 gpu process for one executor container
+            executor_configs.append(f'{exec_ip}:[1]')
+        else:
+            print(f"Error: unrecognized type {meta_dict['type']}!")
+            exit(1)
     
     # a cold start would take 5-6min
-    print(f'Waiting aggregator container {aggr_name} to be ready...')
-    aggr_ip = -1
-    start_time = time.time()
-    while time.time() - start_time < 600:
-        resp = core_api.read_namespaced_pod(aggr_name, namespace="fedscale")
-        if resp.status.container_statuses[0].ready:
-            aggr_ip = resp.status.pod_ip
-            break
-        time.sleep(1)
-    if aggr_ip == -1:
-        print(f"Error: aggregator {aggr_name} not ready after maximum waiting time allowed, aborting...")
-        exit(1)
+    # print(f'Waiting aggregator container {aggr_name} to be ready...')
+    # aggr_ip = -1
+    # start_time = time.time()
+    # while time.time() - start_time < 600:
+    #     resp = core_api.read_namespaced_pod(aggr_name, namespace="fedscale")
+    #     if resp.status.container_statuses[0].ready:
+    #         aggr_ip = resp.status.pod_ip
+    #         break
+    #     time.sleep(1)
+    # if aggr_ip == -1:
+    #     print(f"Error: aggregator {aggr_name} not ready after maximum waiting time allowed, aborting...")
+    #     exit(1)
     
-    k8s_dict[aggr_name] = {
-        "type": "aggregator",
-        "ip": aggr_ip,
-        "rank_id": 0,
-        "yaml_path": aggr_yaml_path
-    }
+    # k8s_dict[aggr_name] = {
+    #     "type": "aggregator",
+    #     "ip": aggr_ip,
+    #     "rank_id": 0,
+    #     "yaml_path": aggr_yaml_path
+    # }
 
-    # TODO: refactor the code so that docker/k8s version invoke the same init function
-    print(f'Initializing aggregator container {aggr_name}...')
-    send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    start_time = time.time()
-    while time.time() - start_time <= 10:
-        # avoid busy waiting
-        time.sleep(0.1)
-        try:
-            send_socket.connect((aggr_ip, 30000))
-        except socket.error:
-            continue
-        msg = {}
-        msg["type"] = "aggr_init"
-        msg['data'] = job_conf.copy()
-        msg['data']['this_rank'] = 0
-        msg['data']['num_executors'] = yaml_conf["num_executors"]
-        msg = json.dumps(msg)
-        send_socket.sendall(msg.encode('utf-8'))
-        send_socket.close()
-        break
-    time.sleep(10)
+    # # TODO: refactor the code so that docker/k8s version invoke the same init function
+    # print(f'Initializing aggregator container {aggr_name}...')
+    # send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # start_time = time.time()
+    # while time.time() - start_time <= 10:
+    #     # avoid busy waiting
+    #     time.sleep(0.1)
+    #     try:
+    #         send_socket.connect((aggr_ip, 30000))
+    #     except socket.error:
+    #         continue
+    #     msg = {}
+    #     msg["type"] = "aggr_init"
+    #     msg['data'] = job_conf.copy()
+    #     msg['data']['this_rank'] = 0
+    #     msg['data']['num_executors'] = yaml_conf["num_executors"]
+    #     msg = json.dumps(msg)
+    #     send_socket.sendall(msg.encode('utf-8'))
+    #     send_socket.close()
+    #     break
+    # time.sleep(10)
 
     # TODO: make executors init multi-threaded to boost performance
     for name, meta_dict in k8s_dict.items():
         if meta_dict["type"] == "aggregator":
-            continue
-        print(f'Waiting executor container {name} to be ready...')
-        start_time = time.time()
-        exec_ip = -1
-        while time.time() - start_time < 600:
-            resp = core_api.read_namespaced_pod(name, namespace="fedscale")
-            if resp.status.container_statuses[0].ready:
-                exec_ip = resp.status.pod_ip
+            # TODO: refactor the code so that docker/k8s version invoke the same init function
+            print(f'Initializing aggregator container {aggr_name}...')
+            send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            start_time = time.time()
+            while time.time() - start_time <= 10:
+                # avoid busy waiting
+                time.sleep(0.1)
+                try:
+                    send_socket.connect((meta_dict["ip"], 30000))
+                except socket.error:
+                    continue
+                msg = {}
+                msg["type"] = "aggr_init"
+                msg['data'] = job_conf.copy()
+                msg['data']['this_rank'] = 0
+                msg['data']['num_executors'] = yaml_conf["num_executors"]
+                msg['data']['executor_configs'] = "=".join(executor_configs)
+                msg = json.dumps(msg)
+                send_socket.sendall(msg.encode('utf-8'))
+                send_socket.close()
                 break
-            time.sleep(1)
-        if exec_ip == -1:
-            print(f"Error: executor {name} not ready after maximum waiting time allowed, aborting...")
+            time.sleep(10)
+        elif meta_dict["type"] == "executor":
+            print(f'Initializing executor container {name}...')
+            send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            start_time = time.time()
+            while time.time() - start_time <= 10:
+                # avoid busy waiting
+                time.sleep(0.1)
+                try:
+                    send_socket.connect((meta_dict["ip"], 32000))
+                except socket.error:
+                    continue
+                msg = {}
+                msg["type"] = "exec_init"
+                msg['data'] = job_conf.copy()
+                msg['data']['this_rank'] = meta_dict['rank_id']
+                msg['data']['num_executors'] = yaml_conf["num_executors"]
+                # TODO: support CUDA device
+                # assume single aggregator for now
+                msg['data']['ps_ip'] = aggr_ip
+                msg = json.dumps(msg)
+                send_socket.sendall(msg.encode('utf-8'))
+                send_socket.close()
+                break            
+        else:
+            print(f"Error: unrecognized type {meta_dict['type']}!")
             exit(1)
-        # update meta data
-        meta_dict["ip"] = exec_ip
-        print(f'Initializing executor container {name}...')
-        send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        start_time = time.time()
-        while time.time() - start_time <= 10:
-            # avoid busy waiting
-            time.sleep(0.1)
-            try:
-                send_socket.connect((exec_ip, 32000))
-            except socket.error:
-                continue
-            msg = {}
-            msg["type"] = "exec_init"
-            msg['data'] = job_conf.copy()
-            msg['data']['this_rank'] = meta_dict['rank_id']
-            msg['data']['num_executors'] = yaml_conf["num_executors"]
-            # TODO: support CUDA device
-            msg['data']['ps_ip'] = aggr_ip
-            msg = json.dumps(msg)
-            send_socket.sendall(msg.encode('utf-8'))
-            send_socket.close()
-            break            
 
     current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), job_name)
     with open(current_path, "wb") as fout:
@@ -471,7 +530,7 @@ if len(sys.argv) > 1:
         process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)
     elif sys.argv[1] == 'stop':
         terminate(sys.argv[2])
-    elif sys.argv[1] == 'log':
+    elif sys.argv[1] == 'logs':
         check_log(sys.argv[2])
     else:
         print_help = True
@@ -482,6 +541,6 @@ if print_help:
     # TODO: add support for reporting k8s job status
     print("\033[0;32mUsage:\033[0;0m\n")
     print("submit $PATH_TO_CONF_YML     # Submit a job")
-    print("log $JOB_NAME               # Check the aggregator log of a job")
+    print("logs $JOB_NAME               # Check the aggregator log of a job")
     print("stop $JOB_NAME               # Terminate a job")
     print()
