@@ -1,0 +1,42 @@
+{
+  "username": "conrevo",
+  "aggregator": {
+    "ip": "130.127.134.2",
+    "port": 29501
+  },
+  "executor_info": {
+    "size": [32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+  },
+  "assets": {
+    "dir": "TrainTest",
+    "training_set": "TrainSet",
+    "testing_set": "TestSet",
+    "training_labels": "train_labels.txt",
+    "testing_labels": "test_labels.txt",
+    "old_model_mnn": "model.mnn",
+    "old_model_json": "model.json",
+    "new_model_mnn": "temp_model.mnn",
+    "new_model_json": "temp_model.json"
+  },
+  "training": {
+    "num_classes": 10,
+    "epoch": 5,
+    "batch_size": 32,
+    "num_workers": 4,
+    "learning_rate": 1e-2,
+    "loss_decay": 0.2,
+    "weight_decay": 0.00004,
+    "momentum": 0.9,
+    "channel": 3,
+    "width": 28,
+    "height": 28
+  },
+  "testing": {
+    "num_classes": 10,
+    "test_bsz": 10,
+    "num_workers": 0,
+    "channel": 3,
+    "width": 28,
+    "height": 28
+  }
+}

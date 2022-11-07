@@ -50,6 +50,7 @@ parser.add_argument('--blacklist_rounds', type=int, default=-1)
 parser.add_argument('--blacklist_max_len', type=float, default=0.3)
 parser.add_argument('--embedding_file', type=str,
                     default='glove.840B.300d.txt')
+parser.add_argument('--input_shape', type=tuple, default=(1, 3, 28, 28))
 
 
 # The configuration of different hyper-parameters for training
