@@ -1,6 +1,14 @@
 fedscale.core.aggregation package
 =================================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   fedscale.core.aggregation.android
+
 Submodules
 ----------
 
