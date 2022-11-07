@@ -12,4 +12,13 @@ class LinearModel(Module):
         self.softmax = Softmax(dim=1)
 
     def forward(self, input: torch.Tensor):
+        """Linear model forward
+
+        Args:
+            input (torch.Tensor): A tensor input with shape (N, 3, 28, 28).
+
+        Returns:
+            torch.Tensor: A tensor output with shape (N, 10), 
+                          which is the classification prediction of the model.
+        """
         return self.softmax(self.linear(self.flatten(input)))
