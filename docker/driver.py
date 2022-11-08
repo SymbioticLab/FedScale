@@ -347,7 +347,8 @@ def submit_to_k8s(yaml_conf):
         # generate executor yaml
         exec_config = {
             "data_path": yaml_conf["data_path"],
-            "pod_name": exec_name
+            "pod_name": exec_name,
+            "use_cuda": job_conf["use_cuda"]
         }
 
         exec_yaml_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{exec_name}.yaml')
@@ -370,6 +371,8 @@ def submit_to_k8s(yaml_conf):
             # a cold start would take 5-6min, depends on network status
             while time.time() - start_time < 600:
                 resp = core_api.read_namespaced_pod(name, namespace="fedscale")
+                if resp.status.phase == 'Pending':
+                    continue
                 if resp.status.container_statuses[0].ready:
                     aggr_ip = resp.status.pod_ip
                     break
@@ -384,6 +387,8 @@ def submit_to_k8s(yaml_conf):
             start_time = time.time()
             while time.time() - start_time < 600:
                 resp = core_api.read_namespaced_pod(name, namespace="fedscale")
+                if resp.status.phase == 'Pending':
+                    continue
                 if resp.status.container_statuses[0].ready:
                     exec_ip = resp.status.pod_ip
                     break
@@ -444,6 +449,9 @@ def submit_to_k8s(yaml_conf):
                 # TODO: support CUDA device
                 # assume single aggregator for now
                 msg['data']['ps_ip'] = aggr_ip
+                if job_conf["use_cuda"]:
+                    # TODO: what if there are multiple GPUs?
+                    msg['data']['cuda_device'] = f"cuda:0"
                 msg = json.dumps(msg)
                 send_socket.sendall(msg.encode('utf-8'))
                 send_socket.close()

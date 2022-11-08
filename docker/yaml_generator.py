@@ -89,6 +89,18 @@ def generate_exec_template(dict, path):
             }]
         }
     }
+    if dict["use_cuda"]: 
+        config["spec"]["containers"][0]["resources"] = {
+            "limits": {
+                "nvidia.com/gpu": 1 # request 1 GPU
+            }
+        }
+        config["spec"]["tolerations"] = [{
+            "key": "nvidia.com/gpu",
+            "operator": "Exists",
+            "effect": "NoSchedule"
+        }]
+
     with open(path, "w") as f:
         f.write(yaml.dump(config, default_flow_style=False))
         
