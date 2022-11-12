@@ -56,7 +56,7 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
 
     Document trainDataConfJSON;
     trainDataConfJSON.Parse(trainData.c_str());
-    std::string trainImagesFolder   = directory + "/" + trainDataConfJSON["data"].GetString();
+    std::string trainImagesFolder   = directory + "/" + trainDataConfJSON["data"].GetString() + "/";
     std::string trainImagesTxt      = directory + "/" + trainDataConfJSON["label"].GetString();
 
     Document modelConfJSON;
@@ -223,7 +223,7 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTest(
 
     Document testDataConfJSON;
     testDataConfJSON.Parse(testData.c_str());
-    std::string testImagesFolder    = directory + "/" + testDataConfJSON["data"].GetString();
+    std::string testImagesFolder    = directory + "/" + testDataConfJSON["data"].GetString() + "/";
     std::string testImagesTxt       = directory + "/" + testDataConfJSON["label"].GetString();
 
     Document modelConfJSON;
@@ -316,7 +316,7 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTest(
         correctTop1 += accuracyTop1->readMap<int32_t>()[0];
 
         auto predictTop5 = _TopKV2(predict, _Scalar<int>(5))[1];
-        auto accuracyTop5 = _Cast<int32_t>(_Equal(predictTop5, label).sum({}));
+        auto accuracyTop5 = _Cast<int32_t>(_Equal(predictTop5, _Unsqueeze(label, {1})).sum({}));
         correctTop5 += accuracyTop5->readMap<int32_t>()[0];
 
         MNN_PRINT("[test][iter][%d][accuracy][top 1][%d/%d=%f%%][top 5][%d/%d=%f%%]", i,

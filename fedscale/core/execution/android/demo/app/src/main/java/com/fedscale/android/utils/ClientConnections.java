@@ -2,7 +2,10 @@ package com.fedscale.android.utils;
 
 import android.util.Log;
 
+import java.util.concurrent.TimeUnit;
+
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.executor.JobServiceGrpc;
 
@@ -12,7 +15,7 @@ import io.grpc.executor.JobServiceGrpc;
 public class ClientConnections {
     public int port;
     public String address;
-    public Channel channel;
+    public ManagedChannel channel;
     public JobServiceGrpc.JobServiceBlockingStub stub;
     public final int MAX_MESSAGE_LENGTH = 1*1024*1024*1024;
 
@@ -41,10 +44,10 @@ public class ClientConnections {
     }
 
     /**
-     * Stop connection from server. Note: Not implemented because java grpc has no close method.
+     * Stop connection from server.
      */
-    public void CloseServerConnection() {
+    public void CloseServerConnection() throws InterruptedException {
         Log.i("GRPC", "%%%%%%%%%% Closing grpc connection to the aggregator %%%%%%%%%%");
-        // TODO
+        this.channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
 }

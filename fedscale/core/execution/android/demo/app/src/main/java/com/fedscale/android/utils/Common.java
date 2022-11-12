@@ -99,6 +99,9 @@ public class Common {
         String[] assets = context.getAssets().list(assetsDir);
         for (int i = 0; i < assets.length; ++i) {
             String inPath = assetsDir + "/" + assets[i];
+            if (assetsDir.equals("")) {
+                inPath = assets[i];
+            }
             String outPath = outDir + "/" + assets[i];
             String[] subAssets = context.getAssets().list(inPath);
             if (subAssets.length == 0) {

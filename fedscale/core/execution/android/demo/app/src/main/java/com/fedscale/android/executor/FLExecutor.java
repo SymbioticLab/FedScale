@@ -176,7 +176,7 @@ public class FLExecutor extends AppCompatActivity {
         this.round++;
         this.setText(this.mExecuteStatus, Common.UPDATE_MODEL);
         this.setText(this.mUserId, this.mExecutorID + ": Round " + this.round);
-        Common.writeString2File(config, this.config.getJSONObject("model_conf").getString("path"));
+        Common.writeString2File(config, getCacheDir() + "/" + this.config.getJSONObject("model_conf").getString("path"));
     }
 
     /**
@@ -263,7 +263,7 @@ public class FLExecutor extends AppCompatActivity {
     /**
      * Stop the current executor
      */
-    public void FLStop() {
+    public void FLStop() throws InterruptedException {
         this.setText(this.mExecuteStatus, Common.SHUT_DOWN);
         this.communicator.CloseServerConnection();
         this.receivedStopRequest = true;
