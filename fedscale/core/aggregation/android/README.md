@@ -11,7 +11,9 @@ MNN does not support direct conversion from MNN to PyTorch model, so we did a ma
 
 `linear_model.py` contains a simple linear model with Flatten->Linear->Softmax, used for simple test of our sample android app.
 
-In order to run this aggregator, please run
+`mnn_convert.py` contains all the code necessary for MNN<->PyTorch model conversion.
+
+In order to run this aggregator with default setting in order to test sample app, please run
 ```
 git clone https://github.com/SymbioticLab/FedScale.git
 cd FedScale
