@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch import Module, Tensor
+from torch import Tensor
 
 
 def init_keymap(model_weights: dict, mnn_json) -> dict:
@@ -74,7 +74,7 @@ def init_keymap(model_weights: dict, mnn_json) -> dict:
                         break
     return keymap
 
-def torch_to_mnn(model: Module, input_shape: Tensor, is_install=False):
+def torch_to_mnn(model, input_shape: Tensor, is_install=False):
     """Convert torch model to mnn json.
 
     Args:
