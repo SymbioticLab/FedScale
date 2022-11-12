@@ -4,7 +4,7 @@ This directory contains minimum files modified from [MNN Android Demo](https://g
 
 ## Download and build sample android app
 
-1. Download and unzip [sample dataset (TrainTest.zip)](https://drive.google.com/uc?export=download&id=1sLKIx6kuVZ0jVGgBLx_AGTM0YM5rhct_) to `TrainTest/` directory. Remove `TrainTest.zip` after unzip to save space on your mobile device. After unzip, you should see 3 files and 2 directories under `TrainTest/`:
+1. Download and unzip [sample dataset (TrainTest.zip)](https://drive.google.com/uc?export=download&id=1sLKIx6kuVZ0jVGgBLx_AGTM0YM5rhct_) to `assets/` directory. Remove `TrainTest.zip` after unzip to save space on your mobile device. After unzip, you should see 3 files and 2 directories under `assets/`:
    1. `TrainSet`: Training set directory, contains 316 images.
    2. `TestSet`: Testing set directory, contains 34 images.
    3. `conf.json`: Configuration file for mobile app.
@@ -35,11 +35,10 @@ python3 android_aggregator.py --experiment_mode=mobile --num_participants=1 --mo
 
 ## Customize your own app
 
-1. If you want to use your own dataset, please put your data under `TrainTest/TrainSet` and `TrainTest/TestSet`, make sure that your label has the same format as my label file.
-   1. If you want to change the file/dir name under `TrainTest`, please make sure to change the corresponding config in `assets` attribute inside `TrainTest/conf.json`. 
-   2. If you want to change the name of `TrainTest`, you should change `assetsDir` at L485 in `com.taobao.android.mnndemo.FLExecutor`.
-2. If you want to use your own model for **image classification**, please either change `channel`, `width` and `height` inside `TrainTest/conf.json` to your own input and change `num_classes` to your own classes, or override these attributes when sending `CLIENT_TRAIN` request.
-3. If you want to use your own model for tasks other than image classification, you may need to write your own JNI C++ trainer and tester. Please refer to [MNN](https://github.com/alibaba/MNN) for further development guide. You may also need to change `channel`, `width` and `height` inside `TrainTest/conf.json` to your own input and change or remove `num_classes`.
+1. If you want to use your own dataset, please put your data under `assets/TrainSet` and `assets/TestSet`, make sure that your label has the same format as my label file.
+   1. If you want to change the file/dir name under `assets`, please make sure to change the corresponding config in `assets` attribute inside `assets/conf.json`. 
+2. If you want to use your own model for **image classification**, please either change `channel`, `width` and `height` inside `assets/conf.json` to your own input and change `num_classes` to your own classes, or override these attributes when sending `CLIENT_TRAIN` request.
+3. If you want to use your own model for tasks other than image classification, you may need to write your own JNI C++ trainer and tester. Please refer to [MNN](https://github.com/alibaba/MNN) for further development guide. You may also need to change `channel`, `width` and `height` inside `assets/conf.json` to your own input and change or remove `num_classes`.
 4. Please note that MNN does not support DropOut and will SegFault during training. MNN may have other potential bugs.
 
 ----

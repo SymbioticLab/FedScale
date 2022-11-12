@@ -19,7 +19,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     defaultConfig {
-        applicationId "com.taobao.android.mnndemo"
+        applicationId "com.fedscale.android.executor"
         minSdkVersion 14
         targetSdkVersion 28
         multiDexEnabled true

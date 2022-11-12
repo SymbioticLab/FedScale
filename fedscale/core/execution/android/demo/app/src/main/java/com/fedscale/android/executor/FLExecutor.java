@@ -1,4 +1,4 @@
-package com.taobao.android.mnndemo;
+package com.fedscale.android.executor;
 
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -10,9 +10,9 @@ import android.widget.TextView;
 
 import com.google.common.hash.Hashing;
 import com.google.protobuf.ByteString;
-import com.taobao.android.mnn.MNNTrainInstance;
-import com.taobao.android.utils.ClientConnections;
-import com.taobao.android.utils.Common;
+import com.fedscale.android.mnn.MNNTrainInstance;
+import com.fedscale.android.utils.ClientConnections;
+import com.fedscale.android.utils.Common;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,7 +30,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * Sample android executor with MNN backend support.
+ * Sample com.fedscale.android executor with MNN backend support.
  * Training and executing will be handled inside MNN C++.
  * Server-client communication will be handled in JAVA.
  */
@@ -45,15 +45,6 @@ public class FLExecutor extends AppCompatActivity {
     private int round = 0;
     private boolean receivedStopRequest = false;
     private Queue<ServerResponse> eventQueue = new LinkedList<>();
-
-    private String trainingSets;
-    private String trainingLabels;
-    private String testingSets;
-    private String testingLabels;
-    private String oldJsonPath;
-    private String oldModelPath;
-    private String newJsonPath;
-    private String newModelPath;
 
     private TextView mUserId;
     private TextView mExecuteStatus;
@@ -108,26 +99,19 @@ public class FLExecutor extends AppCompatActivity {
     // No need for initModel
 
     /**
-     * Move all files/directories inside assetsDir into android cache directory.
-     *
-     * @param assetsDir The subdirectory of assets which contains
-     *                  training set, testing set, labels and config.
+     * Move all files/directories inside assetsDir into com.fedscale.android cache directory.
      */
-    private void initData(String assetsDir) throws IOException {
+    private void initData() throws IOException {
         Log.i(Common.TAG, "Data movement starts ...");
-        String mMobileTrainPath = getCacheDir() + "/" + assetsDir;
-        Common.copyDir(getBaseContext(), assetsDir, mMobileTrainPath);
+        Common.copyDir(getBaseContext(), "", getCacheDir());
         Log.i(Common.TAG, "Data movement completes ...");
     }
 
     /**
      * Initialize variables associated to conf.json.
-     *
-     * @param assetsDir The subdirectory of assets which contains
-     *                  training set, testing set, labels and config.
      */
-    private void initAsset(String assetsDir) throws IOException, JSONException {
-        String configPath = getCacheDir() + "/" + assetsDir + "/conf.json";
+    private void initAsset() throws IOException, JSONException {
+        String configPath = getCacheDir() + "/conf.json";
         String configStr = Common.readStringFromFile(configPath);
         this.config = new JSONObject(configStr);
         this.mExecutorID = this.initExecutorId(this.config.getString("username"));
@@ -136,29 +120,15 @@ public class FLExecutor extends AppCompatActivity {
         this.communicator = new ClientConnections(
                 this.aggregatorIP,
                 this.aggregatorPort);
-
-        String dataDir = getCacheDir() + "/" + assetsDir;
-        JSONObject assetsConfig = this.config.getJSONObject("assets");
-        this.trainingSets   = dataDir + "/" + assetsConfig.getString("training_set") + "/";
-        this.testingSets    = dataDir + "/" + assetsConfig.getString("testing_set") + "/";
-        this.trainingLabels = dataDir + "/" + assetsConfig.getString("training_labels");
-        this.testingLabels  = dataDir + "/" + assetsConfig.getString("testing_labels");
-        this.oldJsonPath    = dataDir + "/" + assetsConfig.getString("old_model_json");
-        this.oldModelPath   = dataDir + "/" + assetsConfig.getString("old_model_mnn");
-        this.newJsonPath    = dataDir + "/" + assetsConfig.getString("new_model_json");
-        this.newModelPath   = dataDir + "/" + assetsConfig.getString("new_model_mnn");
     }
 
     /**
      * Start running the executor by setting up execution and communication environment,
      * and monitoring the grpc message.
-     *
-     * @param assetsDir The subdirectory of assets which contains
-     *                  training set, testing set, labels and config.
      */
-    private void runExecutor(String assetsDir) throws Exception {
-        this.initData(assetsDir);
-        this.initAsset(assetsDir);
+    private void runExecutor() throws Exception {
+        this.initData();
+        this.initAsset();
         this.initUI();
         this.setupCommunication();
         this.eventMonitor();
@@ -201,11 +171,11 @@ public class FLExecutor extends AppCompatActivity {
      *
      * @param config The broadcast global model config.
      */
-    public void FLUpdateModel(String config) throws IOException {
+    public void FLUpdateModel(String config) throws IOException, JSONException {
         this.round++;
         this.setText(this.mExecuteStatus, Common.UPDATE_MODEL);
         this.setText(this.mUserId, this.mExecutorID + ": Round " + this.round);
-        Common.writeString2File(config, this.oldJsonPath);
+        Common.writeString2File(config, this.config.getJSONObject("model_conf").getString("path"));
     }
 
     /**
@@ -217,21 +187,14 @@ public class FLExecutor extends AppCompatActivity {
     public String FLTrain(String config) throws Exception {
         this.setText(this.mExecuteStatus, Common.CLIENT_TRAIN);
         MNNTrainInstance trainInstance = new MNNTrainInstance();
-        trainInstance.convert(
-                this.oldModelPath,
-                this.oldJsonPath,
-                true);
-        JSONObject newConf = this.overrideConf(
-                this.config.getJSONObject("training"),
+        JSONObject newTrainingConf = this.overrideConf(
+                this.config.getJSONObject("training_conf"),
                 config);
         String trainResult = trainInstance.train(
-                newConf.getInt("num_classes"),
-                this.oldModelPath,
-                this.newModelPath,
-                this.newJsonPath,
-                this.trainingSets,
-                this.trainingLabels,
-                newConf.toString());
+                getCacheDir().toString(),
+                this.config.getJSONObject("training_data").toString(),
+                this.config.getJSONObject("model_conf").toString(),
+                newTrainingConf.toString());
         CompleteRequest request = CompleteRequest.newBuilder()
                 .setClientId(this.mExecutorID)
                 .setExecutorId(this.mExecutorID)
@@ -262,19 +225,14 @@ public class FLExecutor extends AppCompatActivity {
     public void FLTest(String config) throws Exception {
         this.setText(this.mExecuteStatus, Common.MODEL_TEST);
         MNNTrainInstance trainInstance = new MNNTrainInstance();
-        trainInstance.convert(
-                this.oldModelPath,
-                this.oldJsonPath,
-                true);
-        JSONObject newConf = this.overrideConf(
-                this.config.getJSONObject("testing"),
+        JSONObject newTestingConf = this.overrideConf(
+                this.config.getJSONObject("testing_conf"),
                 config);
         String testResult = trainInstance.test(
-                newConf.getInt("num_classes"),
-                this.oldModelPath,
-                this.testingSets,
-                this.testingLabels,
-                newConf.toString());
+                getCacheDir().toString(),
+                this.config.getJSONObject("testing_data").toString(),
+                this.config.getJSONObject("model_conf").toString(),
+                newTestingConf.toString());
         JSONObject testRes = new JSONObject();
         testRes.put("executorId", this.mExecutorID);
         testRes.put("results", new JSONObject(testResult));
@@ -482,11 +440,9 @@ public class FLExecutor extends AppCompatActivity {
         mThread.start();
         mHandle = new Handler(mThread.getLooper());
 
-        String assetsDir = "TrainTest";
-
         mHandle.post(() -> {
             try {
-                runExecutor(assetsDir);
+                runExecutor();
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -1,4 +1,4 @@
-package com.taobao.android.utils;
+package com.fedscale.android.utils;
 
 import android.util.Log;
 

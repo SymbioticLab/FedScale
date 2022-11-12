@@ -1,11 +1,3 @@
-//
-//  MobilenetV2Utils.cpp
-//  MNN
-//
-//  Created by MNN on 2020/01/08.
-//  Copyright © 2018, Alibaba Group Holding Limited
-//
-
 #include <MNN/MNNDefine.h>
 #include <android/bitmap.h>
 #include <jni.h>
@@ -47,31 +39,47 @@ std::string parseString(JNIEnv* env, jstring str) {
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
-    JNIEnv* env,
-    jclass type,
-    jint numClasses_,
-    jint addToLabel_,
-    jstring trainModelPath_,
-    jstring newModelPath_,
-    jstring newJsonPath_,
-    jstring trainImagesFolder_,
-    jstring trainImagesTxt_,
-    jstring config_
-    ) {
+Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
+        JNIEnv* env,
+        jclass type,
+        jstring directory_,
+        jstring trainData_,
+        jstring modelConf_,
+        jstring trainingConf_
+) {
+    std::string directory           = parseString(env, directory_);
+    std::string trainData           = parseString(env, trainData_);
+    std::string modelConf           = parseString(env, modelConf_);
+    std::string trainingConf        = parseString(env, trainingConf_);
 
-    int numClasses = numClasses_;
-    int addToLabel = addToLabel_;
-    std::string trainModelPath      = parseString(env, trainModelPath_   );
-    std::string newModelPath        = parseString(env, newModelPath_   );
-    std::string newJsonPath         = parseString(env, newJsonPath_   );
-    std::string trainImagesFolder   = parseString(env, trainImagesFolder_);
-    std::string trainImagesTxt      = parseString(env, trainImagesTxt_   );
-    std::string configStr           = parseString(env, config_);
+    int addToLabel = 0;
 
-    Document configJSON;
-    configJSON.Parse(configStr.c_str());
+    Document trainDataConfJSON;
+    trainDataConfJSON.Parse(trainData.c_str());
+    std::string trainImagesFolder   = directory + "/" + trainDataConfJSON["data"].GetString();
+    std::string trainImagesTxt      = directory + "/" + trainDataConfJSON["label"].GetString();
 
+    Document modelConfJSON;
+    modelConfJSON.Parse(modelConf.c_str());
+    std::string trainJsonPath       = directory + "/" + modelConfJSON["path"].GetString();
+    std::string trainModelPath      = directory + "/model.mnn";
+    std::string newModelPath        = directory + "/temp_model.mnn";
+    std::string newJsonPath         = directory + "/temp_json.mnn";
+
+    Document trainingConfJSON;
+    trainingConfJSON.Parse(trainingConf.c_str());
+    const std::string clientId  = trainingConfJSON["client_id"].GetString();
+    const int numClasses        = trainingConfJSON["num_classes"].GetInt();
+    const int trainEpochs       = trainingConfJSON["epoch"].GetInt();
+    const int trainBatchSize    = trainingConfJSON["batch_size"].GetInt();
+    const int trainNumWorkers   = trainingConfJSON["num_workers"].GetInt();
+    const float rate            = trainingConfJSON["learning_rate"].GetFloat();
+    const float lossDecay       = trainingConfJSON["loss_decay"].GetFloat();
+    const int channel           = trainingConfJSON["channel"].GetInt();
+
+    MNN_PRINT("[JSON->MNN][start][JSON][%s][MNN][%s]", trainJsonPath.c_str(), trainModelPath.c_str());
+    MNN::Cli::json2mnn(trainJsonPath.c_str(), trainModelPath.c_str());
+    MNN_PRINT("[JSON->MNN][end][JSON][%s][MNN][%s]", trainJsonPath.c_str(), trainModelPath.c_str());
 
     auto varMap = Variable::loadMap(trainModelPath.c_str());
     if (varMap.empty()) {
@@ -87,38 +95,32 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
     BackendConfig config;
     exe->setGlobalExecutorConfig(MNN_FORWARD_USER_1, config, 2);
     std::shared_ptr<SGD> solver(new SGD(model));
-    solver->setMomentum(0.9f);
+    solver->setMomentum(trainingConfJSON["momentum"].GetFloat());
     // solver->setMomentum2(0.99f);
-    solver->setWeightDecay(0.00004f);
+    solver->setWeightDecay(trainingConfJSON["weight_decay"].GetFloat());
 
     auto converImagesToFormat = CV::RGB;
-    int resizeHeight = 28;
-    int resizeWidth = 28;
+    int resizeHeight = trainingConfJSON["height"].GetInt();
+    int resizeWidth = trainingConfJSON["width"].GetInt();
     std::vector<float> means = {127.5, 127.5, 127.5};
     std::vector<float> scales = {1 / 127.5, 1 / 127.5, 1 / 127.5};
     std::vector<float> cropFraction = {
-        0.875, 0.875};  // center crop fraction for height and width
+            0.875, 0.875};  // center crop fraction for height and width
     bool centerOrRandomCrop = false;  // true for random crop
     std::shared_ptr<ImageDataset::ImageConfig> datasetConfig(
-        ImageDataset::ImageConfig::create(converImagesToFormat, resizeHeight,
-                                          resizeWidth, scales, means,
-                                          cropFraction, centerOrRandomCrop));
+            ImageDataset::ImageConfig::create(converImagesToFormat, resizeHeight,
+                                              resizeWidth, scales, means,
+                                              cropFraction, centerOrRandomCrop));
     bool readAllImagesToMemory = false;
     auto trainDataset =
-        ImageDataset::create(trainImagesFolder, trainImagesTxt,
-                             datasetConfig.get(), readAllImagesToMemory);
-
-    const int trainBatchSize = 32;
-    const int trainNumWorkers = 4;
+            ImageDataset::create(trainImagesFolder, trainImagesTxt,
+                                 datasetConfig.get(), readAllImagesToMemory);
 
     auto trainDataLoader =
-        trainDataset.createLoader(trainBatchSize, true, true, trainNumWorkers);
+            trainDataset.createLoader(trainBatchSize, true, true, trainNumWorkers);
 
     const int trainIterations = trainDataLoader->iterNumber();
 
-    // belong to config
-    float lossDecay = 0.2;
-    int trainEpochs = 5;
     float epochTrainLoss = 0;
     float currentLoss = 0;
 
@@ -138,16 +140,15 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
                 auto example = trainData[0];
                 // Compute One-Hot
                 auto newTarget = _OneHot(
-                    _Cast<int32_t>(_Squeeze(
-                        example.second[0] + _Scalar<int32_t>(addToLabel), {})),
-                    _Scalar<int>(numClasses), _Scalar<float>(1.0f),
-                    _Scalar<float>(0.0f));
+                        _Cast<int32_t>(_Squeeze(
+                                example.second[0] + _Scalar<int32_t>(addToLabel), {})),
+                        _Scalar<int>(numClasses), _Scalar<float>(1.0f),
+                        _Scalar<float>(0.0f));
                 auto predict =
-                    model->forward(_Convert(example.first[0], NC4HW4));
+                        model->forward(_Convert(example.first[0], NC4HW4));
                 auto loss = _CrossEntropy(predict, newTarget);
                 // float rate   = LrScheduler::inv(0.0001,
                 // solver->currentStep(), 0.0001, 0.75);
-                float rate = 1e-2;
                 solver->setLearningRate(rate);
                 currentLoss = loss->readMap<float>()[0];
 
@@ -155,7 +156,7 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
                     epochTrainLoss = currentLoss;
                 } else {
                     epochTrainLoss = (1 - lossDecay) * epochTrainLoss +
-                            lossDecay * currentLoss;
+                                     lossDecay * currentLoss;
                 }
 
                 MNN_PRINT("[train][iter][%d][loss][%f][lr][%f]",
@@ -167,7 +168,7 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
         {
             model->setIsTraining(false);
             auto forwardInput =
-                _Input({1, 3, resizeHeight, resizeWidth}, NC4HW4);
+                    _Input({1, channel, resizeHeight, resizeWidth}, NC4HW4);
             forwardInput->setName("data");
             auto predict = model->forward(forwardInput);
             Transformer::turnModelToInfer()->onExecute({predict});
@@ -187,8 +188,6 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
     Writer<StringBuffer> writer(s);
     writer.StartObject();
     writer.Key("clientId");
-    Value& tmp = configJSON["client_id"];
-    std::string clientId = tmp.GetString();
     writer.String(clientId.c_str());
     writer.Key("moving_loss");
     writer.Double(epochTrainLoss);
@@ -210,24 +209,37 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTrain(
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_taobao_android_mnn_MNNTrainNative_nativeTest(
-    JNIEnv* env,
-    jclass type,
-    jint numClasses_,
-    jint addToLabel_,
-    jstring testModelPath_,
-    jstring testImagesFolder_,
-    jstring testImagesTxt_,
-    jstring config_) {
-    int numClasses = numClasses_;
-    int addToLabel = addToLabel_;
-    std::string testModelPath = parseString(env, testModelPath_);
-    std::string testImagesFolder = parseString(env, testImagesFolder_);
-    std::string testImagesTxt = parseString(env, testImagesTxt_);
-    std::string configStr = parseString(env, config_);
+Java_com_fedscale_android_mnn_MNNNative_nativeTest(
+        JNIEnv* env,
+        jclass type,
+        jstring directory_,
+        jstring testData_,
+        jstring modelConf_,
+        jstring testingConf_) {
+    std::string directory          = parseString(env, directory_);
+    std::string testData           = parseString(env, testData_);
+    std::string modelConf          = parseString(env, modelConf_);
+    std::string testingConf        = parseString(env, testingConf_);
 
-    Document configJSON;
-    configJSON.Parse(configStr.c_str());
+    Document testDataConfJSON;
+    testDataConfJSON.Parse(testData.c_str());
+    std::string testImagesFolder    = directory + "/" + testDataConfJSON["data"].GetString();
+    std::string testImagesTxt       = directory + "/" + testDataConfJSON["label"].GetString();
+
+    Document modelConfJSON;
+    modelConfJSON.Parse(modelConf.c_str());
+    std::string testJsonPath = directory + "/" + modelConfJSON["path"].GetString();
+    std::string testModelPath = directory + "/model.mnn";
+
+    int addToLabel = 0;
+
+    Document testingConfJSON;
+    testingConfJSON.Parse(testingConf.c_str());
+    int numClasses = testingConfJSON["num_classes"].GetInt();
+
+    MNN_PRINT("[JSON->MNN][start][JSON][%s][MNN][%s]", testJsonPath.c_str(), testModelPath.c_str());
+    MNN::Cli::json2mnn(testJsonPath.c_str(), testModelPath.c_str());
+    MNN_PRINT("[JSON->MNN][end][JSON][%s][MNN][%s]", testJsonPath.c_str(), testModelPath.c_str());
 
     auto varMap = Variable::loadMap(testModelPath.c_str());
     if (varMap.empty()) {
@@ -244,27 +256,27 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTest(
     exe->setGlobalExecutorConfig(MNN_FORWARD_USER_1, config, 2);
 
     auto converImagesToFormat = CV::RGB;
-    int resizeHeight = 28;
-    int resizeWidth = 28;
+    int resizeHeight = testingConfJSON["height"].GetInt();
+    int resizeWidth = testingConfJSON["width"].GetInt();
     std::vector<float> means = {127.5, 127.5, 127.5};
     std::vector<float> scales = {1 / 127.5, 1 / 127.5, 1 / 127.5};
     std::vector<float> cropFraction = {
-        0.875, 0.875};  // center crop fraction for height and width
+            0.875, 0.875};  // center crop fraction for height and width
     bool centerOrRandomCrop = false;  // true for random crop
     std::shared_ptr<ImageDataset::ImageConfig> datasetConfig(
-        ImageDataset::ImageConfig::create(converImagesToFormat, resizeHeight,
-                                          resizeWidth, scales, means,
-                                          cropFraction, centerOrRandomCrop));
+            ImageDataset::ImageConfig::create(converImagesToFormat, resizeHeight,
+                                              resizeWidth, scales, means,
+                                              cropFraction, centerOrRandomCrop));
     bool readAllImagesToMemory = false;
     auto testDataset =
-        ImageDataset::create(testImagesFolder, testImagesTxt,
-                             datasetConfig.get(), readAllImagesToMemory);
+            ImageDataset::create(testImagesFolder, testImagesTxt,
+                                 datasetConfig.get(), readAllImagesToMemory);
 
-    const int testBatchSize = 10;
-    const int testNumWorkers = 0;
+    const int testBatchSize = testingConfJSON["test_bsz"].GetInt();
+    const int testNumWorkers = testingConfJSON["num_workers"].GetInt();
 
     auto testDataLoader =
-        testDataset.createLoader(testBatchSize, true, false, testNumWorkers);
+            testDataset.createLoader(testBatchSize, true, false, testNumWorkers);
 
     const int testIterations = testDataLoader->iterNumber();
 
@@ -277,7 +289,8 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTest(
     exe->resetProfile();
 
     float testLoss = 0;
-    int correct = 0;
+    int correctTop1 = 0;
+    int correctTop5 = 0;
     int sampleCount = 0;
     testDataLoader->reset();
     model->setIsTraining(false);
@@ -288,68 +301,41 @@ Java_com_taobao_android_mnn_MNNTrainNative_nativeTest(
         auto data = testDataLoader->next();
         auto example = data[0];
         auto newTarget =
-            _OneHot(_Cast<int32_t>(_Squeeze(
-                        example.second[0] + _Scalar<int32_t>(addToLabel), {})),
-                    _Scalar<int>(numClasses), _Scalar<float>(1.0f),
-                    _Scalar<float>(0.0f));
+                _OneHot(_Cast<int32_t>(_Squeeze(
+                                example.second[0] + _Scalar<int32_t>(addToLabel), {})),
+                        _Scalar<int>(numClasses), _Scalar<float>(1.0f),
+                        _Scalar<float>(0.0f));
         auto predict = model->forward(_Convert(example.first[0], NC4HW4));
         auto loss = _CrossEntropy(predict, newTarget);
         testLoss += loss->readMap<float>()[0];
-        auto label =
-            _Squeeze(example.second[0]) + _Scalar<int32_t>(addToLabel);
+        auto label = _Squeeze(example.second[0]) + _Scalar<int32_t>(addToLabel);
         sampleCount += label->getInfo()->size;
-        int accu = 0;
-        for (int j = 0; j < testBatchSize; ++j) {
-            int _label = 0;
-            int maxScore = predict->readMap<int32_t>()[j * numClasses];
-            for (int k = 0; k < numClasses; ++k) {
-                int currentScore =
-                    predict->readMap<int32_t>()[j * numClasses + k];
-                if (currentScore > maxScore) {
-                    maxScore = currentScore;
-                    _label = k;
-                }
-            }
-            if (_label == label->readMap<int32_t>()[j]) accu++;
-        }
-        correct += accu;
-        MNN_PRINT("[test][iter][%d][acc][%d/%d=%f%%]", i, correct,
-                  sampleCount, float(correct) / sampleCount * 100);
-    }
-    auto accu = (float)correct / testDataLoader->size();
-    MNN_PRINT("[test][final][acc][%f]", accu);
 
+        auto predictTop1 = _ArgMax(predict, 1); // (N, numClasses) --> (N)
+        auto accuracyTop1 = _Cast<int32_t>(_Equal(predictTop1, label).sum({}));
+        correctTop1 += accuracyTop1->readMap<int32_t>()[0];
+
+        auto predictTop5 = _TopKV2(predict, _Scalar<int>(5))[1];
+        auto accuracyTop5 = _Cast<int32_t>(_Equal(predictTop5, label).sum({}));
+        correctTop5 += accuracyTop5->readMap<int32_t>()[0];
+
+        MNN_PRINT("[test][iter][%d][accuracy][top 1][%d/%d=%f%%][top 5][%d/%d=%f%%]", i,
+                  correctTop1, sampleCount, float(correctTop1) / sampleCount * 100,
+                  correctTop5, sampleCount, float(correctTop5) / sampleCount * 100);
+    }
+    auto accuracyFinalTop1 = (float)correctTop1 / testDataLoader->size();
+    auto accuracyFinalTop5 = (float)correctTop5 / testDataLoader->size();
+    MNN_PRINT("[test][final][accuracy][top 1][%f][top 5][%f]", accuracyFinalTop1, accuracyFinalTop5);
 
     exe->dumpProfile();
     writer.Key("top_1");
-    writer.Double(accu);
-    // TODO: add correct top_5, currently equal to top_1
+    writer.Double(accuracyFinalTop1);
     writer.Key("top_5");
-    writer.Double(accu);
+    writer.Double(accuracyFinalTop5);
     writer.Key("test_loss");
     writer.Double(testLoss);
     writer.Key("test_len");
     writer.Uint(testDataLoader->size());
     writer.EndObject();
     return env->NewStringUTF(s.GetString());
-}
-
-extern "C" JNIEXPORT jint JNICALL
-Java_com_taobao_android_mnn_MNNTrainNative_nativeMNNConvert(
-    JNIEnv* env,
-    jclass type, 
-    jstring mnnPath_,
-    jstring jsonPath_,
-    jboolean json2mnn_) {
-    std::string mnnPath = parseString(env, mnnPath_);
-    std::string jsonPath = parseString(env, jsonPath_);
-    bool json2mnn = json2mnn_;
-    if (json2mnn) {
-        MNN::Cli::json2mnn(jsonPath.c_str(), mnnPath.c_str());
-        MNN_PRINT("[JSON->MNN][JSON][%s][MNN][%s]", jsonPath.c_str(), mnnPath.c_str());
-    } else {
-        MNN::Cli::mnn2json(mnnPath.c_str(), jsonPath.c_str());
-        MNN_PRINT("[MNN->JSON][MNN][%s][JSON][%s]", mnnPath.c_str(), jsonPath.c_str());
-    }
-    return 0;
 }

@@ -7,18 +7,18 @@
   "executor_info": {
     "size": [32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
   },
-  "assets": {
-    "dir": "TrainTest",
-    "training_set": "TrainSet",
-    "testing_set": "TestSet",
-    "training_labels": "train_labels.txt",
-    "testing_labels": "test_labels.txt",
-    "old_model_mnn": "model.mnn",
-    "old_model_json": "model.json",
-    "new_model_mnn": "temp_model.mnn",
-    "new_model_json": "temp_model.json"
+  "model_conf": {
+    "path": "model.json"
   },
-  "training": {
+  "training_data": {
+    "data": "TrainSet",
+    "label": "train_labels.txt"
+  },
+  "testing_data": {
+    "data": "TestSet",
+    "label": "test_labels.txt"
+  },
+  "training_conf": {
     "num_classes": 10,
     "epoch": 5,
     "batch_size": 32,
@@ -31,7 +31,7 @@
     "width": 28,
     "height": 28
   },
-  "testing": {
+  "testing_conf": {
     "num_classes": 10,
     "test_bsz": 10,
     "num_workers": 0,

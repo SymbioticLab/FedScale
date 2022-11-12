@@ -1,4 +1,4 @@
-package com.taobao.android.utils;
+package com.fedscale.android.utils;
 
 import android.content.Context;
 import android.util.Log;
@@ -16,7 +16,7 @@ import com.google.common.io.Files;
  * Const string representing status and tools for file operations.
  */
 public class Common {
-    public static String TAG = "MNNDemo";
+    public static String TAG = "Demo";
     public static String UPDATE_MODEL = "update_model";
     public static String MODEL_TEST = "model_test";
     public static String SHUT_DOWN = "terminate_executor";
@@ -38,7 +38,7 @@ public class Common {
     }
 
     /**
-     * Copy file from asset to android.
+     * Copy file from asset to com.fedscale.android.
      *
      * @param context Android context.
      * @param assetsFile Asset filename.
@@ -85,17 +85,16 @@ public class Common {
     }
 
     /**
-     * Copy asset directory into android.
+     * Copy asset directory into com.fedscale.android.
      *
      * @param context Android context.
      * @param assetsDir Asset subdirectory.
      * @param outDir Destination directory.
      * @throws IOException
      */
-    public static void copyDir(Context context, String assetsDir, String outDir) throws IOException {
-        File dir = new File(outDir);
-        if (!dir.exists()) {
-            dir.mkdir();
+    public static void copyDir(Context context, String assetsDir, File outDir) throws IOException {
+        if (!outDir.exists()) {
+            outDir.mkdir();
         }
         String[] assets = context.getAssets().list(assetsDir);
         for (int i = 0; i < assets.length; ++i) {
@@ -107,7 +106,7 @@ public class Common {
                 copyAssetResource2File(context, inPath, outPath);
             } else {
                 // copy directory
-                copyDir(context, inPath, outPath);
+                copyDir(context, inPath, new File(outPath));
             }
         }
     }
