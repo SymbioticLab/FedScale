@@ -8,9 +8,10 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import com.fedscale.android.utils.Backend;
 import com.google.common.hash.Hashing;
 import com.google.protobuf.ByteString;
-import com.fedscale.android.mnn.MNNTrainInstance;
+import com.fedscale.android.mnn.MNNBackend;
 import com.fedscale.android.utils.ClientConnections;
 import com.fedscale.android.utils.Common;
 
@@ -186,11 +187,11 @@ public class FLExecutor extends AppCompatActivity {
      */
     public String FLTrain(String config) throws Exception {
         this.setText(this.mExecuteStatus, Common.CLIENT_TRAIN);
-        MNNTrainInstance trainInstance = new MNNTrainInstance();
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
                 config);
-        String trainResult = trainInstance.train(
+        Backend backend = new MNNBackend();
+        String trainResult = backend.MLTrain(
                 getCacheDir().toString(),
                 this.config.getJSONObject("training_data").toString(),
                 this.config.getJSONObject("model_conf").toString(),
@@ -224,11 +225,11 @@ public class FLExecutor extends AppCompatActivity {
      */
     public void FLTest(String config) throws Exception {
         this.setText(this.mExecuteStatus, Common.MODEL_TEST);
-        MNNTrainInstance trainInstance = new MNNTrainInstance();
         JSONObject newTestingConf = this.overrideConf(
                 this.config.getJSONObject("testing_conf"),
                 config);
-        String testResult = trainInstance.test(
+        Backend backend = new MNNBackend();
+        String testResult = backend.MLTest(
                 getCacheDir().toString(),
                 this.config.getJSONObject("testing_data").toString(),
                 this.config.getJSONObject("model_conf").toString(),

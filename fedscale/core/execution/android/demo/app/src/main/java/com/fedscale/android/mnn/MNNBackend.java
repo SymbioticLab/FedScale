@@ -1,9 +1,11 @@
 package com.fedscale.android.mnn;
 
+import com.fedscale.android.utils.Backend;
+
 /**
- * Training and testing interface from Java to JNI C++ backend.
+ * Implementation of MNN backend support.
  */
-public class MNNTrainInstance {
+public class MNNBackend implements Backend {
     /**
      * Training interface from Java to JNI C++ backend.
      *
@@ -13,7 +15,7 @@ public class MNNTrainInstance {
      * @param trainingConf Stringified JSON config for training.
      * @return Stringified JSON training result containing updated model in JSON.
      */
-    public String train(
+    public String MLTrain(
             String directory,
             String trainingData,
             String modelConf,
@@ -34,7 +36,7 @@ public class MNNTrainInstance {
      * @param testingConf Stringified JSON config for testing.
      * @return  Stringified JSON testing result.
      */
-    public String test(
+    public String MLTest(
             String directory,
             String testingData,
             String modelConf,
