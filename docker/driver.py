@@ -4,6 +4,7 @@ import datetime
 import os
 import pickle
 import random
+import shlex
 import subprocess
 import sys
 import time
@@ -479,12 +480,11 @@ def check_log(job_name):
         for name, meta_dict in job_meta['k8s_dict'].items():
             if meta_dict['type'] != 'aggregator':
                 continue
-            config.load_kube_config()
-            core_api = client.CoreV1Api()
+            # don't use k8s python api here, need interactive log
             print(f"%%%%%%%%%% Start of {name} log %%%%%%%%%%")
-            res = core_api.read_namespaced_pod_log(name, "fedscale")
-            print(res)
-            print(f"%%%%%%%%%% End of {name} log %%%%%%%%%%")
+            cmd = f"kubectl logs {name} --follow -n fedscale"
+            proc = subprocess.Popen(shlex.split(cmd))
+            proc.communicate()
     else:
         print("Error: only support checking job logs running in k8s mode!")
         exit(1)

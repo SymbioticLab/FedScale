@@ -1,6 +1,7 @@
 import yaml
 import sys
 
+# TODO: on the long run, replace this generator with Helm
 def generate_aggr_template(dict, path):
     """ Generate YAML template for aggregator deployment and save it in the given file
     """
@@ -11,7 +12,7 @@ def generate_aggr_template(dict, path):
             "name": dict["pod_name"]
         },
         "spec": {
-        
+            "restartPolicy": "OnFailure",
             "containers": [{
                 "name": "fedscale-aggr",
                 "image": "fedscale/fedscale-aggr",
@@ -61,7 +62,7 @@ def generate_exec_template(dict, path):
             "name": dict["pod_name"]
         },
         "spec": {
-        
+            "restartPolicy": "OnFailure",
             "containers": [{
                 "name": "fedscale-exec",
                 "image": "fedscale/fedscale-exec",
