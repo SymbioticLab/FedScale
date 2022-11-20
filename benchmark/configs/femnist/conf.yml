@@ -2,13 +2,13 @@
 
 # ========== Cluster configuration ========== 
 # ip address of the parameter server (need 1 GPU process)
-ps_ip: 10.0.0.1
+ps_ip: 10.0.0.4
 
 # ip address of each worker:# of available gpus process on each gpu in this node
 # Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
 # E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
 worker_ips:
-    - 10.0.0.1:[4]
+    - 10.0.0.4:[4]
 
 exp_path: $FEDSCALE_HOME/fedscale/core
 
@@ -49,3 +49,10 @@ job_conf:
     - test_bsz: 20
     - use_cuda: True
 
+# ========== Redis configuration ========== 
+redis_conf:
+    redis_executable: /usr/bin/redis-server
+    redis_host: 10.0.0.4
+    redis_port: 6379
+    redis_password: abc # Use ~ to skip password
+    job_tag: _femnist_1

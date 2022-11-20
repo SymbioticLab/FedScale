@@ -34,3 +34,5 @@ common_voice
 puffer  
 landmark  
 coqa
+dump.rdb
+*.pid

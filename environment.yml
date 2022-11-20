@@ -6,10 +6,11 @@ dependencies:
   - tensorboard
   - numba=0.48.0
   - pip=20.0.2
+  - redis-py=3.5.3
   - pip:
     - torch_optimizer
     - torch
-    - tensorflow
+    - tensorflow==2.3.0
     - torchvision
     - transformers
     - scipy==1.4.1
