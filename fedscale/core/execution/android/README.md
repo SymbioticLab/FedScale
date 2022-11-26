@@ -4,7 +4,7 @@ This directory contains minimum files modified from [MNN Android Demo](https://g
 
 ## Download and build sample android app
 
-1. Download and unzip [sample dataset (TrainTest.zip)](https://drive.google.com/uc?export=download&id=1sLKIx6kuVZ0jVGgBLx_AGTM0YM5rhct_) to `assets/` directory. Remove `TrainTest.zip` after unzip to save space on your mobile device. After unzip, you should see 3 files and 2 directories under `assets/`:
+1. Download and unzip [sample dataset (TrainTest.zip)](https://drive.google.com/file/d/1nfi3SVzjaE0LPxwj_5DNdqi6rK7BU8kb/view?usp=sharing) to `assets/` directory. Remove `TrainTest.zip` after unzip to save space on your mobile device. After unzip, you should see 3 files and 2 directories under `assets/`:
    1. `TrainSet`: Training set directory, contains 316 images.
    2. `TestSet`: Testing set directory, contains 34 images.
    3. `conf.json`: Configuration file for mobile app.
@@ -24,14 +24,10 @@ This directory contains minimum files modified from [MNN Android Demo](https://g
 
 1. ssh to your own server and run
 ```
-git clone https://github.com/SymbioticLab/FedScale.git
-cd FedScale
-source install.sh
-pip install -e .
 cd fedscale/core/aggregation/android
 python3 android_aggregator.py --experiment_mode=mobile --num_participants=1 --model=linear
 ```
-2. Change aggregator IP address inside `conf.json` and click `Run` inside Android Studio.
+2. Change aggregator IP address inside `assets/conf.json` and click `Run` inside Android Studio.
 
 ## Customize your own app
 
