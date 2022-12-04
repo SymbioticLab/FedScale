@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import pickle
 
-import fedscale.core.channels.job_api_pb2 as job_api_pb2
-import fedscale.core.config_parser as parser
-from fedscale.core.execution.executor import Executor
-from fedscale.core.execution.rlclient import RLClient
-from fedscale.core.logger.execution import *
-from fedscale.core import commons
+import fedscale.cloud.channels.job_api_pb2 as job_api_pb2
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud.execution.executor import Executor
+from fedscale.cloud.execution.rlclient import RLClient
+from fedscale.cloud.logger.execution import *
+from fedscale.cloud import commons
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from async_client import Client as CustomizedClient

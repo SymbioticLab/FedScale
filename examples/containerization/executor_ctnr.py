@@ -1,7 +1,7 @@
 """An example of Executor container"""
 import socket, json, time, logging
-from fedscale.core.execution.executor import Executor
-import fedscale.core.config_parser as parser
+from fedscale.cloud.execution.executor import Executor
+import fedscale.cloud.config_parser as parser
 
 # We can do hard-code here because containers run in a separate virtual network
 CONTAINER_IP = "0.0.0.0"

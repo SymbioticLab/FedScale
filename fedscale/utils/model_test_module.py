@@ -8,7 +8,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 # libs from fedscale
-import fedscale.core.config_parser as parser
+import fedscale.cloud.config_parser as parser
 from fedscale.dataloaders.nlp import mask_tokens
 
 if parser.args.task == "detection":

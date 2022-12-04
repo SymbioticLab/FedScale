@@ -10,7 +10,7 @@ ps_ip: 10.0.0.1
 worker_ips: 
     - 10.0.0.1:[2] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes. 
 
-exp_path: $FEDSCALE_HOME/fedscale/core
+exp_path: $FEDSCALE_HOME/fedscale/cloud
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: execution/executor.py 

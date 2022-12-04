@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 from resnet_heterofl import resnet18
 
-import fedscale.core.config_parser as parser
+import fedscale.cloud.config_parser as parser
 
 
 def init_model():

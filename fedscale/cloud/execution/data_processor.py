@@ -2,7 +2,7 @@ import os
 
 from torch.nn.utils.rnn import pad_sequence
 
-from fedscale.core.fllibs import *
+from fedscale.cloud.fllibs import *
 
 
 def collate(examples):

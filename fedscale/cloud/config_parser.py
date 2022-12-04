@@ -1,6 +1,6 @@
 import argparse
 
-from fedscale.core import commons
+from fedscale.cloud import commons
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--job_name', type=str, default='demo_job')

@@ -6,9 +6,9 @@ import sys
 import tensorflow as tf
 from tf_client import Customized_Client
 
-import fedscale.core.config_parser as parser
-from fedscale.core.execution.executor import Executor
-from fedscale.core.logger.execution import *
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud.execution.executor import Executor
+from fedscale.cloud.logger.execution import *
 
 """In this example, we only need to change the Client Component we need to import"""
 

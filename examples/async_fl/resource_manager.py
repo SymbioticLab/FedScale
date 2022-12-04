@@ -1,7 +1,7 @@
 import threading
 
-from fedscale.core import commons
-from fedscale.core.resource_manager import ResourceManager as DefaultManager
+from fedscale.cloud import commons
+from fedscale.cloud.resource_manager import ResourceManager as DefaultManager
 import numpy as np
 
 class ResourceManager(DefaultManager):

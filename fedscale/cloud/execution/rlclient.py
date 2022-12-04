@@ -1,8 +1,8 @@
 import logging
 import math
 
-from fedscale.core.execution.client import Client
-from fedscale.core.execution.optimizers import ClientOptimizer
+from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.optimizers import ClientOptimizer
 from fedscale.dataloaders.dqn import *
 
 

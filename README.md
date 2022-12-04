@@ -68,7 +68,7 @@ We acknowledge the contributors of these raw datasets. Please go to the `./bench
 FedScale Runtime is an scalable and extensible deployment as well as evaluation platform to simplify and standardize FL experimental setup and model evaluation. 
 It evolved from our prior system, [Oort](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
 
-Please go to `./fedscale/core` directory and follow the [README](./fedscale/core/README.md) to set up FL training scripts.
+Please go to `./fedscale/cloud` directory and follow the [README](./fedscale/cloud/README.md) to set up FL training scripts.
 
 
 ## Repo Structure
@@ -76,7 +76,7 @@ Please go to `./fedscale/core` directory and follow the [README](./fedscale/core
 ```
 Repo Root
 |---- fedscale          # FedScale source code
-  |---- core            # Core of FedScale service
+  |---- cloud            # Core of FedScale service
   |---- utils           # Auxiliaries (e.g, model zoo and FL optimizer)
   |---- deploy          # Deployment backends (e.g., mobile)
   |---- dataloaders     # Data loaders of benchmarking dataset

@@ -10,7 +10,7 @@ ps_ip: localhost
 worker_ips:
     - localhost:[2,2,2,2]
 
-exp_path: $FEDSCALE_HOME/fedscale/core
+exp_path: $FEDSCALE_HOME/fedscale/cloud
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: ../../examples/async_fl/async_executor.py

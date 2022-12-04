@@ -6,15 +6,15 @@ from argparse import Namespace
 
 import torch
 
-import fedscale.core.channels.job_api_pb2 as job_api_pb2
-import fedscale.core.logger.execution as logger
-import fedscale.core.config_parser as parser
-from fedscale.core import commons
-from fedscale.core.channels.channel_context import ClientConnections
-from fedscale.core.execution.client import Client
-from fedscale.core.execution.data_processor import collate, voice_collate_fn
-from fedscale.core.execution.rlclient import RLClient
-from fedscale.core.fllibs import *
+import fedscale.cloud.channels.job_api_pb2 as job_api_pb2
+import fedscale.cloud.logger.execution as logger
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud import commons
+from fedscale.cloud.channels.channel_context import ClientConnections
+from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.data_processor import collate, voice_collate_fn
+from fedscale.cloud.execution.rlclient import RLClient
+from fedscale.cloud.fllibs import *
 
 
 class Executor(object):

@@ -6,8 +6,8 @@ import pickle
 import torch
 from torch.autograd import Variable
 
-from fedscale.core.execution.client import Client
-from fedscale.core.execution.optimizers import ClientOptimizer
+from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.optimizers import ClientOptimizer
 from fedscale.dataloaders.nlp import mask_tokens
 
 

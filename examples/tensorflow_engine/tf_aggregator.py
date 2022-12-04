@@ -3,9 +3,9 @@ import sys
 
 import tensorflow as tf
 
-import fedscale.core.config_parser as parser
-from fedscale.core.aggregation.aggregator import Aggregator
-from fedscale.core.logger.aggragation import *
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud.aggregation.aggregator import Aggregator
+from fedscale.cloud.logger.aggragation import *
 
 
 class Customized_Aggregator(Aggregator):

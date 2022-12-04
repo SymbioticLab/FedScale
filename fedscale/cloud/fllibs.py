@@ -27,10 +27,10 @@ from torch.multiprocessing import Process, Queue
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from fedscale.core.aggregation.optimizers import ServerOptimizer
-from fedscale.core.client_manager import clientManager
+from fedscale.cloud.aggregation.optimizers import ServerOptimizer
+from fedscale.cloud.client_manager import clientManager
 # libs from fedscale
-import fedscale.core.config_parser as parser
+import fedscale.cloud.config_parser as parser
 from fedscale.dataloaders.divide_data import DataPartitioner, select_dataset
 from fedscale.dataloaders.utils_data import get_data_transform
 from fedscale.utils.model_test_module import test_model

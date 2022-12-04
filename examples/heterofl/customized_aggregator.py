@@ -5,9 +5,9 @@ import config
 import customized_fllibs
 from customized_fllibs import make_param_idx
 
-import fedscale.core.config_parser as parser
-from fedscale.core.aggregation.aggregator import Aggregator
-from fedscale.core.logger.aggragation import *
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud.aggregation.aggregator import Aggregator
+from fedscale.cloud.logger.aggragation import *
 
 
 class Customized_Aggregator(Aggregator):

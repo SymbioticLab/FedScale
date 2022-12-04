@@ -5,8 +5,8 @@ import config
 from customized_fllibs import split_model
 from resnet_heterofl import resnet18
 
-from fedscale.core.execution.client import Client
-from fedscale.core.fllibs import Variable, logging, math, np, os, torch
+from fedscale.cloud.execution.client import Client
+from fedscale.cloud.fllibs import Variable, logging, math, np, os, torch
 
 
 class Customized_Client(Client):

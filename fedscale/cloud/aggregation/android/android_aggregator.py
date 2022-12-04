@@ -1,9 +1,9 @@
 import json
 
-import fedscale.core.config_parser as parser
-from fedscale.core.aggregation.aggregator import Aggregator
-from fedscale.core.aggregation.android.linear_model import LinearModel
-from fedscale.core.aggregation.android.mnn_convert import *
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud.aggregation.aggregator import Aggregator
+from fedscale.cloud.aggregation.android.linear_model import LinearModel
+from fedscale.cloud.aggregation.android.mnn_convert import *
 
 
 class Android_Aggregator(Aggregator):

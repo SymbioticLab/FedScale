@@ -1,6 +1,6 @@
 # package for aggregator
-from fedscale.core.fllibs import *
-import fedscale.core.config_parser as parser
+from fedscale.cloud.fllibs import *
+import fedscale.cloud.config_parser as parser
 
 logDir = None
 

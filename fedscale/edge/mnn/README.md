@@ -24,7 +24,7 @@ This directory contains minimum files modified from [MNN Android Demo](https://g
 
 1. ssh to your own server and run
 ```
-cd fedscale/core/aggregation/android
+cd fedscale/cloud/aggregation/android
 python3 android_aggregator.py --experiment_mode=mobile --num_participants=1 --model=linear
 ```
 2. Change aggregator IP address inside `assets/conf.json` and click `Run` inside Android Studio.

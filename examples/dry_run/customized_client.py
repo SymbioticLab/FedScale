@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-from fedscale.core.execution.client import Client
+from fedscale.cloud.execution.client import Client
 
 
 class Customized_Client(Client):

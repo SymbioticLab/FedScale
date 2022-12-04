@@ -4,7 +4,7 @@ import pickle
 from random import Random
 from typing import Dict, List
 
-from fedscale.core.internal.client import Client
+from fedscale.cloud.internal.client import Client
 
 class clientManager(object):
 
