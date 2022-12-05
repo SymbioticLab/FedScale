@@ -5,8 +5,8 @@ import sys
 
 from customized_client import Customized_Client
 
-from fedscale.cloudd.execution.executor import Executor
-import fedscale.cloudd.config_parser as parser
+from fedscale.cloud.execution.executor import Executor
+import fedscale.cloud.config_parser as parser
 
 """In this example, we only need to change the Client Component we need to import"""
 
