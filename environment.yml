@@ -31,3 +31,4 @@ dependencies:
     - SoundFile
     - resampy==0.3.1
     - kubernetes
+    - wandb
