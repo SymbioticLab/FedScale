@@ -6,6 +6,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--job_name', type=str, default='demo_job')
 parser.add_argument('--log_path', type=str, default='./',
                     help="default path is ../log")
+parser.add_argument('--wandb_token', type=str, default="",
+                    help="API key for wandb as login credentials")
 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
