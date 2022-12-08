@@ -1,5 +1,5 @@
 #!bin/bash
-cd ../fedscale/cloud/aggregation/cache
+cd ../../cloud/aggregation/cache
 
 # install and make MNN to build converter if necessary.
 if [ "$1" = "--install" ] && [ ! -d "MNN" ]; then
