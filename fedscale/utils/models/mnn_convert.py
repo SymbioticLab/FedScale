@@ -90,7 +90,7 @@ def torch_to_mnn(model, input_shape: Tensor, is_install=False):
     input_data = torch.randn(input_shape)
     input_names = ["input"]
     output_names = ["output"]
-    Path("cache").mkdir(exist_ok=True)
+    Path("../../cloud/aggregation/cache").mkdir(exist_ok=True)
     torch.onnx.export(
         model, input_data, "../../cloud/aggregation/cache/model.onnx", verbose=True,
         training=torch.onnx.TrainingMode.TRAINING, do_constant_folding=False,
@@ -103,7 +103,7 @@ def torch_to_mnn(model, input_shape: Tensor, is_install=False):
         subprocess.run(["sh", "../../../scripts/convert.sh"])
 
     # load converted JSON file to mnn_json
-    with open('cache/model.json') as f:
+    with open('../../cloud/aggregation/cache/model.json') as f:
         return json.load(f)
     
 
