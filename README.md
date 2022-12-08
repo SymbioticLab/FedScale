@@ -76,9 +76,9 @@ Please go to `./fedscale/cloud` directory and follow the [README](./fedscale/clo
 ```
 Repo Root
 |---- fedscale          # FedScale source code
-  |---- cloud            # Core of FedScale service
+  |---- cloud           # Core of FedScale service
   |---- utils           # Auxiliaries (e.g, model zoo and FL optimizer)
-  |---- deploy          # Deployment backends (e.g., mobile)
+  |---- edge            # Backends for practical deployments (e.g., mobile)
   |---- dataloaders     # Data loaders of benchmarking dataset
 
 |---- docker            # FedScale docker and container deployment (e.g., Kubernetes)
@@ -86,6 +86,7 @@ Repo Root
   |---- dataset         # Benchmarking datasets
   |---- configs         # Example configurations
 
+|---- scripts           # Scripts for installing dependencies
 |---- examples          # Examples of implementing new FL designs
 |---- docs              # FedScale tutorials and APIs
 ```
