@@ -448,7 +448,11 @@ class Executor(object):
                     pass
             else:
                 time.sleep(1)
-                self.client_ping()
+                try:
+                    self.client_ping()
+                except Exception as e:
+                    logging.info(f"Caught exception {e} from aggregator, terminating executor {self.this_rank} ...")
+                    break
 
 
 if __name__ == "__main__":
