@@ -92,15 +92,15 @@ def torch_to_mnn(model, input_shape: Tensor, is_install=False):
     output_names = ["output"]
     Path("cache").mkdir(exist_ok=True)
     torch.onnx.export(
-        model, input_data, "cache/model.onnx", verbose=True,
+        model, input_data, "../../cloud/aggregation/cache/model.onnx", verbose=True,
         training=torch.onnx.TrainingMode.TRAINING, do_constant_folding=False,
         input_names=input_names, output_names=output_names)
 
     # ONNX -> MNN -> JSON
     if is_install:
-        subprocess.run(["sh", "convert.sh", "--install"])
+        subprocess.run(["sh", "../../../scripts/convert.sh", "--install"])
     else:
-        subprocess.run(["sh", "convert.sh"])
+        subprocess.run(["sh", "../../../scripts/convert.sh"])
 
     # load converted JSON file to mnn_json
     with open('cache/model.json') as f:
