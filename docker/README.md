@@ -146,7 +146,7 @@ docker push fedscale/fedscale-exec
 ```
 
 ### Update Aggr/Exec Initialization
-Aggregator/executor image will run scripts `$FEDSCALE_HOME/docker/config/run-aggr.sh` or `$FEDSCALE_HOME/docker/config/run-exec.sh` by default. The scripts will directly invoke `$FEDSCALE_HOME/fedscale/core/aggregation/aggregator.py` or `$FEDSCALE_HOME/fedscale/core/execution/executor.py`. If you want to change, for example, how to initialize aggregator/executor using different arguments, make sure you change commands in the corresponding `.sh` scripts.
+Aggregator/executor image will run scripts `$FEDSCALE_HOME/docker/config/run-aggr.sh` or `$FEDSCALE_HOME/docker/config/run-exec.sh` by default. The scripts will directly invoke `$FEDSCALE_HOME/fedscale/cloud/aggregation/aggregator.py` or `$FEDSCALE_HOME/fedscale/cloud/execution/executor.py`. If you want to change, for example, how to initialize aggregator/executor using different arguments, make sure you change commands in the corresponding `.sh` scripts.
 
 
 		

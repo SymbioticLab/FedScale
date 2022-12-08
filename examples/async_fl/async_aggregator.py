@@ -5,11 +5,11 @@ import sys
 
 import torch
 
-import fedscale.core.config_parser as parser
-from fedscale.core import commons
-from fedscale.core.aggregation.aggregator import Aggregator
-from fedscale.core.channels import job_api_pb2
-from fedscale.core.logger.aggragation import *
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud import commons
+from fedscale.cloud.aggregation.aggregator import Aggregator
+from fedscale.cloud.channels import job_api_pb2
+from fedscale.cloud.logger.aggragation import *
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from resource_manager import ResourceManager
@@ -155,7 +155,7 @@ class AsyncAggregator(Aggregator):
         self.importance_sum += importance
 
         for p in results['update_weight']:
-            # Different to core/executor, update_weight here is (train_model_weight - untrained)
+            # Different to cloud/executor, update_weight here is (train_model_weight - untrained)
             param_weight = results['update_weight'][p]
 
             if isinstance(param_weight, list):

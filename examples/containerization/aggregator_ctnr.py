@@ -1,7 +1,7 @@
 """An example of containerizing Aggregator"""
 import socket, json, time, logging
-from fedscale.core.aggregation.aggregator import Aggregator
-import fedscale.core.config_parser as parser
+from fedscale.cloud.aggregation.aggregator import Aggregator
+import fedscale.cloud.config_parser as parser
 
 # We can do hard-code here because containers run in a separate virtual network
 CONTAINER_IP = "0.0.0.0"

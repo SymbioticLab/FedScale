@@ -4,8 +4,8 @@ import sys
 from customized_client import Customized_Client
 from customized_fllibs import init_model
 
-import fedscale.core.config_parser as parser
-from fedscale.core.execution.executor import Executor
+import fedscale.cloud.config_parser as parser
+from fedscale.cloud.execution.executor import Executor
 
 
 class Customized_Executor(Executor):

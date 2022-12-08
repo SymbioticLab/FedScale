@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   fedscale.core
+   fedscale.cloud
 
 Module contents
 ---------------

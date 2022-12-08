@@ -10,7 +10,7 @@ ps_ip: 10.0.0.1
 worker_ips:
     - 10.0.0.1:[4]
 
-exp_path: $FEDSCALE_HOME/fedscale/core
+exp_path: $FEDSCALE_HOME/fedscale/cloud
 
 # Entry function of executor and aggregator under $exp_path
 executor_entry: execution/executor.py

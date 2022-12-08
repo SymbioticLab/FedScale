@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import torch
 
-from fedscale.core.execution.client import Client
+from fedscale.cloud.execution.client import Client
 
 
 class Customized_Client(Client):

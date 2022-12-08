@@ -29,8 +29,8 @@ The participants then communicate their model updates to the central server, whe
 
 The aggregation algorithm in FedScale is mainly reflected in two code segments.
 
-1. **Client updates**: FedScale calls `training_handler` in [core/execution/executor.py](../../fedscale/core/execution/executor.py) to initiate client training.
-The following code segment from [core/execution/clients/client.py](../../fedscale/core/execution/clients/client.py) shows how the client trains the model and updates the gradient (when implementing FedProx).
+1. **Client updates**: FedScale calls `training_handler` in [cloud/execution/executor.py](../../fedscale/cloud/execution/executor.py) to initiate client training.
+The following code segment from [cloud/execution/clients/client.py](../../fedscale/cloud/execution/clients/client.py) shows how the client trains the model and updates the gradient (when implementing FedProx).
 
 
 ```
@@ -74,8 +74,8 @@ class ClientOptimizer(object):
 
 ```
 
-2. **Server aggregates**: In the server-side, FedScale calls `round_weight_handler` in [core/aggregation/aggregator.py](../../fedscale/core/aggregation/aggregator.py) to do the aggregation at the end of each round.
-In the function `round_weight_handler`, you can customize your aggregator optimizer in [core/aggregation/optimizers.py](../../fedscale/core/optimizers.py).
+2. **Server aggregates**: In the server-side, FedScale calls `round_weight_handler` in [cloud/aggregation/aggregator.py](../../fedscale/cloud/aggregation/aggregator.py) to do the aggregation at the end of each round.
+In the function `round_weight_handler`, you can customize your aggregator optimizer in [cloud/aggregation/optimizers.py](../../fedscale/cloud/optimizers.py).
 The following code segment shows how FedYoGi and FedAvg aggregate the participant gradients.
 
 ```
@@ -113,16 +113,16 @@ class ServerOptimizer(object):
 ## Client Selection
 
 FedScale uses random selection among all available clients by default.
-However, you can customize the client selector by modifying the `client_manager` in [core/aggregation/aggregator.py](../../fedscale/core/aggregation/aggregator.py),
-which is defined in [/core/client_manager.py](../../fedscale/core/client_manager.py).
+However, you can customize the client selector by modifying the `client_manager` in [cloud/aggregation/aggregator.py](../../fedscale/cloud/aggregation/aggregator.py),
+which is defined in [/cloud/client_manager.py](../../fedscale/cloud/client_manager.py).
 
 Upon every device checking in or reporting results, FedScale aggregator calls `client_manager.registerClient(...)` or `client_manager.registerScore(...)` to record the necessary client information that could help you with the selection decision.
 At the beginning of the round, FedScale aggregator calls `client_manager.resampleClients(...)` to select the training participants.
 
 For example, [Oort](https://www.usenix.org/conference/osdi21/presentation/lai) is a client selector
 that considers both statistical and system utility to improve the model time-to-accuracy performance.
-You can find more details of Oort implementation in [../../thirdparty/oort/oort.py](../../thirdparty/oort/oort.py) and [../../fedscale/core/client_manager.py](../../fedscale/core/client_manager.py).
+You can find more details of Oort implementation in [../../thirdparty/oort/oort.py](../../thirdparty/oort/oort.py) and [../../fedscale/cloud/client_manager.py](../../fedscale/cloud/client_manager.py).
 
 ## Other Examples
 
-You can find more FL algorithm examples in this directory, most of which involve simply customizing the `core/aggregation/aggregator.py`, `core/execution/executor.py`, and/or `core/execution/clients/client.py`. 
+You can find more FL algorithm examples in this directory, most of which involve simply customizing the `cloud/aggregation/aggregator.py`, `cloud/execution/executor.py`, and/or `cloud/execution/clients/client.py`. 
