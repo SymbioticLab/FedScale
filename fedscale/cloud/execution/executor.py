@@ -5,6 +5,7 @@ import pickle
 from argparse import Namespace
 
 import torch
+import wandb
 
 import fedscale.cloud.channels.job_api_pb2 as job_api_pb2
 import fedscale.cloud.logger.execution as logger
@@ -53,6 +54,18 @@ class Executor(object):
         self.received_stop_request = False
         self.event_queue = collections.deque()
 
+        if args.wandb_token != "":
+            os.environ['WANDB_API_KEY'] = args.wandb_token
+            self.wandb = wandb
+            if self.wandb.run is None:
+                self.wandb.init(project=f'fedscale-{args.job_name}',
+                                name=f'executor{args.this_rank}-{args.time_stamp}',
+                                group=f'{args.time_stamp}')
+            else:
+                logging.error("Warning: wandb has already been initialized")
+            # self.wandb.run.name = f'{args.job_name}-{args.time_stamp}'
+        else:
+            self.wandb = None
         super(Executor, self).__init__()
 
     def setup_env(self):
@@ -225,6 +238,7 @@ class Executor(object):
         """
         test_res = self.testing_handler(args=self.args, config=config)
         test_res = {'executorId': self.this_rank, 'results': test_res}
+        self.save_model()
 
         # Report execution completion information
         response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(
@@ -239,8 +253,11 @@ class Executor(object):
     def Stop(self):
         """Stop the current executor
         """
+        logging.info(f"Terminating the executor ...")
         self.aggregator_communicator.close_sever_connection()
         self.received_stop_request = True
+        if self.wandb != None:
+            self.wandb.finish()
 
     def report_executor_info_handler(self):
         """Return the statistics of training dataset
@@ -355,6 +372,7 @@ class Executor(object):
             test_res = client.test(args, self.this_rank, model, device=device)
             _, _, _, testResults = test_res
         else:
+            logging.info("Debugging: executor selecting dataset...")
             data_loader = select_dataset(self.this_rank, self.testing_sets,
                                          batch_size=args.test_bsz, args=args,
                                          isTest=True, collate_fn=self.collate_fn
@@ -366,6 +384,7 @@ class Executor(object):
                 criterion = torch.nn.CrossEntropyLoss().to(device=device)
 
             if self.args.engine == commons.PYTORCH:
+                logging.info("Debugging: executor testing model...")
                 test_res = test_model(self.this_rank, model, data_loader,
                                       device=device, criterion=criterion, tokenizer=tokenizer)
             else:
@@ -448,8 +467,22 @@ class Executor(object):
                     pass
             else:
                 time.sleep(1)
-                self.client_ping()
+                try:
+                    self.client_ping()
+                except Exception as e:
+                    logging.info(f"Caught exception {e} from aggregator, terminating executor {self.this_rank} ...")
+                    self.Stop()
+                    break
 
+    def save_model(self):
+        """Save model to the wandb server if enabled
+        
+        """
+        if self.wandb != None:
+            artifact = self.wandb.Artifact(name='model_'+str(self.this_rank), type='model')
+            artifact.add_file(local_path=self.temp_model_path)
+            self.wandb.log_artifact(artifact)
+    
 
 if __name__ == "__main__":
     executor = Executor(parser.args)

@@ -102,7 +102,23 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if args.wandb_token != "":
             os.environ['WANDB_API_KEY'] = args.wandb_token
             self.wandb = wandb
-            self.wandb.init(project=f'fedscale-{args.job_name}')
+            if self.wandb.run is None:
+                self.wandb.init(project=f'fedscale-{args.job_name}',
+                                name=f'aggregator{args.this_rank}-{args.time_stamp}',
+                                group=f'{args.time_stamp}')
+                self.wandb.config.update({
+                    "num_participants": args.num_participants,
+                    "data_set": args.data_set,
+                    "model": args.model,
+                    "gradient_policy": args.gradient_policy,
+                    "eval_interval": args.eval_interval,
+                    "rounds": args.rounds,
+                    "batch_size": args.batch_size,
+                    "use_cuda": args.use_cuda
+                })
+            else:
+                logging.error("Warning: wandb has already been initialized")
+            # self.wandb.run.name = f'{args.job_name}-{args.time_stamp}'
         else:
             self.wandb = None
 
@@ -356,6 +372,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             file_path=self.args.device_conf_file)
 
         self.event_monitor()
+        self.stop()
 
     def select_participants(self, select_num_participants, overcommitment=1.3):
         """Select clients for next round.
@@ -940,6 +957,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """Stop the aggregator
         """
         logging.info(f"Terminating the aggregator ...")
+        if self.wandb != None:
+            self.wandb.finish()
         time.sleep(5)
 
 
