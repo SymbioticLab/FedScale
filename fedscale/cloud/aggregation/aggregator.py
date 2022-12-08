@@ -637,6 +637,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 'Test/round_to_loss': self.testing_history['perf'][self.round]['loss'],
                 'Test/round_to_accuracy': self.testing_history['perf'][self.round]['top_1'],
                 'FAR/round_duration (min)': self.round_duration/60.,
+                'FAR/time_to_round (min)': self.global_virtual_clock/60.,
             }, step=self.round)
         # self.wandb.log({
         #     'FAR/time_to_test_loss (min)': self.testing_history['perf'][self.round]['loss'],
@@ -692,6 +693,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 pickle.dump(self.testing_history, fout)
 
             if len(self.loss_accumulator):
+                logging.info("logging test result")
                 self.log_test_result()
 
             self.broadcast_events_queue.append(commons.START_ROUND)
