@@ -1,45 +1,45 @@
-fedscale.core.execution package
+fedscale.cloud.execution package
 ===============================
 
 Submodules
 ----------
 
-.. fedscale.core.execution.client module
+.. fedscale.cloud.execution.client module
 .. -------------------------------------
 
-.. .. automodule:: fedscale.core.execution.client
+.. .. automodule:: fedscale.cloud.execution.client
 ..    :members:
 ..    :undoc-members:
 ..    :show-inheritance:
 
-.. fedscale.core.execution.data\_processor module
+.. fedscale.cloud.execution.data\_processor module
 .. ----------------------------------------------
 
-.. .. automodule:: fedscale.core.execution.data_processor
+.. .. automodule:: fedscale.cloud.execution.data_processor
 ..    :members:
 ..    :undoc-members:
 ..    :show-inheritance:
 
-fedscale.core.execution.executor module
+fedscale.cloud.execution.executor module
 ---------------------------------------
 
-.. automodule:: fedscale.core.execution.executor
+.. automodule:: fedscale.cloud.execution.executor
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. fedscale.core.execution.optimizers module
+.. fedscale.cloud.execution.optimizers module
 .. -----------------------------------------
 
-.. .. automodule:: fedscale.core.execution.optimizers
+.. .. automodule:: fedscale.cloud.execution.optimizers
 ..    :members:
 ..    :undoc-members:
 ..    :show-inheritance:
 
-.. fedscale.core.execution.rlclient module
+.. fedscale.cloud.execution.rlclient module
 .. ---------------------------------------
 
-.. .. automodule:: fedscale.core.execution.rlclient
+.. .. automodule:: fedscale.cloud.execution.rlclient
 ..    :members:
 ..    :undoc-members:
 ..    :show-inheritance:
@@ -47,7 +47,7 @@ fedscale.core.execution.executor module
 Module contents
 ---------------
 
-.. automodule:: fedscale.core.execution
+.. automodule:: fedscale.cloud.execution
    :members:
    :undoc-members:
    :show-inheritance:

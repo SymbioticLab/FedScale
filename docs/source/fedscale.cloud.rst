@@ -1,4 +1,4 @@
-fedscale.core package
+fedscale.cloud package
 =====================
 
 Subpackages
@@ -7,48 +7,48 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   fedscale.core.aggregation
-   fedscale.core.execution
+   fedscale.cloud.aggregation
+   fedscale.cloud.execution
 
 Submodules
 ----------
 
-fedscale.core.client\_manager module
+fedscale.cloud.client\_manager module
 ------------------------------------
 
-.. automodule:: fedscale.core.client_manager
+.. automodule:: fedscale.cloud.client_manager
    :members:
    :undoc-members:
    :show-inheritance:
 
-fedscale.core.commons module
+fedscale.cloud.commons module
 ----------------------------
 
-.. automodule:: fedscale.core.commons
+.. automodule:: fedscale.cloud.commons
    :members:
    :undoc-members:
    :show-inheritance:
 
-fedscale.core.config\_parser module
+fedscale.cloud.config\_parser module
 -----------------------------------
 
-.. automodule:: fedscale.core.config_parser
+.. automodule:: fedscale.cloud.config_parser
    :members:
    :undoc-members:
    :show-inheritance:
 
-fedscale.core.fllibs module
+fedscale.cloud.fllibs module
 ---------------------------
 
-.. automodule:: fedscale.core.fllibs
+.. automodule:: fedscale.cloud.fllibs
    :members:
    :undoc-members:
    :show-inheritance:
 
-fedscale.core.resource\_manager module
+fedscale.cloud.resource\_manager module
 --------------------------------------
 
-.. automodule:: fedscale.core.resource_manager
+.. automodule:: fedscale.cloud.resource_manager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -56,7 +56,7 @@ fedscale.core.resource\_manager module
 Module contents
 ---------------
 
-.. automodule:: fedscale.core
+.. automodule:: fedscale.cloud
    :members:
    :undoc-members:
    :show-inheritance:
