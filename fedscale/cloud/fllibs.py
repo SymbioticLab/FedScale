@@ -28,7 +28,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from fedscale.cloud.aggregation.optimizers import ServerOptimizer
-from fedscale.cloud.client_manager import clientManager
+from fedscale.cloud.client_manager import ClientManager
+
 # libs from fedscale
 import fedscale.cloud.config_parser as parser
 from fedscale.dataloaders.divide_data import DataPartitioner, select_dataset
@@ -71,7 +72,7 @@ def import_libs():
                                                         ToMelSpectrogram,
                                                         ToTensor)
     elif parser.args.task == 'detection':
-        global pickle, get_imdb, readClass, resnet, nms, bbox_transform_inv, clip_boxes, cfg, cfg_from_file, cfg_from_list, get_output_dir, adjust_learning_rate, clip_gradient, load_net, save_checkpoint, save_net, weights_normal_init, roibatchLoader, combined_roidb 
+        global pickle, get_imdb, readClass, resnet, nms, bbox_transform_inv, clip_boxes, cfg, cfg_from_file, cfg_from_list, get_output_dir, adjust_learning_rate, clip_gradient, load_net, save_checkpoint, save_net, weights_normal_init, roibatchLoader, combined_roidb
 
         import pickle
 
@@ -96,7 +97,7 @@ def import_libs():
         from torch_baidu_ctc import CTCLoss
     elif parser.args.task == 'rl':
         global gym, RLData, Net, DQN
-        
+
         import gym
 
         from fedscale.dataloaders.dqn import RLData, Net, DQN
@@ -225,7 +226,7 @@ def init_model():
         else:
             if parser.args.model_zoo == "fedscale-zoo":
                 if parser.args.task == "cv":
-                    model = get_cv_model(name=parser.args.model, 
+                    model = get_cv_model(name=parser.args.model,
                         num_classes=outputClass[parser.args.data_set])
                 else:
                     raise NameError(f"Model zoo {parser.args.model_zoo} does not exist")

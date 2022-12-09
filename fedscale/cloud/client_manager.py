@@ -4,23 +4,24 @@ import pickle
 from random import Random
 from typing import Dict, List
 
-from fedscale.cloud.internal.client import Client
+from fedscale.cloud.internal.client_metadata import ClientMetadata
 
-class clientManager(object):
+
+class ClientManager:
 
     def __init__(self, mode, args, sample_seed=233):
-        self.Clients = {}
-        self.clientOnHosts = {}
+        self.client_metadata = {}
+        self.client_on_hosts = {}
         self.mode = mode
         self.filter_less = args.filter_less
         self.filter_more = args.filter_more
 
-        self.ucbSampler = None
+        self.ucb_sampler = None
 
         if self.mode == 'oort':
             from thirdparty.oort.oort import create_training_selector
-            self.ucbSampler = create_training_selector(args=args)
-            
+            self.ucb_sampler = create_training_selector(args=args)
+
         self.feasibleClients = []
         self.rng = Random()
         self.rng.seed(sample_seed)
@@ -34,80 +35,79 @@ class clientManager(object):
                 self.user_trace = pickle.load(fin)
             self.user_trace_keys = list(self.user_trace.keys())
 
-    def registerClient(self, hostId, clientId, size, speed, duration=1):
-        self.register_client(hostId, clientId, size, speed, duration)
-
-    def register_client(self, hostId: int, clientId: int, size: int, speed: Dict[str, float], duration: float=1) -> None:
+    def register_client(self, host_id: int, client_id: int, size: int, speed: Dict[str, float],
+                        duration: float = 1) -> None:
         """Register client information to the client manager.
 
-        Args: 
-            hostId (int): executor Id.
-            clientId (int): client Id.
+        Args:
+            host_id (int): executor Id.
+            client_id (int): client Id.
             size (int): number of samples on this client.
             speed (Dict[str, float]): device speed (e.g., compuutation and communication).
             duration (float): execution latency.
 
         """
-        uniqueId = self.getUniqueId(hostId, clientId)
+        uniqueId = self.getUniqueId(host_id, client_id)
         user_trace = None if self.user_trace is None else self.user_trace[self.user_trace_keys[int(
-            clientId) % len(self.user_trace)]]
+            client_id) % len(self.user_trace)]]
 
-        self.Clients[uniqueId] = Client(hostId, clientId, speed, user_trace)
+        self.client_metadata[uniqueId] = ClientMetadata(host_id, client_id, speed, user_trace)
 
         # remove clients
         if size >= self.filter_less and size <= self.filter_more:
-            self.feasibleClients.append(clientId)
+            self.feasibleClients.append(client_id)
             self.feasible_samples += size
 
             if self.mode == "oort":
-                feedbacks = {'reward': min(size, self.args.local_steps*self.args.batch_size),
+                feedbacks = {'reward': min(size, self.args.local_steps * self.args.batch_size),
                              'duration': duration,
                              }
-                self.ucbSampler.register_client(clientId, feedbacks=feedbacks)
+                self.ucb_sampler.register_client(client_id, feedbacks=feedbacks)
         else:
-            del self.Clients[uniqueId]
-            
+            del self.client_metadata[uniqueId]
+
     def getAllClients(self):
         return self.feasibleClients
 
     def getAllClientsLength(self):
         return len(self.feasibleClients)
 
-    def getClient(self, clientId):
-        return self.Clients[self.getUniqueId(0, clientId)]
+    def getClient(self, client_id):
+        return self.client_metadata[self.getUniqueId(0, client_id)]
 
-    def registerDuration(self, clientId, batch_size, upload_step, upload_size, download_size):
-        if self.mode == "oort" and self.getUniqueId(0, clientId) in self.Clients:
-            exe_cost = self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-                batch_size=batch_size, upload_step=upload_step,
+    def registerDuration(self, client_id, batch_size, local_steps, upload_size, download_size):
+        if self.mode == "oort" and self.getUniqueId(0, client_id) in self.client_metadata:
+            exe_cost = self.client_metadata[self.getUniqueId(0, client_id)].get_completion_time(
+                batch_size=batch_size, local_steps=local_steps,
                 upload_size=upload_size, download_size=download_size
             )
-            self.ucbSampler.update_duration(
-                clientId, exe_cost['computation']+exe_cost['communication'])
+            self.ucb_sampler.update_duration(
+                client_id, exe_cost['computation'] + exe_cost['communication'])
 
-    def getCompletionTime(self, clientId, batch_size, upload_step, upload_size, download_size):
-        return self.Clients[self.getUniqueId(0, clientId)].getCompletionTime(
-            batch_size=batch_size, upload_step=upload_step,
+    def get_completion_time(self, client_id, batch_size, local_steps, upload_size, download_size):
+        return self.client_metadata[self.getUniqueId(0, client_id)].get_completion_time(
+            batch_size=batch_size, local_steps=local_steps,
             upload_size=upload_size, download_size=download_size
         )
 
-    def registerSpeed(self, hostId, clientId, speed):
-        uniqueId = self.getUniqueId(hostId, clientId)
-        self.Clients[uniqueId].speed = speed
+    def registerSpeed(self, host_id, client_id, speed):
+        uniqueId = self.getUniqueId(host_id, client_id)
+        self.client_metadata[uniqueId].speed = speed
 
-    def registerScore(self, clientId, reward, auxi=1.0, time_stamp=0, duration=1., success=True):
-        self.register_feedback(clientId, reward, auxi=auxi, time_stamp=time_stamp, duration=duration, success=success)
+    def registerScore(self, client_id, reward, auxi=1.0, time_stamp=0, duration=1., success=True):
+        self.register_feedback(client_id, reward, auxi=auxi, time_stamp=time_stamp, duration=duration, success=success)
 
-    def register_feedback(self, clientId: int, reward: float, auxi: float=1.0, time_stamp: float=0, duration: float=1., success: bool=True) -> None:
+    def register_feedback(self, client_id: int, reward: float, auxi: float = 1.0, time_stamp: float = 0,
+                          duration: float = 1., success: bool = True) -> None:
         """Collect client execution feedbacks of last round.
 
-        Args: 
-            clientId (int): client Id.
+        Args:
+            client_id (int): client Id.
             reward (float): execution utilities (processed feedbacks).
             auxi (float): unprocessed feedbacks.
             time_stamp (float): current wall clock time.
             duration (float): system execution duration.
-            success (bool): whether this client runs successfully. 
+            success (bool): whether this client runs successfully.
 
         """
         # currently, we only use distance as reward
@@ -119,96 +119,96 @@ class clientManager(object):
                 'time_stamp': time_stamp
             }
 
-            self.ucbSampler.update_client_util(clientId, feedbacks=feedbacks)
+            self.ucb_sampler.update_client_util(client_id, feedbacks=feedbacks)
 
-    def registerClientScore(self, clientId, reward):
-        self.Clients[self.getUniqueId(0, clientId)].registerReward(reward)
+    def registerClientScore(self, client_id, reward):
+        self.client_metadata[self.getUniqueId(0, client_id)].register_reward(reward)
 
-    def getScore(self, hostId, clientId):
-        uniqueId = self.getUniqueId(hostId, clientId)
-        return self.Clients[uniqueId].getScore()
+    def get_score(self, host_id, client_id):
+        uniqueId = self.getUniqueId(host_id, client_id)
+        return self.client_metadata[uniqueId].get_score()
 
     def getClientsInfo(self):
         clientInfo = {}
-        for i, clientId in enumerate(self.Clients.keys()):
-            client = self.Clients[clientId]
-            clientInfo[client.clientId] = client.distance
+        for i, client_id in enumerate(self.client_metadata.keys()):
+            client = self.client_metadata[client_id]
+            clientInfo[client.client_id] = client.distance
         return clientInfo
 
-    def nextClientIdToRun(self, hostId):
-        init_id = hostId - 1
+    def next_client_id_to_run(self, host_id):
+        init_id = host_id - 1
         lenPossible = len(self.feasibleClients)
 
         while True:
-            clientId = str(self.feasibleClients[init_id])
-            csize = self.Clients[clientId].size
+            client_id = str(self.feasibleClients[init_id])
+            csize = self.client_metadata[client_id].size
             if csize >= self.filter_less and csize <= self.filter_more:
-                return int(clientId)
+                return int(client_id)
 
             init_id = max(
                 0, min(int(math.floor(self.rng.random() * lenPossible)), lenPossible - 1))
 
-    def getUniqueId(self, hostId, clientId):
-        return str(clientId)
-        # return (str(hostId) + '_' + str(clientId))
+    def getUniqueId(self, host_id, client_id):
+        return str(client_id)
+        # return (str(host_id) + '_' + str(client_id))
 
-    def clientSampler(self, clientId):
-        return self.Clients[self.getUniqueId(0, clientId)].size
+    def clientSampler(self, client_id):
+        return self.client_metadata[self.getUniqueId(0, client_id)].size
 
-    def clientOnHost(self, clientIds, hostId):
-        self.clientOnHosts[hostId] = clientIds
+    def clientOnHost(self, client_ids, host_id):
+        self.client_on_hosts[host_id] = client_ids
 
-    def getCurrentClientIds(self, hostId):
-        return self.clientOnHosts[hostId]
+    def getCurrentclient_ids(self, host_id):
+        return self.client_on_hosts[host_id]
 
-    def getClientLenOnHost(self, hostId):
-        return len(self.clientOnHosts[hostId])
+    def getClientLenOnHost(self, host_id):
+        return len(self.client_on_hosts[host_id])
 
-    def getClientSize(self, clientId):
-        return self.Clients[self.getUniqueId(0, clientId)].size
+    def getClientSize(self, client_id):
+        return self.client_metadata[self.getUniqueId(0, client_id)].size
 
-    def getSampleRatio(self, clientId, hostId, even=False):
+    def getSampleRatio(self, client_id, host_id, even=False):
         totalSampleInTraining = 0.
 
         if not even:
-            for key in self.clientOnHosts.keys():
-                for client in self.clientOnHosts[key]:
+            for key in self.client_on_hosts.keys():
+                for client in self.client_on_hosts[key]:
                     uniqueId = self.getUniqueId(key, client)
-                    totalSampleInTraining += self.Clients[uniqueId].size
+                    totalSampleInTraining += self.client_metadata[uniqueId].size
 
-            # 1./len(self.clientOnHosts.keys())
-            return float(self.Clients[self.getUniqueId(hostId, clientId)].size)/float(totalSampleInTraining)
+            # 1./len(self.client_on_hosts.keys())
+            return float(self.client_metadata[self.getUniqueId(host_id, client_id)].size) / float(totalSampleInTraining)
         else:
-            for key in self.clientOnHosts.keys():
-                totalSampleInTraining += len(self.clientOnHosts[key])
+            for key in self.client_on_hosts.keys():
+                totalSampleInTraining += len(self.client_on_hosts[key])
 
-            return 1./totalSampleInTraining
+            return 1. / totalSampleInTraining
 
     def getFeasibleClients(self, cur_time):
         if self.user_trace is None:
             clients_online = self.feasibleClients
         else:
-            clients_online = [clientId for clientId in self.feasibleClients if self.Clients[self.getUniqueId(
-                0, clientId)].isActive(cur_time)]
+            clients_online = [client_id for client_id in self.feasibleClients if self.client_metadata[self.getUniqueId(
+                0, client_id)].is_active(cur_time)]
 
         logging.info(f"Wall clock time: {round(cur_time)}, {len(clients_online)} clients online, " +
-                     f"{len(self.feasibleClients)-len(clients_online)} clients offline")
+                     f"{len(self.feasibleClients) - len(clients_online)} clients offline")
 
         return clients_online
 
-    def isClientActive(self, clientId, cur_time):
-        return self.Clients[self.getUniqueId(0, clientId)].isActive(cur_time)
+    def isClientActive(self, client_id, cur_time):
+        return self.client_metadata[self.getUniqueId(0, client_id)].is_active(cur_time)
 
-    def select_participants(self, num_of_clients: int, cur_time: float=0) -> List[int]:
+    def select_participants(self, num_of_clients: int, cur_time: float = 0) -> List[int]:
         """Select participating clients for current execution task.
 
-        Args: 
+        Args:
             num_of_clients (int): number of participants to select.
-            cur_time (float): current wall clock time. 
+            cur_time (float): current wall clock time.
 
         Returns:
             List[int]: indices of selected clients.
-    
+
         """
         self.count += 1
 
@@ -221,7 +221,7 @@ class clientManager(object):
         clients_online_set = set(clients_online)
 
         if self.mode == "oort" and self.count > 1:
-            pickled_clients = self.ucbSampler.select_participant(
+            pickled_clients = self.ucb_sampler.select_participant(
                 num_of_clients, feasible_clients=clients_online_set)
         else:
             self.rng.shuffle(clients_online)
@@ -230,21 +230,21 @@ class clientManager(object):
 
         return pickled_clients
 
-    def resampleClients(self, numOfClients, cur_time=0):
-        return self.select_participants(numOfClients, cur_time)
+    def resampleClients(self, num_of_clients, cur_time=0):
+        return self.select_participants(num_of_clients, cur_time)
 
     def getAllMetrics(self):
         if self.mode == "oort":
-            return self.ucbSampler.getAllMetrics()
+            return self.ucb_sampler.getAllMetrics()
         return {}
 
     def getDataInfo(self):
         return {'total_feasible_clients': len(self.feasibleClients), 'total_num_samples': self.feasible_samples}
 
-    def getClientReward(self, clientId):
-        return self.ucbSampler.get_client_reward(clientId)
+    def getClientReward(self, client_id):
+        return self.ucb_sampler.get_client_reward(client_id)
 
     def get_median_reward(self):
         if self.mode == 'oort':
-            return self.ucbSampler.get_median_reward()
+            return self.ucb_sampler.get_median_reward()
         return 0.
