@@ -3,7 +3,10 @@ import math
 
 from fedscale.cloud.execution.client import Client
 from fedscale.cloud.execution.optimizers import ClientOptimizer
-from fedscale.dataloaders.dqn import *
+
+import fedscale.cloud.config_parser as parser
+if parser.args.task == 'rl':
+    from fedscale.dataloaders.dqn import *
 
 
 class RLClient(Client):
