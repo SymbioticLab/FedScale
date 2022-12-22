@@ -1,9 +1,8 @@
-
 # Define Basic Experiment Setup
+from enum import Enum
+
 SIMULATION_MODE = 'simulation'
 DEPLOYMENT_MODE = 'deployment'
-TENSORFLOW = 'tensorflow'
-PYTORCH = 'pytorch'
 
 # Define Basic FL Events
 UPDATE_MODEL = 'update_model'
@@ -17,3 +16,7 @@ UPLOAD_MODEL = 'upload_model'
 
 # PLACEHOLD
 DUMMY_RESPONSE = 'N'
+
+
+TENSORFLOW = 'tensorflow'
+PYTORCH = 'pytorch'

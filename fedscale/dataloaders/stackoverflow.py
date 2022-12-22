@@ -199,7 +199,7 @@ class stackoverflow():
             client_list = list(train_file['examples'])
             start_time = time.time()
 
-            for clientId, client in enumerate(client_list):
+            for client_id, client in enumerate(client_list):
                 tags_list = list(train_file['examples'][client]['tags'])
                 tokens_list = list(train_file['examples'][client]['tokens'])
                 title_list = list(train_file['examples'][client]['title'])
@@ -215,7 +215,7 @@ class stackoverflow():
                     if not tokens_list:
                         continue
 
-                    mapping_dict[count] = clientId
+                    mapping_dict[count] = client_id
                     text.append(tokens_list)
                     target_tags.append(tags_list)
 
@@ -223,18 +223,18 @@ class stackoverflow():
 
                 clientCount += 1
 
-                num_of_remains = len(client_list) - clientId
+                num_of_remains = len(client_list) - client_id
                 #print("====In loading data, remains {} clients, may take {} sec".format(num_of_remains, (time.time() - start_time)/clientCount * num_of_remains))
                 # logging.info("====In loading  data, remains {} clients".format(num_of_remains)
 
-                if clientId % 5000 == 0:
+                if client_id % 5000 == 0:
                     # dump the cache
                     with open(cache_path, 'wb') as fout:
                         pickle.dump(text, fout)
                         pickle.dump(target_tags, fout)
                         pickle.dump(mapping_dict, fout)
 
-                    #print("====Dump for {} clients".format(clientId))
+                    #print("====Dump for {} clients".format(client_id))
 
             # dump the cache
             with open(cache_path, 'wb') as fout:

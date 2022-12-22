@@ -1,4 +1,4 @@
-class ServerOptimizer(object):
+class TorchServerOptimizer(object):
     """This is a abstract server optimizer class
     
     Args:

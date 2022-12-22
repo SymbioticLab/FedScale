@@ -1,16 +1,14 @@
-# package for client
-import os
-
 from fedscale.cloud.fllibs import *
 import fedscale.cloud.config_parser as parser
 
 logDir = None
 
+
 def init_logging():
     global logDir
 
     logDir = os.path.join(parser.args.log_path, "logs", parser.args.job_name,
-                      parser.args.time_stamp, 'executor')
+                          parser.args.time_stamp, 'executor')
     logFile = os.path.join(logDir, 'log')
     if not os.path.isdir(logDir):
         os.makedirs(logDir, exist_ok=True)
@@ -27,5 +25,3 @@ def init_logging():
 
 def initiate_client_setting():
     init_logging()
-
-

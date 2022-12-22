@@ -1,20 +1,24 @@
 import logging
 import math
-import pickle 
+import time
+
 import torch
 from torch.autograd import Variable
+from overrides import overrides
 
+from fedscale.cloud.execution.client_base import ClientBase
 from fedscale.cloud.execution.optimizers import ClientOptimizer
 from fedscale.dataloaders.nlp import mask_tokens
+from fedscale.utils.model_test_module import test_pytorch_model
 
 
-class Client(object):
+class TorchClient(ClientBase):
     """Basic client component in Federated Learning"""
 
     def __init__(self, conf):
         self.optimizer = ClientOptimizer()
         self.init_task(conf)
-    
+
     def init_task(self, conf):
         if conf.task == "detection":
             self.im_data = Variable(torch.FloatTensor(1).cuda())
@@ -24,12 +28,13 @@ class Client(object):
 
         self.epoch_train_loss = 1e-4
         self.completed_steps = 0
-        self.loss_squre = 0
+        self.loss_squared = 0
 
+    @overrides
     def train(self, client_data, model, conf):
 
-        clientId = conf.clientId
-        logging.info(f"Start to train (CLIENT: {clientId}) ...")
+        client_id = conf.client_id
+        logging.info(f"Start to train (CLIENT: {client_id}) ...")
         tokenizer, device = conf.tokenizer, conf.device
 
         model = model.to(device=device)
@@ -47,7 +52,7 @@ class Client(object):
         criterion = self.get_criterion(conf)
         error_type = None
 
-        # NOTE: If one may hope to run fixed number of epochs, instead of iterations, 
+        # NOTE: If one may hope to run fixed number of epochs, instead of iterations,
         # use `while self.completed_steps < conf.local_steps * len(client_data)` instead
         while self.completed_steps < conf.local_steps:
             try:
@@ -59,17 +64,17 @@ class Client(object):
         state_dicts = model.state_dict()
         model_param = {p: state_dicts[p].data.cpu().numpy()
                        for p in state_dicts}
-        results = {'clientId': clientId, 'moving_loss': self.epoch_train_loss,
-                   'trained_size': self.completed_steps*conf.batch_size, 
+        results = {'client_id': client_id, 'moving_loss': self.epoch_train_loss,
+                   'trained_size': self.completed_steps * conf.batch_size,
                    'success': self.completed_steps == conf.local_steps}
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
+            logging.info(f"Training of (CLIENT: {client_id}) completes, {results}")
         else:
-            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {client_id}) failed as {error_type}")
 
         results['utility'] = math.sqrt(
-            self.loss_squre)*float(trained_unique_samples)
+            self.loss_squared) * float(trained_unique_samples)
         results['update_weight'] = model_param
         results['wall_duration'] = 0
 
@@ -83,10 +88,10 @@ class Client(object):
             for key, value in dict(model.named_parameters()).items():
                 if value.requires_grad:
                     if 'bias' in key:
-                        params += [{'params': [value], 'lr':lr*(cfg.TRAIN.DOUBLE_BIAS + 1),
+                        params += [{'params': [value], 'lr': lr * (cfg.TRAIN.DOUBLE_BIAS + 1),
                                     'weight_decay': cfg.TRAIN.BIAS_DECAY and cfg.TRAIN.WEIGHT_DECAY or 0}]
                     else:
-                        params += [{'params': [value], 'lr':lr,
+                        params += [{'params': [value], 'lr': lr,
                                     'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
             optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
 
@@ -131,7 +136,7 @@ class Client(object):
                     data, tokenizer, conf, device=conf.device)
             elif conf.task == 'voice':
                 (data, target, input_percentages,
-                    target_sizes), _ = data_pair
+                 target_sizes), _ = data_pair
                 input_sizes = input_percentages.mul_(
                     int(data.size(3))).int()
             elif conf.task == 'detection':
@@ -173,19 +178,19 @@ class Client(object):
                 output = outputs.logits
             elif conf.task == "detection":
                 rois, cls_prob, bbox_pred, \
-                    rpn_loss_cls, rpn_loss_box, \
-                    RCNN_loss_cls, RCNN_loss_bbox, \
-                    rois_label = model(
-                        self.im_data, self.im_info, self.gt_boxes, self.num_boxes)
+                rpn_loss_cls, rpn_loss_box, \
+                RCNN_loss_cls, RCNN_loss_bbox, \
+                rois_label = model(
+                    self.im_data, self.im_info, self.gt_boxes, self.num_boxes)
 
                 loss = rpn_loss_cls + rpn_loss_box \
-                    + RCNN_loss_cls + RCNN_loss_bbox
+                       + RCNN_loss_cls + RCNN_loss_bbox
 
                 loss_rpn_cls = rpn_loss_cls.item()
                 loss_rpn_box = rpn_loss_box.item()
                 loss_rcnn_cls = RCNN_loss_cls.item()
                 loss_rcnn_box = RCNN_loss_bbox.item()
-                
+
             else:
                 output = model(data)
                 loss = criterion(output, target)
@@ -202,16 +207,16 @@ class Client(object):
                 loss_list = loss.tolist()
                 loss = loss.mean()
 
-            temp_loss = sum(loss_list)/float(len(loss_list))
-            self.loss_squre = sum([l**2 for l in loss_list]
-                                )/float(len(loss_list))
+            temp_loss = sum(loss_list) / float(len(loss_list))
+            self.loss_squared = sum([l ** 2 for l in loss_list]
+                                    ) / float(len(loss_list))
             # only measure the loss of the first epoch
             if self.completed_steps < len(client_data):
                 if self.epoch_train_loss == 1e-4:
                     self.epoch_train_loss = temp_loss
                 else:
                     self.epoch_train_loss = (
-                        1. - conf.loss_decay) * self.epoch_train_loss + conf.loss_decay * temp_loss
+                                                    1. - conf.loss_decay) * self.epoch_train_loss + conf.loss_decay * temp_loss
 
             # ========= Define the backward loss ==============
             optimizer.zero_grad()
@@ -227,6 +232,14 @@ class Client(object):
             if self.completed_steps == conf.local_steps:
                 break
 
-
-    def test(self, conf):
-        pass
+    @overrides
+    def test(self, client_data, model, conf):
+        evalStart = time.time()
+        test_loss, acc, acc_5, test_results = test_pytorch_model(conf.rank, model, client_data,
+                                                                 device=conf.device, criterion=conf.criterion,
+                                                                 tokenizer=conf.tokenizer)
+        logging.info(
+            "Test results: Eval_time {}, test_loss {}, test_accuracy {:.2f}%, "
+            "test_5_accuracy {:.2f}% \n"
+                .format(round(time.time() - evalStart, 4), test_loss, acc * 100., acc_5 * 100.))
+        return test_results
