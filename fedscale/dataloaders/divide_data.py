@@ -42,7 +42,6 @@ class DataPartitioner(object):
         np.random.seed(seed)
 
         self.data_len = len(self.data)
-        self.task = args.task
         self.numOfLabels = numOfClass
         self.client_label_cnt = defaultdict(set)
 

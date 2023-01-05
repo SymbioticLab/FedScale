@@ -5,6 +5,7 @@ import time
 import torch
 from torch.autograd import Variable
 from overrides import overrides
+from torch.nn import CTCLoss
 
 from fedscale.cloud.execution.client_base import ClientBase
 from fedscale.cloud.execution.optimizers import ClientOptimizer
@@ -15,12 +16,12 @@ from fedscale.utils.model_test_module import test_pytorch_model
 class TorchClient(ClientBase):
     """Basic client component in Federated Learning"""
 
-    def __init__(self, conf):
+    def __init__(self, args):
+        self.args = args
         self.optimizer = ClientOptimizer()
-        self.init_task(conf)
-
-    def init_task(self, conf):
-        if conf.task == "detection":
+        self.device = args.cuda_device if args.use_cuda else torch.device(
+            'cpu')
+        if args.task == "detection":
             self.im_data = Variable(torch.FloatTensor(1).cuda())
             self.im_info = Variable(torch.FloatTensor(1).cuda())
             self.num_boxes = Variable(torch.LongTensor(1).cuda())
@@ -30,14 +31,15 @@ class TorchClient(ClientBase):
         self.completed_steps = 0
         self.loss_squared = 0
 
+
     @overrides
     def train(self, client_data, model, conf):
 
         client_id = conf.client_id
         logging.info(f"Start to train (CLIENT: {client_id}) ...")
-        tokenizer, device = conf.tokenizer, conf.device
+        tokenizer = conf.tokenizer
 
-        model = model.to(device=device)
+        model = model.to(device=self.device)
         model.train()
 
         trained_unique_samples = min(
@@ -121,10 +123,10 @@ class TorchClient(ClientBase):
         criterion = None
         if conf.task == 'voice':
             from torch_baidu_ctc import CTCLoss
-            criterion = CTCLoss(reduction='none').to(device=conf.device)
+            criterion = CTCLoss(reduction='none').to(device=self.device)
         else:
             criterion = torch.nn.CrossEntropyLoss(
-                reduction='none').to(device=conf.device)
+                reduction='none').to(device=self.device)
         return criterion
 
     def train_step(self, client_data, conf, model, optimizer, criterion):
@@ -133,7 +135,7 @@ class TorchClient(ClientBase):
             if conf.task == 'nlp':
                 (data, _) = data_pair
                 data, target = mask_tokens(
-                    data, tokenizer, conf, device=conf.device)
+                    data, tokenizer, conf, device=self.device)
             elif conf.task == 'voice':
                 (data, target, input_percentages,
                  target_sizes), _ = data_pair
@@ -152,16 +154,16 @@ class TorchClient(ClientBase):
                 self.gt_boxes.resize_(data[2].size()).copy_(data[2])
                 self.num_boxes.resize_(data[3].size()).copy_(data[3])
             elif conf.task == 'speech':
-                data = torch.unsqueeze(data, 1).to(device=conf.device)
+                data = torch.unsqueeze(data, 1).to(device=self.device)
             elif conf.task == 'text_clf' and conf.model == 'albert-base-v2':
                 (data, masks) = data
                 data, masks = Variable(data).to(
-                    device=conf.device), Variable(masks).to(device=conf.device)
+                    device=self.device), Variable(masks).to(device=self.device)
 
             else:
-                data = Variable(data).to(device=conf.device)
+                data = Variable(data).to(device=self.device)
 
-            target = Variable(target).to(device=conf.device)
+            target = Variable(target).to(device=self.device)
 
             if conf.task == 'nlp':
                 outputs = model(data, labels=target)
@@ -235,8 +237,12 @@ class TorchClient(ClientBase):
     @overrides
     def test(self, client_data, model, conf):
         evalStart = time.time()
+        if self.args.task == 'voice':
+            criterion = CTCLoss(reduction='mean').to(device=self.device)
+        else:
+            criterion = torch.nn.CrossEntropyLoss().to(device=self.device)
         test_loss, acc, acc_5, test_results = test_pytorch_model(conf.rank, model, client_data,
-                                                                 device=conf.device, criterion=conf.criterion,
+                                                                 device=self.device, criterion=criterion,
                                                                  tokenizer=conf.tokenizer)
         logging.info(
             "Test results: Eval_time {}, test_loss {}, test_accuracy {:.2f}%, "

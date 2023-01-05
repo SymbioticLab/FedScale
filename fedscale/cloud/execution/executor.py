@@ -8,7 +8,6 @@ from argparse import Namespace
 
 import numpy as np
 import torch
-from torch.nn import CTCLoss
 
 import fedscale.cloud.channels.job_api_pb2 as job_api_pb2
 import fedscale.cloud.logger.executor_logging as logger
@@ -37,8 +36,6 @@ class Executor(object):
         logger.initiate_client_setting()
 
         self.args = args
-        self.device = args.cuda_device if args.use_cuda else torch.device(
-            'cpu')
         self.num_executors = args.num_executors
         # ======== env information ========
         self.this_rank = args.this_rank
@@ -53,7 +50,6 @@ class Executor(object):
 
         # ======== runtime information ========
         self.collate_fn = None
-        self.task = args.task
         self.round = 0
         self.start_run_time = time.time()
         self.received_stop_request = False
@@ -81,10 +77,10 @@ class Executor(object):
 
         """
         torch.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
         torch.cuda.manual_seed_all(seed)
         np.random.seed(seed)
         random.seed(seed)
-        torch.backends.cudnn.deterministic = True
 
     def init_control_communication(self):
         """Create communication channel between coordinator and executor.
@@ -120,9 +116,13 @@ class Executor(object):
 
         """
         train_dataset, test_dataset = init_dataset()
-        if self.task == "rl":
+        if self.args.task == "rl":
             return train_dataset, test_dataset
-        # load data partitioner (entire_train_data)
+        if self.args.task == 'nlp':
+            self.collate_fn = collate
+        elif self.args.task == 'voice':
+            self.collate_fn = voice_collate_fn
+        # load data partitionxr (entire_train_data)
         logging.info("Data partitioner starts ...")
 
         training_sets = DataPartitioner(
@@ -135,11 +135,6 @@ class Executor(object):
         testing_sets.partition_data_helper(num_clients=self.num_executors)
 
         logging.info("Data partitioner completes ...")
-
-        if self.task == 'nlp':
-            self.collate_fn = collate
-        elif self.task == 'voice':
-            self.collate_fn = voice_collate_fn
 
         return training_sets, testing_sets
 
@@ -287,10 +282,10 @@ class Executor(object):
             TorchClient: A abstract base client class with runtime config conf.
 
         """
-        if self.args.engine == commons.TENSORFLOW:
+        if conf.engine == commons.TENSORFLOW:
             return TensorflowClient(conf)
-        elif self.args.engine == commons.PYTORCH:
-            if self.args.task == 'rl':
+        elif conf.engine == commons.PYTORCH:
+            if conf.task == 'rl':
                 return RLClient(conf)
             else:
                 return TorchClient(conf)
@@ -308,7 +303,7 @@ class Executor(object):
 
         """
         self.model_wrapper.set_weights(model)
-        conf.client_id, conf.device = client_id, self.device
+        conf.client_id = client_id
         conf.tokenizer = tokenizer
         client_data = select_dataset(client_id, self.training_sets,
                                      batch_size=conf.batch_size, args=self.args,
@@ -316,7 +311,7 @@ class Executor(object):
                                      )
         if self.args.task == "rl":
             client_data = self.training_sets
-        client = self.get_client_trainer(conf)
+        client = self.get_client_trainer(self.args)
         train_res = client.train(
             client_data=client_data, model=self.model_wrapper.get_model(), conf=conf)
 
@@ -332,10 +327,8 @@ class Executor(object):
             dictionary: The test result
 
         """
-        device = self.device
         test_config = self.override_conf({
             'rank': self.this_rank,
-            'device': self.device,
             'memory_capacity': self.args.memory_capacity,
             'tokenizer': tokenizer
         })
@@ -343,12 +336,6 @@ class Executor(object):
         data_loader = select_dataset(self.this_rank, self.testing_sets,
                                      batch_size=self.args.test_bsz, args=self.args,
                                      isTest=True, collate_fn=self.collate_fn)
-
-        if self.args.engine == commons.PYTORCH:
-            if self.task == 'voice':
-                test_config.criterion = CTCLoss(reduction='mean').to(device=device)
-            else:
-                test_config.criterion = torch.nn.CrossEntropyLoss().to(device=device)
 
         test_results = client.test(data_loader, self.model_wrapper.get_model(), test_config)
 

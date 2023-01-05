@@ -8,8 +8,8 @@ import numpy as np
 class TensorflowClient(ClientBase):
     """Inherit default client to use tensorflow engine"""
 
-    def __init__(self, conf):
-        self.conf = conf
+    def __init__(self, args):
+        self.args = args
 
     def convert_np_to_tf_dataset(self, dataset):
         def gen():
@@ -17,7 +17,7 @@ class TensorflowClient(ClientBase):
                 for x, y in dataset:
                     # Convert torch tensor to tf tensor
                     nx, ny = tf.convert_to_tensor(x.swapaxes(1, 3).numpy()), \
-                             tf.one_hot(tf.convert_to_tensor(y.numpy()), self.conf.num_classes)
+                             tf.one_hot(tf.convert_to_tensor(y.numpy()), self.args.num_classes)
                     yield nx, ny
 
         # Sample a batch to get tensor properties

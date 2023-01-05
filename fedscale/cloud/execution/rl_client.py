@@ -21,7 +21,7 @@ class RLClient(TorchClient):
 
         client_id = conf.client_id
         logging.info(f"Start to train (CLIENT: {client_id}) ...")
-        device = conf.device
+        device = self.device
         model = model.to(device=device)
         # self.dqn.eval_net = self.dqn.eval_net.to(device=device)
         # self.dqn.target_net = self.dqn.target_net.to(device=device)
@@ -94,7 +94,7 @@ class RLClient(TorchClient):
         return results
 
     def test(self, client_data, model, conf):
-        model = model.to(device=conf['device'])
+        model = model.to(device=self.device)
         self.dqn.target_net.load_state_dict(model.state_dict())
         self.dqn.set_eval_mode()
         env = gym.make('CartPole-v0').unwrapped

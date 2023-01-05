@@ -83,7 +83,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.model_update_size = 0.
 
         self.collate_fn = None
-        self.task = args.task
         self.round = 0
 
         self.start_run_time = time.time()
