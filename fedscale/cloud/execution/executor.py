@@ -32,7 +32,7 @@ class Executor(object):
         # initiate the executor log path, and executor ips
         logger.initiate_client_setting()
 
-        self.model_wrapper = self.get_client_trainer(args).get_model_adapter(init_model())
+        self.model_adapter = self.get_client_trainer(args).get_model_adapter(init_model())
 
         self.args = args
         self.num_executors = args.num_executors
@@ -171,7 +171,7 @@ class Executor(object):
 
         """
         self.round += 1
-        self.model_wrapper.set_weights(model_weights)
+        self.model_adapter.set_weights(model_weights)
 
     def Train(self, config):
         """Load train config and data to start training on that client
@@ -256,14 +256,10 @@ class Executor(object):
         return Namespace(**default_conf)
 
     def get_client_trainer(self, conf):
-        """A abstract base class for client with training handler, developer can redefine to this function to customize the client training:
-
-        Args:
-            conf (dictionary): The client runtime config.
-
-        Returns:
-            TorchClient: A abstract base client class with runtime config conf.
-
+        """
+        Returns a framework-specific client that handles training and evaluation.
+        :param conf: job config
+        :return: framework-specific client instance
         """
         if conf.engine == commons.TENSORFLOW:
             return TensorflowClient(conf)
@@ -285,18 +281,17 @@ class Executor(object):
             dictionary: The train result
 
         """
-        self.model_wrapper.set_weights(model)
+        self.model_adapter.set_weights(model)
         conf.client_id = client_id
         conf.tokenizer = tokenizer
-        client_data = select_dataset(client_id, self.training_sets,
-                                     batch_size=conf.batch_size, args=self.args,
-                                     collate_fn=self.collate_fn
-                                     )
-        if self.args.task == "rl":
-            client_data = self.training_sets
+        client_data = self.training_sets if self.args.task == "rl" else \
+            select_dataset(client_id, self.training_sets,
+                           batch_size=conf.batch_size, args=self.args,
+                           collate_fn=self.collate_fn
+                           )
         client = self.get_client_trainer(self.args)
         train_res = client.train(
-            client_data=client_data, model=self.model_wrapper.get_model(), conf=conf)
+            client_data=client_data, model=self.model_adapter.get_model(), conf=conf)
 
         return train_res
 
@@ -320,7 +315,7 @@ class Executor(object):
                                      batch_size=self.args.test_bsz, args=self.args,
                                      isTest=True, collate_fn=self.collate_fn)
 
-        test_results = client.test(data_loader, self.model_wrapper.get_model(), test_config)
+        test_results = client.test(data_loader, self.model_adapter.get_model(), test_config)
 
         gc.collect()
 

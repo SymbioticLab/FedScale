@@ -4,6 +4,9 @@ import numpy as np
 
 
 class ModelAdapterBase(abc.ABC):
+    """
+    Represents an adapter that operates on a framework-specific model.
+    """
     @abc.abstractmethod
     def set_weights(self, weights: np.ndarray):
         """

@@ -15,9 +15,13 @@ from fedscale.utils.model_test_module import test_pytorch_model
 
 
 class TorchClient(ClientBase):
-    """Basic client component in Federated Learning"""
+    """Implements a PyTorch-based client for training and evaluation."""
 
     def __init__(self, args):
+        """
+        Initializes a torch client.
+        :param args: Job args
+        """
         self.args = args
         self.optimizer = ClientOptimizer()
         self.device = args.cuda_device if args.use_cuda else torch.device(
@@ -32,10 +36,15 @@ class TorchClient(ClientBase):
         self.completed_steps = 0
         self.loss_squared = 0
 
-
     @overrides
     def train(self, client_data, model, conf):
-
+        """
+        Perform a training task.
+        :param client_data: client training dataset
+        :param model: the framework-specific model
+        :param conf: job config
+        :return: training results
+        """
         client_id = conf.client_id
         logging.info(f"Start to train (CLIENT: {client_id}) ...")
         tokenizer = conf.tokenizer
@@ -237,6 +246,13 @@ class TorchClient(ClientBase):
 
     @overrides
     def test(self, client_data, model, conf):
+        """
+        Perform a testing task.
+        :param client_data: client evaluation dataset
+        :param model: the framework-specific model
+        :param conf: job config
+        :return: testing results
+        """
         evalStart = time.time()
         if self.args.task == 'voice':
             criterion = CTCLoss(reduction='mean').to(device=self.device)
@@ -253,4 +269,9 @@ class TorchClient(ClientBase):
 
     @overrides
     def get_model_adapter(self, model):
+        """
+        Return framework-specific model adapter.
+        :param model: the model
+        :return: a model adapter containing the model
+        """
         return TorchModelAdapter(model)

@@ -31,14 +31,14 @@ setup_commands:
 job_conf:
     - job_name: tf-femnist               # Generate logs under this folder: log_path/job_name/time_stamp
     - log_path: $FEDSCALE_HOME/benchmark # Path of log files
-    - num_participants: 4                      # Number of participants per round, we use K=100 in our paper, large K will be much slower
-    - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
+    - num_participants: 4                # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: femnist                  # Dataset: openImg, google_speech, stackoverflow
     - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/femnist    # Path of the dataset
-    - model: resnet50                      # Need to define the model in tf_aggregator.py
+    - model: resnet50                    # Need to define the model in tf_aggregator.py
     - model_zoo: fedscale-tensorflow-zoo
-    - eval_interval: 5000                     # How many rounds to run a testing on the testing set
-    - rounds: 200                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
-    - filter_less: 0                       # Remove clients w/ less than 21 samples
+    - eval_interval: 5000                # How many rounds to run a testing on the testing set
+    - rounds: 200                        # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 0                     # Remove clients w/ less than 21 samples
     - num_loaders: 2
     - local_steps: 20
     - learning_rate: 0.001

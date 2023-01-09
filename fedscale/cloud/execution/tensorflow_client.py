@@ -8,12 +8,21 @@ from fedscale.cloud.internal.tensorflow_model_adapter import TensorflowModelAdap
 
 
 class TensorflowClient(ClientBase):
-    """Inherit default client to use tensorflow engine"""
+    """Implements a TensorFlow-based client for training and evaluation."""
 
     def __init__(self, args):
+        """
+        Initializes a tf client.
+        :param args: Job args
+        """
         self.args = args
 
-    def convert_np_to_tf_dataset(self, dataset):
+    def _convert_np_to_tf_dataset(self, dataset):
+        """
+        Converts the iterable numpy dataset to a tensorflow Dataset.
+        :param dataset: numpy dataset
+        :return: tf.data.Dataset
+        """
         def gen():
             while True:
                 for x, y in dataset:
@@ -35,9 +44,16 @@ class TensorflowClient(ClientBase):
 
     @overrides
     def train(self, client_data, model, conf):
+        """
+        Perform a training task.
+        :param client_data: client training dataset
+        :param model: the framework-specific model
+        :param conf: job config
+        :return: training results
+        """
         client_id = conf.client_id
         logging.info(f"Start to train (CLIENT: {client_id}) ...")
-        tf_dataset = self.convert_np_to_tf_dataset(client_data).take(conf.local_steps)
+        tf_dataset = self._convert_np_to_tf_dataset(client_data).take(conf.local_steps)
         history = model.fit(tf_dataset, batch_size=conf.batch_size, verbose=1)
 
         # Report the training results
@@ -54,7 +70,14 @@ class TensorflowClient(ClientBase):
 
     @overrides
     def test(self, client_data, model, conf):
-        results = model.evaluate(self.convert_np_to_tf_dataset(client_data).take(100), batch_size=conf.batch_size,
+        """
+        Perform a testing task.
+        :param client_data: client evaluation dataset
+        :param model: the framework-specific model
+        :param conf: job config
+        :return: testing results
+        """
+        results = model.evaluate(self._convert_np_to_tf_dataset(client_data), batch_size=conf.batch_size,
                                  return_dict=True)
         for key, value in results.items():
             if key != 'row_count':
@@ -64,4 +87,9 @@ class TensorflowClient(ClientBase):
 
     @overrides
     def get_model_adapter(self, model):
+        """
+        Return framework-specific model adapter.
+        :param model: the model
+        :return: a model adapter containing the model
+        """
         return TensorflowModelAdapter(model)
