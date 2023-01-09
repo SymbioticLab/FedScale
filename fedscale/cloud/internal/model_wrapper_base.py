@@ -1,10 +1,9 @@
 import abc
 from typing import Any
-
 import numpy as np
 
 
-class ModelWrapperBase(abc.ABC):
+class ModelAdapterBase(abc.ABC):
     @abc.abstractmethod
     def set_weights(self, weights: np.ndarray):
         """

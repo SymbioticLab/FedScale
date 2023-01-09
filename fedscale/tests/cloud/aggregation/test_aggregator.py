@@ -4,8 +4,8 @@ import tensorflow as tf
 import torch
 
 from fedscale.cloud.aggregation.aggregator import Aggregator
-from fedscale.cloud.internal.tensorflow_model_wrapper import TensorflowModelWrapper
-from fedscale.cloud.internal.torch_model_wrapper import TorchModelWrapper
+from fedscale.cloud.internal.tensorflow_model_adapter import TensorflowModelAdapter
+from fedscale.cloud.internal.torch_model_adapter import TorchModelAdapter
 
 
 class MockAggregator(Aggregator):
@@ -26,9 +26,9 @@ class TestAggregator:
         y = tf.keras.layers.Dense(2, activation='softmax')(
             tf.keras.layers.Dense(4, activation='softmax')(x))
         model = tf.keras.Model(x, y)
-        wrapper = TensorflowModelWrapper(model)
-        aggregator = MockAggregator(wrapper)
-        weights = copy.deepcopy(wrapper.get_weights())
+        model_adapter = TensorflowModelAdapter(model)
+        aggregator = MockAggregator(model_adapter)
+        weights = copy.deepcopy(model_adapter.get_weights())
         aggregator.update_weight_aggregation(multiply_weights(weights, 2))
         aggregator.model_in_update += 1
         aggregator.update_weight_aggregation(multiply_weights(weights, 2))
@@ -38,9 +38,9 @@ class TestAggregator:
 
     def test_update_weight_aggregation_for_torch_model(self):
         model = torch.nn.Linear(3, 2)
-        wrapper = TorchModelWrapper(model)
-        aggregator = MockAggregator(wrapper)
-        weights = copy.deepcopy(wrapper.get_weights())
+        model_adapter = TorchModelAdapter(model)
+        aggregator = MockAggregator(model_adapter)
+        weights = copy.deepcopy(model_adapter.get_weights())
         aggregator.update_weight_aggregation(multiply_weights(weights, 2))
         aggregator.model_in_update += 1
         aggregator.update_weight_aggregation(multiply_weights(weights, 2))

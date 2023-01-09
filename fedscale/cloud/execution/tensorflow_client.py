@@ -4,6 +4,8 @@ from overrides import overrides
 from fedscale.cloud.execution.client_base import ClientBase
 import numpy as np
 
+from fedscale.cloud.internal.tensorflow_model_adapter import TensorflowModelAdapter
+
 
 class TensorflowClient(ClientBase):
     """Inherit default client to use tensorflow engine"""
@@ -59,3 +61,7 @@ class TensorflowClient(ClientBase):
                 results[key] = results['row_count'] * value
         results['test_len'] = results['row_count']
         return results
+
+    @overrides
+    def get_model_adapter(self, model):
+        return TensorflowModelAdapter(model)

@@ -4,10 +4,10 @@ import numpy as np
 import torch
 
 from fedscale.cloud.aggregation.optimizers import TorchServerOptimizer
-from fedscale.cloud.internal.model_wrapper_base import ModelWrapperBase
+from fedscale.cloud.internal.model_wrapper_base import ModelAdapterBase
 
 
-class TorchModelWrapper(ModelWrapperBase):
+class TorchModelAdapter(ModelAdapterBase):
     def __init__(self, model: torch.nn.Module, optimizer: TorchServerOptimizer = None):
         self.model = model
         self.optimizer = optimizer

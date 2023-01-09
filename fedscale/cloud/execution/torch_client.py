@@ -9,6 +9,7 @@ from torch.nn import CTCLoss
 
 from fedscale.cloud.execution.client_base import ClientBase
 from fedscale.cloud.execution.optimizers import ClientOptimizer
+from fedscale.cloud.internal.torch_model_adapter import TorchModelAdapter
 from fedscale.dataloaders.nlp import mask_tokens
 from fedscale.utils.model_test_module import test_pytorch_model
 
@@ -249,3 +250,7 @@ class TorchClient(ClientBase):
             "test_5_accuracy {:.2f}% \n"
                 .format(round(time.time() - evalStart, 4), test_loss, acc * 100., acc_5 * 100.))
         return test_results
+
+    @overrides
+    def get_model_adapter(self, model):
+        return TorchModelAdapter(model)

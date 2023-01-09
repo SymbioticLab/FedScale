@@ -17,8 +17,8 @@ import fedscale.cloud.logger.aggregator_logging as logger
 from fedscale.cloud.aggregation.optimizers import TorchServerOptimizer
 from fedscale.cloud.channels import job_api_pb2
 from fedscale.cloud.client_manager import ClientManager
-from fedscale.cloud.internal.tensorflow_model_wrapper import TensorflowModelWrapper
-from fedscale.cloud.internal.torch_model_wrapper import TorchModelWrapper
+from fedscale.cloud.internal.tensorflow_model_adapter import TensorflowModelAdapter
+from fedscale.cloud.internal.torch_model_adapter import TorchModelAdapter
 from fedscale.cloud.resource_manager import ResourceManager
 from fedscale.cloud.fllibs import *
 from torch.utils.tensorboard import SummaryWriter
@@ -162,9 +162,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
     def init_model(self):
         """Initialize the model"""
         if self.args.engine == commons.TENSORFLOW:
-            self.model_wrapper = TensorflowModelWrapper(init_model())
+            self.model_wrapper = TensorflowModelAdapter(init_model())
         elif self.args.engine == commons.PYTORCH:
-            self.model_wrapper = TorchModelWrapper(
+            self.model_wrapper = TorchModelAdapter(
                 init_model(),
                 optimizer=TorchServerOptimizer(
                     self.args.gradient_policy, self.args, self.device))

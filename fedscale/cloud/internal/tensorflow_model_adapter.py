@@ -3,10 +3,10 @@ from typing import List
 import numpy as np
 import tensorflow as tf
 
-from fedscale.cloud.internal.model_wrapper_base import ModelWrapperBase
+from fedscale.cloud.internal.model_wrapper_base import ModelAdapterBase
 
 
-class TensorflowModelWrapper(ModelWrapperBase):
+class TensorflowModelAdapter(ModelAdapterBase):
     def __init__(self, model: tf.keras.Model):
         self.model = model
 

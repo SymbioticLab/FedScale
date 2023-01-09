@@ -17,8 +17,6 @@ from fedscale.cloud.execution.torch_client import TorchClient
 from fedscale.cloud.execution.data_processor import collate, voice_collate_fn
 from fedscale.cloud.execution.rl_client import RLClient
 from fedscale.cloud.fllibs import *
-from fedscale.cloud.internal.tensorflow_model_wrapper import TensorflowModelWrapper
-from fedscale.cloud.internal.torch_model_wrapper import TorchModelWrapper
 from fedscale.dataloaders.divide_data import DataPartitioner, select_dataset
 
 
@@ -32,8 +30,9 @@ class Executor(object):
 
     def __init__(self, args):
         # initiate the executor log path, and executor ips
-        self.model_wrapper = None
         logger.initiate_client_setting()
+
+        self.model_wrapper = self.get_client_trainer(args).get_model_adapter(init_model())
 
         self.args = args
         self.num_executors = args.num_executors
@@ -93,21 +92,6 @@ class Executor(object):
         """
         pass
 
-    def init_model_wrapper(self):
-        """Get the model architecture used in training
-
-        Returns:
-            PyTorch or TensorFlow module: Based on the executor's machine learning framework, initialize and return the model for training
-
-        """
-        if self.args.engine == commons.TENSORFLOW:
-            self.model_wrapper = TensorflowModelWrapper(init_model())
-        elif self.args.engine == commons.PYTORCH:
-            self.model_wrapper = TorchModelWrapper(
-                init_model())
-        else:
-            raise ValueError(f"{self.args.engine} is not a supported engine.")
-
     def init_data(self):
         """Return the training and testing dataset
 
@@ -142,7 +126,6 @@ class Executor(object):
         """Start running the executor by setting up execution and communication environment, and monitoring the grpc message.
         """
         self.setup_env()
-        self.init_model_wrapper()
         self.training_sets, self.testing_sets = self.init_data()
         self.setup_communication()
         self.event_monitor()
@@ -276,7 +259,7 @@ class Executor(object):
         """A abstract base class for client with training handler, developer can redefine to this function to customize the client training:
 
         Args:
-            config (dictionary): The client runtime config.
+            conf (dictionary): The client runtime config.
 
         Returns:
             TorchClient: A abstract base client class with runtime config conf.
