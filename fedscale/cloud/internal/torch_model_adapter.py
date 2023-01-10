@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from fedscale.cloud.aggregation.optimizers import TorchServerOptimizer
-from fedscale.cloud.internal.model_wrapper_base import ModelAdapterBase
+from fedscale.cloud.internal.model_adapter_base import ModelAdapterBase
 
 
 class TorchModelAdapter(ModelAdapterBase):

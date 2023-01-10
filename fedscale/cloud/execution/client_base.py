@@ -1,6 +1,6 @@
 import abc
 
-from fedscale.cloud.internal.model_wrapper_base import ModelAdapterBase
+from fedscale.cloud.internal.model_adapter_base import ModelAdapterBase
 
 
 class ClientBase(abc.ABC):

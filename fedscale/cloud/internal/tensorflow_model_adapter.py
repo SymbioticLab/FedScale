@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 import tensorflow as tf
 
-from fedscale.cloud.internal.model_wrapper_base import ModelAdapterBase
+from fedscale.cloud.internal.model_adapter_base import ModelAdapterBase
 
 
 class TensorflowModelAdapter(ModelAdapterBase):
