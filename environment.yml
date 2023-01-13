@@ -9,6 +9,7 @@ dependencies:
   - pip:
     - torch_optimizer
     - torch
+    - numpy
     - tensorflow
     - torchvision
     - transformers
