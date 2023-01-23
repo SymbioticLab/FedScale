@@ -86,7 +86,7 @@ class TensorflowClient(ClientBase):
         return results
 
     @overrides
-    def get_model_adapter(self, model):
+    def get_model_adapter(self, model) -> TensorflowModelAdapter:
         """
         Return framework-specific model adapter.
         :param model: the model

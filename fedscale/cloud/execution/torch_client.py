@@ -268,7 +268,7 @@ class TorchClient(ClientBase):
         return test_results
 
     @overrides
-    def get_model_adapter(self, model):
+    def get_model_adapter(self, model) -> TorchModelAdapter:
         """
         Return framework-specific model adapter.
         :param model: the model
