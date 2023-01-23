@@ -27,7 +27,8 @@ class TorchModelAdapter(ModelAdapterBase):
         """
         current_grad_weights = [param.data.clone() for param in self.model.state_dict().values()]
         new_state_dict = {
-            name: torch.from_numpy(np.asarray(weights[i])) for i, name in enumerate(self.model.state_dict().keys())
+            name: torch.from_numpy(np.asarray(weights[i], dtype=np.float32))
+            for i, name in enumerate(self.model.state_dict().keys())
         }
         self.model.load_state_dict(new_state_dict)
         if self.optimizer:
