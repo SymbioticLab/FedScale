@@ -43,7 +43,8 @@ job_conf:
     - local_steps: 20
     - learning_rate: 0.001
     - batch_size: 32
-    - num_classes: 10
+    - input_shape: 32 32 3
+    - num_classes: 62
     - test_bsz: 32
     - use_cuda: False
     - engine: 'tensorflow'

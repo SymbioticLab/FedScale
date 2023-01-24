@@ -42,6 +42,7 @@ job_conf:
     - num_loaders: 2
     - local_steps: 20
     - learning_rate: 0.001
+    - input_shape: 32 32 3
     - batch_size: 32
     - num_classes: 10
     - test_bsz: 32

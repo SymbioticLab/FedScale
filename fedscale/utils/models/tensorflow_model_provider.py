@@ -21,7 +21,7 @@ def build_resnet50(args):
         include_top=True,
         weights=None,
         input_tensor=None,
-        input_shape=[32, 32, 3],
+        input_shape=args.input_shape,
         pooling=None,
         classes=args.num_classes
     )
@@ -34,7 +34,7 @@ def build_resnet50(args):
 
 def build_mobilenet_v3_small(args):
     model = tf.keras.applications.MobileNetV3Small(
-        input_shape=[32, 32, 3],
+        input_shape=args.input_shape,
         alpha=1.0,
         minimalistic=False,
         input_tensor=None,
@@ -42,7 +42,6 @@ def build_mobilenet_v3_small(args):
         classes=args.num_classes,
         pooling=None,
         dropout_rate=0.2,
-        classifier_activation="softmax",
         include_preprocessing=True,
     )
     optimizer = tf.keras.optimizers.SGD(learning_rate=args.learning_rate, momentum=0.9,
