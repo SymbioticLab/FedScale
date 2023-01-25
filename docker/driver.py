@@ -53,9 +53,9 @@ def process_cmd(yaml_file, local=False):
             exit(1)
     else:
         use_container = "default"
-        
 
-    
+
+
     ps_ip = yaml_conf['ps_ip']
     worker_ips, total_gpus = [], []
     cmd_script_list = []
@@ -79,7 +79,7 @@ def process_cmd(yaml_file, local=False):
 
     for conf in yaml_conf['job_conf']:
         job_conf.update(conf)
-        
+
     conf_script = ''
     setup_cmd = ''
     if yaml_conf['setup_commands'] is not None:
@@ -90,7 +90,7 @@ def process_cmd(yaml_file, local=False):
     cmd_sufix = f" "
 
     for conf_name in job_conf:
-        conf_script = conf_script + f' --{conf_name}={job_conf[conf_name]}'
+        conf_script = conf_script + f' --{conf_name} {job_conf[conf_name]}'
         if conf_name == "job_name":
             job_name = job_conf[conf_name]
         if conf_name == "log_path":
@@ -152,7 +152,7 @@ def process_cmd(yaml_file, local=False):
                         "rank_id": rank_id,
                         "cuda_id": cuda_id
                     }
-                    
+
                     worker_cmd = f" docker run -i --name fedscale-exec{rank_id}-{time_stamp} --network {yaml_conf['container_network']} -p {ports[rank_id]}:32000 --mount type=bind,source={yaml_conf['data_path']},target=/FedScale/benchmark fedscale/fedscale-exec"
                 else:
                     worker_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['executor_entry']} {conf_script} --this_rank={rank_id} --num_executors={total_gpu_processes} --cuda_device=cuda:{cuda_id} "
@@ -236,7 +236,7 @@ def process_cmd(yaml_file, local=False):
                 msg = json.dumps(msg)
                 send_socket.sendall(msg.encode('utf-8'))
                 send_socket.close()
-                break                
+                break
 
 
     print(f"Submitted job, please check your logs {job_conf['log_path']}/logs/{job_conf['job_name']}/{time_stamp} for status")
@@ -258,7 +258,7 @@ def terminate(job_name):
             print(f"Shutting down container {name} on {meta_dict['ip']}")
             with open(f"{job_name}_logging", 'a') as fout:
                 subprocess.Popen(f'ssh {job_meta["user"]}{meta_dict["ip"]} "docker rm --force {name}"',
-                                shell=True, stdout=fout, stderr=fout)          
+                                shell=True, stdout=fout, stderr=fout)
     elif job_meta['use_container'] == "k8s":
         # for now, assume we run in k8s admin mode, placeholder for client job submission in the future
         config.load_kube_config()
@@ -266,11 +266,11 @@ def terminate(job_name):
         for name, meta_dict in job_meta['k8s_dict'].items():
             if os.path.exists(meta_dict["yaml_path"]):
                 os.remove(meta_dict["yaml_path"])
-                
+
             print(f"Shutting down container {name}...")
             core_api.delete_namespaced_pod(name, namespace="fedscale")
 
-    else:    
+    else:
         for vm_ip in job_meta['vms']:
             print(f"Shutting down job on {vm_ip}")
             with open(f"{job_name}_logging", 'a') as fout:
@@ -293,7 +293,7 @@ def submit_to_k8s(yaml_conf):
         namespace_config = client.V1Namespace(
             metadata=client.V1ObjectMeta(name="fedscale"))
         core_api.create_namespace(namespace_config)
-    
+
     time_stamp = datetime.datetime.fromtimestamp(
         time.time()).strftime('%m%d_%H%M%S')
     running_vms = set()
@@ -334,7 +334,7 @@ def submit_to_k8s(yaml_conf):
         "rank_id": 0,
         "yaml_path": aggr_yaml_path
     }
-    
+
     print(f"Submitting aggregator container {aggr_name} to k8s...")
 
     # TODO: logging?
@@ -380,7 +380,7 @@ def submit_to_k8s(yaml_conf):
                 time.sleep(1)
             if aggr_ip == -1:
                 print(f"Error: aggregator {name} not ready after maximum waiting time allowed, aborting...")
-                exit(1)      
+                exit(1)
             meta_dict["ip"] = aggr_ip
         elif meta_dict['type'] == 'executor':
             print(f'Waiting executor container {name} to be ready...')
@@ -404,7 +404,7 @@ def submit_to_k8s(yaml_conf):
         else:
             print(f"Error: unrecognized type {meta_dict['type']}!")
             exit(1)
-    
+
 
     # TODO: make executors init multi-threaded to boost performance
     for name, meta_dict in k8s_dict.items():
@@ -456,7 +456,7 @@ def submit_to_k8s(yaml_conf):
                 msg = json.dumps(msg)
                 send_socket.sendall(msg.encode('utf-8'))
                 send_socket.close()
-                break            
+                break
         else:
             print(f"Error: unrecognized type {meta_dict['type']}!")
             exit(1)
@@ -468,14 +468,14 @@ def submit_to_k8s(yaml_conf):
 
 def check_log(job_name):
     current_path = os.path.dirname(os.path.abspath(__file__))
-    job_meta_path = os.path.join(current_path, job_name)    
+    job_meta_path = os.path.join(current_path, job_name)
     if not os.path.isfile(job_meta_path):
         print(f"Error: fail to terminate {job_name}, as it does not exist")
         exit(1)
 
     with open(job_meta_path, 'rb') as fin:
         job_meta = pickle.load(fin)
-    
+
     if job_meta['use_container'] == 'k8s':
         for name, meta_dict in job_meta['k8s_dict'].items():
             if meta_dict['type'] != 'aggregator':
@@ -488,7 +488,7 @@ def check_log(job_name):
     else:
         print("Error: only support checking job logs running in k8s mode!")
         exit(1)
-    
+
 
 print_help: bool = False
 if len(sys.argv) > 1:
