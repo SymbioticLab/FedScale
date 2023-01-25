@@ -159,7 +159,7 @@ public class FLExecutor extends AppCompatActivity {
     /**
      * Serialize the response to send to server upon assigned job completion
      *
-     * @param responses Client responses after job completion.
+     * @param responses TorchClient responses after job completion.
      * @return The serialized response object to server.
      */
     private ByteString serializeResponse(String responses) throws IOException {

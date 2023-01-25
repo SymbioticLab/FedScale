@@ -1,8 +1,8 @@
-"""A skeleton for Pytorch Client"""
-from fedscale.cloud.execution.client import Client
+"""A skeleton for Pytorch TorchClient"""
+from fedscale.cloud.execution.torch_client import TorchClient
 
 
 
-class Torch_Client(Client):
-    """A class for PyTorch version of Client, directly inherited from fedscale/cloud/execution/client.py"""
+class Torch_Client(TorchClient):
+    """A class for PyTorch version of TorchClient, directly inherited from fedscale/cloud/execution/torch_client.py"""
     pass

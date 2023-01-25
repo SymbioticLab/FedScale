@@ -5,17 +5,17 @@ import config
 from customized_fllibs import split_model
 from resnet_heterofl import resnet18
 
-from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.torch_client import TorchClient
 from fedscale.cloud.fllibs import Variable, logging, math, np, os, torch
 
 
-class Customized_Client(Client):
+class Customized_Client(TorchClient):
     def __init__(self, conf):
         super().__init__(conf)
         self.model_rate = None
         self.param_idx = None
         self.local_parameters = None
-        
+
 
     def make_model_rate(self):
         """get the model scaling rate"""
@@ -23,7 +23,7 @@ class Customized_Client(Client):
             self.model_rate = np.random.choice(config.cfg['shrinkage'])
         elif config.cfg['model_split_mode'] == 'fix':
             for i in range(len(config.cfg['model_rate'])):
-                if self.clientId % sum(config.cfg['proportion_of_model']) < \
+                if self.client_id % sum(config.cfg['proportion_of_model']) < \
                     sum(config.cfg['proportion_of_model'][:i+1]):
                     self.model_rate = config.cfg['model_rate'][i]
                     break
@@ -31,13 +31,13 @@ class Customized_Client(Client):
 
 
     def train(self, client_data, model, conf):
-        self.clientId = conf.clientId
+        self.client_id = conf.client_id
         self.make_model_rate()
-        logging.info(f"Start to split model (CLIENT: {self.clientId}, MODEL RATE: {self.model_rate}) ...")
+        logging.info(f"Start to split model (CLIENT: {self.client_id}, MODEL RATE: {self.model_rate}) ...")
         self.local_parameters = split_model(model, self.model_rate)
         self.local_model = resnet18(model_rate=self.model_rate)
         self.local_model.load_state_dict(self.local_parameters)
-        logging.info(f"Start to train (CLIENT: {self.clientId}) ...")
+        logging.info(f"Start to train (CLIENT: {self.client_id}) ...")
         device = conf.device
         self.local_model = self.local_model.to(device=device)
         self.local_model.train(True)
@@ -47,7 +47,7 @@ class Customized_Client(Client):
         epoch_train_loss = 1e-4
         error_type = None
         completed_steps = 0
-        loss_squre = 0
+        loss_squared = 0
         completed_steps = 0
         while completed_steps < config.cfg['local_epochs']:
             try:
@@ -63,7 +63,7 @@ class Customized_Client(Client):
                     loss_list = loss.tolist()
                     loss = loss.mean()
                     temp_loss = sum(loss_list)/float(len(loss_list))
-                    loss_squre = sum([l**2 for l in loss_list])/float(len(loss_list))
+                    loss_squared = sum([l**2 for l in loss_list])/float(len(loss_list))
                     if completed_steps < len(client_data):
                         if epoch_train_loss == 1e-4:
                             epoch_train_loss = temp_loss
@@ -73,20 +73,20 @@ class Customized_Client(Client):
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.local_model.parameters(), 1)
                     optimizer.step()
-                logging.info(f"Client {self.clientId} completes local epoch: {completed_steps}, loss square: {loss_squre}")
+                logging.info(f"Client {self.client_id} completes local epoch: {completed_steps}, loss square: {loss_squared}")
                 completed_steps += 1
 
             except Exception as ex:
                 error_type = ex
                 break
-        results = {'clientId':self.clientId, 'moving_loss': epoch_train_loss,
+        results = {'client_id':self.client_id, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
-        results['utility'] = math.sqrt(loss_squre)*float(trained_unique_samples)
+        results['utility'] = math.sqrt(loss_squared)*float(trained_unique_samples)
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {self.clientId}) completes, {results}")
+            logging.info(f"Training of (CLIENT: {self.client_id}) completes, {results}")
         else:
-            logging.info(f"Training of (CLIENT: {self.clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {self.client_id}) failed as {error_type}")
 
         results['wall_duration'] = 0
         results['model_rate'] = self.model_rate

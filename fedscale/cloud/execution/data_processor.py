@@ -1,5 +1,4 @@
-import os
-
+import torch
 from torch.nn.utils.rnn import pad_sequence
 
 from fedscale.cloud.fllibs import *
@@ -14,9 +13,6 @@ def collate(examples):
 def voice_collate_fn(batch):
     def func(p):
         return p[0].size(1)
-
-    start_time = time.time()
-
     batch = sorted(batch, key=lambda sample: sample[0].size(1), reverse=True)
     longest_sample = max(batch, key=func)[0]
     freq_size = longest_sample.size(0)
@@ -36,7 +32,4 @@ def voice_collate_fn(batch):
         target_sizes[x] = len(target)
         targets.extend(target)
     targets = torch.IntTensor(targets)
-
-    end_time = time.time()
-
     return (inputs, targets, input_percentages, target_sizes), None

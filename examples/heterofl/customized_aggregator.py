@@ -1,13 +1,14 @@
-import os
-import sys
+import math
+import random
+from collections import OrderedDict
+
+import torch
 
 import config
 import customized_fllibs
 from customized_fllibs import make_param_idx
-
-import fedscale.cloud.config_parser as parser
 from fedscale.cloud.aggregation.aggregator import Aggregator
-from fedscale.cloud.logger.aggragation import *
+from fedscale.cloud.logger.aggregation_logging import *
 
 
 class Customized_Aggregator(Aggregator):
@@ -55,14 +56,14 @@ class Customized_Aggregator(Aggregator):
         self.client_training_results.append(results)
         self.stats_util_accumulator.append(results['utility'])
         self.loss_accumulator.append(results['moving_loss'])
-        self.client_manager.registerScore(results['clientId'], results['utility'], auxi=math.sqrt(results['moving_loss']),
+        self.client_manager.registerScore(results['client_id'], results['utility'], auxi=math.sqrt(results['moving_loss']),
             time_stamp=self.epoch,
-            duration=self.virtual_client_clock[results['clientId']]['computation']+self.virtual_client_clock[results['clientId']]['communication']
+            duration=self.virtual_client_clock[results['client_id']]['computation']+self.virtual_client_clock[results['client_id']]['communication']
         )
 
         self.update_lock.acquire()
         self.model_in_update += 1
-        
+
         if self.model_in_update == self.tasks_round:
             self.combine_models()
 
@@ -115,9 +116,9 @@ class Customized_Aggregator(Aggregator):
                     count[k] += 1
             tmp_v[count[k] > 0] = tmp_v[count[k] > 0].div_(count[k][count[k] > 0])
             v[count[k] > 0] = tmp_v[count[k] > 0].to(v.dtype)
-        return        
-    
-            
+        return
+
+
 if __name__ == "__main__":
     aggregator = Customized_Aggregator(parser.args)
     aggregator.run()

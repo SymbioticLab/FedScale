@@ -79,7 +79,7 @@ In the function `round_weight_handler`, you can customize your aggregator optimi
 The following code segment shows how FedYoGi and FedAvg aggregate the participant gradients.
 
 ```
-class ServerOptimizer(object):
+class TorchServerOptimizer(object):
 
    def __init__(self, mode, args, device, sample_seed=233):
        self.mode = mode

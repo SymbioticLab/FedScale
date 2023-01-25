@@ -152,17 +152,17 @@ class _training_selector(object):
 
         np2.random.seed(sample_seed)
 
-    def register_client(self, clientId, feedbacks):
+    def register_client(self, client_id, feedbacks):
         # Initiate the score for arms. [score, time_stamp, # of trials, size of client, auxi, duration]
-        if clientId not in self.totalArms:
-            self.totalArms[clientId] = {}
-            self.totalArms[clientId]['reward'] = feedbacks['reward']
-            self.totalArms[clientId]['duration'] = feedbacks['duration']
-            self.totalArms[clientId]['time_stamp'] = self.training_round
-            self.totalArms[clientId]['count'] = 0
-            self.totalArms[clientId]['status'] = True
+        if client_id not in self.totalArms:
+            self.totalArms[client_id] = {}
+            self.totalArms[client_id]['reward'] = feedbacks['reward']
+            self.totalArms[client_id]['duration'] = feedbacks['duration']
+            self.totalArms[client_id]['time_stamp'] = self.training_round
+            self.totalArms[client_id]['count'] = 0
+            self.totalArms[client_id]['status'] = True
 
-            self.unexplored.add(clientId)
+            self.unexplored.add(client_id)
 
     def calculateSumUtil(self, clientList):
         cnt, cntUtil = 1e-4, 0
@@ -207,20 +207,20 @@ class _training_selector(object):
         logging.info("Training selector: Pacer {}: lastExploitationUtil {}, lastExplorationUtil {}, last_util_record {}".
                         format(self.training_round, lastExploitationUtil, lastExplorationUtil, self.last_util_record))
 
-    def update_client_util(self, clientId, feedbacks):
+    def update_client_util(self, client_id, feedbacks):
         '''
         @ feedbacks['reward']: statistical utility
         @ feedbacks['duration']: system utility
         @ feedbacks['count']: times of involved
         '''
-        self.totalArms[clientId]['reward'] = feedbacks['reward']
-        self.totalArms[clientId]['duration'] = feedbacks['duration']
-        self.totalArms[clientId]['time_stamp'] = feedbacks['time_stamp']
-        self.totalArms[clientId]['count'] += 1
-        self.totalArms[clientId]['status'] = feedbacks['status']
+        self.totalArms[client_id]['reward'] = feedbacks['reward']
+        self.totalArms[client_id]['duration'] = feedbacks['duration']
+        self.totalArms[client_id]['time_stamp'] = feedbacks['time_stamp']
+        self.totalArms[client_id]['count'] += 1
+        self.totalArms[client_id]['status'] = feedbacks['status']
 
-        self.unexplored.discard(clientId)
-        self.successfulClients.add(clientId)
+        self.unexplored.discard(client_id)
+        self.successfulClients.add(client_id)
 
 
     def get_blacklist(self):
@@ -230,9 +230,9 @@ class _training_selector(object):
             sorted_client_ids = sorted(list(self.totalArms), reverse=True,
                                         key=lambda k:self.totalArms[k]['count'])
 
-            for clientId in sorted_client_ids:
-                if self.totalArms[clientId]['count'] > self.args.blacklist_rounds:
-                    blacklist.append(clientId)
+            for client_id in sorted_client_ids:
+                if self.totalArms[client_id]['count'] > self.args.blacklist_rounds:
+                    blacklist.append(client_id)
                 else:
                     break
 
@@ -252,9 +252,9 @@ class _training_selector(object):
         viable_clients = feasible_clients if feasible_clients is not None else set([x for x in self.totalArms.keys() if self.totalArms[x]['status']])
         return self.getTopK(num_of_clients, self.training_round+1, viable_clients)
 
-    def update_duration(self, clientId, duration):
-        if clientId in self.totalArms:
-            self.totalArms[clientId]['duration'] = duration
+    def update_duration(self, client_id, duration):
+        if client_id in self.totalArms:
+            self.totalArms[client_id]['duration'] = duration
 
     def getTopK(self, numOfSamples, cur_time, feasible_clients):
         self.training_round = cur_time
@@ -279,11 +279,11 @@ class _training_selector(object):
 
         moving_reward, staleness, allloss = [], [], {}
 
-        for clientId in orderedKeys:
-            if self.totalArms[clientId]['reward'] > 0:
-                creward = self.totalArms[clientId]['reward']
+        for client_id in orderedKeys:
+            if self.totalArms[client_id]['reward'] > 0:
+                creward = self.totalArms[client_id]['reward']
                 moving_reward.append(creward)
-                staleness.append(cur_time - self.totalArms[clientId]['time_stamp'])
+                staleness.append(cur_time - self.totalArms[client_id]['time_stamp'])
 
 
         max_reward, min_reward, range_reward, avg_reward, clip_value = self.get_norm(moving_reward, self.args.clip_bound)
@@ -325,11 +325,11 @@ class _training_selector(object):
         cut_off_util = scores[sortedClientUtil[exploitLen]] * self.args.cut_off_util
 
         tempPickedClients = []
-        for clientId in sortedClientUtil:
+        for client_id in sortedClientUtil:
             # we want at least 10 times of clients for augmentation
-            if scores[clientId] < cut_off_util and len(tempPickedClients) > 10.*exploitLen:
+            if scores[client_id] < cut_off_util and len(tempPickedClients) > 10.*exploitLen:
                 break
-            tempPickedClients.append(clientId)
+            tempPickedClients.append(client_id)
 
         augment_factor = len(tempPickedClients)
 
@@ -364,10 +364,10 @@ class _training_selector(object):
         pickedClients = self.exploreClients + self.exploitClients
         top_k_score = []
         for i in range(min(3, len(pickedClients))):
-            clientId = pickedClients[i]
-            _score = (self.totalArms[clientId]['reward'] - min_reward)/range_reward
-            _staleness = self.alpha*((cur_time-self.totalArms[clientId]['time_stamp']) - min_staleness)/float(range_staleness) #math.sqrt(0.1*math.log(cur_time)/max(1e-4, self.totalArms[clientId]['time_stamp']))
-            top_k_score.append((self.totalArms[clientId], [_score, _staleness]))
+            client_id = pickedClients[i]
+            _score = (self.totalArms[client_id]['reward'] - min_reward)/range_reward
+            _staleness = self.alpha*((cur_time-self.totalArms[client_id]['time_stamp']) - min_staleness)/float(range_staleness) #math.sqrt(0.1*math.log(cur_time)/max(1e-4, self.totalArms[client_id]['time_stamp']))
+            top_k_score.append((self.totalArms[client_id], [_score, _staleness]))
 
         logging.info("At round {}, UCB exploited {}, augment_factor {}, exploreLen {}, un-explored {}, exploration {}, round_threshold {}, sampled score is {}"
             .format(cur_time, numOfExploited, augment_factor/max(1e-4, exploitLen), exploreLen, len(self.unexplored), self.exploration, self.round_threshold, top_k_score))

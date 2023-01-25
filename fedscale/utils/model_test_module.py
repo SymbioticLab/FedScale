@@ -24,6 +24,8 @@ if parser.args.task == "detection":
     from fedscale.dataloaders.rcnn.lib.model.utils.config import cfg
     from fedscale.dataloaders.rcnn.lib.roi_data_layer.roidb import \
         combined_roidb
+elif parser.args.task == 'voice':
+    from fedscale.dataloaders.decoder import GreedyDecoder
 
 
 def cal_accuracy(targets, outputs):
@@ -50,7 +52,7 @@ def cal_accuracy(targets, outputs):
     return temp_acc, temp_all_or_false, temp_len
 
 
-def test_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tokenizer=None):
+def test_pytorch_model(rank, model, test_data, device='cpu', criterion=nn.NLLLoss(), tokenizer=None):
 
     test_loss = 0
     correct = 0

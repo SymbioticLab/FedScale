@@ -1,22 +1,32 @@
 import logging
 import math
-import pickle 
+import time
+
 import torch
 from torch.autograd import Variable
+from overrides import overrides
+from torch.nn import CTCLoss
 
+from fedscale.cloud.execution.client_base import ClientBase
 from fedscale.cloud.execution.optimizers import ClientOptimizer
+from fedscale.cloud.internal.torch_model_adapter import TorchModelAdapter
 from fedscale.dataloaders.nlp import mask_tokens
+from fedscale.utils.model_test_module import test_pytorch_model
 
 
-class Client(object):
-    """Basic client component in Federated Learning"""
+class TorchClient(ClientBase):
+    """Implements a PyTorch-based client for training and evaluation."""
 
-    def __init__(self, conf):
+    def __init__(self, args):
+        """
+        Initializes a torch client.
+        :param args: Job args
+        """
+        self.args = args
         self.optimizer = ClientOptimizer()
-        self.init_task(conf)
-    
-    def init_task(self, conf):
-        if conf.task == "detection":
+        self.device = args.cuda_device if args.use_cuda else torch.device(
+            'cpu')
+        if args.task == "detection":
             self.im_data = Variable(torch.FloatTensor(1).cuda())
             self.im_info = Variable(torch.FloatTensor(1).cuda())
             self.num_boxes = Variable(torch.LongTensor(1).cuda())
@@ -24,15 +34,22 @@ class Client(object):
 
         self.epoch_train_loss = 1e-4
         self.completed_steps = 0
-        self.loss_squre = 0
+        self.loss_squared = 0
 
+    @overrides
     def train(self, client_data, model, conf):
+        """
+        Perform a training task.
+        :param client_data: client training dataset
+        :param model: the framework-specific model
+        :param conf: job config
+        :return: training results
+        """
+        client_id = conf.client_id
+        logging.info(f"Start to train (CLIENT: {client_id}) ...")
+        tokenizer = conf.tokenizer
 
-        clientId = conf.clientId
-        logging.info(f"Start to train (CLIENT: {clientId}) ...")
-        tokenizer, device = conf.tokenizer, conf.device
-
-        model = model.to(device=device)
+        model = model.to(device=self.device)
         model.train()
 
         trained_unique_samples = min(
@@ -47,7 +64,7 @@ class Client(object):
         criterion = self.get_criterion(conf)
         error_type = None
 
-        # NOTE: If one may hope to run fixed number of epochs, instead of iterations, 
+        # NOTE: If one may hope to run fixed number of epochs, instead of iterations,
         # use `while self.completed_steps < conf.local_steps * len(client_data)` instead
         while self.completed_steps < conf.local_steps:
             try:
@@ -59,17 +76,17 @@ class Client(object):
         state_dicts = model.state_dict()
         model_param = {p: state_dicts[p].data.cpu().numpy()
                        for p in state_dicts}
-        results = {'clientId': clientId, 'moving_loss': self.epoch_train_loss,
-                   'trained_size': self.completed_steps*conf.batch_size, 
+        results = {'client_id': client_id, 'moving_loss': self.epoch_train_loss,
+                   'trained_size': self.completed_steps * conf.batch_size,
                    'success': self.completed_steps == conf.local_steps}
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
+            logging.info(f"Training of (CLIENT: {client_id}) completes, {results}")
         else:
-            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {client_id}) failed as {error_type}")
 
         results['utility'] = math.sqrt(
-            self.loss_squre)*float(trained_unique_samples)
+            self.loss_squared) * float(trained_unique_samples)
         results['update_weight'] = model_param
         results['wall_duration'] = 0
 
@@ -83,10 +100,10 @@ class Client(object):
             for key, value in dict(model.named_parameters()).items():
                 if value.requires_grad:
                     if 'bias' in key:
-                        params += [{'params': [value], 'lr':lr*(cfg.TRAIN.DOUBLE_BIAS + 1),
+                        params += [{'params': [value], 'lr': lr * (cfg.TRAIN.DOUBLE_BIAS + 1),
                                     'weight_decay': cfg.TRAIN.BIAS_DECAY and cfg.TRAIN.WEIGHT_DECAY or 0}]
                     else:
-                        params += [{'params': [value], 'lr':lr,
+                        params += [{'params': [value], 'lr': lr,
                                     'weight_decay': cfg.TRAIN.WEIGHT_DECAY}]
             optimizer = torch.optim.SGD(params, momentum=cfg.TRAIN.MOMENTUM)
 
@@ -116,10 +133,10 @@ class Client(object):
         criterion = None
         if conf.task == 'voice':
             from torch_baidu_ctc import CTCLoss
-            criterion = CTCLoss(reduction='none').to(device=conf.device)
+            criterion = CTCLoss(reduction='none').to(device=self.device)
         else:
             criterion = torch.nn.CrossEntropyLoss(
-                reduction='none').to(device=conf.device)
+                reduction='none').to(device=self.device)
         return criterion
 
     def train_step(self, client_data, conf, model, optimizer, criterion):
@@ -128,10 +145,10 @@ class Client(object):
             if conf.task == 'nlp':
                 (data, _) = data_pair
                 data, target = mask_tokens(
-                    data, tokenizer, conf, device=conf.device)
+                    data, tokenizer, conf, device=self.device)
             elif conf.task == 'voice':
                 (data, target, input_percentages,
-                    target_sizes), _ = data_pair
+                 target_sizes), _ = data_pair
                 input_sizes = input_percentages.mul_(
                     int(data.size(3))).int()
             elif conf.task == 'detection':
@@ -147,16 +164,16 @@ class Client(object):
                 self.gt_boxes.resize_(data[2].size()).copy_(data[2])
                 self.num_boxes.resize_(data[3].size()).copy_(data[3])
             elif conf.task == 'speech':
-                data = torch.unsqueeze(data, 1).to(device=conf.device)
+                data = torch.unsqueeze(data, 1).to(device=self.device)
             elif conf.task == 'text_clf' and conf.model == 'albert-base-v2':
                 (data, masks) = data
                 data, masks = Variable(data).to(
-                    device=conf.device), Variable(masks).to(device=conf.device)
+                    device=self.device), Variable(masks).to(device=self.device)
 
             else:
-                data = Variable(data).to(device=conf.device)
+                data = Variable(data).to(device=self.device)
 
-            target = Variable(target).to(device=conf.device)
+            target = Variable(target).to(device=self.device)
 
             if conf.task == 'nlp':
                 outputs = model(data, labels=target)
@@ -173,19 +190,19 @@ class Client(object):
                 output = outputs.logits
             elif conf.task == "detection":
                 rois, cls_prob, bbox_pred, \
-                    rpn_loss_cls, rpn_loss_box, \
-                    RCNN_loss_cls, RCNN_loss_bbox, \
-                    rois_label = model(
-                        self.im_data, self.im_info, self.gt_boxes, self.num_boxes)
+                rpn_loss_cls, rpn_loss_box, \
+                RCNN_loss_cls, RCNN_loss_bbox, \
+                rois_label = model(
+                    self.im_data, self.im_info, self.gt_boxes, self.num_boxes)
 
                 loss = rpn_loss_cls + rpn_loss_box \
-                    + RCNN_loss_cls + RCNN_loss_bbox
+                       + RCNN_loss_cls + RCNN_loss_bbox
 
                 loss_rpn_cls = rpn_loss_cls.item()
                 loss_rpn_box = rpn_loss_box.item()
                 loss_rcnn_cls = RCNN_loss_cls.item()
                 loss_rcnn_box = RCNN_loss_bbox.item()
-                
+
             else:
                 output = model(data)
                 loss = criterion(output, target)
@@ -202,16 +219,16 @@ class Client(object):
                 loss_list = loss.tolist()
                 loss = loss.mean()
 
-            temp_loss = sum(loss_list)/float(len(loss_list))
-            self.loss_squre = sum([l**2 for l in loss_list]
-                                )/float(len(loss_list))
+            temp_loss = sum(loss_list) / float(len(loss_list))
+            self.loss_squared = sum([l ** 2 for l in loss_list]
+                                    ) / float(len(loss_list))
             # only measure the loss of the first epoch
             if self.completed_steps < len(client_data):
                 if self.epoch_train_loss == 1e-4:
                     self.epoch_train_loss = temp_loss
                 else:
                     self.epoch_train_loss = (
-                        1. - conf.loss_decay) * self.epoch_train_loss + conf.loss_decay * temp_loss
+                                                    1. - conf.loss_decay) * self.epoch_train_loss + conf.loss_decay * temp_loss
 
             # ========= Define the backward loss ==============
             optimizer.zero_grad()
@@ -227,6 +244,34 @@ class Client(object):
             if self.completed_steps == conf.local_steps:
                 break
 
+    @overrides
+    def test(self, client_data, model, conf):
+        """
+        Perform a testing task.
+        :param client_data: client evaluation dataset
+        :param model: the framework-specific model
+        :param conf: job config
+        :return: testing results
+        """
+        evalStart = time.time()
+        if self.args.task == 'voice':
+            criterion = CTCLoss(reduction='mean').to(device=self.device)
+        else:
+            criterion = torch.nn.CrossEntropyLoss().to(device=self.device)
+        test_loss, acc, acc_5, test_results = test_pytorch_model(conf.rank, model, client_data,
+                                                                 device=self.device, criterion=criterion,
+                                                                 tokenizer=conf.tokenizer)
+        logging.info(
+            "Test results: Eval_time {}, test_loss {}, test_accuracy {:.2f}%, "
+            "test_5_accuracy {:.2f}% \n"
+                .format(round(time.time() - evalStart, 4), test_loss, acc * 100., acc_5 * 100.))
+        return test_results
 
-    def test(self, conf):
-        pass
+    @overrides
+    def get_model_adapter(self, model) -> TorchModelAdapter:
+        """
+        Return framework-specific model adapter.
+        :param model: the model
+        :return: a model adapter containing the model
+        """
+        return TorchModelAdapter(model)

@@ -42,13 +42,13 @@ def select_by_sorted_num(raw_datas, pref, budget):
 
         top_k_indices = sorted(feasible_clients, reverse=True, key=lambda k:sum_of_cols[k])
 
-        for idx, clientId in enumerate(top_k_indices):
+        for idx, client_id in enumerate(top_k_indices):
             # Take this client, and reduce the preference by the capacity of each class on this client
 
             tempTakenSamples = {}
 
             for cl in listOfInterest:
-                takenSamples = min(preference[cl], datas[clientId][cl])
+                takenSamples = min(preference[cl], datas[client_id][cl])
                 preference[cl] -= takenSamples
 
                 if preference[cl] == 0:
@@ -57,8 +57,8 @@ def select_by_sorted_num(raw_datas, pref, budget):
 
                 tempTakenSamples[cl] = takenSamples
 
-            datas[clientId, :] = 0
-            clientsTaken[clientId] = tempTakenSamples
+            datas[client_id, :] = 0
+            clientsTaken[client_id] = tempTakenSamples
 
             if interestChanged: break
 
@@ -132,7 +132,7 @@ def run_select_by_category(request_list, data_distribution, client_info, budget,
                 #logging.info(f"Testing Selector: Augmenting the cut_off_clients to {cut_off_clients} in heuristic")
 
         augTime = time.time() - start_time
-        #logging.info(f"Testing Selector: Client augmentation took {augTime:.2f} sec to pick {len(select_clients)} clients")
+        #logging.info(f"Testing Selector: TorchClient augmentation took {augTime:.2f} sec to pick {len(select_clients)} clients")
 
         select_client_list = list(select_clients.keys())
 

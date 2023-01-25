@@ -155,7 +155,7 @@ class reddit():
             for client_data in client_data_list:
                 client_list = client_data['users']
 
-                for clientId, client in enumerate(client_list):
+                for client_id, client in enumerate(client_list):
                     tokens_list = list(client_data['user_data'][client]['x'])
 
                     for tokens in tokens_list:
@@ -165,7 +165,7 @@ class reddit():
                         if not tokens_list:
                             continue
 
-                        mapping_dict[count] = clientId
+                        mapping_dict[count] = client_id
                         text.append(tokens_list)
 
                         count += 1
@@ -176,13 +176,13 @@ class reddit():
                     #print("====In loading data, remains {} clients, may take {} sec".format(num_of_remains, (time.time() - start_time)/clientCount * num_of_remains))
                     # logging.info("====In loading  data, remains {} clients".format(num_of_remains)
 
-                    if clientId % 5000 == 0:
+                    if client_id % 5000 == 0:
                         # dump the cache
                         with open(cache_path, 'wb') as fout:
                             pickle.dump(text, fout)
                             pickle.dump(mapping_dict, fout)
 
-                        print("====Dump for {} clients".format(clientId))
+                        print("====Dump for {} clients".format(client_id))
 
             # dump the cache
             with open(cache_path, 'wb') as fout:

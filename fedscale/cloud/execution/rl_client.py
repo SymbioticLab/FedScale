@@ -1,7 +1,7 @@
 import logging
 import math
 
-from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.torch_client import TorchClient
 from fedscale.cloud.execution.optimizers import ClientOptimizer
 
 import fedscale.cloud.config_parser as parser
@@ -9,7 +9,7 @@ if parser.args.task == 'rl':
     from fedscale.dataloaders.dqn import *
 
 
-class RLClient(Client):
+class RLClient(TorchClient):
     """Basic client component in Federated Learning"""
 
     def __init__(self, conf):
@@ -19,9 +19,9 @@ class RLClient(Client):
 
     def train(self, client_data, model, conf):
 
-        clientId = conf.clientId
-        logging.info(f"Start to train (CLIENT: {clientId}) ...")
-        device = conf.device
+        client_id = conf.client_id
+        logging.info(f"Start to train (CLIENT: {client_id}) ...")
+        device = self.device
         model = model.to(device=device)
         # self.dqn.eval_net = self.dqn.eval_net.to(device=device)
         # self.dqn.target_net = self.dqn.target_net.to(device=device)
@@ -78,23 +78,23 @@ class RLClient(Client):
         model.load_state_dict(self.dqn.target_net.state_dict())
         model_param = [param.data.cpu().numpy()
                        for param in model.parameters()]
-        results = {'clientId': clientId, 'moving_loss': epoch_train_loss,
+        results = {'client_id': client_id, 'moving_loss': epoch_train_loss,
                    'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
         results['utility'] = math.sqrt(
             epoch_train_loss)*float(trained_unique_samples)
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
+            logging.info(f"Training of (CLIENT: {client_id}) completes, {results}")
         else:
-            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {client_id}) failed as {error_type}")
 
         results['update_weight'] = model_param
         results['wall_duration'] = 0
 
         return results
 
-    def test(self, args, rank, model, device):
-        model = model.to(device=device)
+    def test(self, client_data, model, conf):
+        model = model.to(device=self.device)
         self.dqn.target_net.load_state_dict(model.state_dict())
         self.dqn.set_eval_mode()
         env = gym.make('CartPole-v0').unwrapped
@@ -112,11 +112,11 @@ class RLClient(Client):
             self.dqn.store_transition(s, a, new_r, s_)
             reward_sum += new_r
             s = s_
-            if self.dqn.memory_counter > args.memory_capacity:
+            if self.dqn.memory_counter > conf['memory_capacity']:
                 test_loss += self.dqn.learn()
 
             if done:
                 break
         logging.info('Rank {}: Test set: Average loss: {}, Reward: {}'
-                     .format(rank, test_loss, reward_sum))
+                     .format(conf['rank'], test_loss, reward_sum))
         return 0, 0, 0, {'top_1': reward_sum, 'top_5': reward_sum, 'test_loss': test_loss, 'test_len': 1}

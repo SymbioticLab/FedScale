@@ -1,0 +1,50 @@
+# Configuration file of running tensorflow backend
+
+# ========== Cluster configuration ==========
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: localhost
+
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
+worker_ips:
+    - localhost:[1] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes.
+
+exp_path: $FEDSCALE_HOME/fedscale/cloud
+
+# Entry function of executor and aggregator under $exp_path
+executor_entry: execution/executor.py
+
+aggregator_entry: aggregation/aggregator.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate fedscale
+
+# ========== Additional job configuration ==========
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
+
+job_conf:
+    - job_name: tf-femnist               # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: $FEDSCALE_HOME/benchmark # Path of log files
+    - num_participants: 4                # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: femnist                  # Dataset: openImg, google_speech, stackoverflow
+    - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/femnist    # Path of the dataset
+    - model: resnet50                    # Need to define the model in tf_aggregator.py
+    - model_zoo: fedscale-tensorflow-zoo
+    - eval_interval: 5000                # How many rounds to run a testing on the testing set
+    - rounds: 200                        # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 0                     # Remove clients w/ less than 21 samples
+    - num_loaders: 2
+    - local_steps: 20
+    - learning_rate: 0.001
+    - batch_size: 32
+    - input_shape: 32 32 3
+    - num_classes: 62
+    - test_bsz: 32
+    - use_cuda: False
+    - engine: 'tensorflow'

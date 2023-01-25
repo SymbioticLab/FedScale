@@ -1,44 +1,21 @@
 # Standard libs
-import collections
-import copy
-import datetime
-import gc
 import json
 import logging
-import math
 import os
-import pickle
-import random
-import re
-import socket
 import sys
-import threading
-import time
-from collections import OrderedDict
-
-import numpy
-import numpy as np
-# PyTorch libs
-import torch
-import torch.distributed as dist
 import torchvision.models as tormodels
-from torch.autograd import Variable
-from torch.multiprocessing import Process, Queue
-from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
-from fedscale.cloud.aggregation.optimizers import ServerOptimizer
-from fedscale.cloud.client_manager import ClientManager
 
 # libs from fedscale
 import fedscale.cloud.config_parser as parser
-from fedscale.dataloaders.divide_data import DataPartitioner, select_dataset
+from fedscale.cloud import commons
 from fedscale.dataloaders.utils_data import get_data_transform
-from fedscale.utils.model_test_module import test_model
 # FedScale model libs
-from fedscale.utils.models.model_provider import get_cv_model
+from fedscale.utils.models.torch_model_provider import get_cv_model
+from fedscale.utils.models.tensorflow_model_provider import get_tensorflow_model
 
 tokenizer = None
+
 
 def import_libs():
     global tokenizer
@@ -47,35 +24,34 @@ def import_libs():
         global AdamW, AlbertTokenizer, AutoConfig, AutoModelWithLMHead, AutoTokenizer, MobileBertForPreTraining, load_and_cache_examples, mask_tokens
 
         from transformers import (AdamW, AlbertTokenizer, AutoConfig,
-                                AutoModelWithLMHead, AutoTokenizer,
-                                MobileBertForPreTraining)
+                                  AutoModelWithLMHead, AutoTokenizer,
+                                  MobileBertForPreTraining)
 
         from fedscale.dataloaders.nlp import load_and_cache_examples, mask_tokens
         tokenizer = AlbertTokenizer.from_pretrained(
             'albert-base-v2', do_lower_case=True)
     elif parser.args.task == 'speech':
-        global numba, SPEECH, BackgroundNoiseDataset, AddBackgroundNoiseOnSTFT, DeleteSTFT,FixSTFTDimension, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, ToMelSpectrogramFromSTFT, ToSTFT, ChangeAmplitude, ChangeSpeedAndPitchAudio, FixAudioLength, LoadAudio, ToMelSpectrogram, ToTensor
+        global numba, SPEECH, BackgroundNoiseDataset, AddBackgroundNoiseOnSTFT, DeleteSTFT, FixSTFTDimension, StretchAudioOnSTFT, TimeshiftAudioOnSTFT, ToMelSpectrogramFromSTFT, ToSTFT, ChangeAmplitude, ChangeSpeedAndPitchAudio, FixAudioLength, LoadAudio, ToMelSpectrogram, ToTensor
 
         import numba
 
         from fedscale.dataloaders.speech import SPEECH, BackgroundNoiseDataset
         from fedscale.dataloaders.transforms_stft import (AddBackgroundNoiseOnSTFT,
-                                                        DeleteSTFT,
-                                                        FixSTFTDimension,
-                                                        StretchAudioOnSTFT,
-                                                        TimeshiftAudioOnSTFT,
-                                                        ToMelSpectrogramFromSTFT,
-                                                        ToSTFT)
+                                                          DeleteSTFT,
+                                                          FixSTFTDimension,
+                                                          StretchAudioOnSTFT,
+                                                          TimeshiftAudioOnSTFT,
+                                                          ToMelSpectrogramFromSTFT,
+                                                          ToSTFT)
         from fedscale.dataloaders.transforms_wav import (ChangeAmplitude,
-                                                        ChangeSpeedAndPitchAudio,
-                                                        FixAudioLength, LoadAudio,
-                                                        ToMelSpectrogram,
-                                                        ToTensor)
+                                                         ChangeSpeedAndPitchAudio,
+                                                         FixAudioLength, LoadAudio,
+                                                         ToMelSpectrogram,
+                                                         ToTensor)
     elif parser.args.task == 'detection':
         global pickle, get_imdb, readClass, resnet, nms, bbox_transform_inv, clip_boxes, cfg, cfg_from_file, cfg_from_list, get_output_dir, adjust_learning_rate, clip_gradient, load_net, save_checkpoint, save_net, weights_normal_init, roibatchLoader, combined_roidb
 
         import pickle
-
         from fedscale.dataloaders.rcnn.lib.datasets.factory import get_imdb
         from fedscale.dataloaders.rcnn.lib.datasets.pascal_voc import readClass
         from fedscale.dataloaders.rcnn.lib.model.faster_rcnn.resnet import resnet
@@ -102,13 +78,13 @@ def import_libs():
 
         from fedscale.dataloaders.dqn import RLData, Net, DQN
 
+
 # shared functions of aggregator and clients
 # initiate for nlp
 
 # Yile: are these vars used anywhere?
 os.environ['MASTER_ADDR'] = parser.args.ps_ip
 os.environ['MASTER_PORT'] = parser.args.ps_port
-
 
 outputClass = {'Mnist': 10, 'cifar10': 10, "imagenet": 1000, 'emnist': 47, 'amazon': 5,
                'openImg': 596, 'google_speech': 35, 'femnist': 62, 'yelp': 5, 'inaturalist': 1010
@@ -124,7 +100,7 @@ def init_model():
 
     if parser.args.task == 'nlp':
         config = AutoConfig.from_pretrained(
-            os.path.join(parser.args.data_dir, parser.args.model+'-config.json'))
+            os.path.join(parser.args.data_dir, parser.args.model + '-config.json'))
         model = AutoModelWithLMHead.from_config(config)
         tokenizer = AlbertTokenizer.from_pretrained(
             parser.args.model, do_lower_case=True)
@@ -223,11 +199,14 @@ def init_model():
         elif parser.args.model == 'svm':
             from fedscale.utils.models.simple.models import LinearSVM
             model = LinearSVM(parser.args.input_dim, outputClass[parser.args.data_set])
+        elif parser.args.model_zoo == "fedscale-tensorflow-zoo":
+            assert parser.args.engine == commons.TENSORFLOW
+            model = get_tensorflow_model(parser.args.model, parser.args)
         else:
-            if parser.args.model_zoo == "fedscale-zoo":
+            if parser.args.model_zoo == "fedscale-torch-zoo":
                 if parser.args.task == "cv":
                     model = get_cv_model(name=parser.args.model,
-                        num_classes=outputClass[parser.args.data_set])
+                                         num_classes=outputClass[parser.args.data_set])
                 else:
                     raise NameError(f"Model zoo {parser.args.model_zoo} does not exist")
             elif parser.args.model_zoo == "torchcv":
@@ -239,7 +218,6 @@ def init_model():
 
 
 def init_dataset():
-
     import_libs()
 
     if parser.args.task == "detection":
@@ -249,7 +227,8 @@ def init_dataset():
             imdb, roidb, ratio_list, ratio_index = combined_roidb(
                 imdb_name, ['DATA_DIR', parser.args.data_dir], sizes=parser.args.train_size_file)
             train_dataset = roibatchLoader(
-                roidb, ratio_list, ratio_index, parser.args.batch_size, imdb.num_classes, imdb._image_index_temp,  training=True)
+                roidb, ratio_list, ratio_index, parser.args.batch_size, imdb.num_classes, imdb._image_index_temp,
+                training=True)
             imdb_, roidb_, ratio_list_, ratio_index_ = combined_roidb(
                 imdbval_name, ['DATA_DIR', parser.args.data_dir], sizes=parser.args.test_size_file, training=False)
             imdb_.competition_mode(on=True)
@@ -350,7 +329,8 @@ def init_dataset():
         elif parser.args.data_set == 'google_speech':
             bkg = '_background_noise_'
             data_aug_transform = transforms.Compose(
-                [ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(), TimeshiftAudioOnSTFT(), FixSTFTDimension()])
+                [ChangeAmplitude(), ChangeSpeedAndPitchAudio(), FixAudioLength(), ToSTFT(), StretchAudioOnSTFT(),
+                 TimeshiftAudioOnSTFT(), FixSTFTDimension()])
             bg_dataset = BackgroundNoiseDataset(
                 os.path.join(parser.args.data_dir, bkg), data_aug_transform)
             add_bg_noise = AddBackgroundNoiseOnSTFT(bg_dataset)

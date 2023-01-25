@@ -42,7 +42,6 @@ class DataPartitioner(object):
         np.random.seed(seed)
 
         self.data_len = len(self.data)
-        self.task = args.task
         self.numOfLabels = numOfClass
         self.client_label_cnt = defaultdict(set)
 
@@ -62,8 +61,8 @@ class DataPartitioner(object):
         """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category, category_id>"""
         logging.info(f"Partitioning data by profile {data_map_file}...")
 
-        clientId_maps = {}
-        unique_clientIds = {}
+        client_id_maps = {}
+        unique_client_ids = {}
         # load meta data from the data_map_file
         with open(data_map_file) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
@@ -77,19 +76,19 @@ class DataPartitioner(object):
                 else:
                     client_id = row[0]
 
-                    if client_id not in unique_clientIds:
-                        unique_clientIds[client_id] = len(unique_clientIds)
+                    if client_id not in unique_client_ids:
+                        unique_client_ids[client_id] = len(unique_client_ids)
 
-                    clientId_maps[sample_id] = unique_clientIds[client_id]
-                    self.client_label_cnt[unique_clientIds[client_id]].add(
+                    client_id_maps[sample_id] = unique_client_ids[client_id]
+                    self.client_label_cnt[unique_client_ids[client_id]].add(
                         row[-1])
                     sample_id += 1
 
         # Partition data given mapping
-        self.partitions = [[] for _ in range(len(unique_clientIds))]
+        self.partitions = [[] for _ in range(len(unique_client_ids))]
 
         for idx in range(sample_id):
-            self.partitions[clientId_maps[idx]].append(idx)
+            self.partitions[client_id_maps[idx]].append(idx)
 
     def partition_data_helper(self, num_clients, data_map_file=None):
 
@@ -114,7 +113,7 @@ class DataPartitioner(object):
             indexes = indexes[part_len:]
 
     def use(self, partition, istest):
-        resultIndex = self.partitions[partition]
+        resultIndex = self.partitions[partition % len(self.partitions)]
 
         exeuteLength = len(resultIndex) if not istest else int(
             len(resultIndex) * self.args.test_ratio)
