@@ -1,5 +1,5 @@
 fedscale.cloud package
-=====================
+======================
 
 Subpackages
 -----------
@@ -14,7 +14,7 @@ Submodules
 ----------
 
 fedscale.cloud.client\_manager module
-------------------------------------
+-------------------------------------
 
 .. automodule:: fedscale.cloud.client_manager
    :members:
@@ -22,7 +22,7 @@ fedscale.cloud.client\_manager module
    :show-inheritance:
 
 fedscale.cloud.commons module
-----------------------------
+-----------------------------
 
 .. automodule:: fedscale.cloud.commons
    :members:
@@ -30,7 +30,7 @@ fedscale.cloud.commons module
    :show-inheritance:
 
 fedscale.cloud.config\_parser module
------------------------------------
+------------------------------------
 
 .. automodule:: fedscale.cloud.config_parser
    :members:
@@ -38,7 +38,7 @@ fedscale.cloud.config\_parser module
    :show-inheritance:
 
 fedscale.cloud.fllibs module
----------------------------
+----------------------------
 
 .. automodule:: fedscale.cloud.fllibs
    :members:
@@ -46,7 +46,7 @@ fedscale.cloud.fllibs module
    :show-inheritance:
 
 fedscale.cloud.resource\_manager module
---------------------------------------
+---------------------------------------
 
 .. automodule:: fedscale.cloud.resource_manager
    :members:
