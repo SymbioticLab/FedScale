@@ -19,6 +19,8 @@ parser.add_argument('--engine', type=str, default=commons.PYTORCH,
 parser.add_argument('--num_executors', type=int, default=1)
 parser.add_argument('--executor_configs', type=str,
                     default="127.0.0.1:[1]")  # seperated by ;
+# Note: In async mode, the num_participants param is treated as the async buffer size. In sync, this is the number
+# of clients that are selected each round.
 parser.add_argument('--num_participants', type=int, default=4)
 parser.add_argument('--data_map_file', type=str, default=None)
 parser.add_argument('--use_cuda', type=str, default='True')
@@ -101,18 +103,9 @@ parser.add_argument('--backbone', type=str, default='./resnet50.pth')
 # for malicious
 parser.add_argument('--malicious_factor', type=int, default=1e15)
 
-# for asynchronous FL buffer size
-parser.add_argument('--max_concurrency', type=int, default=100)
-parser.add_argument('--async_buffer', type=int, default=10)
+# for asynchronous FL
+parser.add_argument('--max_concurrency', type=int, default=10)
 parser.add_argument('--max_staleness', type=int, default=5)
-parser.add_argument(
-    '--checkin_period', type=int, default=50, help='number of rounds to sample async clients'
-)
-parser.add_argument('--arrival_interval', type=int, default=3)
-parser.add_argument(
-    "--async_mode", type=bool, default=False, help="use async FL aggregation"
-)
-
 
 # for differential privacy
 parser.add_argument('--noise_factor', type=float, default=0.1)
