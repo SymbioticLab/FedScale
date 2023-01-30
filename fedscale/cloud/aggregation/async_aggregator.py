@@ -13,7 +13,7 @@ class AsyncAggregator(Aggregator):
     """Represents an async aggregator implementing the FedBuff algorithm.
     Currently, this aggregator only supports simulation mode."""
 
-    def new_task(self, event_time):
+    def _new_task(self, event_time):
         """Generates a new task that starts at event_time, and inserts it into the min heap.
 
         :param event_time: the time to start the new task.
@@ -39,6 +39,7 @@ class AsyncAggregator(Aggregator):
         self.client_task_start_times[client] = event_time
         self.client_task_model_version[client] = self.round
 
+    @overrides
     def create_client_task(self, executor_id):
         """Issue a new client training task to the specific executor.
 
@@ -55,6 +56,7 @@ class AsyncAggregator(Aggregator):
         model_version = self.client_task_model_version[next_client_id]
         return train_config, self.model_cache[self.round - model_version]
 
+    @overrides
     def tictak_client_tasks(self, sampled_clients, num_clients_to_collect):
         """Record sampled client execution information in last round. In the SIMULATION_MODE,
         further filter the sampled_client and pick the top num_clients_to_collect clients.
@@ -74,17 +76,17 @@ class AsyncAggregator(Aggregator):
             durations = []
             final_time = self.global_virtual_clock
             if not self.min_pq:
-                self.new_task(self.global_virtual_clock)
+                self._new_task(self.global_virtual_clock)
             while len(clients_to_run) < num_clients_to_collect:
                 event_time, event_type, client = heappop(self.min_pq)
                 if event_type == 'start':
                     self.current_concurrency += 1
                     if self.current_concurrency < self.args.max_concurrency:
-                        self.new_task(event_time)
+                        self._new_task(event_time)
                 else:
                     self.current_concurrency -= 1
                     if self.current_concurrency == self.args.max_concurrency - 1:
-                        self.new_task(event_time)
+                        self._new_task(event_time)
                     if self.round - self.client_task_model_version[client] <= self.args.max_staleness:
                         clients_to_run.append(client)
                     durations.append(event_time - self.client_task_start_times[client])
@@ -98,6 +100,7 @@ class AsyncAggregator(Aggregator):
             times = [1 for _ in sampled_clients]
             return sampled_clients, sampled_clients, completed_client_clock, 1, times
 
+    @overrides
     def setup_env(self):
         """Set up environment and variables."""
         self.setup_seed(seed=1)
