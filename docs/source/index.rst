@@ -10,8 +10,9 @@ Welcome to fedscale's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   fedscale.core.aggregation.rst
-   fedscale.core.execution.rst
+   fedscale.cloud.aggregation.rst
+   fedscale.cloud.execution.rst
+   fedscale.edge.execution.rst
 
 Indices and tables
 ==================

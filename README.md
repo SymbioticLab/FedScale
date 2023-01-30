@@ -76,9 +76,9 @@ Please go to `./fedscale/cloud` directory and follow the [README](./fedscale/clo
 ```
 Repo Root
 |---- fedscale          # FedScale source code
-  |---- cloud            # Core of FedScale service
+  |---- cloud           # Core of FedScale service
   |---- utils           # Auxiliaries (e.g, model zoo and FL optimizer)
-  |---- deploy          # Deployment backends (e.g., mobile)
+  |---- edge            # Backends for practical deployments (e.g., mobile)
   |---- dataloaders     # Data loaders of benchmarking dataset
 
 |---- docker            # FedScale docker and container deployment (e.g., Kubernetes)
@@ -86,6 +86,7 @@ Repo Root
   |---- dataset         # Benchmarking datasets
   |---- configs         # Example configurations
 
+|---- scripts           # Scripts for installing dependencies
 |---- examples          # Examples of implementing new FL designs
 |---- docs              # FedScale tutorials and APIs
 ```
@@ -115,6 +116,8 @@ and
 
 ## Contributions and Communication
 Please submit [issues](https://github.com/SymbioticLab/FedScale/issues) or [pull requests](https://github.com/SymbioticLab/FedScale/pulls) as you find bugs or improve FedScale.
+
+For each submission, please add unit tests to the corresponding changes and make sure that all unit tests pass by running `pytest fedscale/tests`.
 
 If you have any questions or comments, please join our [Slack](https://join.slack.com/t/fedscale/shared_invite/zt-uzouv5wh-ON8ONCGIzwjXwMYDC2fiKw) channel, or email us ([fedscale@googlegroups.com](mailto:fedscale@googlegroups.com)). 
 

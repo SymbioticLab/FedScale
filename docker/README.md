@@ -5,7 +5,9 @@ This is a tutorial on how to run FedScale jobs under k8s/docker's management ser
 Kubernetes (k8s) is a popular container management framework used in cloud applications. It is integrated with auto-configured network and offers features like load balancing, autoscaling, which is suitable for deploying FedScale framework. 
 
 ### K8S Setup
-We provide scripts for setting up k8s master and worker nodes from a bare-metal cluster in [this repo](https://github.com/IKACE/k8s_setup). The rest part of k8s deployment tutorial assumes the user has set up a k8s network properly.
+We provide scripts for setting up k8s master and worker nodes from a bare-metal cluster in [this repo](https://github.com/IKACE/k8s_setup). The rest part of k8s deployment tutorial assumes the user has set up a k8s network properly. 
+
+To run GPU jobs, follow [K8S CUDA Plugin Tutorial](https://github.com/IKACE/k8s_setup#kubernetes-cuda-plugin-setup) to setup your k8s cluster with CUDA plugin support. FedScale is also fully integrated with time-slicing GPU feature, follow [ Time-slicing GPU Tutorial](https://github.com/IKACE/k8s_setup#optional-enable-time-slicing-feature) to setup time-slicing GPU feature in your k8s cluster.
 
 ### FedScale K8S Demo
 Example configs for submitting jobs to k8s cluster are provided under `$FEDSCALE_HOME/benchmark/configs` (e.g. `$FEDSCALE_HOME/benchmark/configs/femnist/conf_k8s.yml`). Suppose we want to run `Femnist` job with 1 aggregator and 2 executor, modify the config file `conf_k8s.yml` as following:
@@ -17,6 +19,8 @@ Example configs for submitting jobs to k8s cluster are provided under `$FEDSCALE
 - Specify number of aggregators `num_aggregators: 1`, for now we only support a single aggregator for one job, but we are developing hierarchical aggregators feature that will be added in the future.
 
 - Specify number of executors `num_executors: 2`. 
+
+- Set `use_cuda` flag to `True` if you want to use GPU during the training. If enabled, the executors will be running on CUDA GPUs. Each executor is mapped to a *logical GPU unit*, where the physical GPU could either be an entire single GPU or a time-slicing sharable GPU, depending on your k8s configuration.
 
 - Submit job
 

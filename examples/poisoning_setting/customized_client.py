@@ -8,25 +8,25 @@ import torch
 from clip_norm import clip_grad_norm_
 from torch.autograd import Variable
 
-from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.torch_client import TorchClient
 
 
-class Customized_Client(Client):
+class Customized_Client(TorchClient):
     """Basic client component in Federated Learning"""
 
     def train(self, client_data, model, conf):
         """We flip the label of the malicious client"""
-        clientId = conf.clientId
+        client_id = conf.client_id
 
         """1 out of malicious_factor client is malicious"""
-        is_malicious = ((clientId+1) % conf.malicious_factor == 0)
+        is_malicious = ((client_id+1) % conf.malicious_factor == 0)
 
         if is_malicious:
             label_mapping = list(range(conf.num_class))
-            np.random.seed(clientId)
+            np.random.seed(client_id)
             np.random.shuffle(label_mapping)
 
-        logging.info(f"Start to train (CLIENT: {clientId}) ...")
+        logging.info(f"Start to train (CLIENT: {client_id}) ...")
         device = conf.device
 
         last_model_params = [p.data.clone() for p in model.parameters()]
@@ -96,14 +96,14 @@ class Customized_Client(Client):
         state_dicts = model.state_dict()
         model_param = {p:state_dicts[p].data.cpu().numpy() for p in state_dicts}
 
-        results = {'clientId':clientId, 'moving_loss': epoch_train_loss,
+        results = {'client_id':client_id, 'moving_loss': epoch_train_loss,
                   'trained_size': completed_steps*conf.batch_size, 'success': completed_steps > 0}
         results['utility'] = math.sqrt(epoch_train_loss)*float(trained_unique_samples)
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}, is_malicious: {is_malicious}")
+            logging.info(f"Training of (CLIENT: {client_id}) completes, {results}, is_malicious: {is_malicious}")
         else:
-            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {client_id}) failed as {error_type}")
 
         results['update_weight'] = model_param
         results['wall_duration'] = 0

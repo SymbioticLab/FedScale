@@ -7,7 +7,7 @@ def get_data_transform(data: str):
     if data == 'mnist':
         train_transform = transforms.Compose([
             # transforms.Grayscale(num_output_channels=1),
-            transforms.Resize((28, 28)),
+            transforms.Resize((32, 32)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
@@ -15,7 +15,7 @@ def get_data_transform(data: str):
 
         test_transform = transforms.Compose([
             # transforms.Grayscale(num_output_channels=1),
-            transforms.Resize((28, 28)),
+            transforms.Resize((32, 32)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))

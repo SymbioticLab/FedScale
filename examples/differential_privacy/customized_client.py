@@ -8,10 +8,10 @@ import torch
 from clip_norm import clip_grad_norm_
 from torch.autograd import Variable
 
-from fedscale.cloud.execution.client import Client
+from fedscale.cloud.execution.torch_client import TorchClient
 
 
-class Customized_Client(Client):
+class Customized_Client(TorchClient):
     """
     Basic client component in Federated Learning
     Local differential privacy
@@ -19,8 +19,8 @@ class Customized_Client(Client):
 
     def train(self, client_data, model, conf):
 
-        clientId = conf.clientId
-        logging.info(f"Start to train (CLIENT: {clientId}) ...")
+        client_id = conf.client_id
+        logging.info(f"Start to train (CLIENT: {client_id}) ...")
         tokenizer, device = conf.tokenizer, conf.device
         last_model_params = [p.data.clone() for p in model.parameters()]
 
@@ -65,15 +65,15 @@ class Customized_Client(Client):
             torch.normal(mean=0, std=sigma, size=state_dicts[p].data.shape).cpu().numpy()) for p in state_dicts}
 
 
-        results = {'clientId': clientId, 'moving_loss': self.epoch_train_loss,
+        results = {'client_id': client_id, 'moving_loss': self.epoch_train_loss,
                    'trained_size': self.completed_steps*conf.batch_size, 'success': self.completed_steps > 0}
         results['utility'] = math.sqrt(
-            self.loss_squre)*float(trained_unique_samples)
+            self.loss_squared)*float(trained_unique_samples)
 
         if error_type is None:
-            logging.info(f"Training of (CLIENT: {clientId}) completes, {results}")
+            logging.info(f"Training of (CLIENT: {client_id}) completes, {results}")
         else:
-            logging.info(f"Training of (CLIENT: {clientId}) failed as {error_type}")
+            logging.info(f"Training of (CLIENT: {client_id}) failed as {error_type}")
 
         results['update_weight'] = model_param
         results['wall_duration'] = 0

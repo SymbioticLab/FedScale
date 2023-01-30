@@ -8,7 +8,7 @@ from customized_client import Customized_Client
 from fedscale.cloud.execution.executor import Executor
 import fedscale.cloud.config_parser as parser
 
-"""In this example, we only need to change the Client Component we need to import"""
+"""In this example, we only need to change the TorchClient Component we need to import"""
 
 class Customized_Executor(Executor):
     """Each executor takes certain resource to run real training.

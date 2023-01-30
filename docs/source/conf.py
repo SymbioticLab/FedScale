@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('./../../fedscale'))
 # -- Project information -----------------------------------------------------
 
 project = 'fedscale'
-copyright = '2022, FedScale Team'
+copyright = '2023, FedScale Team'
 author = 'FedScale Team'
 
 # The full version, including alpha/beta/rc tags

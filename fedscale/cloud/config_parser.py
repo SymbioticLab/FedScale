@@ -11,7 +11,7 @@ parser.add_argument('--wandb_token', type=str, default="",
 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
-parser.add_argument('--ps_port', type=str, default='29501')
+parser.add_argument('--ps_port', type=str, default='29500')
 parser.add_argument('--this_rank', type=int, default=1)
 parser.add_argument('--connection_timeout', type=int, default=60)
 parser.add_argument('--experiment_mode', type=str,
@@ -33,7 +33,8 @@ parser.add_argument('--clock_factor', type=float, default=1.0,
 
 # The configuration of model and dataset
 parser.add_argument('--model_zoo', type=str, default='torchcv',
-                    help="model zoo to load the models from", choices=["torchcv", "fedscale-zoo"])
+                    help="model zoo to load the models from", choices=["torchcv", "fedscale-torch-zoo",
+                                                                       "fedscale-tensorflow-zoo"])
 parser.add_argument('--data_dir', type=str, default='~/cifar10/')
 parser.add_argument('--device_conf_file', type=str, default='/tmp/client.cfg')
 parser.add_argument('--model', type=str, default='shufflenet_v2_x2_0')
@@ -52,7 +53,7 @@ parser.add_argument('--blacklist_rounds', type=int, default=-1)
 parser.add_argument('--blacklist_max_len', type=float, default=0.3)
 parser.add_argument('--embedding_file', type=str,
                     default='glove.840B.300d.txt')
-parser.add_argument('--input_shape', type=tuple, default=(1, 3, 28, 28))
+parser.add_argument('--input_shape', type=int, nargs='+', default=[1, 3, 28, 28])
 
 
 # The configuration of different hyper-parameters for training
@@ -61,7 +62,6 @@ parser.add_argument('--local_steps', type=int, default=20)
 parser.add_argument('--batch_size', type=int, default=30)
 parser.add_argument('--test_bsz', type=int, default=128)
 parser.add_argument('--backend', type=str, default="gloo")
-parser.add_argument('--upload_step', type=int, default=20)
 parser.add_argument('--learning_rate', type=float, default=5e-2)
 parser.add_argument('--min_learning_rate', type=float, default=5e-5)
 parser.add_argument('--input_dim', type=int, default=0)
