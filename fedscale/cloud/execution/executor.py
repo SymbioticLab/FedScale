@@ -225,7 +225,6 @@ class Executor(object):
         """
         test_res = self.testing_handler()
         test_res = {'executorId': self.this_rank, 'results': test_res}
-        self.save_model()
 
         # Report execution completion information
         response = self.aggregator_communicator.stub.CLIENT_EXECUTE_COMPLETION(
@@ -413,14 +412,6 @@ class Executor(object):
                     logging.info(f"Caught exception {e} from aggregator, terminating executor {self.this_rank} ...")
                     self.Stop()
 
-    def save_model(self):
-        """Save model to the wandb server if enabled
-        
-        """
-        if self.wandb != None:
-            artifact = self.wandb.Artifact(name='model_'+str(self.this_rank), type='model')
-            artifact.add_file(local_path=self.temp_model_path)
-            self.wandb.log_artifact(artifact)
     
     def log_test_result(self, test_res):
         """Log test results to wandb server if enabled

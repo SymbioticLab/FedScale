@@ -2,6 +2,7 @@
 import collections
 import copy
 import math
+import os
 import pickle
 import random
 import threading
@@ -59,6 +60,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.update_lock = threading.Lock()
         # all weights including bias/#_batch_tracked (e.g., state_dict)
         self.model_weights = None
+        self.temp_model_path = os.path.join(
+            logger.logDir, 'model_'+str(args.this_rank)+".npy")
 
         # ======== channels ========
         self.connection_timeout = self.args.connection_timeout
@@ -444,6 +447,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if self.model_in_update == self.tasks_round:
             self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
             self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
+        self.save_model()
+
 
     def aggregate_test_result(self):
         accumulator = self.test_result_accumulator[0]
@@ -591,6 +596,17 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         #     'FAR/time_to_test_loss (min)': self.testing_history['perf'][self.round]['loss'],
         #     'FAR/time_to_test_accuracy (min)': self.testing_history['perf'][self.round]['top_1'],
         # }, step=int(self.global_virtual_clock/60.)) # wandb only accepts integer step, so we lose some accuracy in global time here
+
+    def save_model(self):
+        """Save model to the wandb server if enabled
+        
+        """
+        if parser.args.save_checkpoint:
+            np.save(self.temp_model_path, self.model_weights)
+            if self.wandb != None:
+                artifact = self.wandb.Artifact(name='model_'+str(self.this_rank), type='model')
+                artifact.add_file(local_path=self.temp_model_path)
+                self.wandb.log_artifact(artifact)
 
     def deserialize_response(self, responses):
         """Deserialize the response from executor
