@@ -555,23 +555,19 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.round)
         self.log_writer.add_scalar(
-            'FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
+            'Train/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
         self.log_writer.add_scalar(
-            'FAR/round_duration (min)', self.round_duration / 60., self.round)
+            'Train/round_duration (min)', self.round_duration / 60., self.round)
         self.log_writer.add_histogram(
-            'FAR/client_duration (min)', self.flatten_client_duration, self.round)
-        # print(f"round_duration: {self.round_duration/60.} at round {self.round}")
+            'Train/client_duration (min)', self.flatten_client_duration, self.round)
 
         if self.wandb != None:
             self.wandb.log({
                 'Train/round_to_loss': avg_loss,
-                'FAR/round_duration (min)': self.round_duration/60.,
-                'FAR/client_duration (min)': self.flatten_client_duration,
-                'FAR/time_to_round (min)': self.global_virtual_clock/60.,
+                'Train/round_duration (min)': self.round_duration/60.,
+                'Train/client_duration (min)': self.flatten_client_duration,
+                'Train/time_to_round (min)': self.global_virtual_clock/60.,
             }, step=self.round)
-        # self.wandb.log({
-        #     'FAR/time_to_train_loss (min)': avg_loss,
-        # }, step=int(self.global_virtual_clock/60.)) # wandb only accepts integer step, so we lose some accuracy in global time here
         
     def log_test_result(self):
         """Log testing result on TensorBoard and optionally WanDB
@@ -580,22 +576,18 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             'Test/round_to_loss', self.testing_history['perf'][self.round]['loss'], self.round)
         self.log_writer.add_scalar(
             'Test/round_to_accuracy', self.testing_history['perf'][self.round]['top_1'], self.round)
-        self.log_writer.add_scalar('FAR/time_to_test_loss (min)', self.testing_history['perf'][self.round]['loss'],
+        self.log_writer.add_scalar('Test/time_to_test_loss (min)', self.testing_history['perf'][self.round]['loss'],
                                    self.global_virtual_clock / 60.)
-        self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
+        self.log_writer.add_scalar('Test/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
                                    self.global_virtual_clock / 60.)
 
         if self.wandb != None:
             self.wandb.log({
                 'Test/round_to_loss': self.testing_history['perf'][self.round]['loss'],
                 'Test/round_to_accuracy': self.testing_history['perf'][self.round]['top_1'],
-                'FAR/round_duration (min)': self.round_duration/60.,
-                'FAR/time_to_round (min)': self.global_virtual_clock/60.,
+                'Test/round_duration (min)': self.round_duration/60.,
+                'Test/time_to_round (min)': self.global_virtual_clock/60.,
             }, step=self.round)
-        # self.wandb.log({
-        #     'FAR/time_to_test_loss (min)': self.testing_history['perf'][self.round]['loss'],
-        #     'FAR/time_to_test_accuracy (min)': self.testing_history['perf'][self.round]['top_1'],
-        # }, step=int(self.global_virtual_clock/60.)) # wandb only accepts integer step, so we lose some accuracy in global time here
 
     def save_model(self):
         """Save model to the wandb server if enabled

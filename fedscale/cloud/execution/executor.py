@@ -64,7 +64,7 @@ class Executor(object):
                                 group=f'{args.time_stamp}')
             else:
                 logging.error("Warning: wandb has already been initialized")
-            # self.wandb.run.name = f'{args.job_name}-{args.time_stamp}'
+            
         else:
             self.wandb = None
         super(Executor, self).__init__()
