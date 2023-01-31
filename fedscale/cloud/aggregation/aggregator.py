@@ -293,7 +293,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             num_clients_to_collect (int): The number of clients actually needed for next round.
 
         Returns:
-            tuple: Return the sampled clients and client execution information in the last round.
+            Tuple: (the List of clients to run, the List of stragglers in the round, a Dict of the virtual clock of each
+            client, the duration of the aggregation round, and the durations of each client's task).
 
         """
         if self.experiment_mode == commons.SIMULATION_MODE:
@@ -359,6 +360,12 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         self.event_monitor()
 
+    def _is_first_result_in_round(self):
+        return self.model_in_update == 1
+
+    def _is_last_result_in_round(self):
+        return self.model_in_update == self.tasks_round
+
     def select_participants(self, select_num_participants, overcommitment=1.3):
         """Select clients for next round.
 
@@ -417,11 +424,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         update_weights = results['update_weight']
         if type(update_weights) is dict:
             update_weights = [x for x in update_weights.values()]
-        if self.model_in_update == 1:
+        if self._is_first_result_in_round():
             self.model_weights = update_weights
         else:
             self.model_weights = [weight + update_weights[i] for i, weight in enumerate(self.model_weights)]
-        if self.model_in_update == self.tasks_round:
+        if self._is_last_result_in_round():
             self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
             self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
 
@@ -451,7 +458,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         round_perf = self.testing_history['perf'][self.round]
         logging.info(
             "FL Testing in round: {}, virtual_clock: {}, results: {}"
-                .format(self.round, self.global_virtual_clock, round_perf))
+            .format(self.round, self.global_virtual_clock, round_perf))
 
     def update_default_task_config(self):
         """Update the default task configuration after each round

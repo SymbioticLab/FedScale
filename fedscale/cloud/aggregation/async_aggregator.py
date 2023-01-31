@@ -31,9 +31,6 @@ class AsyncAggregator(Aggregator):
         duration = exe_cost['computation'] + \
                    exe_cost['communication']
         end_time = event_time + duration
-        # if the client is not active by the time of collection, we consider it is lost in this round
-        if not self.client_manager.isClientActive(client, duration):
-            pass
         heappush(self.min_pq, (event_time, 'start', client))
         heappush(self.min_pq, (end_time, 'end', client))
         self.client_task_start_times[client] = event_time
@@ -66,7 +63,9 @@ class AsyncAggregator(Aggregator):
             num_clients_to_collect (int): The number of clients actually needed for next round.
 
         Returns:
-            tuple: Return the sampled clients and client execution information in the last round.
+            Tuple: (the List of clients to run, the List of stragglers in the round, a Dict of the virtual clock of each
+            client, the duration of the aggregation round, and the durations of each client's task).
+
         """
         if self.experiment_mode == commons.SIMULATION_MODE:
             self.model_cache.appendleft(self.model_wrapper.get_weights())
@@ -95,6 +94,7 @@ class AsyncAggregator(Aggregator):
             return (clients_to_run, [], self.virtual_client_clock, 0,
                     durations)
         else:
+            # Dummy placeholder for non-simulations.
             completed_client_clock = {
                 client: {'computation': 1, 'communication': 1} for client in sampled_clients}
             times = [1 for _ in sampled_clients]
@@ -116,19 +116,23 @@ class AsyncAggregator(Aggregator):
     def update_weight_aggregation(self, results):
         """Updates the aggregation with the new results.
 
+        Implements the aggregation mechanism implemented in FedBuff
+        https://arxiv.org/pdf/2106.06639.pdf (Nguyen et al., 2022)
+
         :param results: the results collected from the client.
         """
         update_weights = results['update_weight']
-        inverted_staleness = 1 / (1 + self.round - self.client_task_model_version[results['client_id']])
+        # Aggregation weight is derived from equation from "staleness scaling" section in the referenced FedBuff paper.
+        inverted_staleness = 1 / (1 + self.round - self.client_task_model_version[results['client_id']]) ** 0.5
         self.aggregation_denominator += inverted_staleness
         if type(update_weights) is dict:
             update_weights = [x for x in update_weights.values()]
-        if self.model_in_update == 1:
+        if self._is_first_result_in_round():
             self.model_weights = [weight * inverted_staleness for weight in update_weights]
         else:
             self.model_weights = [weight + inverted_staleness * update_weights[i] for i, weight in
                                   enumerate(self.model_weights)]
-        if self.model_in_update == self.tasks_round:
+        if self._is_last_result_in_round():
             self.model_weights = [np.divide(weight, self.aggregation_denominator) for weight in self.model_weights]
             self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
             self.aggregation_denominator = 0
