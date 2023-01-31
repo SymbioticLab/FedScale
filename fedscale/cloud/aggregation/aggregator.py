@@ -62,6 +62,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.model_weights = None
         self.temp_model_path = os.path.join(
             logger.logDir, 'model_'+str(args.this_rank)+".npy")
+        self.last_saved_round = 0
 
         # ======== channels ========
         self.connection_timeout = self.args.connection_timeout
@@ -447,7 +448,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if self.model_in_update == self.tasks_round:
             self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
             self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
-        self.save_model()
 
 
     def aggregate_test_result(self):
@@ -543,7 +543,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         if self.round >= self.args.rounds:
             self.broadcast_aggregator_events(commons.SHUT_DOWN)
-        elif self.round % self.args.eval_interval == 0 or self.round == 1:
+        elif self.round % self.args.eval_interval == 0:
             self.broadcast_aggregator_events(commons.UPDATE_MODEL)
             self.broadcast_aggregator_events(commons.MODEL_TEST)
         else:
@@ -593,7 +593,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """Save model to the wandb server if enabled
         
         """
-        if parser.args.save_checkpoint:
+        if parser.args.save_checkpoint and self.last_saved_round < self.round:
+            self.last_saved_round = self.round
             np.save(self.temp_model_path, self.model_weights)
             if self.wandb != None:
                 artifact = self.wandb.Artifact(name='model_'+str(self.this_rank), type='model')
@@ -645,6 +646,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             # Dump the testing result
             with open(os.path.join(logger.logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
+
+            self.save_model()
 
             if len(self.loss_accumulator):
                 logging.info("logging test result")

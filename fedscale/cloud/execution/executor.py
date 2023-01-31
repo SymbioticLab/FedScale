@@ -416,12 +416,14 @@ class Executor(object):
     def log_test_result(self, test_res):
         """Log test results to wandb server if enabled
         """
-        test_loss, acc, acc_5, _ = test_res
+        acc = round(test_res["top_1"] / test_res["test_len"], 4)
+        acc_5 = round(test_res["top_5"] / test_res["test_len"], 4)
+        test_loss = test_res["test_loss"] / test_res["test_len"]
         if self.wandb != None:
             self.wandb.log({
-                'Test/round_to_loss': test_loss,
                 'Test/round_to_top1_accuracy': acc,
                 'Test/round_to_top5_accuracy': acc_5,
+                'Test/round_to_loss': test_loss,
             }, step=self.round)
 
 if __name__ == "__main__":
