@@ -61,6 +61,7 @@ class TFLiteAggregator(Aggregator):
             restored_tensors = [
                 np.asarray(tf.raw_ops.Restore(file_pattern=path, tensor_name=var.name,
                                               dt=var.dtype, name='restore')) for var in self.model_wrapper.get_model().layers if var.trainable]
+            os.remove(path)
             data["update_weight"] = restored_tensors
         return data
 
