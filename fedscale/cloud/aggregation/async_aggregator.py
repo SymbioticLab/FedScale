@@ -91,8 +91,7 @@ class AsyncAggregator(Aggregator):
                     durations.append(event_time - self.client_task_start_times[client])
                     final_time = event_time
             self.global_virtual_clock = final_time
-            return (clients_to_run, [], self.virtual_client_clock, 0,
-                    durations)
+            return clients_to_run, [], self.virtual_client_clock, 0, durations
         else:
             # Dummy placeholder for non-simulations.
             completed_client_clock = {
