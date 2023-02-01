@@ -4,7 +4,7 @@ This document contains explanation and instruction of aggregation for mobiles.
 
 An example android aggregator accompanied by an [sample android app](https://github.com/SymbioticLab/FedScale/fedscale/cloud/execution/android). The android app has [MNN](https://github.com/alibaba/MNN) backend support.
 
-`fedscale/cloud/aggregation/android_aggregator.py` contains an inherited version of aggregator. While keeping all functionalities of the original [aggregator](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/cloud/aggregation/aggregator.py), it adds support to do bijective conversion between PyTorch model and MNN model. It uses JSON to communicate with android client.
+`fedscale/cloud/aggregation/aggregator_mnn.py` contains an inherited version of aggregator. While keeping all functionalities of the original [aggregator](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/cloud/aggregation/aggregator.py), it adds support to do bijective conversion between PyTorch model and MNN model. It uses JSON to communicate with android client.
 
 **Note**:
 MNN does not support direct conversion from MNN to PyTorch model, so we did a manual conversion from MNN to JSON, then from JSON to PyTorch model. We currently only support Convolution (including Linear) and BatchNorm conversion. We welcome contribution to support more conversion for operators with trainable parameters.
@@ -22,7 +22,7 @@ cd FedScale
 source install.sh
 pip install -e .
 cd fedscale/cloud/aggregation
-python3 android_aggregator.py --experiment_mode=mobile --num_participants=1 --model=linear
+python3 aggreagtor_mnn.py --experiment_mode=mobile --num_participants=1 --model=linear
 ```
 and configure your android app according to the [tutorial](https://github.com/SymbioticLab/FedScale/fedscale/cloud/execution/android/README.md).
 

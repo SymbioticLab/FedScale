@@ -26,8 +26,10 @@ import io.grpc.executor.RegisterRequest;
 import io.grpc.executor.ServerResponse;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
@@ -40,8 +42,6 @@ import java.util.Queue;
  * Server-client communication will be handled in JAVA.
  */
 public class FLExecutor extends AppCompatActivity {
-    // TODO: 1. How to convert json(bytes) to bytes?
-    // TODO: 2. How to support batch train/test?
     // TODO: 3. Test client with cloud
     private JSONObject config;
 
@@ -127,9 +127,9 @@ public class FLExecutor extends AppCompatActivity {
         this.mExecutorID = this.initExecutorId(this.config.getString("username"));
         this.aggregatorIP = this.config.getJSONObject("aggregator").getString("ip");
         this.aggregatorPort = this.config.getJSONObject("aggregator").getInt("port");
-//        this.communicator = new ClientConnections(
-//                this.aggregatorIP,
-//                this.aggregatorPort);
+        this.communicator = new ClientConnections(
+                this.aggregatorIP,
+                this.aggregatorPort);
     }
 
     /**
@@ -140,14 +140,8 @@ public class FLExecutor extends AppCompatActivity {
         this.initData();
         this.initAsset();
         this.initUI();
-//        this.setupCommunication();
-//        this.eventMonitor();
-
-        this.currentModel = FileUtil.loadMappedFile(getBaseContext(), "model.tflite");
-        JSONObject tmp = new JSONObject();
-        tmp.put("client_id", this.mExecutorID);
-        this.FLTrain(tmp.toString());
-        this.FLTest("{}");
+        this.setupCommunication();
+        this.eventMonitor();
     }
 
     /**
@@ -177,9 +171,12 @@ public class FLExecutor extends AppCompatActivity {
      * @param responses Client responses after job completion.
      * @return The serialized response object to server.
      */
-    private ByteString serializeResponse(JSONObject responses) {
+    private ByteString serializeResponse(JSONObject responses) throws IOException {
         Common.largeLog("serialize", responses.toString());
-        return ByteString.copyFrom(responses.toString().getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(byteOut);
+        out.writeObject(responses);
+        return ByteString.copyFrom(byteOut.toByteArray());
     }
 
     /**
@@ -187,7 +184,7 @@ public class FLExecutor extends AppCompatActivity {
      *
      * @param model The broadcast global model config.
      */
-    public void FLUpdateModel(ByteString model) throws IOException, JSONException {
+    public void FLUpdateModel(ByteString model) {
         this.round++;
         this.setText(this.mExecuteStatus, Common.UPDATE_MODEL);
         this.setText(this.mUserId, this.mExecutorID + ": Round " + this.round);
@@ -216,25 +213,25 @@ public class FLExecutor extends AppCompatActivity {
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
         Common.largeLog("[TRAIN]", trainResult.toString());
-//        CompleteRequest request = CompleteRequest.newBuilder()
-//                .setClientId(this.mExecutorID)
-//                .setExecutorId(this.mExecutorID)
-//                .setEvent(Common.CLIENT_TRAIN)
-//                .setStatus(true).build();
-//        long startTime = System.currentTimeMillis() / 1000;
-//        while (System.currentTimeMillis() / 1000 - startTime < 180) {
-//            try {
-//                ServerResponse response = this.communicator.stub.cLIENTEXECUTECOMPLETION(request);
-//                this.dispatchWorkerEvents(response);
-//                break;
-//            } catch (Exception e) {
-//                Log.w(
-//                        Common.TAG,
-//                        String.format("Failed to connect to aggregator %s:%d. Will retry in 5 sec.",
-//                                this.aggregatorIP, this.aggregatorPort));
-//                Thread.sleep(5 * 1000);
-//            }
-//        }
+        CompleteRequest request = CompleteRequest.newBuilder()
+                .setClientId(this.mExecutorID)
+                .setExecutorId(this.mExecutorID)
+                .setEvent(Common.CLIENT_TRAIN)
+                .setStatus(true).build();
+        long startTime = System.currentTimeMillis() / 1000;
+        while (System.currentTimeMillis() / 1000 - startTime < 180) {
+            try {
+                ServerResponse response = this.communicator.stub.cLIENTEXECUTECOMPLETION(request);
+                this.dispatchWorkerEvents(response);
+                break;
+            } catch (Exception e) {
+                Log.w(
+                        Common.TAG,
+                        String.format("Failed to connect to aggregator %s:%d. Will retry in 5 sec.",
+                                this.aggregatorIP, this.aggregatorPort));
+                Thread.sleep(5 * 1000);
+            }
+        }
         return trainResult;
     }
 
@@ -258,27 +255,27 @@ public class FLExecutor extends AppCompatActivity {
         testRes.put("executorId", this.mExecutorID);
         testRes.put("results", testResult);
         Common.largeLog("[TEST]", testRes.toString());
-//        CompleteRequest request = CompleteRequest.newBuilder()
-//                .setClientId(this.mExecutorID)
-//                .setExecutorId(this.mExecutorID)
-//                .setEvent(Common.MODEL_TEST)
-//                .setStatus(true)
-//                .setDataResult(this.serializeResponse(testRes.toString())).
-//                build();
-//        long startTime = System.currentTimeMillis() / 1000;
-//        while (System.currentTimeMillis() / 1000 - startTime < 180) {
-//            try {
-//                ServerResponse response = this.communicator.stub.cLIENTEXECUTECOMPLETION(request);
-//                this.dispatchWorkerEvents(response);
-//                break;
-//            } catch (Exception e) {
-//                Log.w(
-//                        Common.TAG,
-//                        String.format("Failed to connect to aggregator %s:%d. Will retry in 5 sec.",
-//                                this.aggregatorIP, this.aggregatorPort));
-//                Thread.sleep(5 * 1000);
-//            }
-//        }
+        CompleteRequest request = CompleteRequest.newBuilder()
+                .setClientId(this.mExecutorID)
+                .setExecutorId(this.mExecutorID)
+                .setEvent(Common.MODEL_TEST)
+                .setStatus(true)
+                .setDataResult(this.serializeResponse(testRes)).
+                build();
+        long startTime = System.currentTimeMillis() / 1000;
+        while (System.currentTimeMillis() / 1000 - startTime < 180) {
+            try {
+                ServerResponse response = this.communicator.stub.cLIENTEXECUTECOMPLETION(request);
+                this.dispatchWorkerEvents(response);
+                break;
+            } catch (Exception e) {
+                Log.w(
+                        Common.TAG,
+                        String.format("Failed to connect to aggregator %s:%d. Will retry in 5 sec.",
+                                this.aggregatorIP, this.aggregatorPort));
+                Thread.sleep(5 * 1000);
+            }
+        }
     }
 
     /**
