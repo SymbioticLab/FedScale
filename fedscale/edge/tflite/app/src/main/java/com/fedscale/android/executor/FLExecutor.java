@@ -32,8 +32,10 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
 /**
@@ -171,12 +173,17 @@ public class FLExecutor extends AppCompatActivity {
      * @param responses Client responses after job completion.
      * @return The serialized response object to server.
      */
-    private ByteString serializeResponse(JSONObject responses) throws IOException {
+    private ByteString serializeResponse(Map<String, Object> responses) throws IOException {
         Common.largeLog("serialize", responses.toString());
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(byteOut);
         out.writeObject(responses);
         return ByteString.copyFrom(byteOut.toByteArray());
+    }
+
+    private ByteString serializeResponse(JSONObject responses) throws IOException {
+        Common.largeLog("serialize", responses.toString());
+        return ByteString.copyFrom(responses.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -201,13 +208,13 @@ public class FLExecutor extends AppCompatActivity {
      * @param config The client training config.
      * @return The client id and train result.
      */
-    public JSONObject FLTrain(String config) throws Exception {
+    public Map<String, Object> FLTrain(String config) throws Exception {
         this.setText(this.mExecuteStatus, Common.CLIENT_TRAIN);
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
                 config);
         Backend backend = new TFLiteBackend();
-        JSONObject trainResult = backend.MLTrain(
+        Map<String, Object> trainResult = backend.MLTrain(
                 getCacheDir().toString(),
                 this.currentModel,
                 this.config.getJSONObject("training_data"),
@@ -246,12 +253,12 @@ public class FLExecutor extends AppCompatActivity {
                 this.config.getJSONObject("testing_conf"),
                 config);
         Backend backend = new TFLiteBackend();
-        JSONObject testResult = backend.MLTest(
+        Map<String, Object> testResult = backend.MLTest(
                 getCacheDir().toString(),
                 this.currentModel,
                 this.config.getJSONObject("testing_data"),
                 newTestingConf);
-        JSONObject testRes = new JSONObject();
+        Map<String, Object> testRes = new HashMap<>();
         testRes.put("executorId", this.mExecutorID);
         testRes.put("results", testResult);
         Common.largeLog("[TEST]", testRes.toString());
@@ -395,7 +402,7 @@ public class FLExecutor extends AppCompatActivity {
                 Log.i(Common.TAG, "Handling EVENT " + currentEvent);
                 if (currentEvent.equals(Common.CLIENT_TRAIN)) {
                     String trainConfigStr = this.deserializeResponse(request.getMeta());
-                    JSONObject trainResult = this.FLTrain(trainConfigStr);
+                    Map<String, Object> trainResult = this.FLTrain(trainConfigStr);
                     CompleteRequest cRequest = CompleteRequest.newBuilder()
                             .setClientId(this.mExecutorID)
                             .setExecutorId(this.mExecutorID)

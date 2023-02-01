@@ -38,7 +38,7 @@ public class TFLiteBackend implements Backend {
 //    private final Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
-    public JSONObject MLTrain(
+    public Map<String, Object> MLTrain(
             String directory,
             ByteBuffer model,
             JSONObject trainingDataConf,
@@ -117,7 +117,7 @@ public class TFLiteBackend implements Backend {
         Map<String, Object> outputs = new HashMap<>();
         interpreter.runSignature(inputs, outputs, "save");
 
-        JSONObject results = new JSONObject();
+        Map<String, Object> results = new HashMap<>();
         results.put("client_id", clientId);
         results.put("moving_loss", epochTrainLoss);
         results.put("trained_size", trainEpochs * dataCount);
@@ -130,7 +130,7 @@ public class TFLiteBackend implements Backend {
     }
 
     @Override
-    public JSONObject MLTest(
+    public Map<String, Object> MLTest(
             String directory,
             ByteBuffer model,
             JSONObject testingDataConf,
@@ -202,7 +202,7 @@ public class TFLiteBackend implements Backend {
         float accuracyFinalTop1 = (float)correctTop1 / dataCount;
         float accuracyFinalTop5 = (float)correctTop5 / dataCount;
 
-        JSONObject results = new JSONObject();
+        Map<String, Object> results = new HashMap<>();
         results.put("top_1", accuracyFinalTop1);
         results.put("top_5", accuracyFinalTop5);
         results.put("test_loss", testLoss);

@@ -22,7 +22,7 @@ cd FedScale
 source install.sh
 pip install -e .
 cd fedscale/cloud/aggregation
-python3 aggreagtor_mnn.py --experiment_mode=mobile --num_participants=1 --model=linear
+python3 aggregator_mnn.py --experiment_mode=mobile --num_participants=1 --model=linear
 ```
 and configure your android app according to the [tutorial](https://github.com/SymbioticLab/FedScale/fedscale/cloud/execution/android/README.md).
 

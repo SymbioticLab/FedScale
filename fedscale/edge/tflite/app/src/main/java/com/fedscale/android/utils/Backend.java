@@ -5,6 +5,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Training and testing interface from Java to JNI C++ backend.
@@ -19,7 +20,7 @@ public interface Backend {
      * @param trainingConf Stringified JSON config for training.
      * @return Stringified JSON training result containing updated model in JSON.
      */
-    JSONObject MLTrain(
+    Map<String, Object> MLTrain(
             String directory,
             ByteBuffer model,
             JSONObject trainingDataConf,
@@ -34,7 +35,7 @@ public interface Backend {
      * @param testingConf Stringified JSON config for testing.
      * @return  Stringified JSON testing result.
      */
-    JSONObject MLTest(
+    Map<String, Object> MLTest(
             String directory,
             ByteBuffer model,
             JSONObject testingDataConf,
