@@ -1,4 +1,3 @@
-import logging
 import numpy as np
 
 import fedscale.cloud.config_parser as parser
@@ -77,9 +76,6 @@ class TFLiteAggregator(Aggregator):
             bytes: The serialized response object to server.
         """
         if type(responses) is list:
-            tmp = [np.array_equal(a, b) for a, b in zip(
-                responses, self.model_wrapper.get_weights())]
-            logging.info(f"Serializing {responses}, original weights {self.model_wrapper.get_weights()}, check type - {type(responses) is list}, length - {len(responses) > 0}, equal - {tmp}")
             responses = self.tflite_model
         return super().serialize_response(responses)
 

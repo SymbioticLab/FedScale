@@ -48,8 +48,6 @@ public class FLExecutor extends AppCompatActivity {
     // TODO: 3. Test client with cloud
     private JSONObject config;
 
-    private ByteBuffer currentModel;
-
     private String mExecutorID;
     private String aggregatorIP;
     private int aggregatorPort;
@@ -164,7 +162,8 @@ public class FLExecutor extends AppCompatActivity {
      */
     private Object deserializeResponse(ByteString responses) throws IOException {
         Unpickler unpickler = new Unpickler();
-        return unpickler.loads(responses.toByteArray());
+        Object result = unpickler.loads(responses.toByteArray());
+        return result;
     }
 
     /**
@@ -192,7 +191,6 @@ public class FLExecutor extends AppCompatActivity {
         final String fileName = this.config.getJSONObject("model_conf").getString("path");
         final String modelPath = getCacheDir() + "/" + fileName;
         Common.inputStream2File(is, modelPath);
-        this.currentModel = ByteBuffer.wrap(model).order(ByteOrder.nativeOrder());
     }
 
     /**
@@ -369,6 +367,7 @@ public class FLExecutor extends AppCompatActivity {
         long startTime = System.currentTimeMillis() / 1000;
         while (System.currentTimeMillis() / 1000 - startTime < 180) {
             try {
+                Log.i(Common.TAG, "Trying to get EVENT");
                 ServerResponse response = this.communicator.stub.cLIENTPING(request);
                 Log.i(Common.TAG, "Get EVENT " + response.getEvent());
                 this.dispatchWorkerEvents(response);
