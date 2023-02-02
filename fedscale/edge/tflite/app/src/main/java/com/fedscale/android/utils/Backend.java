@@ -12,13 +12,13 @@ import java.util.Map;
  */
 public interface Backend {
     /**
-     * Training interface from Java to JNI C++ backend.
+     * Training interface from Java to TFLite backend.
      *
      * @param directory Directory of model and data.
-     * @param model Model.
+     * @param model Model filename.
      * @param trainingDataConf Training set and label path config.
-     * @param trainingConf Stringified JSON config for training.
-     * @return Stringified JSON training result containing updated model in JSON.
+     * @param trainingConf JSON config for training.
+     * @return Training result containing updated model in JSON.
      */
     Map<String, Object> MLTrain(
             String directory,
@@ -27,13 +27,13 @@ public interface Backend {
             JSONObject trainingConf) throws JSONException, IOException;
 
     /**
-     * Testing interface from Java to JNI C++ backend.
+     * Testing interface from Java to TFLite backend.
      *
      * @param directory Directory of model and data.
-     * @param model Model.
+     * @param model Model filename.
      * @param testingDataConf Testing set and label path config.
-     * @param testingConf Stringified JSON config for testing.
-     * @return  Stringified JSON testing result.
+     * @param testingConf JSON config for testing.
+     * @return Testing result.
      */
     Map<String, Object> MLTest(
             String directory,

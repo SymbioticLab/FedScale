@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +41,6 @@ public class Common {
      *
      * @param filename The name of the file.
      * @return The string content of the file.
-     * @throws IOException
      */
     public static String readStringFromFile(String filename) throws IOException {
         return Files.toString(new File(filename), StandardCharsets.UTF_8);
@@ -54,7 +52,6 @@ public class Common {
      * @param context Android context.
      * @param assetsFile Asset filename.
      * @param outFile Destination filename.
-     * @throws IOException
      */
     public static void copyAssetResource2File(Context context, String assetsFile, String outFile) throws IOException {
         InputStream is = context.getAssets().open(assetsFile);
@@ -66,7 +63,6 @@ public class Common {
      *
      * @param str String content.
      * @param outFile Destination filename.
-     * @throws IOException
      */
     public static void writeString2File(String str, String outFile) throws IOException {
         InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
@@ -78,7 +74,6 @@ public class Common {
      *
      * @param is InputStream content.
      * @param outFile Destination filename.
-     * @throws IOException
      */
     public static void inputStream2File(InputStream is, String outFile) throws IOException {
         File outF = new File(outFile);
@@ -95,6 +90,12 @@ public class Common {
         outF.setReadable(true);
     }
 
+    /**
+     * Read bytes from input stream.
+     *
+     * @param inputStream InputStream where to read bytes.
+     * @return Bytes inside the input steam.
+     */
     public static byte[] readBytes(InputStream inputStream) throws IOException {
         byte[] buffer = new byte[1024];
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -112,7 +113,6 @@ public class Common {
      * @param context Android context.
      * @param assetsDir Asset subdirectory.
      * @param outDir Destination directory.
-     * @throws IOException
      */
     public static void copyDir(Context context, String assetsDir, File outDir) throws IOException {
         if (!outDir.exists()) {
@@ -136,6 +136,12 @@ public class Common {
         }
     }
 
+    /**
+     * Convert JSONObject to Map.
+     *
+     * @param json JSONObject to be converted.
+     * @return Converted Map.
+     */
     public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
         Map<String, Object> retMap = new HashMap<>();
 
@@ -145,6 +151,12 @@ public class Common {
         return retMap;
     }
 
+    /**
+     * Convert JSONObject to Map.
+     *
+     * @param object JSONObject to be converted.
+     * @return Converted Map.
+     */
     public static Map<String, Object> toMap(JSONObject object) throws JSONException {
         Map<String, Object> map = new HashMap<>();
 
@@ -165,6 +177,12 @@ public class Common {
         return map;
     }
 
+    /**
+     * Convert JSONArray to List.
+     *
+     * @param array JSONArray to be converted.
+     * @return Converted list.
+     */
     public static List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<>();
         for(int i = 0; i < array.length(); i++) {

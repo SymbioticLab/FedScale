@@ -24,7 +24,6 @@ import org.tensorflow.lite.support.image.ops.ResizeWithCropOrPadOp;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -35,8 +34,13 @@ import java.util.List;
 import java.util.Map;
 
 public class TFLiteBackend implements Backend {
-//    private final Handler handler = new Handler(Looper.getMainLooper());
-
+    /**
+     * @param directory        Directory of model and data.
+     * @param model            Model filename.
+     * @param trainingDataConf Training set and label path config.
+     * @param trainingConf     JSON config for training.
+     * @return Training result containing updated model in JSON.
+     */
     @Override
     public Map<String, Object> MLTrain(
             String directory,
@@ -129,6 +133,13 @@ public class TFLiteBackend implements Backend {
         return results;
     }
 
+    /**
+     * @param directory       Directory of model and data.
+     * @param model           Model filename.
+     * @param testingDataConf Testing set and label path config.
+     * @param testingConf     JSON config for testing.
+     * @return Testing result.
+     */
     @Override
     public Map<String, Object> MLTest(
             String directory,
@@ -210,6 +221,18 @@ public class TFLiteBackend implements Backend {
         return results;
     }
 
+    /**
+     * Data loader for Android. TFLite does not have its native data loader.
+     *
+     * @param labels List of labels, numbers in string.
+     * @param imagesFolder Folder of dataset.
+     * @param batchSize Batch size.
+     * @param height Height of image.
+     * @param width Width of image.
+     * @param channel Channel of image.
+     * @param numClasses Number of classes during training.
+     * @return (image batches, label batches), list of float arrays.
+     */
     private Pair<List<float[][]>, List<float[][]>> dataLoader(
             List<String> labels,
             String imagesFolder,
@@ -243,6 +266,13 @@ public class TFLiteBackend implements Backend {
                 this.generateBatchBuffers(labelBatches, numClasses));
     }
 
+    /**
+     * Convert list of list of data to list of batches where each batch is a 2D float array.
+     *
+     * @param batches Batches, inside each batch is a list of data, TFLite does not recognize list.
+     * @param allocateSizePerData Size per each data.
+     * @return A list of batches, each batch is a 2-dimension float array.
+     */
     private List<float[][]> generateBatchBuffers(
             List<List<float[]>> batches,
             int allocateSizePerData) {
@@ -258,7 +288,14 @@ public class TFLiteBackend implements Backend {
         return batchBuffers;
     }
 
-    // Preprocess the image and convert it into a TensorImage for classification.
+    /**
+     * Preprocess the image and convert it into a TensorImage for classification.
+     *
+     * @param image Image in Bitmap.
+     * @param targetHeight Target height after resize.
+     * @param targetWidth Target width after resize.
+     * @return Image in float array.
+     */
     private float[] processImage(
             Bitmap image,
             int targetHeight,
@@ -278,7 +315,13 @@ public class TFLiteBackend implements Backend {
     }
 
 
-    // encode the classes name to float array
+    /**
+     * encode the classes name to float array
+     *
+     * @param id ID of the current data.
+     * @param numClasses Number of classes participating in training.
+     * @return Label in float array.
+     */
     private float[] encodeLabel(int id, int numClasses) {
         float[] classArray = new float[numClasses];
         Arrays.fill(classArray, 0f);

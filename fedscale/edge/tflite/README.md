@@ -1,55 +1,38 @@
-# TensorFlow Lite Model Personalization Demo
+# Android TFLite Sample App
 
-### Overview
+This directory contains minimum files modified from [MNN Android Demo](https://github.com/alibaba/MNN/tree/master/project/android/demo) and [TFLite Android Demo](https://www.tensorflow.org/lite/examples/on_device_training/overview). The training and testing will be conducted by TFLite backend, while the task execution and communication with server will be managed by Java. The sample has been tested upon image classification with a simple linear model and a small subset of [ImageNet-MINI](https://www.kaggle.com/datasets/ifigotin/imagenetmini-1000). This documentation contains a step-by-step tutorial on how to download, build and config this app on your own device, and modify this app for your own implementation and deployment.
 
-This is a camera app that continuously classifies the objects in the frames seen
-by your device's back camera. This example illustrates a way of personalizing a
-TFLite model on-device without sending any data to the server. It can be adapted
-for various tasks and models. These instructions walk you through building and
-running the demo on an Android device.
+## Download and build sample android app
 
-The model files are downloaded via Gradle scripts when you build and run the
-app. You don't need to do any steps to download TFLite models into the project
-explicitly.
+1. Download and unzip [sample dataset (TrainTest.zip)](https://drive.google.com/file/d/1nfi3SVzjaE0LPxwj_5DNdqi6rK7BU8kb/view?usp=sharing) to `assets/` directory. Remove `TrainTest.zip` after unzip to save space on your mobile device. After unzip, you should see 3 files and 2 directories under `assets/`:
+   1. `TrainSet`: Training set directory, contains 316 images.
+   2. `TestSet`: Testing set directory, contains 34 images.
+   3. `conf.json`: Configuration file for mobile app.
+   4. `train_labels.txt`: Training label file with format `<filename> <label>`, where `<filename>` is the path after `TrainSet/`.
+   5. `test_labels.txt`: Testing label file with the same format as `train_labels.txt`.
+2. Install [Android Studio](https://developer.android.com/studio) and open project `fedscale/edge/tflite`. Download necessary SDKs, NDKs and CMake when prompted. My version:
+    - SDK: API 32
+    - Android Gradle Plugin Version: 3.5.3
+    - Gradle Version: 5.4.1
+    - Source Compatibility: Java 8
+    - Target Compatibility: Java 8
+3. Make project. Android Studio will compile and build the app for you.
 
-This application should be run on a physical Android device.
+## Test this app with default setting
 
-![App example showing UI controls. Training mode.](screenshot1.jpg?raw=true
-"Training mode")
+1. ssh to your own server and run
+```
+cd fedscale/cloud/aggregation/android
+python3 aggregator_tflite.py --experiment_mode=mobile --num_participants=1 --engine=tensorflow
+```
+2. Change aggregator IP address inside `assets/conf.json` and click `Run` inside Android Studio.
 
-![App example without UI controls. Inference mode.](screenshot2.jpg?raw=true
-"Inference mode")
+## Customize your own app
 
-## Build the demo using Android Studio
+1. If you want to use your own dataset, please put your data under `assets/TrainSet` and `assets/TestSet`, make sure that your label has the same format as my label file.
+   1. If you want to change the file/dir name under `assets`, please make sure to change the corresponding config in `assets` attribute inside `assets/conf.json`. 
+2. If you want to use your own model for **image classification**, please either change `channel`, `width` and `height` inside `assets/conf.json` to your own input and change `num_classes` to your own classes, or override these attributes when sending `CLIENT_TRAIN` request.
+3. If you want to use your own model for tasks other than image classification, you may need to write your own TFLite trainer and tester. Please refer to [TFLite](https://www.tensorflow.org/lite/api_docs) for further development guide. You may also need to change `channel`, `width` and `height` inside `assets/conf.json` to your own input and change or remove `num_classes`.
 
-### Prerequisites
-
-* The **[Android Studio](https://developer.android.com/studio/index.html)**
-  IDE (Android Studio 2021.2.1 or newer). This sample has been tested on Android
-  Studio Chipmunk.
-
-* A physical Android device with a minimum OS version of SDK 23 (Android 6.0 -
-  Marshmallow) with developer mode enabled. The process of enabling developer
-  mode may vary by device.
-
-### Building
-
-* Open Android Studio. From the Welcome screen, select Open an existing Android
-  Studio project.
-
-* From the Open File or Project window that appears, navigate to and select the
-  tensorflow-lite/examples/model_personalization/android directory. Click OK.
-
-* If it asks you to do a Gradle Sync, click OK.
-
-* With your Android device connected to your computer and developer mode
-  enabled, click on the green Run arrow in Android Studio.
-
-### Models used
-
-Downloading, extraction, and placing the models into the assets folder is
-managed automatically by the download.gradle file.
-
-### Generate your model
-
-To generate or customize your model you can read [here](../README.md).
+----
+If you need any other help, feel free to contact FedScale team or the developer [website](https://continue-revolution.github.io) [email](mailto:continuerevolution@gmail.com) of this app.

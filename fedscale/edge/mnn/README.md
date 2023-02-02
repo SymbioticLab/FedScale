@@ -1,4 +1,4 @@
-# Android Sample App
+# Android MNN Sample App
 
 This directory contains minimum files modified from [MNN Android Demo](https://github.com/alibaba/MNN/tree/master/project/android/demo). The training and testing will be conducted by MNN C++ backend, while the task execution and communication with server will be managed by Java. The sample has been tested upon image classification with a simple linear model and a small subset of [ImageNet-MINI](https://www.kaggle.com/datasets/ifigotin/imagenetmini-1000). This documentation contains a step-by-step tutorial on how to download, build and config this app on your own device, and modify this app for your own implementation and deployment.
 
@@ -25,7 +25,7 @@ This directory contains minimum files modified from [MNN Android Demo](https://g
 1. ssh to your own server and run
 ```
 cd fedscale/cloud/aggregation/android
-python3 android_aggregator.py --experiment_mode=mobile --num_participants=1 --model=linear
+python3 aggregator_mnn.py --experiment_mode=mobile --num_participants=1 --model=linear
 ```
 2. Change aggregator IP address inside `assets/conf.json` and click `Run` inside Android Studio.
 

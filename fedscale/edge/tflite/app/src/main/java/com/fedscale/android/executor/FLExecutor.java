@@ -31,7 +31,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,7 +44,6 @@ import java.util.Queue;
  * Server-client communication will be handled in JAVA.
  */
 public class FLExecutor extends AppCompatActivity {
-    // TODO: 3. Test client with cloud
     private JSONObject config;
 
     private String mExecutorID;
@@ -77,6 +75,13 @@ public class FLExecutor extends AppCompatActivity {
         });
     }
 
+    /**
+     *
+     * Initialize executor ID.
+     *
+     * @param username Username in String.
+     * @return HMAC-SHA256 hash of username.
+     */
     private String initExecutorId(String username) {
         long currTime = System.currentTimeMillis();
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
@@ -207,7 +212,6 @@ public class FLExecutor extends AppCompatActivity {
         Backend backend = new TFLiteBackend();
         Map<String, Object> trainResult = backend.MLTrain(
                 getCacheDir().toString(),
-//                this.currentModel,
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
@@ -246,7 +250,6 @@ public class FLExecutor extends AppCompatActivity {
         Backend backend = new TFLiteBackend();
         Map<String, Object> testResult = backend.MLTest(
                 getCacheDir().toString(),
-//                this.currentModel,
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("testing_data"),
                 newTestingConf);
