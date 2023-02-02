@@ -12,6 +12,7 @@ Welcome to fedscale's documentation!
 
    fedscale.cloud.aggregation.rst
    fedscale.cloud.execution.rst
+   fedscale.edge.execution.rst
 
 Indices and tables
 ==================
