@@ -2,7 +2,7 @@
   "username": "conrevo",
   "aggregator": {
     "ip": "130.127.133.228",
-    "port": 29501
+    "port": 29500
   },
   "executor_info": {
     "size": [32, 32, 32, 32, 32, 32, 32, 32, 32, 32]

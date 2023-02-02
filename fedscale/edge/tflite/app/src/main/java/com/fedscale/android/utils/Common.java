@@ -1,7 +1,6 @@
 package com.fedscale.android.utils;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import java.io.ByteArrayInputStream;
@@ -10,10 +9,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.FloatBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import com.google.common.io.Files;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Const string representing status and tools for file operations.
@@ -37,7 +45,7 @@ public class Common {
      * @throws IOException
      */
     public static String readStringFromFile(String filename) throws IOException {
-        return Files.toString(new File(filename), Charset.forName("UTF-8"));
+        return Files.toString(new File(filename), StandardCharsets.UTF_8);
     }
 
     /**
@@ -61,7 +69,7 @@ public class Common {
      * @throws IOException
      */
     public static void writeString2File(String str, String outFile) throws IOException {
-        InputStream is = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
         inputStream2File(is, outFile);
     }
 
@@ -111,12 +119,12 @@ public class Common {
             outDir.mkdir();
         }
         String[] assets = context.getAssets().list(assetsDir);
-        for (int i = 0; i < assets.length; ++i) {
-            String inPath = assetsDir + "/" + assets[i];
+        for (String asset : assets) {
+            String inPath = assetsDir + "/" + asset;
             if (assetsDir.equals("")) {
-                inPath = assets[i];
+                inPath = asset;
             }
-            String outPath = outDir + "/" + assets[i];
+            String outPath = outDir + "/" + asset;
             String[] subAssets = context.getAssets().list(inPath);
             if (subAssets.length == 0) {
                 // copy file
@@ -126,6 +134,51 @@ public class Common {
                 copyDir(context, inPath, new File(outPath));
             }
         }
+    }
+
+    public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
+        Map<String, Object> retMap = new HashMap<>();
+
+        if(json != JSONObject.NULL) {
+            retMap = toMap(json);
+        }
+        return retMap;
+    }
+
+    public static Map<String, Object> toMap(JSONObject object) throws JSONException {
+        Map<String, Object> map = new HashMap<>();
+
+        Iterator<String> keysItr = object.keys();
+        while(keysItr.hasNext()) {
+            String key = keysItr.next();
+            Object value = object.get(key);
+
+            if(value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+
+            else if(value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            map.put(key, value);
+        }
+        return map;
+    }
+
+    public static List<Object> toList(JSONArray array) throws JSONException {
+        List<Object> list = new ArrayList<>();
+        for(int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if(value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+
+            else if(value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            list.add(value);
+        }
+        return list;
     }
 
     /**

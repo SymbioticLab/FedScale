@@ -1,9 +1,9 @@
-import json
+import logging
 import numpy as np
 
 import fedscale.cloud.config_parser as parser
 from fedscale.cloud.aggregation.aggregator import Aggregator
-from fedscale.cloud.internal.tensorflow_model_adapter import TensorflowModelAdapter
+from fedscale.cloud.internal.tflite_model_adapter import TFLiteModelAdapter
 from fedscale.utils.models.tflite_model_provider import *
 
 
@@ -23,7 +23,7 @@ class TFLiteAggregator(Aggregator):
         """
         Load the model architecture and convert to TFLite.
         """
-        self.model_wrapper = TensorflowModelAdapter(
+        self.model_wrapper = TFLiteModelAdapter(
             build_simple_linear(self.args))
         self.model_weights = self.model_wrapper.get_weights()
         self.tflite_model = convert_and_save(
@@ -53,14 +53,14 @@ class TFLiteAggregator(Aggregator):
         Returns:
             string, bool, or bytes: The deserialized response object from executor.
         """
-        data = json.loads(responses)
+        data = super().deserialize_response(responses)
         if "update_weight" in data:
             path = f'cache/{data["client_id"]}.ckpt'
             with open(path, 'wb') as model_file:
                 model_file.write(data["update_weight"])
             restored_tensors = [
                 np.asarray(tf.raw_ops.Restore(file_pattern=path, tensor_name=var.name,
-                                              dt=var.dtype, name='restore')) for var in self.model_wrapper.get_model().layers if var.trainable]
+                                              dt=var.dtype, name='restore')) for var in self.model_wrapper.get_model().weights if var.trainable]
             os.remove(path)
             data["update_weight"] = restored_tensors
         return data
@@ -76,10 +76,13 @@ class TFLiteAggregator(Aggregator):
         Returns:
             bytes: The serialized response object to server.
         """
-        if responses == self.model_wrapper.get_weights():
+        if type(responses) is list:
+            tmp = [np.array_equal(a, b) for a, b in zip(
+                responses, self.model_wrapper.get_weights())]
+            logging.info(f"Serializing {responses}, original weights {self.model_wrapper.get_weights()}, check type - {type(responses) is list}, length - {len(responses) > 0}, equal - {tmp}")
+        if type(responses) is list:
             responses = self.tflite_model
-        data = json.dumps(responses)
-        return data.encode('utf-8')
+        return super().serialize_response(responses)
 
 
 if __name__ == "__main__":

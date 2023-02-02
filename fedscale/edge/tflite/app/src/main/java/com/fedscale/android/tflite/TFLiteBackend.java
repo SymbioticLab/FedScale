@@ -40,7 +40,7 @@ public class TFLiteBackend implements Backend {
     @Override
     public Map<String, Object> MLTrain(
             String directory,
-            ByteBuffer model,
+            String model,
             JSONObject trainingDataConf,
             JSONObject trainingConf) throws JSONException, IOException {
         final String trainImagesFolder = directory + "/" + trainingDataConf.getString("data" ) + "/";
@@ -80,7 +80,7 @@ public class TFLiteBackend implements Backend {
 
         Interpreter.Options options = new Interpreter.Options();
         options.setNumThreads(trainNumWorkers);
-        Interpreter interpreter = new Interpreter(model, options);
+        Interpreter interpreter = new Interpreter(new File(directory + "/" + model), options);
 
         for (int epoch = 0; epoch < trainEpochs; ++epoch) {
             for (int batchIdx = 0; batchIdx < trainIterations; ++batchIdx) {
@@ -132,7 +132,7 @@ public class TFLiteBackend implements Backend {
     @Override
     public Map<String, Object> MLTest(
             String directory,
-            ByteBuffer model,
+            String model,
             JSONObject testingDataConf,
             JSONObject testingConf) throws JSONException, IOException {
         final String testImagesFolder = directory + "/" + testingDataConf.getString("data" ) + "/";
@@ -162,7 +162,7 @@ public class TFLiteBackend implements Backend {
 
         Interpreter.Options options = new Interpreter.Options();
         options.setNumThreads(testNumWorkers);
-        Interpreter interpreter = new Interpreter(model, options);
+        Interpreter interpreter = new Interpreter(new File(directory + "/" + model), options);
 
         float testLoss = 0;
         int correctTop1 = 0;

@@ -76,7 +76,7 @@ class MNNAggregator(Aggregator):
         Returns:
             bytes: The serialized response object to server.
         """
-        if type(responses) is list and responses == self.model_wrapper.get_weights():
+        if type(responses) is list and all([np.array_equal(a, b) for a, b in zip(responses, self.model_wrapper.get_weights())]):
             responses = self.mnn_json
         data = json.dumps(responses)
         return data.encode('utf-8')

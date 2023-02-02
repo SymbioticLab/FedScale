@@ -16,9 +16,11 @@ import com.fedscale.android.tflite.TFLiteBackend;
 import com.fedscale.android.utils.ClientConnections;
 import com.fedscale.android.utils.Common;
 
+import net.razorvine.pickle.Pickler;
+import net.razorvine.pickle.Unpickler;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.tensorflow.lite.support.common.FileUtil;
 
 import io.grpc.executor.CompleteRequest;
 import io.grpc.executor.PingRequest;
@@ -26,11 +28,10 @@ import io.grpc.executor.RegisterRequest;
 import io.grpc.executor.ServerResponse;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -161,10 +162,9 @@ public class FLExecutor extends AppCompatActivity {
      * @param responses Serialized response from server.
      * @return Deserialized response string from server.
      */
-    private String deserializeResponse(ByteString responses) throws IOException {
-        String res = responses.toString("UTF-8");
-        Common.largeLog("deserialize", res);
-        return res;
+    private Object deserializeResponse(ByteString responses) throws IOException {
+        Unpickler unpickler = new Unpickler();
+        return unpickler.loads(responses.toByteArray());
     }
 
     /**
@@ -175,15 +175,8 @@ public class FLExecutor extends AppCompatActivity {
      */
     private ByteString serializeResponse(Map<String, Object> responses) throws IOException {
         Common.largeLog("serialize", responses.toString());
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(byteOut);
-        out.writeObject(responses);
-        return ByteString.copyFrom(byteOut.toByteArray());
-    }
-
-    private ByteString serializeResponse(JSONObject responses) throws IOException {
-        Common.largeLog("serialize", responses.toString());
-        return ByteString.copyFrom(responses.toString().getBytes(StandardCharsets.UTF_8));
+        Pickler pickler = new Pickler();
+        return ByteString.copyFrom(pickler.dumps(responses));
     }
 
     /**
@@ -191,15 +184,15 @@ public class FLExecutor extends AppCompatActivity {
      *
      * @param model The broadcast global model config.
      */
-    public void FLUpdateModel(ByteString model) {
+    public void FLUpdateModel(byte[] model) throws JSONException, IOException {
         this.round++;
         this.setText(this.mExecuteStatus, Common.UPDATE_MODEL);
         this.setText(this.mUserId, this.mExecutorID + ": Round " + this.round);
-//        InputStream is = new ByteArrayInputStream(model.toByteArray());
-//        final String fileName = this.config.getJSONObject("model_conf").getString("path");
-//        final String modelPath = getCacheDir() + "/" + fileName;
-//        Common.inputStream2File(is, modelPath);
-        this.currentModel = model.asReadOnlyByteBuffer();
+        InputStream is = new ByteArrayInputStream(model);
+        final String fileName = this.config.getJSONObject("model_conf").getString("path");
+        final String modelPath = getCacheDir() + "/" + fileName;
+        Common.inputStream2File(is, modelPath);
+        this.currentModel = ByteBuffer.wrap(model).order(ByteOrder.nativeOrder());
     }
 
     /**
@@ -208,7 +201,7 @@ public class FLExecutor extends AppCompatActivity {
      * @param config The client training config.
      * @return The client id and train result.
      */
-    public Map<String, Object> FLTrain(String config) throws Exception {
+    public Map<String, Object> FLTrain(Map<String, Object> config) throws Exception {
         this.setText(this.mExecuteStatus, Common.CLIENT_TRAIN);
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
@@ -216,10 +209,10 @@ public class FLExecutor extends AppCompatActivity {
         Backend backend = new TFLiteBackend();
         Map<String, Object> trainResult = backend.MLTrain(
                 getCacheDir().toString(),
-                this.currentModel,
+//                this.currentModel,
+                this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
-        Common.largeLog("[TRAIN]", trainResult.toString());
         CompleteRequest request = CompleteRequest.newBuilder()
                 .setClientId(this.mExecutorID)
                 .setExecutorId(this.mExecutorID)
@@ -247,7 +240,7 @@ public class FLExecutor extends AppCompatActivity {
      *
      * @param config The client testing config.
      */
-    public void FLTest(String config) throws Exception {
+    public void FLTest(Map<String, Object> config) throws Exception {
         this.setText(this.mExecuteStatus, Common.MODEL_TEST);
         JSONObject newTestingConf = this.overrideConf(
                 this.config.getJSONObject("testing_conf"),
@@ -255,13 +248,13 @@ public class FLExecutor extends AppCompatActivity {
         Backend backend = new TFLiteBackend();
         Map<String, Object> testResult = backend.MLTest(
                 getCacheDir().toString(),
-                this.currentModel,
+//                this.currentModel,
+                this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("testing_data"),
                 newTestingConf);
         Map<String, Object> testRes = new HashMap<>();
         testRes.put("executorId", this.mExecutorID);
         testRes.put("results", testResult);
-        Common.largeLog("[TEST]", testRes.toString());
         CompleteRequest request = CompleteRequest.newBuilder()
                 .setClientId(this.mExecutorID)
                 .setExecutorId(this.mExecutorID)
@@ -299,9 +292,8 @@ public class FLExecutor extends AppCompatActivity {
      *
      * @return Return the statistics of training dataset.
      */
-    private JSONObject reportExecutorInfoHandler() throws JSONException {
-        JSONObject executorInfo = this.config.getJSONObject("executor_info");
-        return executorInfo;
+    private Map<String, Object> reportExecutorInfoHandler() throws JSONException {
+        return Common.jsonToMap(this.config.getJSONObject("executor_info"));
     }
 
     // No need for updateModelHandler
@@ -315,7 +307,7 @@ public class FLExecutor extends AppCompatActivity {
      * @param newConf The server specified client runtime config.
      * @return The JSONObject of the updated client runtime config.
      */
-    private JSONObject overrideConf(JSONObject oldConfJSON, String newConf) throws JSONException {
+    private JSONObject overrideConf(JSONObject oldConfJSON, Map<String, Object> newConf) throws JSONException {
         JSONObject newConfJSON = new JSONObject(newConf);
         if (newConfJSON.has("client_id")) {
             oldConfJSON.put("client_id", newConfJSON.getString("client_id"));
@@ -355,6 +347,8 @@ public class FLExecutor extends AppCompatActivity {
                 this.dispatchWorkerEvents(response);
                 break;
             } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println(e);
                 Log.w(
                         Common.TAG,
                         String.format("Failed to connect to aggregator %s:%d. Will retry in 5 sec.",
@@ -401,8 +395,8 @@ public class FLExecutor extends AppCompatActivity {
                 String currentEvent = request.getEvent();
                 Log.i(Common.TAG, "Handling EVENT " + currentEvent);
                 if (currentEvent.equals(Common.CLIENT_TRAIN)) {
-                    String trainConfigStr = this.deserializeResponse(request.getMeta());
-                    Map<String, Object> trainResult = this.FLTrain(trainConfigStr);
+                    Map<String, Object> trainResult = this.FLTrain(
+                            (Map<String, Object>) this.deserializeResponse(request.getMeta()));
                     CompleteRequest cRequest = CompleteRequest.newBuilder()
                             .setClientId(this.mExecutorID)
                             .setExecutorId(this.mExecutorID)
@@ -427,9 +421,9 @@ public class FLExecutor extends AppCompatActivity {
                         }
                     }
                 } else if (currentEvent.equals(Common.MODEL_TEST)) {
-                    this.FLTest(this.deserializeResponse(request.getMeta()));
+                    this.FLTest((Map<String, Object>)this.deserializeResponse(request.getMeta()));
                 } else if (currentEvent.equals(Common.UPDATE_MODEL)) {
-                    this.FLUpdateModel(request.getData());
+                    this.FLUpdateModel((byte[])this.deserializeResponse(request.getData()));
                 } else if (currentEvent.equals(Common.SHUT_DOWN)) {
                     this.FLStop();
                 }

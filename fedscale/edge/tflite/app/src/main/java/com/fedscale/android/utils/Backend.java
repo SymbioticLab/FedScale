@@ -22,7 +22,7 @@ public interface Backend {
      */
     Map<String, Object> MLTrain(
             String directory,
-            ByteBuffer model,
+            String model,
             JSONObject trainingDataConf,
             JSONObject trainingConf) throws JSONException, IOException;
 
@@ -37,7 +37,7 @@ public interface Backend {
      */
     Map<String, Object> MLTest(
             String directory,
-            ByteBuffer model,
+            String model,
             JSONObject testingDataConf,
             JSONObject testingConf) throws JSONException, IOException;
 }
