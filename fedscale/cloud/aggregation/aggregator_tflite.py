@@ -25,9 +25,9 @@ class TFLiteAggregator(Aggregator):
         """
         self.model_wrapper = TFLiteModelAdapter(
             build_simple_linear(self.args))
-        self.model_weights = self.model_wrapper.get_weights()
         self.tflite_model = convert_and_save(
             TFLiteModel(self.model_wrapper.get_model()))
+        self.model_weights = self.model_wrapper.get_weights()
 
     def update_weight_aggregation(self, update_weights):
         """
@@ -80,7 +80,6 @@ class TFLiteAggregator(Aggregator):
             tmp = [np.array_equal(a, b) for a, b in zip(
                 responses, self.model_wrapper.get_weights())]
             logging.info(f"Serializing {responses}, original weights {self.model_wrapper.get_weights()}, check type - {type(responses) is list}, length - {len(responses) > 0}, equal - {tmp}")
-        if type(responses) is list:
             responses = self.tflite_model
         return super().serialize_response(responses)
 
