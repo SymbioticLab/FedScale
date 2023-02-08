@@ -51,7 +51,13 @@ Comments in our example will help you quickly understand how to specify these pa
 
 ## Dashboard
 
-We have integrated Tensorboad for the visualization of experiment results. To track the experiment with ```[log_path]``` (e.g., ```./FedScale/benchmark/logs/cifar10/0209_141336```), please try ```tensorboard --logdir=[log_path] --bind_all```, and all the results will be available at: ```http://[ip_of_coordinator]:6006/```.
+### Tensorboard
+
+We have integrated Tensorboard for the visualization of experiment results. To track the experiment with ```[log_path]``` (e.g., ```./FedScale/benchmark/logs/cifar10/0209_141336```), please try ```tensorboard --logdir=[log_path] --bind_all```, and all the results will be available at: ```http://[ip_of_coordinator]:6006/```.
+
+### WandB
+
+We also support WandB Dashboard for job parameter logging, the visualization of training/testing results, system metrics collection, and model weights checkpointing. To use WandB, add ```wandb_token: "YOUR_WANDB_TOKEN"``` under ```job_conf``` of the job configs. All the metrics and experiment results will be uploaded to the WandB account connected with your token. To enable model weights checkpointing, add ```save_checkpoint: True``` under ```job_conf``` of your job configs.
 
 ## Logs and Metrics
 
