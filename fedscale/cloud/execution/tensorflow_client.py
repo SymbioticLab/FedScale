@@ -83,6 +83,9 @@ class TensorflowClient(ClientBase):
         for key, value in results.items():
             if key != 'row_count':
                 results[key] = results['row_count'] * value
+        # transform results to unified form
+        results['top_1'] = results['accuracy']
+        results['test_loss'] = results['loss']
         results['test_len'] = results['row_count']
         return results
 
