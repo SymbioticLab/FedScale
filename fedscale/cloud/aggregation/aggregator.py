@@ -376,14 +376,15 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         and communication environment, and monitoring the grpc message.
         """
         self.setup_env()
+        self.client_profiles = self.load_client_profile(
+            file_path=self.args.device_conf_file)
+            
         self.init_control_communication()
         self.init_data_communication()
 
         self.init_model()
         self.model_update_size = sys.getsizeof(
             pickle.dumps(self.model_wrapper)) / 1024.0 * 8.  # kbits
-        self.client_profiles = self.load_client_profile(
-            file_path=self.args.device_conf_file)
 
         self.event_monitor()
         self.stop()
@@ -543,7 +544,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         if self.round >= self.args.rounds:
             self.broadcast_aggregator_events(commons.SHUT_DOWN)
-        elif self.round % self.args.eval_interval == 0:
+        elif self.round % self.args.eval_interval == 0 or self.round == 1:
             self.broadcast_aggregator_events(commons.UPDATE_MODEL)
             self.broadcast_aggregator_events(commons.MODEL_TEST)
         else:

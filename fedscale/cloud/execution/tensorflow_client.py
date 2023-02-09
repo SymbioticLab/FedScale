@@ -79,10 +79,13 @@ class TensorflowClient(ClientBase):
         """
         tf_dataset = self._convert_np_to_tf_dataset(client_data)
         results = model.evaluate(tf_dataset, batch_size=conf.batch_size,
-                                 steps=len(client_data.dataset)/conf.batch_size, return_dict=True, verbose=1)
+                                 steps=len(client_data.dataset)/conf.batch_size, return_dict=True, verbose=0)
         for key, value in results.items():
             if key != 'row_count':
                 results[key] = results['row_count'] * value
+        # transform results to unified form
+        results['top_1'] = results['accuracy']
+        results['test_loss'] = results['loss']
         results['test_len'] = results['row_count']
         return results
 
