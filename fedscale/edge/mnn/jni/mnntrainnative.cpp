@@ -187,7 +187,7 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
     StringBuffer s;
     Writer<StringBuffer> writer(s);
     writer.StartObject();
-    writer.Key("clientId");
+    writer.Key("client_id");
     writer.String(clientId.c_str());
     writer.Key("moving_loss");
     writer.Double(epochTrainLoss);

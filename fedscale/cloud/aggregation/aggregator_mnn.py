@@ -4,9 +4,10 @@ import fedscale.cloud.config_parser as parser
 from fedscale.cloud.aggregation.aggregator import Aggregator
 from fedscale.utils.models.simple.linear_model import LinearModel
 from fedscale.utils.models.mnn_convert import *
+from fedscale.cloud.internal.torch_model_adapter import TorchModelAdapter
 
 
-class Android_Aggregator(Aggregator):
+class MNNAggregator(Aggregator):
     """This aggregator collects training/testing feedbacks from Android MNN APPs.
 
     Args:
@@ -27,14 +28,14 @@ class Android_Aggregator(Aggregator):
         NOTE: MNN does not support dropout.
         """
         if self.args.model == 'linear':
-            self.model = LinearModel()
-            self.model_weights = self.model.state_dict()
+            self.model_wrapper = TorchModelAdapter(LinearModel())
+            self.model_weights = self.model_wrapper.get_weights()
         else:
             super().init_model()
-        self.mnn_json = torch_to_mnn(self.model, self.input_shape, True)
-        self.keymap_mnn2torch = init_keymap(self.model_weights, self.mnn_json)
+        self.mnn_json = torch_to_mnn(self.model_wrapper.get_model(), self.input_shape, True)
+        self.keymap_mnn2torch = init_keymap(self.model_wrapper.get_model().state_dict(), self.mnn_json)
 
-    def round_weight_handler(self, last_model):
+    def update_weight_aggregation(self, update_weights):
         """
         Update model when the round completes.
         Then convert new model to mnn json.
@@ -42,9 +43,9 @@ class Android_Aggregator(Aggregator):
         Args:
             last_model (list): A list of global model weight in last round.
         """
-        super().round_weight_handler(last_model)
-        if self.round > 1:
-            self.mnn_json = torch_to_mnn(self.model, self.input_shape)
+        super().update_weight_aggregation(update_weights)
+        if self.model_in_update == self.tasks_round:
+            self.mnn_json = torch_to_mnn(self.model_wrapper.get_model(), self.input_shape)
 
     def deserialize_response(self, responses):
         """
@@ -75,12 +76,12 @@ class Android_Aggregator(Aggregator):
         Returns:
             bytes: The serialized response object to server.
         """
-        if responses == self.model:
+        if type(responses) is list and all([np.array_equal(a, b) for a, b in zip(responses, self.model_wrapper.get_weights())]):
             responses = self.mnn_json
         data = json.dumps(responses)
         return data.encode('utf-8')
 
 
 if __name__ == "__main__":
-    aggregator = Android_Aggregator(parser.args)
+    aggregator = MNNAggregator(parser.args)
     aggregator.run()

@@ -1,0 +1,8 @@
+assets/*train*
+assets/TrainSet
+assets/*test*
+assets/TestSet
+assets/*tflite*
+.idea
+.gradle
+app/build
