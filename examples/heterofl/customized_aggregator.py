@@ -46,7 +46,7 @@ class Customized_Aggregator(Aggregator):
         top_k_index = random.sample(sortedWorkersByCompletion, k=num_clients_to_collect)
         clients_to_run = [sampledClientsReal[k] for k in top_k_index]
 
-        dummy_clients = [sampledClientsReal[k] for k in sortedWorkersByCompletion[num_clients_to_collect:]]
+        stragglers = [sampledClientsReal[k] for k in sortedWorkersByCompletion[num_clients_to_collect:]]
         round_duration = completionTimes[top_k_index[-1]]
         completionTimes.sort()
 

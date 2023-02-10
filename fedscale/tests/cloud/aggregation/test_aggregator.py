@@ -17,7 +17,7 @@ class MockAggregator(Aggregator):
 
 
 def multiply_weights(weights, factor):
-    return [weights_group * factor for weights_group in weights]
+    return {"update_weight": [weights_group * factor for weights_group in weights]}
 
 
 class TestAggregator:
