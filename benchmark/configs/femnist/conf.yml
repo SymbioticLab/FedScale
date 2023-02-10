@@ -48,4 +48,5 @@ job_conf:
     - batch_size: 20
     - test_bsz: 20
     - use_cuda: True
+    - save_checkpoint: False
 

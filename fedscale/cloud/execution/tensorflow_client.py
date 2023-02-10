@@ -54,7 +54,7 @@ class TensorflowClient(ClientBase):
         client_id = conf.client_id
         logging.info(f"Start to train (CLIENT: {client_id}) ...")
         tf_dataset = self._convert_np_to_tf_dataset(client_data).take(conf.local_steps)
-        history = model.fit(tf_dataset, batch_size=conf.batch_size, verbose=1)
+        history = model.fit(tf_dataset, batch_size=conf.batch_size, verbose=0)
 
         # Report the training results
         results = {'client_id': client_id,
@@ -77,11 +77,15 @@ class TensorflowClient(ClientBase):
         :param conf: job config
         :return: testing results
         """
-        results = model.evaluate(self._convert_np_to_tf_dataset(client_data), batch_size=conf.batch_size,
-                                 return_dict=True)
+        tf_dataset = self._convert_np_to_tf_dataset(client_data)
+        results = model.evaluate(tf_dataset, batch_size=conf.batch_size,
+                                 steps=len(client_data.dataset)/conf.batch_size, return_dict=True, verbose=0)
         for key, value in results.items():
             if key != 'row_count':
                 results[key] = results['row_count'] * value
+        # transform results to unified form
+        results['top_1'] = results['accuracy']
+        results['test_loss'] = results['loss']
         results['test_len'] = results['row_count']
         return results
 

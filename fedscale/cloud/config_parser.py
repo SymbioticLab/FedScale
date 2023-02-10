@@ -6,6 +6,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--job_name', type=str, default='demo_job')
 parser.add_argument('--log_path', type=str, default='./',
                     help="default path is ../log")
+parser.add_argument('--wandb_token', type=str, default="",
+                    help="API key for wandb as login credentials")
 
 # The basic configuration of the cluster
 parser.add_argument('--ps_ip', type=str, default='127.0.0.1')
@@ -54,6 +56,7 @@ parser.add_argument('--blacklist_max_len', type=float, default=0.3)
 parser.add_argument('--embedding_file', type=str,
                     default='glove.840B.300d.txt')
 parser.add_argument('--input_shape', type=int, nargs='+', default=[1, 3, 28, 28])
+parser.add_argument('--save_checkpoint', type=bool, default=False)
 
 
 # The configuration of different hyper-parameters for training

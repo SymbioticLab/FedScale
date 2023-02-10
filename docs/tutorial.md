@@ -73,7 +73,9 @@ You can find the job logging `job_name` under the path `log_path` specified in t
 cat job_name_logging |grep 'Training loss'
 cat job_name_logging |grep 'FL Testing'
 ```
-You can also use [Tensorboard](../fedscale/cloud/README.md#experiment-dashboard) to better visualize the progress.
+
+You can also use **Tensorboard** or **WandB** to better visualize the progress, please refer to [Dashboard Tutorial](../fedscale/cloud/README.md#dashboard) for more details.
+
 
 ## K8S/Docker Deployment
 We also support deploying FL experiments using k8s/docker, please follow instructions in  **[Containerized FedScale Tutorial](../docker/README.md)**.

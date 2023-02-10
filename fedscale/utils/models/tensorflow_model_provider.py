@@ -28,7 +28,7 @@ def build_resnet50(args):
     optimizer = tf.keras.optimizers.SGD(learning_rate=args.learning_rate, momentum=0.9,
                                         nesterov=False, name='SGD')
     model.compile(optimizer=optimizer, loss='categorical_crossentropy',
-                  metrics=['accuracy', RowCount()])
+                  metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=5, name="top_5"), RowCount()])
     return model
 
 
@@ -47,7 +47,7 @@ def build_mobilenet_v3_small(args):
     optimizer = tf.keras.optimizers.SGD(learning_rate=args.learning_rate, momentum=0.9,
                                         nesterov=False, name='SGD')
     model.compile(optimizer=optimizer, loss='categorical_crossentropy',
-                  metrics=['accuracy', RowCount()])
+                  metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=5, name="top_5"), RowCount()])
     return model
 
 

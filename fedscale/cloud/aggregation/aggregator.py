@@ -2,6 +2,7 @@
 import collections
 import copy
 import math
+import os
 import pickle
 import random
 import threading
@@ -11,6 +12,8 @@ from concurrent import futures
 import grpc
 import numpy as np
 import torch
+import wandb
+from torch.utils.tensorboard import SummaryWriter
 
 import fedscale.cloud.channels.job_api_pb2_grpc as job_api_pb2_grpc
 import fedscale.cloud.logger.aggregator_logging as logger
@@ -57,6 +60,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.update_lock = threading.Lock()
         # all weights including bias/#_batch_tracked (e.g., state_dict)
         self.model_weights = None
+        self.temp_model_path = os.path.join(
+            logger.logDir, 'model_'+str(args.this_rank)+".npy")
+        self.last_saved_round = 0
 
         # ======== channels ========
         self.connection_timeout = self.args.connection_timeout
@@ -99,6 +105,28 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                                 'gradient_policy': args.gradient_policy, 'task': args.task,
                                 'perf': collections.OrderedDict()}
         self.log_writer = SummaryWriter(log_dir=logger.logDir)
+        if args.wandb_token != "":
+            os.environ['WANDB_API_KEY'] = args.wandb_token
+            self.wandb = wandb
+            if self.wandb.run is None:
+                self.wandb.init(project=f'fedscale-{args.job_name}',
+                                name=f'aggregator{args.this_rank}-{args.time_stamp}',
+                                group=f'{args.time_stamp}')
+                self.wandb.config.update({
+                    "num_participants": args.num_participants,
+                    "data_set": args.data_set,
+                    "model": args.model,
+                    "gradient_policy": args.gradient_policy,
+                    "eval_interval": args.eval_interval,
+                    "rounds": args.rounds,
+                    "batch_size": args.batch_size,
+                    "use_cuda": args.use_cuda
+                })
+            else:
+                logging.error("Warning: wandb has already been initialized")
+            # self.wandb.run.name = f'{args.job_name}-{args.time_stamp}'
+        else:
+            self.wandb = None
 
         # ======== Task specific ============
         self.init_task_context()
@@ -349,16 +377,18 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         and communication environment, and monitoring the grpc message.
         """
         self.setup_env()
+        self.client_profiles = self.load_client_profile(
+            file_path=self.args.device_conf_file)
+            
         self.init_control_communication()
         self.init_data_communication()
 
         self.init_model()
         self.model_update_size = sys.getsizeof(
             pickle.dumps(self.model_wrapper)) / 1024.0 * 8.  # kbits
-        self.client_profiles = self.load_client_profile(
-            file_path=self.args.device_conf_file)
 
         self.event_monitor()
+        self.stop()
 
     def _is_first_result_in_round(self):
         return self.model_in_update == 1
@@ -431,6 +461,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if self._is_last_result_in_round():
             self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
             self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
+
 
     def aggregate_test_result(self):
         accumulator = self.test_result_accumulator[0]
@@ -531,27 +562,47 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self.broadcast_aggregator_events(commons.START_ROUND)
 
     def log_train_result(self, avg_loss):
-        """Log training result on TensorBoard
+        """Log training result on TensorBoard and optionally WanDB
         """
         self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.round)
         self.log_writer.add_scalar(
-            'FAR/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
+            'Train/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
         self.log_writer.add_scalar(
-            'FAR/round_duration (min)', self.round_duration / 60., self.round)
+            'Train/round_duration (min)', self.round_duration / 60., self.round)
         self.log_writer.add_histogram(
-            'FAR/client_duration (min)', self.flatten_client_duration, self.round)
+            'Train/client_duration (min)', self.flatten_client_duration, self.round)
 
+        if self.wandb != None:
+            self.wandb.log({
+                'Train/round_to_loss': avg_loss,
+                'Train/round_duration (min)': self.round_duration/60.,
+                'Train/client_duration (min)': self.flatten_client_duration,
+                'Train/time_to_round (min)': self.global_virtual_clock/60.,
+            }, step=self.round)
+        
     def log_test_result(self):
-        """Log testing result on TensorBoard
+        """Log testing result on TensorBoard and optionally WanDB
         """
         self.log_writer.add_scalar(
             'Test/round_to_loss', self.testing_history['perf'][self.round]['loss'], self.round)
         self.log_writer.add_scalar(
             'Test/round_to_accuracy', self.testing_history['perf'][self.round]['top_1'], self.round)
-        self.log_writer.add_scalar('FAR/time_to_test_loss (min)', self.testing_history['perf'][self.round]['loss'],
+        self.log_writer.add_scalar('Test/time_to_test_loss (min)', self.testing_history['perf'][self.round]['loss'],
                                    self.global_virtual_clock / 60.)
-        self.log_writer.add_scalar('FAR/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
+        self.log_writer.add_scalar('Test/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
                                    self.global_virtual_clock / 60.)
+
+    def save_model(self):
+        """Save model to the wandb server if enabled
+        
+        """
+        if parser.args.save_checkpoint and self.last_saved_round < self.round:
+            self.last_saved_round = self.round
+            np.save(self.temp_model_path, self.model_weights)
+            if self.wandb != None:
+                artifact = self.wandb.Artifact(name='model_'+str(self.this_rank), type='model')
+                artifact.add_file(local_path=self.temp_model_path)
+                self.wandb.log_artifact(artifact)
 
     def deserialize_response(self, responses):
         """Deserialize the response from executor
@@ -599,7 +650,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             with open(os.path.join(logger.logDir, 'testing_perf'), 'wb') as fout:
                 pickle.dump(self.testing_history, fout)
 
+            self.save_model()
+
             if len(self.loss_accumulator):
+                logging.info("logging test result")
                 self.log_test_result()
 
             self.broadcast_events_queue.append(commons.START_ROUND)
@@ -855,6 +909,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """Stop the aggregator
         """
         logging.info(f"Terminating the aggregator ...")
+        if self.wandb != None:
+            self.wandb.finish()
         time.sleep(5)
 
 

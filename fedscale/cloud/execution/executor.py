@@ -8,6 +8,7 @@ from argparse import Namespace
 
 import numpy as np
 import torch
+import wandb
 
 import fedscale.cloud.channels.job_api_pb2 as job_api_pb2
 import fedscale.cloud.logger.executor_logging as logger
@@ -54,6 +55,18 @@ class Executor(object):
         self.received_stop_request = False
         self.event_queue = collections.deque()
 
+        if args.wandb_token != "":
+            os.environ['WANDB_API_KEY'] = args.wandb_token
+            self.wandb = wandb
+            if self.wandb.run is None:
+                self.wandb.init(project=f'fedscale-{args.job_name}',
+                                name=f'executor{args.this_rank}-{args.time_stamp}',
+                                group=f'{args.time_stamp}')
+            else:
+                logging.error("Warning: wandb has already been initialized")
+            
+        else:
+            self.wandb = None
         super(Executor, self).__init__()
 
     def setup_env(self):
@@ -226,8 +239,11 @@ class Executor(object):
     def Stop(self):
         """Stop the current executor
         """
+        logging.info(f"Terminating the executor ...")
         self.aggregator_communicator.close_sever_connection()
         self.received_stop_request = True
+        if self.wandb != None:
+            self.wandb.finish()
 
     def report_executor_info_handler(self):
         """Return the statistics of training dataset
@@ -316,7 +332,7 @@ class Executor(object):
                                      isTest=True, collate_fn=self.collate_fn)
 
         test_results = client.test(data_loader, self.model_adapter.get_model(), test_config)
-
+        self.log_test_result(test_results)
         gc.collect()
 
         return test_results
@@ -394,8 +410,21 @@ class Executor(object):
                     self.client_ping()
                 except Exception as e:
                     logging.info(f"Caught exception {e} from aggregator, terminating executor {self.this_rank} ...")
-                    break
+                    self.Stop()
 
+    
+    def log_test_result(self, test_res):
+        """Log test results to wandb server if enabled
+        """
+        acc = round(test_res["top_1"] / test_res["test_len"], 4)
+        acc_5 = round(test_res["top_5"] / test_res["test_len"], 4)
+        test_loss = test_res["test_loss"] / test_res["test_len"]
+        if self.wandb != None:
+            self.wandb.log({
+                'Test/round_to_top1_accuracy': acc,
+                'Test/round_to_top5_accuracy': acc_5,
+                'Test/round_to_loss': test_loss,
+            }, step=self.round)
 
 if __name__ == "__main__":
     executor = Executor(parser.args)
