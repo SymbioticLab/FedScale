@@ -97,10 +97,7 @@ def torch_to_mnn(model, input_shape: Tensor, is_install=False):
         input_names=input_names, output_names=output_names)
 
     # ONNX -> MNN -> JSON
-    if is_install:
-        subprocess.run(["sh", "../../../scripts/convert.sh", "--install"])
-    else:
-        subprocess.run(["sh", "../../../scripts/convert.sh"])
+    subprocess.run(["sh", "../../../scripts/convert.sh"])
 
     # load converted JSON file to mnn_json
     with open('../../cloud/aggregation/cache/model.json') as f:

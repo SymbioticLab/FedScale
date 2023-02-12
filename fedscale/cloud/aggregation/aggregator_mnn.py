@@ -78,6 +78,7 @@ class MNNAggregator(Aggregator):
         """
         if type(responses) is list:
             responses = self.mnn_json
+        responses = json.dumps(responses)
         return super().serialize_response(responses)
 
 if __name__ == "__main__":
