@@ -36,7 +36,7 @@
         android:supportsRtl="true"
         android:taskAffinity=""
         tools:ignore="AllowBackup">
-
+        <profileable android:shell="true"/>
         <activity
             android:name=".executor.FLExecutor"
             android:clearTaskOnLaunch="true"

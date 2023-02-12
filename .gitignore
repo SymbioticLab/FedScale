@@ -37,3 +37,4 @@ coqa
 .idea
 out/
 build/
+.vscode

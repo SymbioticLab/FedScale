@@ -376,6 +376,8 @@ public class FLExecutor extends AppCompatActivity {
                 this.dispatchWorkerEvents(response);
                 break;
             } catch (Exception e) {
+                e.printStackTrace();
+                Common.largeLog("Error", e.toString());
                 Log.w(
                         Common.TAG,
                         String.format("Failed to connect to aggregator %s:%d. Will retry in 5 sec.",

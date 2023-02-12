@@ -58,7 +58,7 @@ class MNNAggregator(Aggregator):
         Returns:
             string, bool, or bytes: The deserialized response object from executor.
         """
-        data = json.loads(responses.decode('utf-8'))
+        data = super().deserialize_response(responses)
         if "update_weight" in data:
             data["update_weight"] = mnn_to_torch(
                 self.keymap_mnn2torch,
@@ -76,11 +76,9 @@ class MNNAggregator(Aggregator):
         Returns:
             bytes: The serialized response object to server.
         """
-        if type(responses) is list and all([np.array_equal(a, b) for a, b in zip(responses, self.model_wrapper.get_weights())]):
+        if type(responses) is list:
             responses = self.mnn_json
-        data = json.dumps(responses)
-        return data.encode('utf-8')
-
+        return super().serialize_response(responses)
 
 if __name__ == "__main__":
     aggregator = MNNAggregator(parser.args)

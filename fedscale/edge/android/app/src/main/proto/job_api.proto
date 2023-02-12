@@ -1,0 +1,44 @@
+// GRPC definition for the communication between the aggregator and the executors.
+// After modifying this file, run
+// $ python -m grpc_tools.protoc -I../communication/ --python_out=.. --grpc_python_out=.. job_api.proto
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.executor";
+option java_outer_classname = "Executor";
+option objc_class_prefix = "EXE";
+
+package fedscale;
+
+service JobService {
+    rpc CLIENT_REGISTER (RegisterRequest) returns (ServerResponse) {}
+    rpc CLIENT_PING (PingRequest) returns (ServerResponse) {}
+    rpc CLIENT_EXECUTE_COMPLETION (CompleteRequest) returns (ServerResponse) {}
+}
+
+message ServerResponse {
+    string event = 1;
+    bytes meta = 2;
+    bytes data = 3;
+}
+
+message RegisterRequest {
+    string client_id = 1;
+    string executor_id = 2;
+    bytes executor_info = 3;
+}
+
+message PingRequest {
+    string client_id = 1;
+    string executor_id = 2;
+}
+
+message CompleteRequest {
+    string client_id = 1;
+    string executor_id = 2;
+    string event = 3;
+    bool status = 4;
+    string msg = 5;
+    string meta_result = 6;
+    bytes data_result = 7;
+}
