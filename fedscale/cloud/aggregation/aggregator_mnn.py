@@ -77,8 +77,8 @@ class MNNAggregator(Aggregator):
             bytes: The serialized response object to server.
         """
         if type(responses) is list:
-            responses = self.mnn_json
-        responses = json.dumps(responses)
+            # responses = self.mnn_json
+            responses = json.dumps(self.mnn_json)
         return super().serialize_response(responses)
 
 if __name__ == "__main__":
