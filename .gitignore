@@ -38,3 +38,7 @@ coqa
 out/
 build/
 .vscode
+fedscale/cache
+fedscale/tmp*
+fedscale/*.tflite
+fedscale/*.ckpt

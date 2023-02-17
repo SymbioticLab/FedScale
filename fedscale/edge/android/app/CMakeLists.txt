@@ -7,10 +7,10 @@ add_library(MNNTrain SHARED IMPORTED)
 add_library(MNNConvertDeps SHARED IMPORTED)
 add_library(MNNExpress SHARED IMPORTED)
 
-set_target_properties(MNN PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/libMNN.so)
-set_target_properties(MNNTrain PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/libMNNTrain.so)
-set_target_properties(MNNConvertDeps PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/libMNNConvertDeps.so)
-set_target_properties(MNNExpress PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/libMNN_Express.so)
+set_target_properties(MNN PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libMNN.so)
+set_target_properties(MNNTrain PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libMNNTrain.so)
+set_target_properties(MNNConvertDeps PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libMNNConvertDeps.so)
+set_target_properties(MNNExpress PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libMNN_Express.so)
 
 add_library(mnncore SHARED src/main/jni/mnntrainnative.cpp)
 

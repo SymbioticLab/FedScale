@@ -24,7 +24,6 @@ import net.razorvine.pickle.Unpickler;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import io.grpc.Server;
 import io.grpc.executor.CompleteRequest;
 import io.grpc.executor.PingRequest;
 import io.grpc.executor.RegisterRequest;
@@ -57,7 +56,7 @@ public class FLExecutor extends AppCompatActivity {
     private int round = 0;
     private boolean receivedStopRequest = false;
     private Queue<ServerResponse> eventQueue = new LinkedList<>();
-    private Backend backend = new MNNBackend();
+    private Backend backend;
 
     private TextView mUserId;
     private TextView mExecuteStatus;
@@ -123,23 +122,26 @@ public class FLExecutor extends AppCompatActivity {
      */
     private void initData() throws IOException {
         Log.i(Common.TAG, "Data movement starts ...");
-        Common.copyDir(getBaseContext(), "", getCacheDir());
+        Common.copyDir(getBaseContext(), "dataset", getCacheDir());
         Log.i(Common.TAG, "Data movement completes ...");
     }
 
     /**
      * Initialize variables associated to conf.json.
      */
-    private void initAsset() throws IOException, JSONException {
-        String configPath = getCacheDir() + "/conf.json";
-        String configStr = Common.readStringFromFile(configPath);
-        this.config = new JSONObject(configStr);
+    private void initAsset() throws Exception {
+        this.config = new JSONObject(Common.readFile(
+                getBaseContext().getAssets().open("conf.json")).toString());
         this.mExecutorID = this.initExecutorId(this.config.getString("username"));
         this.aggregatorIP = this.config.getJSONObject("aggregator").getString("ip");
         this.aggregatorPort = this.config.getJSONObject("aggregator").getInt("port");
         this.communicator = new ClientConnections(
                 this.aggregatorIP,
                 this.aggregatorPort);
+        final String backendName = this.config.getJSONObject("model_conf").getString("backend");
+        if (backendName.equals("tflite")) this.backend = new TFLiteBackend();
+        else if (backendName.equals("mnn")) this.backend = new MNNBackend();
+        else throw new Exception(String.format("Unsupported backend %s", backendName));
     }
 
     /**
@@ -191,18 +193,14 @@ public class FLExecutor extends AppCompatActivity {
      *
      * @param model The broadcast global model config.
      */
-    public void FLUpdateModel(Object model) throws JSONException, IOException {
+    public void FLUpdateModel(byte[] model) throws JSONException, IOException {
         this.round++;
         this.setText(this.mExecuteStatus, Common.UPDATE_MODEL);
         this.setText(this.mUserId, this.mExecutorID + ": Round " + this.round);
         final String fileName = this.config.getJSONObject("model_conf").getString("path");
         final String modelPath = getCacheDir() + "/" + fileName;
-        if (model.getClass().getName().equals("java.lang.String")) {
-            Common.writeString2File((String) model, modelPath);
-        } else {
-            InputStream is = new ByteArrayInputStream((byte[]) model);
-            Common.inputStream2File(is, modelPath);
-        }
+        InputStream is = new ByteArrayInputStream(model);
+        Common.inputStream2File(is, modelPath);
     }
 
     /**
@@ -346,7 +344,7 @@ public class FLExecutor extends AppCompatActivity {
                 String currentEvent = request.getEvent();
                 Log.i(Common.TAG, "Handling EVENT " + currentEvent);
                 if (currentEvent.equals(Common.CLIENT_TRAIN)) {
-                    this.FLUpdateModel(this.deserializeResponse(request.getData()));
+                    this.FLUpdateModel((byte[]) this.deserializeResponse(request.getData()));
                     Map<String, Object> trainResult = this.FLTrain(
                             (Map<String, Object>) this.deserializeResponse(request.getMeta()));
                     CompleteRequest cRequest = CompleteRequest.newBuilder()
@@ -360,7 +358,7 @@ public class FLExecutor extends AppCompatActivity {
                 } else if (currentEvent.equals(Common.MODEL_TEST)) {
                     this.FLTest((Map<String, Object>)this.deserializeResponse(request.getMeta()));
                 } else if (currentEvent.equals(Common.UPDATE_MODEL)) {
-                    this.FLUpdateModel(this.deserializeResponse(request.getData()));
+                    this.FLUpdateModel((byte[])this.deserializeResponse(request.getData()));
                 } else if (currentEvent.equals(Common.SHUT_DOWN)) {
                     this.FLStop();
                 }

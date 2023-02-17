@@ -37,16 +37,6 @@ public class Common {
     public static String UPLOAD_MODEL = "upload_model";
 
     /**
-     * Read file into string.
-     *
-     * @param filename The name of the file.
-     * @return The string content of the file.
-     */
-    public static String readStringFromFile(String filename) throws IOException {
-        return Files.toString(new File(filename), StandardCharsets.UTF_8);
-    }
-
-    /**
      * Copy file from asset to com.fedscale.android.
      *
      * @param context Android context.
@@ -55,17 +45,6 @@ public class Common {
      */
     public static void copyAssetResource2File(Context context, String assetsFile, String outFile) throws IOException {
         InputStream is = context.getAssets().open(assetsFile);
-        inputStream2File(is, outFile);
-    }
-
-    /**
-     * Write string content to file.
-     *
-     * @param str String content.
-     * @param outFile Destination filename.
-     */
-    public static void writeString2File(String str, String outFile) throws IOException {
-        InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
         inputStream2File(is, outFile);
     }
 
@@ -96,15 +75,15 @@ public class Common {
      * @param inputStream InputStream where to read bytes.
      * @return Bytes inside the input steam.
      */
-    public static byte[] readBytes(InputStream inputStream) throws IOException {
+    public static ByteArrayOutputStream readFile(InputStream inputStream) throws IOException {
         byte[] buffer = new byte[1024];
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         int byteCount;
         while ((byteCount = inputStream.read(buffer)) != -1) {
-            os.write(buffer, 0, byteCount);
+            outputStream.write(buffer, 0, byteCount);
         }
         inputStream.close();
-        return os.toByteArray();
+        return outputStream;
     }
 
     /**

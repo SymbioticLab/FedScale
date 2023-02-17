@@ -1,2 +1,0 @@
-rootProject.name = "Android TFLite Demo App"
-include ':app'
