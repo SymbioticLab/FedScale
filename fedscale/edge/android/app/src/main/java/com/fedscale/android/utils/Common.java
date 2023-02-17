@@ -3,20 +3,16 @@ package com.fedscale.android.utils;
 import android.content.Context;
 import android.util.Log;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.io.Files;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -118,25 +114,10 @@ public class Common {
     /**
      * Convert JSONObject to Map.
      *
-     * @param json JSONObject to be converted.
-     * @return Converted Map.
-     */
-    public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
-        Map<String, Object> retMap = new HashMap<>();
-
-        if(json != JSONObject.NULL) {
-            retMap = toMap(json);
-        }
-        return retMap;
-    }
-
-    /**
-     * Convert JSONObject to Map.
-     *
      * @param object JSONObject to be converted.
      * @return Converted Map.
      */
-    public static Map<String, Object> toMap(JSONObject object) throws JSONException {
+    public static Map<String, Object> JSON2Map(JSONObject object) throws JSONException {
         Map<String, Object> map = new HashMap<>();
 
         Iterator<String> keysItr = object.keys();
@@ -145,11 +126,11 @@ public class Common {
             Object value = object.get(key);
 
             if(value instanceof JSONArray) {
-                value = toList((JSONArray) value);
+                value = JSONArray2List((JSONArray) value);
             }
 
             else if(value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
+                value = JSON2Map((JSONObject) value);
             }
             map.put(key, value);
         }
@@ -162,16 +143,16 @@ public class Common {
      * @param array JSONArray to be converted.
      * @return Converted list.
      */
-    public static List<Object> toList(JSONArray array) throws JSONException {
+    public static List<Object> JSONArray2List(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<>();
         for(int i = 0; i < array.length(); i++) {
             Object value = array.get(i);
             if(value instanceof JSONArray) {
-                value = toList((JSONArray) value);
+                value = JSONArray2List((JSONArray) value);
             }
 
             else if(value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
+                value = JSON2Map((JSONObject) value);
             }
             list.add(value);
         }

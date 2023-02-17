@@ -364,8 +364,8 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, saved_model_dir='c
     converter.experimental_enable_resource_variables = True
     tflite_model_bytes = converter.convert()
 
-    model_file_path = os.path.join('model.tflite')
-    with open(model_file_path, 'wb') as model_file:
-        model_file.write(tflite_model_bytes)
+    # model_file_path = os.path.join('model.tflite')
+    # with open(model_file_path, 'wb') as model_file:
+    #     model_file.write(tflite_model_bytes)
 
     return tflite_model_bytes, tflite_model

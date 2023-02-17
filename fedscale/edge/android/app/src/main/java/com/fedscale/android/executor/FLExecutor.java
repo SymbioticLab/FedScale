@@ -1,5 +1,6 @@
 package com.fedscale.android.executor;
 
+import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,8 +50,6 @@ public class FLExecutor extends AppCompatActivity {
     private JSONObject config;
 
     private String mExecutorID;
-    private String aggregatorIP;
-    private int aggregatorPort;
     private ClientConnections communicator;
 
     private int round = 0;
@@ -87,7 +86,7 @@ public class FLExecutor extends AppCompatActivity {
      */
     private String initExecutorId(String username) {
         long currTime = System.currentTimeMillis();
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        ByteBuffer buffer = ByteBuffer.allocate(8);
         buffer.putLong(currTime);
         return Hashing
                 .hmacSha256(buffer.array())
@@ -133,11 +132,11 @@ public class FLExecutor extends AppCompatActivity {
         this.config = new JSONObject(Common.readFile(
                 getBaseContext().getAssets().open("conf.json")).toString());
         this.mExecutorID = this.initExecutorId(this.config.getString("username"));
-        this.aggregatorIP = this.config.getJSONObject("aggregator").getString("ip");
-        this.aggregatorPort = this.config.getJSONObject("aggregator").getInt("port");
+        String aggregatorIP = this.config.getJSONObject("aggregator").getString("ip");
+        int aggregatorPort = this.config.getJSONObject("aggregator").getInt("port");
         this.communicator = new ClientConnections(
-                this.aggregatorIP,
-                this.aggregatorPort);
+                aggregatorIP,
+                aggregatorPort);
         final String backendName = this.config.getJSONObject("model_conf").getString("backend");
         if (backendName.equals("tflite")) this.backend = new TFLiteBackend();
         else if (backendName.equals("mnn")) this.backend = new MNNBackend();
@@ -207,9 +206,8 @@ public class FLExecutor extends AppCompatActivity {
      * Load train config and data to start training on that client.
      *
      * @param config The client training config.
-     * @return The client id and train result.
      */
-    public Map<String, Object> FLTrain(Map<String, Object> config) throws Exception {
+    public void FLTrain(Map<String, Object> config) throws Exception {
         this.setText(this.mExecuteStatus, Common.CLIENT_TRAIN);
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
@@ -219,13 +217,22 @@ public class FLExecutor extends AppCompatActivity {
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
+//        CompleteRequest request = CompleteRequest.newBuilder()
+//                .setClientId(this.mExecutorID)
+//                .setExecutorId(this.mExecutorID)
+//                .setEvent(Common.CLIENT_TRAIN)
+//                .setStatus(true).build();
+//        this.sendRequest(() -> this.communicator.stub.cLIENTEXECUTECOMPLETION(request));
+//        return trainResult;
+        // TODO: It might be better to make UPLOAD_MODEL async to utilize the resource.
         CompleteRequest request = CompleteRequest.newBuilder()
                 .setClientId(this.mExecutorID)
                 .setExecutorId(this.mExecutorID)
-                .setEvent(Common.CLIENT_TRAIN)
-                .setStatus(true).build();
+                .setEvent(Common.UPLOAD_MODEL)
+                .setStatus(true)
+                .setDataResult(this.serializeResponse(trainResult))
+                .build();
         this.sendRequest(() -> this.communicator.stub.cLIENTEXECUTECOMPLETION(request));
-        return trainResult;
     }
 
     /**
@@ -271,7 +278,7 @@ public class FLExecutor extends AppCompatActivity {
      * @return Return the statistics of training dataset.
      */
     private Map<String, Object> reportExecutorInfoHandler() throws JSONException {
-        return Common.jsonToMap(this.config.getJSONObject("executor_info"));
+        return Common.JSON2Map(this.config.getJSONObject("executor_info"));
     }
 
     // No need for updateModelHandler
@@ -345,20 +352,20 @@ public class FLExecutor extends AppCompatActivity {
                 Log.i(Common.TAG, "Handling EVENT " + currentEvent);
                 if (currentEvent.equals(Common.CLIENT_TRAIN)) {
                     this.FLUpdateModel((byte[]) this.deserializeResponse(request.getData()));
-                    Map<String, Object> trainResult = this.FLTrain(
-                            (Map<String, Object>) this.deserializeResponse(request.getMeta()));
-                    CompleteRequest cRequest = CompleteRequest.newBuilder()
-                            .setClientId(this.mExecutorID)
-                            .setExecutorId(this.mExecutorID)
-                            .setEvent(Common.UPLOAD_MODEL)
-                            .setStatus(true)
-                            .setDataResult(this.serializeResponse(trainResult))
-                            .build();
-                    this.sendRequest(() -> this.communicator.stub.cLIENTEXECUTECOMPLETION(cRequest));
+                    this.FLTrain((Map<String, Object>) this.deserializeResponse(request.getMeta()));
+//                    CompleteRequest cRequest = CompleteRequest.newBuilder()
+//                            .setClientId(this.mExecutorID)
+//                            .setExecutorId(this.mExecutorID)
+//                            .setEvent(Common.UPLOAD_MODEL)
+//                            .setStatus(true)
+//                            .setDataResult(this.serializeResponse(trainResult))
+//                            .build();
+//                    this.sendRequest(() -> this.communicator.stub.cLIENTEXECUTECOMPLETION(cRequest));
                 } else if (currentEvent.equals(Common.MODEL_TEST)) {
+                    this.FLUpdateModel((byte[]) this.deserializeResponse(request.getData()));
                     this.FLTest((Map<String, Object>)this.deserializeResponse(request.getMeta()));
-                } else if (currentEvent.equals(Common.UPDATE_MODEL)) {
-                    this.FLUpdateModel((byte[])this.deserializeResponse(request.getData()));
+//                } else if (currentEvent.equals(Common.UPDATE_MODEL)) {
+//                    this.FLUpdateModel((byte[])this.deserializeResponse(request.getData()));
                 } else if (currentEvent.equals(Common.SHUT_DOWN)) {
                     this.FLStop();
                 }
@@ -402,6 +409,7 @@ public class FLExecutor extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i("OnCreate", "");
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -427,17 +435,28 @@ public class FLExecutor extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        Log.i("OnPause", "");
         super.onPause();
     }
 
     @Override
     protected void onResume() {
+        Log.i("OnResume", "");
         super.onResume();
     }
 
     @Override
+    public void onBackPressed() {
+        Log.i("onBackPressed", "");
+        Intent home = new Intent(Intent.ACTION_MAIN);
+        home.addCategory(Intent.CATEGORY_HOME);
+        startActivity(home);
+    }
+
+    @Override
     protected void onDestroy() {
-        mThread.interrupt();
+        Log.i("OnDestroy", "");
+        mThread.quitSafely();
         super.onDestroy();
     }
 }
