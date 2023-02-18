@@ -44,7 +44,7 @@ class TFLiteAggregator(Aggregator):
         super().update_weight_aggregation(update_weights)
         if self.model_in_update == self.tasks_round:
             self.tflite_model_bytes, self.tflite_model = convert_and_save(
-                self.model_wrapper.get_weights(), self.base, self.args)
+                self.model_wrapper.get_model(), self.base, self.args)
 
     def deserialize_response(self, responses):
         """
