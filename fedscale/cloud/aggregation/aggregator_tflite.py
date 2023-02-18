@@ -32,10 +32,6 @@ class TFLiteAggregator(Aggregator):
         self.model_wrapper = TFLiteModelAdapter(model)
         self.tflite_model_bytes, self.tflite_model = convert_and_save(model, self.base, self.args)
         self.model_weights = self.model_wrapper.get_weights()
-        interpreter = tf.lite.Interpreter(model_content=self.tflite_model_bytes)
-        interpreter.allocate_tensors()
-        self.tflite_restore = interpreter.get_signature_runner('restore')
-        self.tflite_weights = interpreter.get_signature_runner('weights')
 
     def update_weight_aggregation(self, update_weights):
         """
@@ -47,15 +43,8 @@ class TFLiteAggregator(Aggregator):
         """
         super().update_weight_aggregation(update_weights)
         if self.model_in_update == self.tasks_round:
-            path = f'cache/{self.tasks_round}.ckpt'
-            self.tflite_model.save(path)
-            self.tflite_restore(checkpoint_path=np.array(
-                path, dtype=np.string_))
-            interpreter = tf.lite.Interpreter(model_content=self.tflite_model_bytes)
-            interpreter.allocate_tensors()
-            logging.info(self.tflite_weights())
-            logging.info(interpreter.get_signature_runner('weights')())
-            os.remove(path)
+            self.tflite_model_bytes, self.tflite_model = convert_and_save(
+                self.model_wrapper.get_weights(), self.base, self.args)
 
     def deserialize_response(self, responses):
         """
