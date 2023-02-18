@@ -35,6 +35,7 @@ class TFLiteAggregator(Aggregator):
         interpreter = tf.lite.Interpreter(model_content=self.tflite_model_bytes)
         interpreter.allocate_tensors()
         self.tflite_restore = interpreter.get_signature_runner('restore')
+        self.tflite_weights = interpreter.get_signature_runner('weights')
 
     def update_weight_aggregation(self, update_weights):
         """
@@ -50,6 +51,10 @@ class TFLiteAggregator(Aggregator):
             self.tflite_model.save(path)
             self.tflite_restore(checkpoint_path=np.array(
                 path, dtype=np.string_))
+            interpreter = tf.lite.Interpreter(model_content=self.tflite_model_bytes)
+            interpreter.allocate_tensors()
+            logging.info(self.tflite_weights())
+            logging.info(interpreter.get_signature_runner('weights')())
             os.remove(path)
 
     def deserialize_response(self, responses):
@@ -174,10 +179,11 @@ class TFLiteAggregator(Aggregator):
             else:
                 self.add_event_handler(
                     executor_id, event, meta_result, data_result)
+            event_pop = self.individual_client_events[executor_id].popleft()
+            logging.info(f"Event {event_pop} popped from queue.")
         else:
             logging.error(
                 f"Received undefined event {event} from client {client_id}")
-        self.individual_client_events[executor_id].popleft()
         return self.CLIENT_PING(request, context)
 
 

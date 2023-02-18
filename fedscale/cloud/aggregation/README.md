@@ -41,7 +41,7 @@ cd FedScale
 source install.sh
 pip install -e .
 cd fedscale/cloud/aggregation
-python3 aggregator_tflite.py --experiment_mode mobile --num_participants 1 --num_classes 10 --input_shape 32 32 3 --engine=tensorflow --model=[linear|mobilenetv3|resnet50|mobilenetv3_finetune|resnet50_finetune]
+python3 aggregator_tflite.py --experiment_mode mobile --num_participants 1 --num_classes 10 --input_shape 32 32 3 --engine tensorflow --model [linear|mobilenetv3|resnet50|mobilenetv3_finetune|resnet50_finetune]
 ```
 and configure your android app according to the [tutorial](https://github.com/SymbioticLab/FedScale/fedscale/edge/tflite/README.md).
 
