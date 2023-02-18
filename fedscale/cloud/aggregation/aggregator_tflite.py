@@ -30,7 +30,7 @@ class TFLiteAggregator(Aggregator):
         """
         model, self.base = get_tflite_model(self.args.model, self.args)
         self.model_wrapper = TFLiteModelAdapter(model)
-        self.tflite_model_bytes, self.tflite_model = convert_and_save(model, self.base)
+        self.tflite_model_bytes, self.tflite_model = convert_and_save(model, self.base, self.args)
         self.model_weights = self.model_wrapper.get_weights()
         interpreter = tf.lite.Interpreter(model_content=self.tflite_model_bytes)
         interpreter.allocate_tensors()
