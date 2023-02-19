@@ -19,10 +19,13 @@ def build_simple_linear(args):
 
 
 def build_mobilenetv3(args):
-    model = tf.keras.applications.MobileNetV3Small(
-        input_shape=args.input_shape,
-        classes=args.num_classes,
-        weights=None)
+    model = tf.keras.Sequential([
+        tf.keras.layers.Reshape(args.input_shape),
+        tf.keras.applications.MobileNetV3Small(
+            input_shape=args.input_shape,
+            classes=args.num_classes,
+            weights=None)
+    ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
@@ -33,9 +36,12 @@ def build_mobilenetv3(args):
 
 
 def build_mobilenetv3_finetune(args):
-    base = tf.keras.applications.MobileNetV3Small(
-        input_shape=args.input_shape,
-        include_top=False)
+    base = tf.keras.Sequential([
+        tf.keras.layers.Reshape(args.input_shape), 
+        tf.keras.applications.MobileNetV3Small(
+            input_shape=args.input_shape,
+            include_top=False)
+    ])
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(128, activation='relu', name='dense_1'),
         tf.keras.layers.Dense(args.num_classes, name='dense_2'),
@@ -51,11 +57,13 @@ def build_mobilenetv3_finetune(args):
 
 
 def build_resnet50(args):
-    model = tf.keras.applications.resnet.ResNet50(
-        input_shape=args.input_shape,
-        classes=args.num_classes,
-        weights=None
-    )
+    model = tf.keras.Sequential([
+        tf.keras.layers.Reshape(args.input_shape), 
+        tf.keras.applications.resnet.ResNet50(
+            input_shape=args.input_shape,
+            classes=args.num_classes,
+            weights=None)
+    ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
@@ -66,11 +74,13 @@ def build_resnet50(args):
 
 
 def build_resnet50_finetune(args):
-    base = tf.keras.applications.resnet.ResNet50(
-        include_top=False,
-        input_shape=args.input_shape,
-        classes=args.num_classes
-    )
+    base = tf.keras.Sequential([
+        tf.keras.layers.Reshape(args.input_shape), 
+        tf.keras.applications.resnet.ResNet50(
+            include_top=False,
+            input_shape=args.input_shape,
+            classes=args.num_classes)
+    ])
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(128, activation='relu', name='dense_1'),
         tf.keras.layers.Dense(args.num_classes, name='dense_2'),
