@@ -20,8 +20,6 @@ class TFLiteAggregator(Aggregator):
     def __init__(self, args):
         super().__init__(args)
         self.tflite_model = None
-        self.tflite_model_bytes = None
-        self.tflite_restore = None
         self.base = None
 
     def init_model(self):
@@ -30,7 +28,7 @@ class TFLiteAggregator(Aggregator):
         """
         model, self.base = get_tflite_model(self.args.model, self.args)
         self.model_wrapper = TFLiteModelAdapter(model)
-        self.tflite_model_bytes, self.tflite_model = convert_and_save(model, self.base, self.args)
+        self.tflite_model = convert_and_save(model, self.base, self.args)
         self.model_weights = self.model_wrapper.get_weights()
 
     def update_weight_aggregation(self, update_weights):
@@ -43,7 +41,7 @@ class TFLiteAggregator(Aggregator):
         """
         super().update_weight_aggregation(update_weights)
         if self.model_in_update == self.tasks_round:
-            self.tflite_model_bytes, self.tflite_model = convert_and_save(
+            self.tflite_model = convert_and_save(
                 self.model_wrapper.get_model(), self.base, self.args)
 
     def deserialize_response(self, responses):
@@ -70,24 +68,38 @@ class TFLiteAggregator(Aggregator):
             os.remove(path)
             data["update_weight"] = restored_tensors
         return data
-
-    def create_client_task(self, executor_id):
-        """Issue a new client training task to specific executor
+    
+    def serialize_response(self, responses):
+        """ Serialize the response to send to server upon assigned job completion
 
         Args:
-            executorId (int): Executor Id.
+            responses (ServerResponse): Serialized response from server.
 
         Returns:
-            tuple: Training config for new task. (dictionary, PyTorch or TensorFlow module)
+            bytes: The serialized response object to server.
 
         """
-        next_client_id = self.resource_manager.get_next_task(executor_id)
-        train_config = None
-        # NOTE: model = None then the executor will load the global model broadcasted in UPDATE_MODEL
-        if next_client_id is not None:
-            config = self.get_client_conf(next_client_id)
-            train_config = {'client_id': next_client_id, 'task_config': config}
-        return train_config, self.tflite_model_bytes
+        if type(responses) is list:
+            responses = self.tflite_model
+        return super().serialize_response(responses)
+
+    # def create_client_task(self, executor_id):
+    #     """Issue a new client training task to specific executor
+
+    #     Args:
+    #         executorId (int): Executor Id.
+
+    #     Returns:
+    #         tuple: Training config for new task. (dictionary, PyTorch or TensorFlow module)
+
+    #     """
+    #     next_client_id = self.resource_manager.get_next_task(executor_id)
+    #     train_config = None
+    #     # NOTE: model = None then the executor will load the global model broadcasted in UPDATE_MODEL
+    #     if next_client_id is not None:
+    #         config = self.get_client_conf(next_client_id)
+    #         train_config = {'client_id': next_client_id, 'task_config': config}
+    #     return train_config, self.tflite_model_bytes
     
     def CLIENT_PING(self, request, context):
         """Handle client ping requests
@@ -130,7 +142,7 @@ class TFLiteAggregator(Aggregator):
                             commons.CLIENT_TRAIN)
             elif current_event == commons.MODEL_TEST:
                 response_msg = self.get_test_config(client_id)
-                response_data = self.tflite_model_bytes
+                response_data = self.tflite_model
             elif current_event == commons.SHUT_DOWN:
                 response_msg = self.get_shutdown_config(executor_id)
                 self.individual_client_events[executor_id].popleft()

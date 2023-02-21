@@ -7,14 +7,13 @@ def build_simple_linear(args):
         tf.keras.layers.Flatten(name='flatten'),
         tf.keras.layers.Dense(128, activation='relu', name='dense_1'),
         tf.keras.layers.Dense(args.num_classes, name='dense_2'),
-        tf.keras.layers.Softmax(),
     ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
             momentum=0.9,
             weight_decay=4e-5),
-        loss=tf.keras.losses.CategoricalCrossentropy())
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
     return model, None
 
 
@@ -24,74 +23,76 @@ def build_mobilenetv3(args):
         tf.keras.applications.MobileNetV3Small(
             input_shape=args.input_shape,
             classes=args.num_classes,
-            weights=None)
+            weights=None,
+            classifier_activation=None)
     ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
             momentum=0.9,
             weight_decay=4e-5),
-        loss=tf.keras.losses.CategoricalCrossentropy())
+        loss=tf.keras.losses.CategoricalCrossentropy(fron_logits=True))
     return model, None
 
 
 def build_mobilenetv3_finetune(args):
     base = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape), 
+        tf.keras.layers.Reshape(args.input_shape),
         tf.keras.applications.MobileNetV3Small(
             input_shape=args.input_shape,
             include_top=False)
     ])
     model = tf.keras.Sequential([
+        tf.keras.layers.Flatten(name='flatten'),
         tf.keras.layers.Dense(128, activation='relu', name='dense_1'),
         tf.keras.layers.Dense(args.num_classes, name='dense_2'),
-        tf.keras.layers.Softmax(),
     ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
             momentum=0.9,
             weight_decay=4e-5),
-        loss=tf.keras.losses.CategoricalCrossentropy())
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
     return model, base
 
 
 def build_resnet50(args):
     model = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape), 
+        tf.keras.layers.Reshape(args.input_shape),
         tf.keras.applications.resnet.ResNet50(
             input_shape=args.input_shape,
             classes=args.num_classes,
-            weights=None)
+            weights=None,
+            classifier_activation=None)
     ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
             momentum=0.9,
             weight_decay=4e-5),
-        loss=tf.keras.losses.CategoricalCrossentropy())
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
     return model, None
 
 
 def build_resnet50_finetune(args):
     base = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape), 
+        tf.keras.layers.Reshape(args.input_shape),
         tf.keras.applications.resnet.ResNet50(
             include_top=False,
             input_shape=args.input_shape,
             classes=args.num_classes)
     ])
     model = tf.keras.Sequential([
+        tf.keras.layers.Flatten(name='flatten'),
         tf.keras.layers.Dense(128, activation='relu', name='dense_1'),
         tf.keras.layers.Dense(args.num_classes, name='dense_2'),
-        tf.keras.layers.Softmax(),
     ])
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
             momentum=0.9,
             weight_decay=4e-5),
-        loss=tf.keras.losses.CategoricalCrossentropy())
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
     return model, base
 
 
@@ -229,36 +230,6 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
                 "checkpoint_path": checkpoint_path
             }
 
-        @tf.function(input_signature=[tf.TensorSpec(shape=[], dtype=tf.string)])
-        def restore(self, checkpoint_path):
-            """Restores the serialized trainable weights from the given checkpoint file.
-
-            Args:
-                checkpoint_path (tf.string): A path to a saved checkpoint file.
-
-            Returns:
-                dict: Map of restored weight and bias.
-            """
-            restored_tensors = {}
-            for var in self.model.weights:
-                restored = tf.raw_ops.Restore(
-                    file_pattern=checkpoint_path, tensor_name=var.name,
-                    dt=var.dtype, name='restore')
-                var.assign(restored)
-                restored_tensors[var.name] = restored
-            return restored_tensors
-        
-        @tf.function(input_signature=[])
-        def weights(self):
-            """Get trainable weights from the model.
-
-            Returns:
-                dict: Map of restored weight and bias.
-            """
-            tensors = {}
-            for var in self.model.weights:
-                tensors[var.name] = var.read_value()
-            return tensors
 
     class TFLiteModelFinetune(TFLiteModel):
         """TF Transfer Learning model class."""
@@ -363,8 +334,6 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             'test': tflite_model.test.get_concrete_function(),
             'infer': tflite_model.infer.get_concrete_function(),
             'save': tflite_model.save.get_concrete_function(),
-            'restore': tflite_model.restore.get_concrete_function(),
-            'weights': tflite_model.weights.get_concrete_function(),
         }
     else:
         tflite_model = TFLiteModelFinetune(tf_model, tf_base)
@@ -374,8 +343,6 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             'infer': tflite_model.infer.get_concrete_function(),
             'load': tflite_model.load.get_concrete_function(),
             'save': tflite_model.save.get_concrete_function(),
-            'restore': tflite_model.restore.get_concrete_function(),
-            'weights': tflite_model.weights.get_concrete_function(),
         }
 
     tf.saved_model.save(
@@ -397,4 +364,4 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
         with open(model_file_path, 'wb') as model_file:
             model_file.write(tflite_model_bytes)
 
-    return tflite_model_bytes, tflite_model
+    return tflite_model_bytes
