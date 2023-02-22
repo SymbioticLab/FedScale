@@ -68,7 +68,7 @@ public class TFLiteBackend implements Backend {
         final int trainIterations = (int)Math.ceil((double)dataCount / (double)trainBatchSize);
         Collections.shuffle(labels);
 
-        Pair<List<FloatBuffer>, List<float[][]>> pair = dataLoader(
+        Pair<List<float[][][][]>, List<float[][]>> pair = dataLoader(
                 labels,
                 trainImagesFolder,
                 trainBatchSize,
@@ -76,7 +76,7 @@ public class TFLiteBackend implements Backend {
                 width,
                 channel,
                 numClasses);
-        List<FloatBuffer> trainImageBatches = pair.first;
+        List<float[][][][]> trainImageBatches = pair.first;
         List<float[][]> trainLabelBatches = pair.second;
 
         float epochTrainLoss = 0;
@@ -160,7 +160,7 @@ public class TFLiteBackend implements Backend {
         final int dataCount = labels.size();
         final int testIterations = (int)Math.ceil((double)dataCount / (double)testBatchSize);
 
-        Pair<List<FloatBuffer>, List<float[][]>> pair = dataLoader(
+        Pair<List<float[][][][]>, List<float[][]>> pair = dataLoader(
                 labels,
                 testImagesFolder,
                 testBatchSize,
@@ -168,7 +168,7 @@ public class TFLiteBackend implements Backend {
                 width,
                 channel,
                 numClasses);
-        List<FloatBuffer> testImageBatches = pair.first;
+        List<float[][][][]> testImageBatches = pair.first;
         List<float[][]> testLabelBatches = pair.second;
 
         Interpreter.Options options = new Interpreter.Options();
@@ -233,7 +233,7 @@ public class TFLiteBackend implements Backend {
      * @param numClasses Number of classes during training.
      * @return (image batches, label batches), list of float arrays.
      */
-    private Pair<List<FloatBuffer>, List<float[][]>> dataLoader(
+    private Pair<List<float[][][][]>, List<float[][]>> dataLoader(
             List<String> labels,
             String imagesFolder,
             int batchSize,
@@ -242,18 +242,17 @@ public class TFLiteBackend implements Backend {
             int channel,
             int numClasses
     ) {
-        List<List<FloatBuffer>> imageBatches = new ArrayList<>();
+        List<List<float[][][]>> imageBatches = new ArrayList<>();
         List<List<float[]>> labelBatches = new ArrayList<>();
-        for (int i = 0; i < (labels.size()/batchSize) * batchSize; ++i) {
-            String label = labels.get(i);
+        for (String label: labels) {
             final String imageFileName = imagesFolder + label.split(" ")[0];
-            final FloatBuffer imageBuffer = processImage(
-                    BitmapFactory.decodeFile(imageFileName), height, width);
+            final float[][][] imageBuffer = processImage(
+                    BitmapFactory.decodeFile(imageFileName), height, width, channel);
             final float[] imageLabel = encodeLabel(
                     Integer.parseInt(label.split(" ")[1]), numClasses);
             int currentLastIdx = imageBatches.size() - 1;
             if (imageBatches.size() == 0 || imageBatches.get(currentLastIdx).size() == batchSize) {
-                List<FloatBuffer> newImageBatch = new ArrayList<>();
+                List<float[][][]> newImageBatch = new ArrayList<>();
                 imageBatches.add(newImageBatch);
                 List<float[]> newLabelBatch = new ArrayList<>();
                 labelBatches.add(newLabelBatch);
@@ -263,7 +262,7 @@ public class TFLiteBackend implements Backend {
             labelBatches.get(currentLastIdx).add(imageLabel);
         }
         return new Pair<>(
-                this.generateImageBatchBuffers(imageBatches, batchSize * channel * width * height),
+                this.generateImageBatchBuffers(imageBatches, height, width, channel),
                 this.generateLabelBatchBuffers(labelBatches, numClasses));
     }
 
@@ -271,17 +270,23 @@ public class TFLiteBackend implements Backend {
      * Convert list of list of data to list of batches where each batch is a 2D float array.
      *
      * @param batches Batches, inside each batch is a list of data, TFLite does not recognize list.
-     * @param allocateSizePerData Size per each data.
-     * @return A list of batches, each batch is a 2-dimension float array.
+     * @param height height of image.
+     * @param width width of image.
+     * @param channel channel of image.
+     * @return A list of batches, each batch is a multiple-dimensional float array.
      */
-    private List<FloatBuffer> generateImageBatchBuffers(
-            List<List<FloatBuffer>> batches,
-            int allocateSizePerData) {
-        List<FloatBuffer> batchBuffers = new ArrayList<>();
-        for (List<FloatBuffer> batch: batches) {
-            FloatBuffer newBatchBuffer = FloatBuffer.allocate(allocateSizePerData);
-            for (FloatBuffer data: batch) newBatchBuffer.put(data);
-            newBatchBuffer.rewind();
+    private List<float[][][][]> generateImageBatchBuffers(
+            List<List<float[][][]>> batches,
+            int height,
+            int width,
+            int channel) {
+        List<float[][][][]> batchBuffers = new ArrayList<>();
+        for (List<float[][][]> batch: batches) {
+            float[][][][] newBatchBuffer = new float[batch.size()][height][width][channel];
+            int iteration = 0;
+            for (float[][][] data: batch) {
+                newBatchBuffer[iteration++] = data;
+            }
             batchBuffers.add(newBatchBuffer);
         }
         return batchBuffers;
@@ -315,12 +320,14 @@ public class TFLiteBackend implements Backend {
      * @param image Image in Bitmap.
      * @param targetHeight Target height after resize.
      * @param targetWidth Target width after resize.
+     * @param channel Channel of image.
      * @return Image in float array.
      */
-    private FloatBuffer processImage(
+    private float[][][] processImage(
             Bitmap image,
             int targetHeight,
-            int targetWidth) {
+            int targetWidth,
+            int channel) {
         int height = image.getHeight();
         int width = image.getWidth();
         int cropSize = min(height, width);
@@ -332,8 +339,17 @@ public class TFLiteBackend implements Backend {
                 .build();
         TensorImage tensorImage = new TensorImage(DataType.FLOAT32);
         tensorImage.load(image);
-        imageProcessor.process(tensorImage);
-        return imageProcessor.process(tensorImage).getBuffer().asFloatBuffer();
+        float[][][] image3D = new float[targetHeight][targetWidth][3];
+        float[] image1D = imageProcessor.process(tensorImage).getTensorBuffer().getFloatArray();
+        for (int h = 0; h < targetHeight; ++h) {
+            for (int w = 0; w < targetWidth; ++w) {
+                for (int c = 0; c < channel; ++c) {
+                    int index = h * targetWidth * 3 + w * 3 + c;
+                    image3D[h][w][c] = image1D[index];
+                }
+            }
+        }
+        return image3D;
     }
 
 

@@ -217,13 +217,6 @@ public class FLExecutor extends AppCompatActivity {
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
-//        CompleteRequest request = CompleteRequest.newBuilder()
-//                .setClientId(this.mExecutorID)
-//                .setExecutorId(this.mExecutorID)
-//                .setEvent(Common.CLIENT_TRAIN)
-//                .setStatus(true).build();
-//        this.sendRequest(() -> this.communicator.stub.cLIENTEXECUTECOMPLETION(request));
-//        return trainResult;
         // TODO: It might be better to make UPLOAD_MODEL async to utilize the resource.
         CompleteRequest request = CompleteRequest.newBuilder()
                 .setClientId(this.mExecutorID)
@@ -353,19 +346,9 @@ public class FLExecutor extends AppCompatActivity {
                 if (currentEvent.equals(Common.CLIENT_TRAIN)) {
                     this.FLUpdateModel((byte[]) this.deserializeResponse(request.getData()));
                     this.FLTrain((Map<String, Object>) this.deserializeResponse(request.getMeta()));
-//                    CompleteRequest cRequest = CompleteRequest.newBuilder()
-//                            .setClientId(this.mExecutorID)
-//                            .setExecutorId(this.mExecutorID)
-//                            .setEvent(Common.UPLOAD_MODEL)
-//                            .setStatus(true)
-//                            .setDataResult(this.serializeResponse(trainResult))
-//                            .build();
-//                    this.sendRequest(() -> this.communicator.stub.cLIENTEXECUTECOMPLETION(cRequest));
                 } else if (currentEvent.equals(Common.MODEL_TEST)) {
                     this.FLUpdateModel((byte[]) this.deserializeResponse(request.getData()));
                     this.FLTest((Map<String, Object>)this.deserializeResponse(request.getMeta()));
-//                } else if (currentEvent.equals(Common.UPDATE_MODEL)) {
-//                    this.FLUpdateModel((byte[])this.deserializeResponse(request.getData()));
                 } else if (currentEvent.equals(Common.SHUT_DOWN)) {
                     this.FLStop();
                 }
