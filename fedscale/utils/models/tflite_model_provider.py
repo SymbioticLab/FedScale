@@ -18,26 +18,22 @@ def build_simple_linear(args):
 
 
 def build_mobilenetv3(args):
-    model = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape),
-        tf.keras.applications.MobileNetV3Small(
-            input_shape=args.input_shape,
-            classes=args.num_classes,
-            weights=None,
-            classifier_activation=None)
-    ])
+    model = tf.keras.applications.MobileNetV3Small(
+        input_shape=args.input_shape,
+        classes=args.num_classes,
+        weights=None,
+        classifier_activation=None)
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
             momentum=0.9,
             weight_decay=4e-5),
-        loss=tf.keras.losses.CategoricalCrossentropy(fron_logits=True))
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
     return model, None
 
 
 def build_mobilenetv3_finetune(args):
     base = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape),
         tf.keras.applications.MobileNetV3Small(
             input_shape=args.input_shape,
             include_top=False)
@@ -57,14 +53,11 @@ def build_mobilenetv3_finetune(args):
 
 
 def build_resnet50(args):
-    model = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape),
-        tf.keras.applications.resnet.ResNet50(
-            input_shape=args.input_shape,
-            classes=args.num_classes,
-            weights=None,
-            classifier_activation=None)
-    ])
+    model = tf.keras.applications.resnet.ResNet50(
+        input_shape=args.input_shape,
+        classes=args.num_classes,
+        weights=None,
+        classifier_activation=None)
     model.compile(
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.learning_rate,
@@ -75,13 +68,10 @@ def build_resnet50(args):
 
 
 def build_resnet50_finetune(args):
-    base = tf.keras.Sequential([
-        tf.keras.layers.Reshape(args.input_shape),
-        tf.keras.applications.resnet.ResNet50(
-            include_top=False,
-            input_shape=args.input_shape,
-            classes=args.num_classes)
-    ])
+    base = tf.keras.applications.resnet.ResNet50(
+        include_top=False,
+        input_shape=args.input_shape,
+        classes=args.num_classes)
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(name='flatten'),
         tf.keras.layers.Dense(128, activation='relu', name='dense_1'),
@@ -246,35 +236,21 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
 
         @tf.function(input_signature=[
             tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32),
-        ])
-        def load(self, data: tf.Tensor) -> dict:
-            """Generates and loads bottleneck features from the given image batch.
-
-            Args:
-                data (tf.Tensor): A tensor of image feature batch to generate the bottleneck from.
-
-            Returns:
-                dict: Map of the bottleneck.
-            """
-            bottleneck = tf.keras.layers.Flatten()(self.base(data, training=False))
-            return {'bottleneck': bottleneck}
-
-        @tf.function(input_signature=[
-            tf.TensorSpec([None, NUM_FEATURES], tf.float32),
             tf.TensorSpec([None, NUM_CLASSES], tf.float32),
         ])
         def train(self, data: tf.Tensor, label: tf.Tensor) -> dict:
             """Runs one training step with the given bottleneck features and labels.
 
             Args:
-                data (tf.Tensor): A tensor of bottleneck features generated from the base model.
+                data (tf.Tensor): A tensor of image from training set.
                 label (tf.Tensor): A tensor of class labels for the given batch.
 
             Returns:
                 dict: Map of the training loss.
             """
+            bottleneck = self.base(data)
             with tf.GradientTape() as tape:
-                prediction = self.model(data)
+                prediction = self.model(bottleneck)
                 loss = self.model.loss(label, prediction)
             gradients = tape.gradient(loss, self.model.trainable_variables)
             self.model.optimizer.apply_gradients(
@@ -283,20 +259,20 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             return result
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, NUM_FEATURES], tf.float32),
+            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32),
             tf.TensorSpec([None, NUM_CLASSES], tf.float32)
         ])
         def test(self, data: tf.Tensor, label: tf.Tensor) -> dict:
             """Invokes a test on the given feature.
 
             Args:
-                data (tf.Tensor): A tensor of bottleneck features generated from the base model.
+                data (tf.Tensor): A tensor of image from testing set.
                 label (tf.Tensor): A tensor of class labels for the given batch.
 
             Returns:
                 dict: Map of the testing result, including loss, top1 and top5 accuracy.
             """
-            predict = self.model(data)
+            predict = self.model(self.base(data))
             loss = self.model.loss(label, predict)
             label_vec = tf.argmax(label, 1, output_type=tf.int32)
             top1 = tf.reduce_sum(
@@ -322,28 +298,16 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             Returns:
                 dict: Map of the softmax output.
             """
-            bottleneck = tf.reshape(
-                self.base(data, training=False), (-1, NUM_FEATURES))
-            output = self.model(bottleneck)
+            output = self.model(self.base(data))
             return {'output': output}
 
-    if tf_base is None:
-        tflite_model = TFLiteModel(tf_model)
-        signatures = {
-            'train': tflite_model.train.get_concrete_function(),
-            'test': tflite_model.test.get_concrete_function(),
-            'infer': tflite_model.infer.get_concrete_function(),
-            'save': tflite_model.save.get_concrete_function(),
-        }
-    else:
-        tflite_model = TFLiteModelFinetune(tf_model, tf_base)
-        signatures = {
-            'train': tflite_model.train.get_concrete_function(),
-            'test': tflite_model.test.get_concrete_function(),
-            'infer': tflite_model.infer.get_concrete_function(),
-            'load': tflite_model.load.get_concrete_function(),
-            'save': tflite_model.save.get_concrete_function(),
-        }
+    tflite_model = TFLiteModel(tf_model) if tf_base is None else TFLiteModelFinetune(tf_model, tf_base)
+    signatures = {
+        'train': tflite_model.train.get_concrete_function(),
+        'test': tflite_model.test.get_concrete_function(),
+        'infer': tflite_model.infer.get_concrete_function(),
+        'save': tflite_model.save.get_concrete_function(),
+    }
 
     tf.saved_model.save(
         tflite_model,

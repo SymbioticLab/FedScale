@@ -15,7 +15,7 @@ class TFLiteModelAdapter(ModelAdapterBase):
             var.assign(weight)
 
     def get_weights(self) -> List[np.ndarray]:
-        return [np.asarray(var.read_value()) for var in self.model.weights if var.trainable]
+        return [np.asarray(var.read_value()) for var in self.model.weights]
 
     def get_model(self):
         return self.model
