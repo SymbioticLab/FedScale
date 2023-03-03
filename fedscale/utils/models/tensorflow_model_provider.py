@@ -59,5 +59,5 @@ _models = {
 
 def get_tensorflow_model(name: str, args):
     if name not in _models:
-        raise f"{name} is not a tensorflow-supported model in FedScale. Please add implementation to the _models dict."
+        raise ValueError(f"Unsupported model: {name}")
     return _models[name](args)

@@ -13,11 +13,7 @@ An example android aggregator accompanied by
 **Note**:
 MNN does not support direct conversion from MNN to PyTorch model, so we did a manual conversion from MNN to JSON, then from JSON to PyTorch model. We currently only support Convolution (including Linear) and BatchNorm conversion. We welcome contribution to support more conversion for operators with trainable parameters.
 
-`scripts/convert.sh` contains model conversion code. It will clone MNN and build converter. You do not need to manually run this script. This script is run internally inside android aggregator.
-
-`fedscale/utils/models/simple/linear_model.py` contains a simple linear model with Flatten->Linear->Softmax, used for simple test of our sample android app.
-
-`fedscale/utils/models/mnn_convert.py` contains all the code necessary for MNN<->PyTorch model conversion.
+`fedscale/utils/models/mnn_model_provider.py` contains all the code necessary for MNN<->PyTorch model conversion and currently supported PyTorch models that can be converted to MNN without bugs.
 
 In order to run this aggregator with default setting in order to test sample app, please run
 ```
@@ -26,7 +22,7 @@ cd FedScale
 source install.sh
 pip install -e .
 cd fedscale/cloud/aggregation
-python3 aggregator_mnn.py --experiment_mode=mobile --num_participants=1 --model=linear
+python3 aggregator_mnn.py --experiment_mode mobile --num_participants 1 --num_classes 10 --input_shape 32 32 3 --model linear
 ```
 and configure your android app according to the [tutorial](https://github.com/SymbioticLab/FedScale/fedscale/edge/mnn/README.md).
 
@@ -45,7 +41,7 @@ cd FedScale
 source install.sh
 pip install -e .
 cd fedscale/cloud/aggregation
-python3 aggregator_tflite.py --experiment_mode=mobile --num_participants=1 --engine=tensorflow
+python3 aggregator_tflite.py --experiment_mode mobile --num_participants 1 --num_classes 10 --input_shape 32 32 3 --engine tensorflow --model [linear|mobilenetv3|resnet50|mobilenetv3_finetune|resnet50_finetune] --learning_rate 1e-2
 ```
 and configure your android app according to the [tutorial](https://github.com/SymbioticLab/FedScale/fedscale/edge/tflite/README.md).
 

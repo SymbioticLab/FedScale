@@ -1,0 +1,5 @@
+.idea
+.gradle
+app/build
+*/.cxx
+assets/dataset
