@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">FedScale Demo</string>
+    <string name="appbar_scrolling_view_behavior" translatable="false">android.support.design.widget.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="start_fl">Start FL</string>
+    <string name="stop_fl">Stop FL</string>
+    <string name="start_finetune">Start Local Fine-tune</string>
+    <string name="stop_finetune">Stop Local Fine-tune</string>
+    <string name="no_model">You may not start local fine-tuning because there is no model locally. Please connect to the server first.</string>
+    <string name="has_model">You may now start local fine-tuning. If the FL executor is running, you should stop it first.</string>
+</resources>
