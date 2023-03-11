@@ -21,7 +21,6 @@
 #include "train/source/transformer/Transformer.hpp"
 #include "cpp/ConvertToFullQuant.hpp"
 #include "module/PipelineModule.hpp"
-#include "converter/include/cli.hpp"
 
 using namespace MNN;
 using namespace MNN::Express;
@@ -61,7 +60,6 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
     std::string trainJsonPath       = directory + "/" + modelFilename;
     std::string trainModelPath      = directory + "/model.mnn";
     std::string newModelPath        = directory + "/temp_model.mnn";
-    std::string newJsonPath         = directory + "/temp_json.mnn";
 
     auto clientId = static_cast<jstring>(env->CallObjectMethod(trainingConf_, getString, env->NewStringUTF("client_id")));
     const int numClasses        = env->CallIntMethod(trainingConf_, getInt, env->NewStringUTF("num_classes"));
@@ -75,9 +73,6 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
     const float lossDecay       = env->CallDoubleMethod(trainingConf_, getDouble, env->NewStringUTF("loss_decay"));
     const float momentum        = env->CallDoubleMethod(trainingConf_, getDouble, env->NewStringUTF("momentum"));
     const float weight_decay    = env->CallDoubleMethod(trainingConf_, getDouble, env->NewStringUTF("weight_decay"));
-
-    MNN::Cli::json2mnn(trainJsonPath.c_str(), trainModelPath.c_str());
-    MNN_PRINT("[JSON->MNN][JSON][%s][MNN][%s]", trainJsonPath.c_str(), trainModelPath.c_str());
 
     auto varMap = Variable::loadMap(trainModelPath.c_str());
     if (varMap.empty()) {
@@ -176,10 +171,7 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
         exe->dumpProfile();
     }
 
-    MNN::Cli::mnn2json(newModelPath.c_str(), newJsonPath.c_str());
-    MNN_PRINT("[MNN->JSON][MNN][%s][JSON][%s]", newModelPath.c_str(), newJsonPath.c_str());
-
-    std::ifstream t(newJsonPath);
+    std::ifstream t(newModelPath);
     std::stringstream buffer;
     buffer << t.rdbuf();
 
@@ -233,10 +225,6 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTest(
     const int resizeWidth       = env->CallIntMethod(testingConf_, getInt, env->NewStringUTF("width"));
     const int testBatchSize     = env->CallIntMethod(testingConf_, getInt, env->NewStringUTF("test_bsz"));
     const int testNumWorkers    = env->CallIntMethod(testingConf_, getInt, env->NewStringUTF("num_workers"));
-
-    MNN_PRINT("[JSON->MNN][start][JSON][%s][MNN][%s]", testJsonPath.c_str(), testModelPath.c_str());
-    MNN::Cli::json2mnn(testJsonPath.c_str(), testModelPath.c_str());
-    MNN_PRINT("[JSON->MNN][end][JSON][%s][MNN][%s]", testJsonPath.c_str(), testModelPath.c_str());
 
     auto varMap = Variable::loadMap(testModelPath.c_str());
     if (varMap.empty()) {
