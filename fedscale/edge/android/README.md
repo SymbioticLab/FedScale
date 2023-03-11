@@ -1,69 +1,79 @@
 # FedScale Deployment
 
-FedScale provides a cloud-based [aggregation service](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/cloud/aggregation/README.md) and an SDK for smartphones on the edge that currently supports TensorflowLite and Alibaba MNN on Android (iOS support coming soon!). In this tutorial, we introduce how to:
+FedScale provides a cloud-based [aggregation service](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/cloud/aggregation/README.md) and an [SDK](#fedscale-mobile-runtime) for smartphones on the edge that currently supports TensorflowLite and Alibaba MNN on Android (iOS support coming soon!). In this tutorial, we introduce how to:
 
-- Initiate FedScale Cloud Service
-- Import FedScale SDK to locally fine tune models
-- Connect to FedScale cloud for federated training
+- [Initiate FedScale Cloud Service](#fedscale-cloud-aggregation)
+- [Import FedScale SDK to locally fine tune models](#fedscale-mobile-runtime)
+- [Connect to FedScale cloud for federated training](#fedscale-mobile-runtime)
 
-![fedscale deployment](../../../docs/fedscale-deploy.png)
+<p align="center">
+<img src="../../../docs/fedscale-deploy.png" width="600" height="400"/>
+</p>
 
 
 
 ## FedScale Cloud Aggregation
+FedScale cloud aggregation orchestrates distributed mobile devices to collaboratively train ML models over the Internet. It manages client check-in, participant selection, and model aggregation for practical FL deployment. 
 
-You may follow these steps to deploy and run the cloud server specific to [Alibaba MNN](https://github.com/SymbioticLab/FedScale/fedscale/edge/mnn/) or [TFLite](https://github.com/SymbioticLab/FedScale/fedscale/edge/tflite/).
+FedScale deployment mode follows similar setup of the [simulation mode](https://github.com/SymbioticLab/FedScale/blob/master/docs/tutorial.md) to streamline cloud-based prototyping and real-world deployment with little migration overhead. 
 
-- Specify number of executors `num_participants: 1`. You may add more mobile participants to any number you want. We currently only support all participant in one single training backend.
+- **Configurate job**: Jobs are configured in the `yml` format. Here is an [example](../../../benchmark/configs/android/tflite.yml
+): 
 
-- Specify `model`. Currently we have only tested `linear` models for Alibaba MNN backend because Alibaba MNN does not support Dropout. However, you may choose one of `linear`|`mobilenetv3`|`resnet50`|`mobilenetv3_finetune`|`resnet50_finetune` models. `finetune` means that only the last 2 linear layers will be trained, but the backbone layers will be frozen.
+  ```
+  job_conf:
+      - job_name: android-tflite  
+      - experiment_mode: mobile
+      - log_path: $FEDSCALE_HOME/benchmark    # Path of log files
+      - num_participants: 100                 # Number of participants selected in each training round
+      - model: mobilenetv3                    # Model to be trained
+      - data_path: assets/dataset             # Path to local database
+      - input_shape: 32 32 3                  # Shape of training data stored in local database
+      - num_classes: 10                       # Number of categories 
+  ```
 
-- Set `use_cuda` flag to `True` if you want to use GPU for aggregation. However, as aggregation process is sequential addition of several small tensors, GPU acceleration is very little.
+- **Submit job:** After figuring out the configuration, we can submit the FL training job in the cloud, which then will automatically coordinate edge clients. 
 
-- Submit job
+  ```
+  cd $FEDSCALE_HOME/docker
+  # If you want to run MNN backend on mobile.
+  python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/android/mnn.yml 
+  # If you want to run TFLite backend on mobile.
+  python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/android/tflite.yml 
+  ```
 
-	```
-	cd $FEDSCALE_HOME/docker
-	python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/android/mnn.yml # If you want to run MNN backend on mobile.
-	python3 driver.py submit $FEDSCALE_HOME/benchmark/configs/android/tflite.yml # If you want to run TFLite backend on mobile.
-	```
+- **Check logs:** FedScale will generate logs under `data_path` you provided by default. If you use k8s deployment for cloud aggregation, keep in mind that k8s may load balancing your job to any node on the cluster, so make sure you are checking the `data_path` on the correct node.
 
-- Check logs: FedScale will generate logs under `data_path` you provided by default. Keep in mind that k8s may load balancing your job to any node on the cluster, so make sure you are checking the `data_path` on the correct node.
+- **Stop job:** When FL training reaches the target accuracy, we can stop FL training with the following command of line on the cloud server node.
 
-- Stop job
-
-	```
-	cd $FEDSCALE_HOME/docker
-	python3 driver.py stop $YOUR_JOB
-	```
+  ```
+  cd $FEDSCALE_HOME/docker
+  python3 driver.py stop $YOUR_JOB
+  ```
 
 ## FedScale Mobile Runtime
 
-We provide a sample app which you can choose to 
+If you don't have an app, you may refer to [Sample App](README-App.md) to play with a sample Android app. Next, we introduce how to: 
 - Train/test models with TFLite or Alibaba MNN.
 - Fine-tune models locally **after** receiving model from the cloud.
 
-Please follow these steps to download and build the sample android app.
+To get started, you need to install the FedScale SDK and import it into your project.
+Once you have installed the SDK, you can add ``fedscale_client`` to your app with the following code to fine-tune your local model: 
 
-1. Download and unzip [sample dataset (TrainTest.zip)](https://drive.google.com/file/d/1nfi3SVzjaE0LPxwj_5DNdqi6rK7BU8kb/view?usp=sharing) to `assets/` directory. Remove `TrainTest.zip` after unzip to save space on your mobile device. After unzip, you should see 3 files and 2 directories under `assets/`:
-   1. `TrainSet`: Training set directory, contains 320 images.
-   2. `TestSet`: Testing set directory, contains 32 images.
-   3. `conf.json`: Configuration file for mobile app.
-   4. `train_labels.txt`: Training label file with format `<filename> <label>`, where `<filename>` is the path after `TrainSet/`.
-   5. `test_labels.txt`: Testing label file with the same format as `train_labels.txt`.
-2. Install [Android Studio](https://developer.android.com/studio) and open project `fedscale/edge/tflite`. Download necessary SDKs, NDKs and CMake when prompted. My version:
-    - SDK: API 32
-    - Android Gradle Plugin Version: 3.5.3
-    - Gradle Version: 5.4.1
-    - Source Compatibility: Java 8
-    - Target Compatibility: Java 8
-3. Modify `conf.json` and dataset.
-   - You must modify `aggregator.ip` & `aggregator.port` to your own server.
-   - You can choose your training framework by modifying `model_conf.backend` to `tflite` or `mnn`.
-   - You may config your dataset information at `training_conf` and `testing_conf`.
-   - You may put your own **image classification** dataset under `/TrainSet` and `/TestSet` directories and modify `train_labels.txt` and `test_labels.txt` accordingly. The format of labels must be \<filename\> \<label\>.
-   - If you want to perform tasks other than image classification, you should modify framework-specific code [MNN](https://github.com/SymbioticLab/FedScale/fedscale/edge/android/app/src/main/java/com/fedscale/android/mnn) [TFLite](https://github.com/SymbioticLab/FedScale/fedscale/edge/android/app/src/main/java/com/fedscale/android/tflite). If you are using TFLite, you should also write your own signatures similar to [our TFLite model provider](https://github/com/SymbioticLab/FedScale/fedscale/cloud/internal/tflite_model_adapter.py)
-4. Make Project. Android Studio will compile and build the app for you. Click Run if you want to run the app on a real android device.
+  ```
+  import com.fedscale.android.Client;
+  public class App {
+      …
+      private Client fedscale_client;
+      protected void onCreate() {
+          …
+          this.fedscale_client = new Client();
+          this.fedscale_client.run(); // run in background threads
+      }
+  }
+  ```
+
+For example, our [example app](README-App.md) uses an image classification model within the app. Our example app puts training data under ``assets/dataset``. When the user opens the app, ``fedscale_client`` carefully schedules the resource to decide whether to start fine-tuning. 
 
 ----
 If you need any further help, feel free to contact FedScale team or the developer [website](https://continue-revolution.github.io) [email](mailto:continuerevolution@gmail.com) of this app.
