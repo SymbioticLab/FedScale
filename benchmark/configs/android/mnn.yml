@@ -1,0 +1,32 @@
+# Configuration file of running tensorflow backend
+
+# ========== Cluster configuration ==========
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: localhost
+
+exp_path: $FEDSCALE_HOME/fedscale/cloud
+
+aggregator_entry: aggregation/aggregator_mnn.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate fedscale
+
+# ========== Additional job configuration ==========
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
+
+job_conf:
+    - job_name: android-mnn              # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: $FEDSCALE_HOME/benchmark # Path of log files
+    - experiment_mode: mobile
+    - num_participants: 1                # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - model: linear                      # Need to define the model in aggregator_mnn.py
+    - learning_rate: 0.01
+    - batch_size: 32
+    - input_shape: 32 32 3
+    - num_classes: 10
+    - test_bsz: 16

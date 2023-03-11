@@ -9,7 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="7dp"
         android:background="#ffffff"
         android:orientation="vertical">
 
@@ -17,24 +16,46 @@
             android:id="@+id/userId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="6dp"
             android:gravity="center_vertical"
-            android:textSize="18dp"
-            android:textStyle="bold" />
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/executeRound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/executeStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:textSize="18dp" />
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/executeResult"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:textSize="18dp" />
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/executeMsg"
+            android:text="@string/no_model"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/flButton"
+            android:text="@string/start_fl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/finetuneButton"
+            android:text="@string/start_finetune"
+            android:enabled="false"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 </RelativeLayout>

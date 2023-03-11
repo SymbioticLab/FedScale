@@ -29,6 +29,8 @@ public class Common {
     public static String START_ROUND = "start_round";
     public static String CLIENT_CONNECT = "client_connect";
     public static String CLIENT_TRAIN = "client_train";
+    public static String CLIENT_TRAIN_LOCALLY = "client_train_locally";
+    public static String CLIENT_TRAIN_LOCALLY_FIN = "client_train_locally_finish";
     public static String DUMMY_EVENT = "dummy_event";
     public static String UPLOAD_MODEL = "upload_model";
 

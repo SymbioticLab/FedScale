@@ -1,15 +1,8 @@
 package com.fedscale.android.executor;
 
-import android.content.Intent;
-import android.os.Handler;
-import android.os.HandlerThread;
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
-import android.view.WindowManager;
-import android.widget.TextView;
 
-import com.fedscale.android.R;
+import com.fedscale.android.app.FLApp;
 import com.fedscale.android.mnn.MNNBackend;
 import com.fedscale.android.utils.Backend;
 import com.fedscale.android.utils.MessageProcessor;
@@ -46,7 +39,7 @@ import java.util.Queue;
  * Training and executing will be handled inside MNN C++.
  * Server-client communication will be handled in JAVA.
  */
-public class FLExecutor extends AppCompatActivity {
+public class FLExecutor {
     private JSONObject config;
 
     private String mExecutorID;
@@ -57,24 +50,10 @@ public class FLExecutor extends AppCompatActivity {
     private Queue<ServerResponse> eventQueue = new LinkedList<>();
     private Backend backend;
 
-    private TextView mUserId;
-    private TextView mExecuteStatus;
-    private TextView mExecuteResult;
+    private FLApp app;
 
-    HandlerThread mThread;
-    Handler mHandle;
-
-    /**
-     * Initialization of the User Interface.
-     * Three lines of UI: executor id, status, result (not changed)
-     */
-    private void initUI() {
-        runOnUiThread(()->{
-            String userIdMsg = this.mExecutorID + ": Round " + this.round;
-            this.mUserId.setText(userIdMsg);
-            this.mExecuteStatus.setText(Common.CLIENT_CONNECT);
-            this.mExecuteResult.setText("");
-        });
+    public FLExecutor(FLApp app) {
+        this.app = app;
     }
 
     /**
@@ -121,7 +100,7 @@ public class FLExecutor extends AppCompatActivity {
      */
     private void initData() throws IOException {
         Log.i(Common.TAG, "Data movement starts ...");
-        Common.copyDir(getBaseContext(), "dataset", getCacheDir());
+        Common.copyDir(app.getBaseContext(), "dataset", app.getCacheDir());
         Log.i(Common.TAG, "Data movement completes ...");
     }
 
@@ -130,7 +109,7 @@ public class FLExecutor extends AppCompatActivity {
      */
     private void initAsset() throws Exception {
         this.config = new JSONObject(Common.readFile(
-                getBaseContext().getAssets().open("conf.json")).toString());
+                app.getBaseContext().getAssets().open("conf.json")).toString());
         this.mExecutorID = this.initExecutorId(this.config.getString("username"));
         String aggregatorIP = this.config.getJSONObject("aggregator").getString("ip");
         int aggregatorPort = this.config.getJSONObject("aggregator").getInt("port");
@@ -147,12 +126,10 @@ public class FLExecutor extends AppCompatActivity {
      * Start running the executor by setting up execution and communication environment,
      * and monitoring the grpc message.
      */
-    private void runExecutor() throws Exception {
+    public void initExecutor() throws Exception {
         this.initData();
         this.initAsset();
-        this.initUI();
-        this.setupCommunication();
-        this.eventMonitor();
+        this.app.initUI(this.config.getString("username"));
     }
 
     /**
@@ -193,13 +170,15 @@ public class FLExecutor extends AppCompatActivity {
      * @param model The broadcast global model config.
      */
     public void FLUpdateModel(byte[] model) throws JSONException, IOException {
+        this.app.onWriteModel();
         this.round++;
-        this.setText(this.mExecuteStatus, Common.UPDATE_MODEL);
-        this.setText(this.mUserId, this.mExecutorID + ": Round " + this.round);
+        this.app.onChangeStatus(Common.UPDATE_MODEL);
+        this.app.onChangeRound(this.round);
         final String fileName = this.config.getJSONObject("model_conf").getString("path");
-        final String modelPath = getCacheDir() + "/" + fileName;
+        final String modelPath = app.getCacheDir() + "/" + fileName;
         InputStream is = new ByteArrayInputStream(model);
         Common.inputStream2File(is, modelPath);
+        this.app.onGetModel();
     }
 
     /**
@@ -208,12 +187,12 @@ public class FLExecutor extends AppCompatActivity {
      * @param config The client training config.
      */
     public void FLTrain(Map<String, Object> config) throws Exception {
-        this.setText(this.mExecuteStatus, Common.CLIENT_TRAIN);
+        this.app.onChangeStatus(Common.CLIENT_TRAIN);
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
                 config);
         Map<String, Object> trainResult = this.backend.MLTrain(
-                getCacheDir().toString(),
+                this.app.getCacheDir().toString(),
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
@@ -229,17 +208,30 @@ public class FLExecutor extends AppCompatActivity {
     }
 
     /**
+     * Load train config and data to start training on that client without connecting to the cloud.
+     */
+    public void LocalTrain() throws Exception {
+        this.app.onChangeStatus(Common.CLIENT_TRAIN_LOCALLY);
+        Map<String, Object> trainResult = this.backend.MLTrain(
+                this.app.getCacheDir().toString(),
+                this.config.getJSONObject("model_conf").getString("path"),
+                this.config.getJSONObject("training_data"),
+                this.config.getJSONObject("training_conf"));
+        this.app.onChangeStatus(Common.CLIENT_TRAIN_LOCALLY_FIN);
+    }
+
+    /**
      * Model Testing. By default, we test the accuracy on all data of clients in the test group
      *
      * @param config The client testing config.
      */
     public void FLTest(Map<String, Object> config) throws Exception {
-        this.setText(this.mExecuteStatus, Common.MODEL_TEST);
+        this.app.onChangeStatus(Common.MODEL_TEST);
         JSONObject newTestingConf = this.overrideConf(
                 this.config.getJSONObject("testing_conf"),
                 config);
         Map<String, Object> testResult = this.backend.MLTest(
-                getCacheDir().toString(),
+                app.getCacheDir().toString(),
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("testing_data"),
                 newTestingConf);
@@ -257,10 +249,19 @@ public class FLExecutor extends AppCompatActivity {
     }
 
     /**
+     * Start the current executor
+     */
+    public void FLStart() throws Exception {
+        this.app.onChangeStatus(Common.CLIENT_CONNECT);
+        this.setupCommunication();
+        this.eventMonitor();
+    }
+
+    /**
      * Stop the current executor
      */
     public void FLStop() throws InterruptedException {
-        this.setText(this.mExecuteStatus, Common.SHUT_DOWN);
+        this.app.onChangeStatus(Common.SHUT_DOWN);
         this.communicator.CloseServerConnection();
         this.receivedStopRequest = true;
     }
@@ -311,7 +312,7 @@ public class FLExecutor extends AppCompatActivity {
      * Register the executor information to the aggregator.
      */
     private void clientRegister() throws Exception {
-        this.setText(this.mExecuteStatus, "Registering");
+        this.app.onChangeStatus("Registering");
         RegisterRequest request = RegisterRequest.newBuilder()
                 .setExecutorId(this.mExecutorID)
                 .setClientId(this.mExecutorID)
@@ -325,7 +326,7 @@ public class FLExecutor extends AppCompatActivity {
      * Ping the aggregator for new task.
      */
     private void clientPing() throws InterruptedException {
-        this.setText(this.mExecuteStatus, "Pinging");
+        this.app.onChangeStatus("Pinging");
         PingRequest request = PingRequest.newBuilder()
                 .setClientId(this.mExecutorID)
                 .setExecutorId(this.mExecutorID).build();
@@ -378,68 +379,5 @@ public class FLExecutor extends AppCompatActivity {
                 Thread.sleep(5 * 1000);
             }
         }
-    }
-
-    /**
-     * Set text displayed on User Interface.
-     *
-     * @param text The associated TextView object.
-     * @param value The value of the updated text.
-     */
-    private void setText(final TextView text,final String value){
-        runOnUiThread(() -> text.setText(value));
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        Log.i("OnCreate", "");
-        super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(R.layout.activity_main);
-
-        this.mUserId = findViewById(R.id.userId);
-        this.mExecuteStatus = findViewById(R.id.executeStatus);
-        this.mExecuteResult = findViewById(R.id.executeResult);
-
-        mThread = new HandlerThread("MNNTrain");
-        mThread.start();
-        mHandle = new Handler(mThread.getLooper());
-
-        mHandle.post(() -> {
-            try {
-                runExecutor();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    @Override
-    protected void onPause() {
-        Log.i("OnPause", "");
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        Log.i("OnResume", "");
-        super.onResume();
-    }
-
-    @Override
-    public void onBackPressed() {
-        Log.i("onBackPressed", "");
-        Intent home = new Intent(Intent.ACTION_MAIN);
-        home.addCategory(Intent.CATEGORY_HOME);
-        startActivity(home);
-    }
-
-    @Override
-    protected void onDestroy() {
-        Log.i("OnDestroy", "");
-        mThread.quitSafely();
-        super.onDestroy();
     }
 }
