@@ -54,7 +54,7 @@ Now that you have FedScale installed, you can start exploring FedScale following
 1. [Explore FedScale datasets](./docs/Femnist_stats.md)
 2. [Deploy your FL experiment](./docs/tutorial.md)
 3. [Implement an FL algorithm](./examples/README.md)
-
+4. [Deploy FL on smartphones](./fedscale/edge/android/README.md)
 
 ## FedScale Datasets
 
@@ -68,7 +68,7 @@ We acknowledge the contributors of these raw datasets. Please go to the `./bench
 FedScale Runtime is an scalable and extensible deployment as well as evaluation platform to simplify and standardize FL experimental setup and model evaluation. 
 It evolved from our prior system, [Oort](https://github.com/SymbioticLab/Oort), which has been shown to scale well and can emulate FL training of thousands of clients in each round.
 
-Please go to `./fedscale/cloud` directory and follow the [README](./fedscale/cloud/README.md) to set up FL training scripts.
+Please go to `./fedscale/cloud` directory and follow the [README](./fedscale/cloud/README.md) to set up FL training scripts and the [README](./fedscale/edge/android/README.md) for practical on-device deployment.
 
 
 ## Repo Structure
