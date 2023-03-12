@@ -108,9 +108,7 @@ public class FLApp extends AppCompatActivity {
             this.mHandle = new Handler(this.mThread.getLooper());
             this.mHandle.post(() -> {
                 try {
-                    Map<String, Object> fineTuneConfig = new HashMap<>();
-                    fineTuneConfig.put("fine_tune", true);
-                    this.executor.LocalTrain(fineTuneConfig);
+                    this.executor.LocalTrain();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

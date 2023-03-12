@@ -188,6 +188,7 @@ public class Client {
      */
     public void FLTrain(Map<String, Object> config) throws Exception {
         this.app.onChangeStatus(Common.CLIENT_TRAIN);
+        this.config.getJSONObject("training_conf").put("fine_tune", false);
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
                 config);
@@ -210,16 +211,14 @@ public class Client {
     /**
      * Load train config and data to start training on that client without connecting to the cloud.
      */
-    public void LocalTrain(Map<String, Object> config) throws Exception {
+    public void LocalTrain() throws Exception {
         this.app.onChangeStatus(Common.CLIENT_TRAIN_LOCALLY);
-        JSONObject newTrainingConf = this.overrideConf(
-                this.config.getJSONObject("training_conf"),
-                config);
+        this.config.getJSONObject("training_conf").put("fine_tune", true);
         Map<String, Object> trainResult = this.backend.MLTrain(
                 this.app.getCacheDir().toString(),
                 this.config.getJSONObject("model_conf").getString("path"),
                 this.config.getJSONObject("training_data"),
-                newTrainingConf);
+                this.config.getJSONObject("training_conf"));
         this.app.onChangeStatus(Common.CLIENT_TRAIN_LOCALLY_FIN);
     }
 

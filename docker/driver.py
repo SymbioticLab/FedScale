@@ -127,8 +127,9 @@ def process_cmd(yaml_file, local=False):
 
     with open(f"{job_name}_logging", 'a') as fout:
         if local:
-            local_pid = subprocess.Popen(f'{ps_cmd}', shell=True, stdout=fout, stderr=fout)
-            print(f'Aggregator local PID {local_pid.pid}. Run kill -9 {local_pid} to kill the job.')
+            local_process = subprocess.Popen(f'{ps_cmd}', shell=True, stdout=fout, stderr=fout)
+            local_pid = local_process.pid
+            print(f'Aggregator local PID {local_pid}. Run kill -9 {local_pid} to kill the job.')
         else:
             subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
                              shell=True, stdout=fout, stderr=fout)
