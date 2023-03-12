@@ -220,6 +220,25 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
                 "checkpoint_path": checkpoint_path
             }
 
+        @tf.function(input_signature=[tf.TensorSpec([], tf.string)])
+        def load(self, checkpoint_path):
+            """Loads the trainable weights from the given checkpoint file.
+
+            Args:
+                checkpoint_path (tf.string): A file path to load the weights.
+
+            Returns:
+                dict: Map of the checkpoint file path.
+            """
+            restored_tensors = {}
+            for var in self.model.weights:
+                restored = tf.raw_ops.Restore(
+                    file_pattern=checkpoint_path, tensor_name=var.name, dt=var.dtype,
+                    name='restore')
+                var.assign(restored)
+            restored_tensors[var.name] = restored
+            return restored_tensors
+
 
     class TFLiteModelFinetune(TFLiteModel):
         """TF Transfer Learning model class."""
@@ -307,6 +326,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
         'test': tflite_model.test.get_concrete_function(),
         'infer': tflite_model.infer.get_concrete_function(),
         'save': tflite_model.save.get_concrete_function(),
+        'load': tflite_model.load.get_concrete_function(),
     }
 
     tf.saved_model.save(

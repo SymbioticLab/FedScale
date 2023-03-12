@@ -39,7 +39,7 @@ import java.util.Queue;
  * Training and executing will be handled inside MNN C++.
  * Server-client communication will be handled in JAVA.
  */
-public class FLExecutor {
+public class Client {
     private JSONObject config;
 
     private String mExecutorID;
@@ -52,7 +52,7 @@ public class FLExecutor {
 
     private FLApp app;
 
-    public FLExecutor(FLApp app) {
+    public Client(FLApp app) {
         this.app = app;
     }
 
@@ -188,6 +188,7 @@ public class FLExecutor {
      */
     public void FLTrain(Map<String, Object> config) throws Exception {
         this.app.onChangeStatus(Common.CLIENT_TRAIN);
+        this.config.getJSONObject("training_conf").put("fine_tune", false);
         JSONObject newTrainingConf = this.overrideConf(
                 this.config.getJSONObject("training_conf"),
                 config);
@@ -212,6 +213,7 @@ public class FLExecutor {
      */
     public void LocalTrain() throws Exception {
         this.app.onChangeStatus(Common.CLIENT_TRAIN_LOCALLY);
+        this.config.getJSONObject("training_conf").put("fine_tune", true);
         Map<String, Object> trainResult = this.backend.MLTrain(
                 this.app.getCacheDir().toString(),
                 this.config.getJSONObject("model_conf").getString("path"),
@@ -252,6 +254,7 @@ public class FLExecutor {
      * Start the current executor
      */
     public void FLStart() throws Exception {
+        this.receivedStopRequest = false;
         this.app.onChangeStatus(Common.CLIENT_CONNECT);
         this.setupCommunication();
         this.eventMonitor();
@@ -367,7 +370,7 @@ public class FLExecutor {
      */
     private void sendRequest(MessageProcessor msgProcessor) throws InterruptedException {
         long startTime = System.currentTimeMillis() / 1000;
-        while (System.currentTimeMillis() / 1000 - startTime < 180) {
+        while (System.currentTimeMillis() / 1000 - startTime < 180 && !this.receivedStopRequest) {
             try {
                 Log.i("SendRequest", "Trying to get request");
                 ServerResponse response = msgProcessor.operation();

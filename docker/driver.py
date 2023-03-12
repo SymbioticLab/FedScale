@@ -60,11 +60,12 @@ def process_cmd(yaml_file, local=False):
     worker_ips, total_gpus = [], []
     cmd_script_list = []
 
-    executor_configs = "=".join(yaml_conf['worker_ips'])
-    for ip_gpu in yaml_conf['worker_ips']:
-        ip, gpu_list = ip_gpu.strip().split(':')
-        worker_ips.append(ip)
-        total_gpus.append(eval(gpu_list))
+    executor_configs = "=".join(yaml_conf['worker_ips']) if 'worker_ips' in yaml_conf else ''
+    if 'worker_ips' in yaml_conf:
+        for ip_gpu in yaml_conf['worker_ips']:
+            ip, gpu_list = ip_gpu.strip().split(':')
+            worker_ips.append(ip)
+            total_gpus.append(eval(gpu_list))
 
     time_stamp = datetime.datetime.fromtimestamp(
         time.time()).strftime('%m%d_%H%M%S')
@@ -126,7 +127,9 @@ def process_cmd(yaml_file, local=False):
 
     with open(f"{job_name}_logging", 'a') as fout:
         if local:
-            subprocess.Popen(f'{ps_cmd}', shell=True, stdout=fout, stderr=fout)
+            local_process = subprocess.Popen(f'{ps_cmd}', shell=True, stdout=fout, stderr=fout)
+            local_pid = local_process.pid
+            print(f'Aggregator local PID {local_pid}. Run kill -9 {local_pid} to kill the job.')
         else:
             subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
                              shell=True, stdout=fout, stderr=fout)

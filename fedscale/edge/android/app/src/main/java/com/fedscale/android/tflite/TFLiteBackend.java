@@ -62,6 +62,9 @@ public class TFLiteBackend implements Backend {
         final int channel           = trainingConf.getInt("channel");
         final int height            = trainingConf.getInt("height");
         final int width             = trainingConf.getInt("width");
+        final boolean fineTune      = trainingConf.getBoolean("fine_tune");
+
+        final String newCkpt        = directory + "/model.ckpt";
 
         List<String> labels = FileUtil.loadLabels(new FileInputStream(trainImagesTxt));
         final int dataCount = labels.size();
@@ -85,6 +88,13 @@ public class TFLiteBackend implements Backend {
         Interpreter.Options options = new Interpreter.Options();
         options.setNumThreads(trainNumWorkers);
         Interpreter interpreter = new Interpreter(new File(directory + "/" + model), options);
+
+        if (fineTune && new File(newCkpt).isFile()) {
+            Map<String, Object> inputs = new HashMap<>();
+            inputs.put("checkpoint_path", newCkpt);
+            Map<String, Object> outputs = new HashMap<>();
+            interpreter.runSignature(inputs, outputs, "load");
+        }
 
         for (int epoch = 0; epoch < trainEpochs; ++epoch) {
             for (int batchIdx = 0; batchIdx < trainIterations; ++batchIdx) {
@@ -116,7 +126,7 @@ public class TFLiteBackend implements Backend {
             }
         }
         Map<String, Object> inputs = new HashMap<>();
-        File outputFile = new File(directory + "/model.ckpt");
+        File outputFile = new File(newCkpt);
         inputs.put("checkpoint_path", outputFile.getAbsolutePath());
         Map<String, Object> outputs = new HashMap<>();
         interpreter.runSignature(inputs, outputs, "save");
