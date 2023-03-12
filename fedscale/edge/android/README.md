@@ -75,7 +75,7 @@ Once you have installed the SDK, you can add ``fedScaleClient`` to your app with
 
 For example, our [example app](README-App.md) uses an image classification model within the app. Our example app puts training data under ``assets/TrainSet``. When the user opens the app, ``fedScaleClient`` carefully schedules the resource to decide whether to start fine-tuning. 
 
-The user should first click `Start FL` button to receive the model from the server. After receiving the model, the user has the freedom to choose when to start/stop FL and when to start local fine-tuning. If the user choose to do local fine-tuning, they should click `Stop FL` button and click `Start Local Fine-tune` button for training 1 round.
+For the ease of understanding, our example app allows the user to choose when to start/stop FL and when to start local fine-tuning. If the user choose to do local fine-tuning, they should click `Stop FL` button and click `Start Local Fine-tune` button.
 
 ----
 If you need any further help, feel free to contact FedScale team or the developer [website](https://continue-revolution.github.io) [email](mailto:continuerevolution@gmail.com) of this app.
