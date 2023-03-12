@@ -51,15 +51,12 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
     jmethodID getString = env->GetMethodID(jsonObjectClass, "getString","(Ljava/lang/String;)Ljava/lang/String;");
     jmethodID getInt    = env->GetMethodID(jsonObjectClass, "getInt","(Ljava/lang/String;)I");
     jmethodID getDouble  = env->GetMethodID(jsonObjectClass, "getDouble","(Ljava/lang/String;)D");
+    jmethodID getBoolean  = env->GetMethodID(jsonObjectClass, "getBoolean", "(Ljava/lang/String;)Z");
 
     auto data = static_cast<jstring>(env->CallObjectMethod(trainingDataConf_, getString, env->NewStringUTF("data")));
     auto label = static_cast<jstring>(env->CallObjectMethod(trainingDataConf_, getString, env->NewStringUTF("label")));
     std::string trainImagesFolder   = directory + "/" + parseString(env, data) + "/";
     std::string trainImagesTxt      = directory + "/" + parseString(env, label);
-
-    std::string trainJsonPath       = directory + "/" + modelFilename;
-    std::string trainModelPath      = directory + "/model.mnn";
-    std::string newModelPath        = directory + "/temp_model.mnn";
 
     auto clientId = static_cast<jstring>(env->CallObjectMethod(trainingConf_, getString, env->NewStringUTF("client_id")));
     const int numClasses        = env->CallIntMethod(trainingConf_, getInt, env->NewStringUTF("num_classes"));
@@ -73,6 +70,14 @@ Java_com_fedscale_android_mnn_MNNNative_nativeTrain(
     const float lossDecay       = env->CallDoubleMethod(trainingConf_, getDouble, env->NewStringUTF("loss_decay"));
     const float momentum        = env->CallDoubleMethod(trainingConf_, getDouble, env->NewStringUTF("momentum"));
     const float weight_decay    = env->CallDoubleMethod(trainingConf_, getDouble, env->NewStringUTF("weight_decay"));
+    const bool fineTune         = env->CallBooleanMethod(trainingConf_, getBoolean, env->NewStringUTF("fine_tune"));
+
+    std::string trainJsonPath       = directory + "/" + modelFilename;
+    std::string trainModelPath      = directory + "/model.mnn";
+    std::string newModelPath        = directory + "/temp_model.mnn";
+    if (fineTune) {
+        std::string newModelPath    = directory + "/model.mnn";
+    }
 
     auto varMap = Variable::loadMap(trainModelPath.c_str());
     if (varMap.empty()) {

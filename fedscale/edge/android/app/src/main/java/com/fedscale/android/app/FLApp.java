@@ -13,10 +13,11 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.fedscale.android.R;
-import com.fedscale.android.executor.FLExecutor;
+import com.fedscale.android.executor.Client;
 import com.fedscale.android.utils.Common;
 
-import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FLApp extends AppCompatActivity {
 
@@ -34,12 +35,10 @@ public class FLApp extends AppCompatActivity {
     HandlerThread mThread;
     Handler mHandle;
 
-    private File cacheDir;
-    private Context baseContext;
-
-    private FLExecutor executor;
+    private Client executor;
 
     private Boolean hasModel;
+    private Boolean dataInitialized;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,20 +59,21 @@ public class FLApp extends AppCompatActivity {
 
         this.res = getResources();
 
-        this.cacheDir = getCacheDir();
-        this.baseContext = getBaseContext();
-
-        this.executor = new FLExecutor(this);
-        try {
-            this.executor.initExecutor();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.executor = new Client(this);
 
         this.hasModel = false;
+        this.dataInitialized = false;
 
         this.flButton.setOnClickListener(v -> {
             if (this.flButton.getText().equals(this.res.getString(R.string.start_fl))) {
+                if (!this.dataInitialized) {
+                    try {
+                        this.executor.initExecutor();
+                        this.dataInitialized = true;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 if (this.finetuneButton.isEnabled()) {
                     this.finetuneButton.setEnabled(false);
                 }
@@ -94,7 +94,6 @@ public class FLApp extends AppCompatActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-//                this.mThread.quit();
                 this.flButton.setText(this.res.getString(R.string.start_fl));
                 if (this.hasModel) {
                     this.finetuneButton.setEnabled(true);
@@ -109,7 +108,9 @@ public class FLApp extends AppCompatActivity {
             this.mHandle = new Handler(this.mThread.getLooper());
             this.mHandle.post(() -> {
                 try {
-                    this.executor.LocalTrain();
+                    Map<String, Object> fineTuneConfig = new HashMap<>();
+                    fineTuneConfig.put("fine_tune", true);
+                    this.executor.LocalTrain(fineTuneConfig);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -143,7 +144,6 @@ public class FLApp extends AppCompatActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        mThread.quit();
         super.onDestroy();
     }
 
@@ -153,16 +153,18 @@ public class FLApp extends AppCompatActivity {
      * @param newStatus The value of the updated status.
      */
     public void onChangeStatus(final String newStatus){
-        runOnUiThread(() -> this.mExecuteStatus.setText(newStatus));
-        if (newStatus.equals(Common.CLIENT_TRAIN_LOCALLY_FIN)) {
-            this.finetuneButton.setEnabled(true);
-            this.flButton.setEnabled(true);
-        } else if (newStatus.equals(Common.SHUT_DOWN)) {
-            this.flButton.setText(this.res.getString(R.string.start_fl));
-            if (this.hasModel) {
+        runOnUiThread(() -> {
+            this.mExecuteStatus.setText(newStatus);
+            if (newStatus.equals(Common.CLIENT_TRAIN_LOCALLY_FIN)) {
                 this.finetuneButton.setEnabled(true);
+                this.flButton.setEnabled(true);
+            } else if (newStatus.equals(Common.SHUT_DOWN)) {
+                this.flButton.setText(this.res.getString(R.string.start_fl));
+                if (this.hasModel) {
+                    this.finetuneButton.setEnabled(true);
+                }
             }
-        }
+        });
     }
 
     /**
@@ -171,14 +173,14 @@ public class FLApp extends AppCompatActivity {
      * @param newRound The value of the updated round.
      */
     public void onChangeRound(final int newRound){
-        runOnUiThread(() -> this.mRound.setText(newRound));
+        runOnUiThread(() -> this.mRound.setText(String.format("Round: %d", newRound)));
     }
 
     /**
      * When Executor get model from cloud, the local finetune button will be enabled when FL stop.
      */
     public void onGetModel(){
-        this.mExecuteMsg.setText(this.res.getString(R.string.has_model));
+        runOnUiThread(() -> this.mExecuteMsg.setText(this.res.getString(R.string.has_model)));
         this.hasModel = true;
     }
 
@@ -186,8 +188,10 @@ public class FLApp extends AppCompatActivity {
      * When Executor write model to the disk, the local finetune button will be disabled when FL stop.
      */
     public void onWriteModel() {
-        this.mExecuteMsg.setText(this.res.getString(R.string.no_model));
-        this.finetuneButton.setEnabled(false);
+        runOnUiThread(() -> {
+            this.mExecuteMsg.setText(this.res.getString(R.string.no_model));
+            this.finetuneButton.setEnabled(false);
+        });
         this.hasModel = false;
     }
 
@@ -201,13 +205,5 @@ public class FLApp extends AppCompatActivity {
             this.mExecuteStatus.setText(Common.CLIENT_CONNECT);
             this.mExecuteResult.setText("");
         });
-    }
-
-    public File getCacheDir() {
-        return this.cacheDir;
-    }
-
-    public Context getBaseContext() {
-        return this.baseContext;
     }
 }

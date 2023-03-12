@@ -2,9 +2,9 @@
 
 FedScale provides a cloud-based [aggregation service](https://github.com/SymbioticLab/FedScale/blob/master/fedscale/cloud/aggregation/README.md) and an [SDK](#fedscale-mobile-runtime) for smartphones on the edge that currently supports TensorflowLite and Alibaba MNN on Android (iOS support coming soon!). In this tutorial, we introduce how to:
 
-- [Initiate FedScale Cloud Service](#fedscale-cloud-aggregation)
-- [Import FedScale SDK to locally fine tune models](#fedscale-mobile-runtime)
-- [Connect to FedScale cloud for federated training](#fedscale-mobile-runtime)
+- [FedScale Deployment](#fedscale-deployment)
+  - [FedScale Cloud Aggregation](#fedscale-cloud-aggregation)
+  - [FedScale Mobile Runtime](#fedscale-mobile-runtime)
 
 <p align="center">
 <img src="../../../docs/fedscale-deploy.png" width="600" height="400"/>
@@ -58,22 +58,24 @@ If you don't have an app, you may refer to [Sample App](README-App.md) to play w
 - Fine-tune models locally **after** receiving model from the cloud.
 
 To get started, you need to install the FedScale SDK and import it into your project.
-Once you have installed the SDK, you can add ``fedscale_client`` to your app with the following code to fine-tune your local model: 
+Once you have installed the SDK, you can add ``fedScaleClient`` to your app with the following code to fine-tune your local model: 
 
   ```
   import com.fedscale.android.Client;
   public class App {
       …
-      private Client fedscale_client;
+      private Client fedScaleClient;
       protected void onCreate() {
           …
-          this.fedscale_client = new Client();
-          this.fedscale_client.run(); // run in background threads
+          this.fedScaleClient = new Client(this);
+          this.fedScaleClient.FLStart(); // run in background threads
       }
   }
   ```
 
-For example, our [example app](README-App.md) uses an image classification model within the app. Our example app puts training data under ``assets/dataset``. When the user opens the app, ``fedscale_client`` carefully schedules the resource to decide whether to start fine-tuning. 
+For example, our [example app](README-App.md) uses an image classification model within the app. Our example app puts training data under ``assets/TrainSet``. When the user opens the app, ``fedScaleClient`` carefully schedules the resource to decide whether to start fine-tuning. 
+
+The user should first click `Start FL` button to receive the model from the server. After receiving the model, the user has the freedom to choose when to start/stop FL and when to start local fine-tuning. If the user choose to do local fine-tuning, they should click `Stop FL` button and click `Start Local Fine-tune` button for training 1 round.
 
 ----
 If you need any further help, feel free to contact FedScale team or the developer [website](https://continue-revolution.github.io) [email](mailto:continuerevolution@gmail.com) of this app.

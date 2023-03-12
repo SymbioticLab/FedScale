@@ -38,7 +38,7 @@
         tools:ignore="AllowBackup">
         <profileable android:shell="true"/>
         <activity
-            android:name=".executor.FLExecutor"
+            android:name=".app.FLApp"
             android:clearTaskOnLaunch="true"
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
