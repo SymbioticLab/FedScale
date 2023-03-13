@@ -23,8 +23,10 @@ Please follow these steps to download and build the sample android app.
    - You can choose your training framework by modifying `model_conf.backend` to `tflite` or `mnn`.
    - You may config your dataset information at `training_conf` and `testing_conf`.
    - You may put your own **image classification** dataset under `/TrainSet` and `/TestSet` directories and modify `train_labels.txt` and `test_labels.txt` accordingly. The format of labels must be \<filename\> \<label\>.
-   - If you want to perform tasks other than image classification, you should modify framework-specific code [MNN](https://github.com/SymbioticLab/FedScale/fedscale/edge/android/app/src/main/java/com/fedscale/android/mnn) [TFLite](https://github.com/SymbioticLab/FedScale/fedscale/edge/android/app/src/main/java/com/fedscale/android/tflite). If you are using TFLite, you should also write your own signatures similar to [our TFLite model provider](https://github/com/SymbioticLab/FedScale/fedscale/cloud/internal/tflite_model_adapter.py)
+   - If you want to perform tasks other than image classification, you should modify framework-specific code for [MNN](https://github.com/SymbioticLab/FedScale/fedscale/edge/android/app/src/main/java/com/fedscale/android/mnn) or [TFLite](https://github.com/SymbioticLab/FedScale/fedscale/edge/android/app/src/main/java/com/fedscale/android/tflite). If you are using TFLite, you should also write your own signatures similar to [our TFLite model provider](https://github/com/SymbioticLab/FedScale/fedscale/cloud/internal/tflite_model_adapter.py)
 4. Make Project. Android Studio will compile and build the app for you. Click Run if you want to run the app on a real android device.
+
+*Note that the data paths of training data in the mobile devices and corresponding schemas are configurable when users submit jobs in the cloud to train or fine-tune a particular model (i.e., by updating ``- data_path`` in yml).* 
 
 ----
 If you need any further help, feel free to contact FedScale team or the developer [website](https://continue-revolution.github.io) [email](mailto:continuerevolution@gmail.com) of this app.
