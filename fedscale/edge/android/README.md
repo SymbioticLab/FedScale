@@ -17,7 +17,7 @@ FedScale cloud aggregation orchestrates distributed mobile devices to collaborat
 
 FedScale deployment mode follows similar setup of the [simulation mode](https://github.com/SymbioticLab/FedScale/blob/master/docs/tutorial.md) to streamline cloud-based prototyping and real-world deployment with little migration overhead. 
 
-- **Configurate job**: Jobs are configured in the `yml` format. Here is an [example](../../../benchmark/configs/android/tflite.yml
+- **Configure job**: Jobs are configured in the `yml` format. Here is an [example](../../../benchmark/configs/android/tflite.yml
 ): 
 
   ```
@@ -62,6 +62,7 @@ Once you have installed the SDK, you can add ``fedScaleClient`` to your app with
 
   ```
   import com.fedscale.android.Client;
+  
   public class App {
       …
       private Client fedScaleClient;
@@ -73,9 +74,11 @@ Once you have installed the SDK, you can add ``fedScaleClient`` to your app with
   }
   ```
 
-When the user opens the app, ``fedScaleClient`` internal scheduler will orchestrate the device resource with FedScale cloud to decide whether to start federated training (e.g., FedScale cloud is online) or local fine-tuning (e.g., deeply personalize to the user). 
+When the user opens the app, ``fedScaleClient`` internal scheduler will orchestrate the device resource with FedScale cloud to decide whether to start federated training (e.g., FedScale cloud is online) or to perform local fine-tuning (e.g., deeply personalize to the user). 
 
-For the ease of understanding, our [example app](README-App.md) plays with an image classification task within the app. Our example app puts training data under ``assets/TrainSet``. Note that this data path is configurable when we submit jobs in the cloud (i.e., ``- data_path`` in yml). Our example app allows the user to choose when to start/stop FL and when to start local fine-tuning. If the user choose to do local fine-tuning, they should click `Stop FL` button and click `Start Local Fine-tune` button.
+For the ease of understanding, our [example app](README-App.md) plays with an image classification task within the app. Our example app puts training data under ``assets/TrainSet``. *Note that this data path of training data in the mobile devices is configurable when users submit jobs in the cloud to train or fine-tune a particular model (i.e., by updating ``- data_path`` in yml).* 
+
+Our example app allows the user to choose when to start/stop FL and when to start local fine-tuning. If the user choose to do local fine-tuning, they should click `Stop FL` button and click `Start Local Fine-tune` button.
 
 ----
 If you need any further help, feel free to contact FedScale team or the developer [website](https://continue-revolution.github.io) [email](mailto:continuerevolution@gmail.com) of this app.
