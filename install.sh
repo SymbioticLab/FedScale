@@ -43,8 +43,8 @@ if [[ $(uname -p) == 'arm' ]]; then
   conda env create -f environment-arm.yml
   conda install -c apple tensorflow-deps
   conda activate fedscale
-  python -m pip install tensorflow-macos
-  python -m pip install tensorflow-metal
+  python -m pip install tensorflow-macos==2.9
+  python -m pip install tensorflow-metal==0.5.0
   
 else
   conda init bash
