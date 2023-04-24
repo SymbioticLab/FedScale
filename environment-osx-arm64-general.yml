@@ -1,0 +1,36 @@
+name: fedscale
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - conda-export
+  - grpcio==1.40.0
+  - libprotobuf
+  - numba
+  - python=3.8
+  - tensorboard
+  - pip:
+      - fqdn
+      - gdown
+      - gym
+      - isoduration
+      - jsonpointer
+      - jupyter
+      - kubernetes
+      - librosa
+      - matplotlib
+      - overrides
+      - pandas
+      - pybind11
+      - pytest
+      - python-levenshtein
+      - sentencepiece
+      - sox
+      - tensorboardx
+      - tensorflow-macos
+      - torch-optimizer
+      - torchvision
+      - transformers
+      - uri-template
+      - wandb
+      - webcolors
