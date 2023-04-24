@@ -224,4 +224,3 @@ dependencies:
       - websocket-client==1.5.1
       - widgetsnbextension==4.0.7
       - wrapt==1.15.0
-prefix: /Users/singam/Software/anaconda3/envs/fedscale-intel
