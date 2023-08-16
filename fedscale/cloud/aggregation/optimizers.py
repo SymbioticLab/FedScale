@@ -1,3 +1,5 @@
+import numpy as np 
+import torch
 class TorchServerOptimizer(object):
     """This is a abstract server optimizer class
     
@@ -40,8 +42,12 @@ class TorchServerOptimizer(object):
             diff_weight = self.gradient_controller.update(
                 [pb-pa for pa, pb in zip(last_model, current_model)])
 
-            for idx, param in enumerate(target_model.parameters()):
-                param.data = last_model[idx] + diff_weight[idx]
+            new_state_dict = {
+                name: torch.from_numpy(np.array(last_model[idx] + diff_weight[idx], dtype=np.float32))
+                for idx, name in enumerate(target_model.state_dict().keys())
+            }
+
+            target_model.load_state_dict(new_state_dict)
 
         elif self.mode == 'q-fedavg':
             """
