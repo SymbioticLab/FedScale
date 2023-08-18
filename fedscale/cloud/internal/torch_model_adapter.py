@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 import torch
-
+import copy
 from fedscale.cloud.aggregation.optimizers import TorchServerOptimizer
 from fedscale.cloud.internal.model_adapter_base import ModelAdapterBase
 
@@ -32,6 +32,8 @@ class TorchModelAdapter(ModelAdapterBase):
         }
         self.model.load_state_dict(new_state_dict)
         if self.optimizer:
+            weights_origin = copy.deepcopy(weights)
+            weights = [torch.tensor(x) for x in weights_origin]
             self.optimizer.update_round_gradient(weights, current_grad_weights, self.model)
 
     def get_weights(self) -> List[np.ndarray]:
