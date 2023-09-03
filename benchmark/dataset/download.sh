@@ -49,13 +49,13 @@ speech()
     if [ ! -d "${DIR}/speech_commands/train/" ];
     then
         echo "Downloading Speech Commands dataset(about 2.4GB)..."
-        wget -O ${DIR}/speech_commands/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
+        wget -O ${DIR}/google_speech.tar.gz https://fedscale.eecs.umich.edu/dataset/google_speech.tar.gz
 
         echo "Dataset downloaded, now decompressing..."
-        tar -xf ${DIR}/speech_commands/google_speech.tar.gz -C ${DIR}
+        tar -xf ${DIR}/google_speech.tar.gz -C ${DIR}
 
         echo "Removing compressed file..."
-        rm -f ${DIR}/speech_commands/google_speech.tar.gz
+        rm -f ${DIR}/google_speech.tar.gz
 
         echo -e "${GREEN}Speech Commands dataset downloaded!${NC}"
     else
@@ -584,3 +584,4 @@ case "$1" in
         Help
     ;;
 esac
+	
