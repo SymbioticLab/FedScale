@@ -25,7 +25,7 @@ class TorchModelAdapter(ModelAdapterBase):
         Set the model's weights to the numpy weights array.
         :param weights: numpy weights array
         """
-        current_grad_weights = [param.data.clone() for param in self.model.state_dict().values()]
+        last_grad_weights = [param.data.clone() for param in self.model.state_dict().values()]
         new_state_dict = {
             name: torch.from_numpy(np.asarray(weights[i], dtype=np.float32))
             for i, name in enumerate(self.model.state_dict().keys())
@@ -34,7 +34,7 @@ class TorchModelAdapter(ModelAdapterBase):
         if self.optimizer:
             weights_origin = copy.deepcopy(weights)
             weights = [torch.tensor(x) for x in weights_origin]
-            self.optimizer.update_round_gradient(weights, current_grad_weights, self.model)
+            self.optimizer.update_round_gradient(last_grad_weights, weights, self.model)
 
     def get_weights(self) -> List[np.ndarray]:
         """
