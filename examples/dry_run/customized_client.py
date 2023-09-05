@@ -12,14 +12,14 @@ from fedscale.cloud.execution.torch_client import TorchClient
 
 class Customized_Client(TorchClient):
     """Basic client component in Federated Learning"""
-
     def train(self, client_data, model, conf):
         """We flip the label of the malicious client"""
+        device = conf.cuda_device if conf.use_cuda else torch.device(
+            'cpu')
+
         client_id = conf.client_id
 
         logging.info(f"Start to train (CLIENT: {client_id}) ...")
-        device = conf.device
-
         model = model.to(device=device)
         model.train()
 
