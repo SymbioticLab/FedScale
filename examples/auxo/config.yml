@@ -1,0 +1,6 @@
+split_round: [50,100]
+exploredecay: 0.99
+explorerate: 0.01
+reduction: False
+metric: 'cosine'
+start_round: 0
