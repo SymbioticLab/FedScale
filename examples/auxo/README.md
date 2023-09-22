@@ -2,7 +2,7 @@
 
 <div align="center">
 <picture>
-  <img alt="Auxo logo" width="55%" src="fig/auxo.png">
+  <img alt="Auxo logo" width="45%" src="fig/auxo.png">
 </picture> 
 <h1>Auxo: Efficient Federated Learning via Scalable Client Clustering</h1>
 
@@ -25,6 +25,7 @@ For more details, refer to our academic paper on SoCC'23 [paper](https://arxiv.o
 
 ## Getting Started
 ### Install
+Following the installation steps if you have not installed fedscale yet.
 ```commandline  
 docker build -t fedscale:auxo .
 docker run --gpus all -it --name auxo -v $FEDSCALE_HOME:/workspace/FedScale fedscale:auxo /bin/bash
@@ -40,11 +41,8 @@ source ~/.bashrc
 After setting up the fedscale environment, you can download the dataset and partition each client dataset into train set and test set.
 
 ```commandline
-cd $FEDSCALE_HOME/examples/auxo
-```
-
-```
 fedscale dataset download femnist
+cd $FEDSCALE_HOME/examples/auxo 
 python -m utils.prepare_test_train ../../benchmark/dataset/data/femnist/client_data_mapping/train.csv
 python -m utils.prepare_test_train ../../benchmark/dataset/data/femnist/client_data_mapping/test.csv
 python -m utils.prepare_test_train ../../benchmark/dataset/data/femnist/client_data_mapping/val.csv

@@ -85,7 +85,6 @@ class QTable():
     def update_R_batch(self, cid_list, mid, reward_list, remain_round):
         for cid, reward in zip(cid_list, reward_list):
             self.update_R(cid, mid, reward)
-            # if remain_round == False and reward > 0:
             self.Qtable[cid][mid].train_times_R += 1
 
     def update_subR(self, cid, mid, sub_id):
@@ -175,7 +174,7 @@ class QTable():
         return known_index_list
 
     def split(self, mid):
-
+        # whether to split: enough client subreward info + minimal size satisfy + elbow test
         if self.split_round is not None and self.epoch[mid] in self.split_round:
             return True
         elif self.split_round is None:
@@ -193,11 +192,12 @@ class QTable():
             ratio = sub_num[0] / max(sub_num[1], 1)
 
             within_ratio = True if (ratio > 0.5 and ratio < 2) or self.num_model == 1 else False
-            return sub_num[0] > min_size and sub_num[1] > min_size and within_ratio  # self.num_model < self.avg_train_times and within_ratio
+            return sub_num[0] > min_size and sub_num[1] > min_size and within_ratio
         else:
             return False
 
     def knn_update_subR(self, mid, X_sub, global_index, keep_split=True):
+        # update cluster membership for each clusters
         self.epoch[mid] += 1
         if self.split_round is not None:
             if self.epoch[mid] > max(self.split_round) + 1:
@@ -206,6 +206,7 @@ class QTable():
                 keep_split = True
 
         if self.init_round[mid] == False:
+            # First round of clustering
             if self.num_model > 1:
                 known_clt_list = self.count_known_main(global_index, mid)
                 if len(known_clt_list) <= 1:
@@ -229,6 +230,7 @@ class QTable():
             self.init_round[mid] = True
 
         elif keep_split:
+            # Continuous clustering of subsequent rounds
             sub_num, sub_label_list = self.subcluster_policy(mid, global_index)
 
             if sub_num[0] == sub_num[1] == 0:
@@ -268,7 +270,7 @@ class QTable():
                 return
 
     def update_mainR(self, mid, X_sub, global_index, remain_round=True):
-
+        # update cluster membership for each clusters
         if self.split_round is not None:
             if self.epoch[mid] > max(self.split_round) + 1:
                 remain_round = False
@@ -323,7 +325,7 @@ class QTable():
         # TODO: can have many overlap clients, instead choose clients with highest score
 
     def return_pivot_client(self, mid):
-
+        # Return the clients that belong to the cohort
         self.update_pivot_client(mid)
         return self.pivot_clients[mid]
 
@@ -345,6 +347,7 @@ class QTable():
         return list(set(trained_clt))
 
     def plot(self, X, epoch):
+        # Visualize the clustering result
         trained_clt = self.count_trained_clt()
         plt.scatter(X[trained_clt, 0], X[trained_clt, 1], c=self.y_kmeans[trained_clt], s=30, cmap='viridis')
         plt.title(f"Epoch {epoch}: {len(np.unique(self.y_kmeans[trained_clt], axis=0))} clusters")

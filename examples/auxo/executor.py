@@ -8,10 +8,8 @@ from config import auxo_config
 class AuxoExecutor(Executor):
     def __init__(self, args):
         super().__init__(args)
-
         self.round = [0]
         self.model_adapter = [self.get_client_trainer(args).get_model_adapter(init_model())]
-
 
     def UpdateModel(self, model_weights, cohort_id):
         """Receive the broadcasted global model for current round
