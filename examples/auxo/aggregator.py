@@ -236,7 +236,7 @@ class AuxoAggregator(Aggregator):
             if execution_status is False:
                 logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
 
-            if self.resource_manager.has_next_task(executor_id):
+            if self.resource_manager.has_next_task(executor_id, cohort_id):
                 # NOTE: we do not pop the train immediately in simulation mode,
                 # since the executor may run multiple clients
                 if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:

@@ -33,6 +33,8 @@ class HeterClientManager(ClientManager):
         self.num_cluster = 1
         self.latest_acc_list = {0:1}
 
+        logging.info(f'Client manager initialized with auxo config: {auxo_config}')
+
 
     def register_client(self, host_id: int, client_id: int, size: int, speed: Dict[str, float],
                         duration: float = 1) -> None:

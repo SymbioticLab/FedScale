@@ -63,12 +63,12 @@ python playground.py
 Visualized clustering Results: 
 
  <p float="left">
-  <img src="fig/epoch_14.png" width="100" />
-  <img src="fig/epoch_100.png" width="100" /> 
-  <img src="fig/epoch_224.png" width="100" />
-  <img src="fig/epoch_300.png" width="100" /> 
-  <img src="fig/epoch_500.png" width="100" /> 
-  <img src="fig/epoch_700.png" width="100" /> 
+  <img src="fig/epoch_14.png" width="150" />
+  <img src="fig/epoch_100.png" width="150" /> 
+  <img src="fig/epoch_224.png" width="150" />
+  <img src="fig/epoch_300.png" width="150" /> 
+  <img src="fig/epoch_500.png" width="150" /> 
+  <img src="fig/epoch_700.png" width="150" /> 
 </p>
 
  

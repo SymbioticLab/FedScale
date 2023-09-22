@@ -46,6 +46,7 @@ class AuxoExecutor(Executor):
         client = self.get_client_trainer(self.args)
         if len(client_data) == 0:
             state_dicts = self.model_adapter[cohort_id].get_model().state_dict()
+            logging.info(f"Client {client_id} has no data, return empty result")
             return {'client_id': client_id, 'moving_loss': 0,
                    'trained_size': 0, 'utility': 0, 'wall_duration': 0,
                    'update_weight': {p: state_dicts[p].data.cpu().numpy()
@@ -83,7 +84,7 @@ class AuxoExecutor(Executor):
             )
         )
         self.dispatch_worker_events(response)
-        logging.info(f"Client {client_id} finished training. ")
+        logging.info(f"[Cohort {cohort_id}] Client {client_id} finished training. ")
 
         return client_id, train_res
 
