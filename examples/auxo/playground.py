@@ -7,11 +7,11 @@ from sklearn.cluster import KMeans
 from clustering import QTable
 
 DEFAULT_SAMPLE_SIZE = 50
-DEFAULT_TOTAL_EPOCH = 1000
+DEFAULT_TOTAL_EPOCH = 800
 DEFAULT_TOTAL_SAMPLE = 1000
 DEFAULT_KNOWN_CLT = 150
 NUM_CENTERS = 4
-
+random.seed(100)
 
 def bipartition_cluster(total_epoch, total_sample, sample_size, known_clt):
     start_time = time.time()

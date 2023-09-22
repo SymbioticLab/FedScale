@@ -348,8 +348,8 @@ class QTable():
         trained_clt = self.count_trained_clt()
         plt.scatter(X[trained_clt, 0], X[trained_clt, 1], c=self.y_kmeans[trained_clt], s=30, cmap='viridis')
         plt.title(f"Epoch {epoch}: {len(np.unique(self.y_kmeans[trained_clt], axis=0))} clusters")
-        plt.show()
         plt.savefig(f"epoch_{epoch}.png")
+        plt.show()
 
         if len(np.unique(self.y_kmeans[trained_clt], axis=0)) > 1:
             silhouette_avg = silhouette_score(X[trained_clt], self.y_kmeans[trained_clt])

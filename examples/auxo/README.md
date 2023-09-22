@@ -60,17 +60,15 @@ fedscale driver start benchmark/configs/auxo/auxo.yml
 cd $FEDSCALE_HOME/examples/auxo
 python playground.py
 ```
-Visualized Results: 
+Visualized clustering Results: 
 
  <p float="left">
-  <img src="fig/epoch_11.png" width="100" />
-  <img src="fig/epoch_99.png" width="100" />
+  <img src="fig/epoch_14.png" width="100" />
+  <img src="fig/epoch_100.png" width="100" /> 
+  <img src="fig/epoch_224.png" width="100" />
   <img src="fig/epoch_300.png" width="100" /> 
+  <img src="fig/epoch_500.png" width="100" /> 
+  <img src="fig/epoch_700.png" width="100" /> 
 </p>
 
-
- <p float="left">
-  <img src="fig/epoch_500.png" width="100" />
-  <img src="fig/epoch_700.png" width="100" />
-  <img src="fig/epoch_900.png" width="100" /> 
-</p>
+ 
