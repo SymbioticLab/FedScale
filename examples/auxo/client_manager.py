@@ -2,7 +2,6 @@
 from fedscale.cloud.client_manager import *
 from collections import  defaultdict
 from client_metadata import AuxoClientMetadata
-import math
 import logging
 import numpy as np
 from sklearn import preprocessing
@@ -83,7 +82,7 @@ class HeterClientManager(ClientManager):
         return clients_online
 
 
-    def select_participants(self, num_of_clients: int, cur_time: float = 0, cohort_id: int = 0) -> List[int]:
+    def select_participants(self, num_of_clients: int, cur_time: float = 0, cohort_id: int = 0, test: bool = False) -> List[int]:
         """Select participating clients for current execution task.
 
         Args:
@@ -104,8 +103,18 @@ class HeterClientManager(ClientManager):
         pickled_clients = None
         clients_online_set = set(clients_online)
 
-        # TODO: select clients for testing
-        if self.mode == "oort":
+        if test:
+            pivot_client = self.reward_qtable.return_pivot_client(cohort_id)
+            pivot_client = list(set(pivot_client) & set(self.feasibleClients[cohort_id]))
+            self.rng.shuffle(pivot_client)
+            extra_clt = list(set(clients_online) - set(pivot_client))
+            self.rng.shuffle(extra_clt)
+
+            pickled_clients = pivot_client + extra_clt
+            client_len = min(num_of_clients, len(pickled_clients) - 1)
+            pickled_clients = pickled_clients[:client_len]
+
+        elif self.mode == "oort":
             pickled_clients = self.ucb_sampler.select_participant(
                 num_of_clients, feasible_clients=clients_online_set)
         else:
@@ -233,7 +242,7 @@ class HeterClientManager(ClientManager):
         size_ratio = [len(cluster) for cluster in self.feasibleClients]
         logging.info(f'Round {round} FeasibleClients client number : {size_ratio}')
 
-    def schedule_plan(self, round, cohort_id) -> int:
+    def schedule_plan(self, round=0, cohort_id=0) -> int:
         """ Schedule the training resources for each cohort
 
         Args:

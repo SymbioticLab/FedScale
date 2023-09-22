@@ -3,6 +3,7 @@ import logging
 from fedscale.cloud.execution.executor import *
 from utils.helper import *
 import copy
+from config import auxo_config
 
 class AuxoExecutor(Executor):
     def __init__(self, args):
@@ -43,6 +44,13 @@ class AuxoExecutor(Executor):
                            collate_fn=self.collate_fn
                            )
         client = self.get_client_trainer(self.args)
+        if len(client_data) == 0:
+            state_dicts = self.model_adapter[cohort_id].get_model().state_dict()
+            return {'client_id': client_id, 'moving_loss': 0,
+                   'trained_size': 0, 'utility': 0, 'wall_duration': 0,
+                   'update_weight': {p: state_dicts[p].data.cpu().numpy()
+                       for p in state_dicts},
+                   'success': 1}
         train_res = client.train(
             client_data=client_data, model=self.model_adapter[cohort_id].get_model(), conf=conf)
 
@@ -79,7 +87,51 @@ class AuxoExecutor(Executor):
 
         return client_id, train_res
 
-    def testing_handler(self, cohort_id):
+    def _init_train_test_data(self):
+
+        if self.args.data_set == 'femnist':
+            from utils.openimg import OpenImage
+            train_transform, test_transform = get_data_transform('mnist')
+            train_dataset = OpenImage(self.args.data_dir, dataset='femnist', transform=train_transform, client_mapping_file = auxo_config['train_data_map_file']  )
+            test_dataset = OpenImage(self.args.data_dir, dataset='femnist', transform=test_transform, client_mapping_file = auxo_config['test_data_map_file'] )
+        else:
+            raise NotImplementedError
+        return train_dataset, test_dataset
+
+
+    def init_data(self):
+        """Return the training and testing dataset
+
+        Returns:
+            Tuple of DataPartitioner class: The partioned dataset class for training and testing
+
+        """
+        train_dataset, test_dataset = self._init_train_test_data()
+        if self.args.task == "rl":
+            return train_dataset, test_dataset
+        if self.args.task == 'nlp':
+            self.collate_fn = collate
+        elif self.args.task == 'voice':
+            self.collate_fn = voice_collate_fn
+        # load data partitionxr (entire_train_data)
+        logging.info("Data partitioner starts ...")
+
+        training_sets = DataPartitioner(
+            data=train_dataset, args=self.args, numOfClass=self.args.num_class)
+        training_sets.partition_data_helper(
+            num_clients=self.args.num_participants, data_map_file=auxo_config['train_data_map_file'])
+
+        testing_sets = DataPartitioner(
+            data=test_dataset, args=self.args, numOfClass=self.args.num_class)
+        testing_sets.partition_data_helper(
+            num_clients=self.args.num_participants, data_map_file=auxo_config['test_data_map_file'])
+
+        logging.info("Data partitioner completes ...")
+
+        return training_sets, testing_sets
+
+
+    def testing_handler(self, client_list, cohort_id=0):
         """Test model
 
         Args:
@@ -89,20 +141,35 @@ class AuxoExecutor(Executor):
             dictionary: The test result
 
         """
+
+        test_num_clt = max(len(client_list) // self.num_executors, 1)
+        test_client_id_list = client_list[(self.this_rank - 1) * test_num_clt: self.this_rank * test_num_clt]
+        logging.info(f"[Cohort {cohort_id}] Test client ID: {test_client_id_list}")
+        testResults_accum = {'top_1': 0, 'top_5': 0, 'test_loss': 0, 'test_len': 0}
+
         test_config = self.override_conf({
             'rank': self.this_rank,
             'memory_capacity': self.args.memory_capacity,
             'tokenizer': tokenizer
         })
-        client = self.get_client_trainer(test_config)
-        data_loader = select_dataset(self.this_rank, self.testing_sets,
-                                     batch_size=self.args.test_bsz, args=self.args,
-                                     isTest=True, collate_fn=self.collate_fn)
+        for clt in test_client_id_list:
+            client = self.get_client_trainer(test_config)
+            data_loader = select_dataset(clt, self.testing_sets,
+                                         batch_size=self.args.test_bsz, args=self.args,
+                                         isTest=False, collate_fn=self.collate_fn)
+            if len(data_loader) > 0:
+                test_results = client.test(data_loader, self.model_adapter[cohort_id].get_model(), test_config)
+                testResults_accum['top_1'] += test_results['top_1']
+                testResults_accum['top_5'] += test_results['top_5']
+                testResults_accum['test_loss'] += test_results['test_loss']
+                testResults_accum['test_len'] += test_results['test_len']
 
-        test_results = client.test(data_loader, self.model_adapter[cohort_id].get_model(), test_config)
+        # testRes = {'top_1': correct, 'top_5': top_5,
+        #            'test_loss': sum_loss, 'test_len': test_len}
+
         gc.collect()
 
-        return test_results
+        return testResults_accum
 
     def Test(self, config, cohort_id):
         """Model Testing. By default, we test the accuracy on all data of clients in the test group
@@ -111,7 +178,7 @@ class AuxoExecutor(Executor):
             config (dictionary): The client testing config.
 
         """
-        test_res = self.testing_handler(cohort_id)
+        test_res = self.testing_handler(config['client_id'], cohort_id)
         test_res = {'executorId': self.this_rank, 'results': test_res}
 
         # Report execution completion information

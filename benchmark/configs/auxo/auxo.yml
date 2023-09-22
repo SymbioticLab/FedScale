@@ -1,0 +1,52 @@
+# Configuration file of fed_hetero experiment
+
+# ========== Cluster configuration ==========
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: localhost
+ps_port: 12345
+
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
+worker_ips:
+    - localhost:[7,7,0,0] # worker_ip: [(# processes on gpu) for gpu in available_gpus] eg. 10.0.0.2:[4,4,4,4] This node has 4 gpus, each gpu has 4 processes.
+
+exp_path: $FEDSCALE_HOME/examples/auxo
+
+# Entry function of executor and aggregator under $exp_path
+executor_entry: executor.py
+
+aggregator_entry: aggregator.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate fedscale
+
+# ========== Additional job configuration ==========
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
+
+job_conf:
+    - job_name: auxo_femnist                     # Generate logs under this folder: log_path/job_name/time_stamp
+    - log_path: $FEDSCALE_HOME/benchmark    # Path of log files
+    - num_participants: 200                  # Number of participants per round, we use K=100 in our paper, large K will be much slower
+    - data_set: femnist                     # Dataset: openImg, google_speech, stackoverflow
+    - data_dir: $FEDSCALE_HOME/benchmark/dataset/data/    # Path of the dataset
+    - data_map_file: $FEDSCALE_HOME/benchmark/dataset/data/femnist/client_data_mapping/train.csv              # Allocation of data to each client, turn to iid setting if not provided
+    - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity     # Path of the client trace
+    - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
+    - model: resnet18                       # NOTE: Please refer to our model zoo README and use models for these small image (e.g., 32x32x3) inputs
+#    - model_zoo: fedscale-torch-zoo
+    - eval_interval: 20                     # How many rounds to run a testing on the testing set
+    - rounds: 1000                          # Number of rounds to run this training. We use 1000 in our paper, while it may converge w/ ~400 rounds
+    - filter_less: 0                       # Remove clients w/ less than 21 samples
+    - num_loaders: 2
+    - local_steps: 10
+    - learning_rate: 0.05
+    - batch_size: 20
+    - test_bsz: 20
+    - use_cuda: True
+    - save_checkpoint: False

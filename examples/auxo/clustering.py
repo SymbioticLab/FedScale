@@ -62,18 +62,19 @@ class QTable():
         self.pivot_clients[0] = [*range(self.num_client)]
         self.min_cluster_size = num_client // 10
         self.split_round = split_round
-        # self.epoch = 0
         self.merge_action = merge
         self.metric = metric
         if metric == 'kl':
-            def KL(a, b):
-                epsilon = 0.00001
-                a += epsilon
-                b += epsilon
+            self._initialize_kl()
 
-                return np.sum(np.where(a != 0, a * np.log(a / b), 0))
-
-            self.kl = KL
+    def _initialize_kl(self):
+        """Initialize KL divergence metric if applicable."""
+        def KL(a, b):
+            epsilon = 0.00001
+            a += epsilon
+            b += epsilon
+            return np.sum(np.where(a != 0, a * np.log(a / b), 0))
+        self.kl = KL
 
     def update_R(self, cid, mid, new_reward):
         self.Qtable[cid][mid].update_R(new_reward)
@@ -192,8 +193,7 @@ class QTable():
             ratio = sub_num[0] / max(sub_num[1], 1)
 
             within_ratio = True if (ratio > 0.5 and ratio < 2) or self.num_model == 1 else False
-            return sub_num[0] > min_size and sub_num[
-                1] > min_size and within_ratio  # self.num_model < self.avg_train_times and within_ratio
+            return sub_num[0] > min_size and sub_num[1] > min_size and within_ratio  # self.num_model < self.avg_train_times and within_ratio
         else:
             return False
 
@@ -236,7 +236,6 @@ class QTable():
 
             elif sub_num[0] == 0 or sub_num[1] == 0:
                 sub_size = len(global_index) // 4
-                # TODO: KNN on distance metric
                 if self.metric == 'kl':
                     neigh = NearestNeighbors(n_neighbors=sub_size, metric=lambda a, b: self.kl(a, b)).fit(X_sub)
                 else:
@@ -345,13 +344,13 @@ class QTable():
         print("Trained clients :", len(set(trained_clt)))
         return list(set(trained_clt))
 
-    def plot(self, X):
+    def plot(self, X, epoch):
         trained_clt = self.count_trained_clt()
-        plt.scatter(X[trained_clt, 0], X[trained_clt, 1], c=self.y_kmeans[trained_clt], s=50, cmap='viridis')
-        # fig_name = 'result.png'
-        # plt.savefig(fig_name)
+        plt.scatter(X[trained_clt, 0], X[trained_clt, 1], c=self.y_kmeans[trained_clt], s=30, cmap='viridis')
+        plt.title(f"Epoch {epoch}: {len(np.unique(self.y_kmeans[trained_clt], axis=0))} clusters")
         plt.show()
-        # print("Save to ",fig_name)
+        plt.savefig(f"epoch_{epoch}.png")
+
         if len(np.unique(self.y_kmeans[trained_clt], axis=0)) > 1:
             silhouette_avg = silhouette_score(X[trained_clt], self.y_kmeans[trained_clt])
             print("Silhouette score is ", silhouette_avg)

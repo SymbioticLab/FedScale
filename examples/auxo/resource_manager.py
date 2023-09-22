@@ -33,7 +33,6 @@ class AuxoResourceManager(ResourceManager):
                f"client task {client_id} is not in task queue")
 
     def has_next_task(self, client_id=None, cohort_id=0):
-        # TODO: always has next task
         exist_next_task = False
         if self.experiment_mode == commons.SIMULATION_MODE:
             exist_next_task = self.client_run_queue_idx[cohort_id] < len(

@@ -153,6 +153,21 @@ class AuxoAggregator(Aggregator):
         return job_api_pb2.ServerResponse(event=generate_msg(commons.DUMMY_EVENT, 0),
                                           meta=dummy_data, data=dummy_data)
 
+    def get_test_config(self, client_id, cohort_id=0):
+        """FL model testing on clients, developers can further define personalized client config here.
+
+        Args:
+            client_id (int): The client id.
+
+        Returns:
+            dictionary: The testing config for new task.
+
+        """
+        num_client = self.client_manager.schedule_plan()
+        client_list = self.select_participants(num_client, overcommitment = 1, cohort_id = cohort_id, test=True)
+        return {'client_id': client_list}
+
+
     def CLIENT_PING(self, request, context):
         """Handle client ping requests
 
@@ -185,7 +200,7 @@ class AuxoAggregator(Aggregator):
                             commons.CLIENT_TRAIN)
             elif event_type == commons.MODEL_TEST:
                 # TODO: remove fedscale test and add individual client testing
-                response_msg = self.get_test_config(client_id)
+                response_msg = self.get_test_config(client_id, cohort_id)
             elif event_type == commons.UPDATE_MODEL:
                 response_data = self.model_wrapper[cohort_id].get_weights()
             elif event_type == commons.SHUT_DOWN:
@@ -362,7 +377,7 @@ class AuxoAggregator(Aggregator):
             self.args.learning_rate = max(
                 self.args.learning_rate * self.args.decay_factor, self.args.min_learning_rate)
 
-    def select_participants(self, select_num_participants, overcommitment=1.3, cohort_id=0):
+    def select_participants(self, select_num_participants, overcommitment=1.3, cohort_id=0, test=False):
         """Select clients for next round.
 
         Args:
@@ -376,8 +391,10 @@ class AuxoAggregator(Aggregator):
         return sorted(self.client_manager.select_participants(
             int(select_num_participants * overcommitment),
             cur_time=self.global_virtual_clock[cohort_id],
-            cohort_id=cohort_id)
+            cohort_id=cohort_id,
+            test=test)
         )
+
 
 
     def _init_split_config(self, cohort_id):

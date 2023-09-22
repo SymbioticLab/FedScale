@@ -5,7 +5,7 @@ from fedscale.cloud.internal.client_metadata import *
 class AuxoClientMetadata(ClientMetadata):
     def __init__(self, host_id, client_id, speed, traces=None):
         super().__init__(host_id, client_id, speed, traces)
-        self.grad_ratio = 2
+        self.grad_ratio = 10
 
     def register_gradient(self, W, W_old):
         W_old = [dt.cpu().numpy() for dt in W_old]
