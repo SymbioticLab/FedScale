@@ -1,0 +1,8 @@
+train_data_map_file: examples/auxo/train_by_clt.csv
+test_data_map_file: examples/auxo/test_by_clt.csv
+split_round: [50,100] # can be removed
+exploredecay: 0.99
+explorerate: 0.01
+reduction: False
+metric: 'cosine'
+start_round: 0
