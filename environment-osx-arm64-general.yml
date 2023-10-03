@@ -7,7 +7,7 @@ dependencies:
   - grpcio==1.40.0
   - libprotobuf
   - numba
-  - python=3.8
+  - python=3.9
   - tensorboard
   - pip:
       - fqdn
