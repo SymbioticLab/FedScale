@@ -243,6 +243,7 @@ def process_cmd(yaml_file, local=False):
 
 
     print(f"Submitted job, please check your logs {job_conf['log_path']}/logs/{job_conf['job_name']}/{time_stamp} for status")
+    print(f"if you cannot find logs directory on the path, you need to check ""{job_name}_logging"" log file under FEDSCALE root directory.")
 
 
 def terminate(job_name):
