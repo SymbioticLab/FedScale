@@ -71,7 +71,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # ======== Event Queue =======
         self.individual_client_events = {}  # Unicast
-        self.sever_events_queue = collections.deque()
+        self.server_events_queue = collections.deque()
         self.broadcast_events_queue = collections.deque()  # Broadcast
 
         # ======== runtime information ========
@@ -177,7 +177,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self, self.grpc_server)
         port = '[::]:{}'.format(self.args.ps_port)
 
-        logging.info(f'%%%%%%%%%% Opening aggregator sever using port {port} %%%%%%%%%%')
+        logging.info(f'%%%%%%%%%% Opening aggregator server using port {port} %%%%%%%%%%')
 
         self.grpc_server.add_insecure_port(port)
         self.grpc_server.start()
@@ -750,7 +750,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             data (dictionary): Data transferred in grpc communication, could be model parameters, test result.
 
         """
-        self.sever_events_queue.append((client_id, event, meta, data))
+        self.server_events_queue.append((client_id, event, meta, data))
 
     def CLIENT_REGISTER(self, request, context):
         """FL TorchClient register to the aggregator
@@ -885,8 +885,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     break
 
             # Handle events queued on the aggregator
-            elif len(self.sever_events_queue) > 0:
-                client_id, current_event, meta, data = self.sever_events_queue.popleft()
+            elif len(self.server_events_queue) > 0:
+                client_id, current_event, meta, data = self.server_events_queue.popleft()
 
                 if current_event == commons.UPLOAD_MODEL:
                     self.client_completion_handler(
