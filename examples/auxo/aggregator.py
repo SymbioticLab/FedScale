@@ -102,9 +102,9 @@ class AuxoAggregator(Aggregator):
                     break
 
             # Handle events queued on the aggregator
-            elif len(self.sever_events_queue) > 0:
+            elif len(self.server_events_queue) > 0:
 
-                client_id, current_event, meta, data = self.sever_events_queue.popleft()
+                client_id, current_event, meta, data = self.server_events_queue.popleft()
                 logging.info(f"Event {current_event} is received from client {client_id}")
                 event_type, cohort_id = decode_msg(current_event)
 
