@@ -1,0 +1,61 @@
+# Configuration file of FAR training experiment
+
+# ========== Cluster configuration ==========
+# ip address of the parameter server (need 1 GPU process)
+ps_ip: 127.0.0.1
+
+# ip address of each worker:# of available gpus process on each gpu in this node
+# Note that if we collocate ps and worker on same GPU, then we need to decrease this number of available processes on that GPU by 1
+# E.g., master node has 4 available processes, then 1 for the ps, and worker should be set to: worker:3
+worker_ips:
+    - 127.0.0.1:[2]
+
+exp_path: $FEDSCALE_HOME/fedscale/cloud
+
+# Entry function of executor and aggregator under $exp_path
+executor_entry: execution/executor.py
+
+aggregator_entry: aggregation/aggregator.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+# cmd to run before we can indeed run FAR (in order)
+setup_commands:
+    - source $HOME/anaconda3/bin/activate fedscale
+
+# ========== Additional job configuration ==========
+# Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
+
+job_conf:
+    - job_name: taobao # change job name
+    - log_path: $FEDSCALE_HOME/benchmark
+    - wandb_token: 4221994eb764b3c6244c61a8c6bxxxxxx # add wandb api
+    - task: recommendation # change task name
+    - num_participants: 50
+    - data_set: taobao # modify data_set
+    - data_dir: $FEDSCALE_HOME/benchmark/dataset/taobao # modify data_set path
+    # Delete data_map_file
+    - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity
+    - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
+    - model: dlrm # Modify the used model
+    - eval_interval: 5
+    - rounds: 1000
+    - filter_less: 21
+    - num_loaders: 2
+    - local_steps: 5
+    - learning_rate: 0.01
+    - batch_size: 256
+    - test_bsz: 256
+    - use_cuda: False
+    - save_checkpoint: False
+    # Add new training parameters
+    - n_rows: 200000
+    - sparse_feature_number: 200000 200000 200000 200000 200000 200000 200000 200000 200000 200000 200000 200000
+    - sparse_feature_dim: 16
+    - dense_feature_dim: 10
+    - bot_layer_sizes: 122 64 16
+    - top_layer_sizes: 512 256 1
+    - num_field: 7
+    

@@ -2,7 +2,9 @@
 import json
 import logging
 import os
+import random
 import sys
+import pandas as pd
 import torchvision.models as tormodels
 from torchvision import datasets, transforms
 
@@ -77,6 +79,9 @@ def import_libs():
         import gym
 
         from fedscale.dataloaders.dqn import RLData, Net, DQN
+    elif parser.args.task == 'recommendation':
+        global DLRM
+        from fedscale.utils.models.recommendation.dlrm import DLRM
 
 
 # shared functions of aggregator and clients
@@ -191,6 +196,11 @@ def init_model():
         return model
     elif parser.args.task == 'rl':
         model = DQN(parser.args).target_net
+    elif parser.args.task == 'recommendation':
+        if parser.args.model == 'dlrm':
+            model = DLRM(parser.args)
+        else:
+            logging.info('Recommendation model does not exist!')
     else:
         if parser.args.model == "lr":
             from fedscale.utils.models.simple.models import LogisticRegression
@@ -365,6 +375,36 @@ def init_dataset():
                                               normalize=True,
                                               speed_volume_perturb=False,
                                               spec_augment=False)
+        elif parser.args.data_set == 'taobao':
+            from fedscale.dataloaders.dlrm_taobao import Taobao
+            logging.info(parser.args.n_rows)
+            df_user_profile = pd.read_csv(parser.args.data_dir + '/user_profile.csv', nrows=parser.args.n_rows)
+            df_raw_sample = pd.read_csv(parser.args.data_dir + '/raw_sample.csv', nrows=parser.args.n_rows)
+            df_ad_feature = pd.read_csv(parser.args.data_dir + '/ad_feature.csv', nrows=parser.args.n_rows)
+            df_raw_sample.rename(columns={'user': 'userid'}, inplace=True)
+            df_merged = pd.merge(df_raw_sample, df_user_profile, how='left', on='userid')
+            df_merged = pd.merge(df_merged, df_ad_feature, how='left', on='adgroup_id')
+            df_merged.columns = df_merged.columns.str.strip()
+
+            missing_values = df_merged.isna().any()
+            columns_with_nan = missing_values[missing_values].index.tolist()
+
+            for column in columns_with_nan:
+                mode_value = df_merged[column].mode()[0]
+                df_merged[column].fillna(mode_value, inplace=True)
+
+            def manual_train_test_split(df, test_size=0.2):
+                indices = df.index.tolist()
+                test_indices = random.sample(indices, int(len(indices) * test_size))
+
+                test_df = df.loc[test_indices]
+                train_df = df.drop(test_indices)
+                
+                return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
+
+            train_df, test_df = manual_train_test_split(df_merged, test_size=0.2)
+            train_dataset = Taobao(train_df)
+            test_dataset = Taobao(test_df)
         else:
             logging.info('DataSet must be {}!'.format(
                 ['Mnist', 'Cifar', 'openImg', 'blog', 'stackoverflow', 'speech', 'yelp']))

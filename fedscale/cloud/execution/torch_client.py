@@ -134,9 +134,12 @@ class TorchClient(ClientBase):
         if conf.task == 'voice':
             from torch_baidu_ctc import CTCLoss
             criterion = CTCLoss(reduction='none').to(device=self.device)
+        elif conf.task == 'recommendation':
+            criterion = torch.nn.BCEWithLogitsLoss()
         else:
             criterion = torch.nn.CrossEntropyLoss(
                 reduction='none').to(device=self.device)
+
         return criterion
 
     def train_step(self, client_data, conf, model, optimizer, criterion):
@@ -155,6 +158,8 @@ class TorchClient(ClientBase):
                 temp_data = data_pair
                 target = temp_data[4]
                 data = temp_data[0:4]
+            elif conf.task == 'recommendation':
+                dense_x, sparse_x, target = data_pair
             else:
                 (data, target) = data_pair
 
@@ -169,6 +174,11 @@ class TorchClient(ClientBase):
                 (data, masks) = data
                 data, masks = Variable(data).to(
                     device=self.device), Variable(masks).to(device=self.device)
+            elif conf.task == 'recommendation' and conf.model == 'dlrm':
+                logging.info("start dlrm training step....")
+                dense_features = dense_x.float()
+                sparse_features = sparse_x.long()
+                target = target.float().view(-1, 1)  
 
             else:
                 data = Variable(data).to(device=self.device)
@@ -202,14 +212,16 @@ class TorchClient(ClientBase):
                 loss_rpn_box = rpn_loss_box.item()
                 loss_rcnn_cls = RCNN_loss_cls.item()
                 loss_rcnn_box = RCNN_loss_bbox.item()
-
+            elif conf.task == 'recommendation':
+                outputs = model(sparse_features, dense_features)
+                loss = criterion(outputs, target)
             else:
                 output = model(data)
                 loss = criterion(output, target)
 
             # ======== collect training feedback for other decision components [e.g., oort selector] ======
 
-            if conf.task == 'nlp' or (conf.task == 'text_clf' and conf.model == 'albert-base-v2'):
+            if conf.task == 'nlp' or (conf.task == 'text_clf' and conf.model == 'albert-base-v2') or conf.task == 'recommendation':
                 loss_list = [loss.item()]  # [loss.mean().data.item()]
 
             elif conf.task == "detection":

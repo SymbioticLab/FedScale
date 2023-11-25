@@ -214,6 +214,15 @@ parser.add_argument('--noise-max', default=0.5,
                     help='Maximum noise levels to sample from. Maximum 1.0', type=float)
 parser.add_argument('--no-bidirectional', dest='bidirectional', action='store_false', default=True,
                     help='Turn off bi-directional RNNs, introduces lookahead convolution')
+# for dlrm
+parser.add_argument("--dense_feature_dim", type=int, default=16)
+parser.add_argument("--bot_layer_sizes", type=int, nargs='+', default=[64, 128, 64])
+parser.add_argument("--sparse_feature_number", type=int, nargs='+',default=[10000, 10000, 10000])
+parser.add_argument("--sparse_feature_dim", type=int, default=16)
+parser.add_argument("--top_layer_sizes", type=int, nargs='+', default=[512, 256, 1])
+parser.add_argument("--num_field", type=int, default=26)
+parser.add_argument("--sync_mode", type=str, default=None)
+parser.add_argument("--n_rows", type=int, default=200000)
 
 args, unknown = parser.parse_known_args()
 args.use_cuda = eval(args.use_cuda)

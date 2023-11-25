@@ -26,8 +26,7 @@ if parser.args.task == "detection":
         combined_roidb
 elif parser.args.task == 'voice':
     from fedscale.dataloaders.decoder import GreedyDecoder
-
-
+    
 def cal_accuracy(targets, outputs):
     temp_acc = 0
     temp_all_or_false = 0
@@ -163,6 +162,30 @@ def test_pytorch_model(rank, model, test_data, device='cpu', criterion=nn.NLLLos
                 _, mean_ap = imdb.evaluate_detections(
                     all_boxes, output_dir, parser.args.this_rank)
                 return 0, mean_ap, mean_ap, {'top_1': mean_ap, 'top_5': mean_ap, 'test_loss': 0, 'test_len': num_images}
+        elif parser.args.task == 'recommendation':
+            logging.info("Testing for dlrm...")
+            total_loss = 0.0
+            total_examples = 0
+            correct_predictions = 0
+            for batch in test_data:
+                dense_x, sparse_x, labels = batch
+                dense_x = dense_x.float()
+                sparse_x = sparse_x.long()
+                labels = labels.float().view(-1, 1)
+
+                outputs = model(sparse_x, dense_x)
+
+                criterion = nn.BCEWithLogitsLoss()
+                loss = criterion(outputs, labels)
+                total_loss += loss.item() * labels.size(0)  
+                total_examples += labels.size(0)
+
+                predicted_probs = torch.sigmoid(outputs)  
+                predicted_labels = (predicted_probs > 0.5).float() 
+                correct_predictions += (predicted_labels == labels).sum().item()
+
+            logging.info(f'Test set: Loss: {total_loss:.4f}')
+            return correct_predictions,correct_predictions,total_loss,{'top_1': correct_predictions, 'top_5': correct_predictions, 'test_loss': total_loss, 'test_len': total_examples}
 
         for data, target in test_data:
             try:
