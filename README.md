@@ -55,6 +55,7 @@ Now that you have FedScale installed, you can start exploring FedScale following
 2. [Deploy your FL experiment](./docs/tutorial.md)
 3. [Implement an FL algorithm](./examples/README.md)
 4. [Deploy FL on smartphones](./fedscale/edge/android/README.md)
+5. [Run with your own model and dataset](./docs/CustomModel_RunGuide.md)
 
 ## FedScale Datasets
 
