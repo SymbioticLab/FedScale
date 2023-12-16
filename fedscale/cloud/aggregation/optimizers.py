@@ -76,7 +76,7 @@ class TorchServerOptimizer(object):
                     (u - torch.from_numpy(v).to(device=self.device))
                     * 1.0
                     / learning_rate
-                    for u, v in zip(last_model, result["update_weight"])
+                    for u, v in zip(last_model, result["update_weight"].values())
                 ]
                 loss = result["moving_loss"]
 
