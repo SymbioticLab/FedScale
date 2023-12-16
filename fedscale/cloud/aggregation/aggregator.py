@@ -460,7 +460,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self.model_weights = [weight + update_weights[i] for i, weight in enumerate(self.model_weights)]
         if self._is_last_result_in_round():
             self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
-            self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
+            self.model_wrapper.set_weights(
+                copy.deepcopy(self.model_weights),
+                self.client_training_results
+                )
 
 
     def aggregate_test_result(self):
