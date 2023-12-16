@@ -397,7 +397,7 @@ class Executor(object):
 
                 elif current_event == commons.UPDATE_MODEL:
                     model_weights = self.deserialize_response(request.data)
-                    self.UpdateModel(model_weights)
+                    self.UpdateModel(model_weights, is_aggregator=False)
 
                 elif current_event == commons.SHUT_DOWN:
                     self.Stop()
