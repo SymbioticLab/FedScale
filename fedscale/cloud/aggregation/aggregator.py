@@ -462,7 +462,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
             self.model_wrapper.set_weights(
                 copy.deepcopy(self.model_weights),
-                self.client_training_results
+                client_training_results=self.client_training_results
                 )
 
 
