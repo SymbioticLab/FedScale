@@ -311,7 +311,7 @@ class Executor(object):
             dictionary: The train result
 
         """
-        self.model_adapter.set_weights(model)
+        self.model_adapter.set_weights(model, is_aggregator=False)
         conf.client_id = client_id
         conf.tokenizer = tokenizer
         client_data = (
