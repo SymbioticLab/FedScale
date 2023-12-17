@@ -98,8 +98,10 @@ class TorchServerOptimizer(object):
                 ) + (1.0 / learning_rate) * np.float_power(loss + 1e-10, qfedq)
 
             # update global model
-            for idx, param in enumerate(target_model.parameters()):
-                param.data = last_model[idx] - Deltas[idx] / (hs + 1e-10)
+            new_state_dict = {
+                name: last_model[idx] - Deltas[idx] / (hs + 1e-10) for idx, name in enumerate(target_model.state_dict().keys())
+            }
+            target_model.load_state_dict(new_state_dict)
 
         else:
             # The default optimizer, FedAvg, has been applied in aggregator.py on the fly
