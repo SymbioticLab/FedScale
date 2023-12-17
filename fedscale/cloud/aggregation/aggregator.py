@@ -44,13 +44,12 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         logging.info(f"Job args {args}")
         self.args = args
         self.experiment_mode = args.experiment_mode
-        self.device = args.cuda_device if args.use_cuda else torch.device(
-            'cpu')
+        self.device = args.cuda_device if args.use_cuda else torch.device("cpu")
 
         # ======== env information ========
         self.this_rank = 0
-        self.global_virtual_clock = 0.
-        self.round_duration = 0.
+        self.global_virtual_clock = 0.0
+        self.round_duration = 0.0
         self.resource_manager = ResourceManager(self.experiment_mode)
         self.client_manager = self.init_client_manager(args=args)
 
@@ -61,7 +60,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # all weights including bias/#_batch_tracked (e.g., state_dict)
         self.model_weights = None
         self.temp_model_path = os.path.join(
-            logger.logDir, 'model_'+str(args.this_rank)+".npy")
+            logger.logDir, "model_" + str(args.this_rank) + ".npy"
+        )
         self.last_saved_round = 0
 
         # ======== channels ========
@@ -86,7 +86,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.sampled_executors = []
 
         self.round_stragglers = []
-        self.model_update_size = 0.
+        self.model_update_size = 0.0
 
         self.collate_fn = None
         self.round = 0
@@ -101,27 +101,36 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # number of registered executors
         self.registered_executor_info = set()
         self.test_result_accumulator = []
-        self.testing_history = {'data_set': args.data_set, 'model': args.model, 'sample_mode': args.sample_mode,
-                                'gradient_policy': args.gradient_policy, 'task': args.task,
-                                'perf': collections.OrderedDict()}
+        self.testing_history = {
+            "data_set": args.data_set,
+            "model": args.model,
+            "sample_mode": args.sample_mode,
+            "gradient_policy": args.gradient_policy,
+            "task": args.task,
+            "perf": collections.OrderedDict(),
+        }
         self.log_writer = SummaryWriter(log_dir=logger.logDir)
         if args.wandb_token != "":
-            os.environ['WANDB_API_KEY'] = args.wandb_token
+            os.environ["WANDB_API_KEY"] = args.wandb_token
             self.wandb = wandb
             if self.wandb.run is None:
-                self.wandb.init(project=f'fedscale-{args.job_name}',
-                                name=f'aggregator{args.this_rank}-{args.time_stamp}',
-                                group=f'{args.time_stamp}')
-                self.wandb.config.update({
-                    "num_participants": args.num_participants,
-                    "data_set": args.data_set,
-                    "model": args.model,
-                    "gradient_policy": args.gradient_policy,
-                    "eval_interval": args.eval_interval,
-                    "rounds": args.rounds,
-                    "batch_size": args.batch_size,
-                    "use_cuda": args.use_cuda
-                })
+                self.wandb.init(
+                    project=f"fedscale-{args.job_name}",
+                    name=f"aggregator{args.this_rank}-{args.time_stamp}",
+                    group=f"{args.time_stamp}",
+                )
+                self.wandb.config.update(
+                    {
+                        "num_participants": args.num_participants,
+                        "data_set": args.data_set,
+                        "model": args.model,
+                        "gradient_policy": args.gradient_policy,
+                        "eval_interval": args.eval_interval,
+                        "rounds": args.rounds,
+                        "batch_size": args.batch_size,
+                        "use_cuda": args.use_cuda,
+                    }
+                )
             else:
                 logging.error("Warning: wandb has already been initialized")
             # self.wandb.run.name = f'{args.job_name}-{args.time_stamp}'
@@ -132,8 +141,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.init_task_context()
 
     def setup_env(self):
-        """Set up experiments environment and server optimizer
-        """
+        """Set up experiments environment and server optimizer"""
         self.setup_seed(seed=1)
 
     def setup_seed(self, seed=1):
@@ -157,8 +165,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         if self.experiment_mode == commons.SIMULATION_MODE:
             num_of_executors = 0
             for ip_numgpu in self.args.executor_configs.split("="):
-                ip, numgpu = ip_numgpu.split(':')
-                for numexe in numgpu.strip()[1:-1].split(','):
+                ip, numgpu = ip_numgpu.split(":")
+                for numexe in numgpu.strip()[1:-1].split(","):
                     for _ in range(int(numexe.strip())):
                         num_of_executors += 1
             self.executors = list(range(num_of_executors))
@@ -169,22 +177,22 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.grpc_server = grpc.server(
             futures.ThreadPoolExecutor(max_workers=20),
             options=[
-                ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-                ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+                ("grpc.max_send_message_length", MAX_MESSAGE_LENGTH),
+                ("grpc.max_receive_message_length", MAX_MESSAGE_LENGTH),
             ],
         )
-        job_api_pb2_grpc.add_JobServiceServicer_to_server(
-            self, self.grpc_server)
-        port = '[::]:{}'.format(self.args.ps_port)
+        job_api_pb2_grpc.add_JobServiceServicer_to_server(self, self.grpc_server)
+        port = "[::]:{}".format(self.args.ps_port)
 
-        logging.info(f'%%%%%%%%%% Opening aggregator server using port {port} %%%%%%%%%%')
+        logging.info(
+            f"%%%%%%%%%% Opening aggregator server using port {port} %%%%%%%%%%"
+        )
 
         self.grpc_server.add_insecure_port(port)
         self.grpc_server.start()
 
     def init_data_communication(self):
-        """For jumbo traffics (e.g., training results).
-        """
+        """For jumbo traffics (e.g., training results)."""
         pass
 
     def init_model(self):
@@ -195,22 +203,24 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self.model_wrapper = TorchModelAdapter(
                 init_model(),
                 optimizer=TorchServerOptimizer(
-                    self.args.gradient_policy, self.args, self.device))
+                    self.args.gradient_policy, self.args, self.device
+                ),
+            )
         else:
             raise ValueError(f"{self.args.engine} is not a supported engine.")
         self.model_weights = self.model_wrapper.get_weights()
 
     def init_task_context(self):
-        """Initiate execution context for specific tasks
-        """
+        """Initiate execution context for specific tasks"""
         if self.args.task == "detection":
             cfg_from_file(self.args.cfg_file)
             np.random.seed(self.cfg.RNG_SEED)
             self.imdb, _, _, _ = combined_roidb(
-                "voc_2007_test", ['DATA_DIR', self.args.data_dir], server=True)
+                "voc_2007_test", ["DATA_DIR", self.args.data_dir], server=True
+            )
 
     def init_client_manager(self, args):
-        """ Initialize client sampler
+        """Initialize client sampler
 
         Args:
             args (dictionary): Variable arguments for fedscale runtime config. defaults to the setup in arg_parser.py
@@ -247,7 +257,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         global_client_profile = {}
         if os.path.exists(file_path):
-            with open(file_path, 'rb') as fin:
+            with open(file_path, "rb") as fin:
                 # {client_id: [computer, bandwidth]}
                 global_client_profile = pickle.load(fin)
 
@@ -262,28 +272,37 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         """
         logging.info(f"Loading {len(info['size'])} client traces ...")
-        for _size in info['size']:
+        for _size in info["size"]:
             # since the worker rankId starts from 1, we also configure the initial dataId as 1
-            mapped_id = (self.num_of_clients + 1) % len(
-                self.client_profiles) if len(self.client_profiles) > 0 else 1
+            mapped_id = (
+                (self.num_of_clients + 1) % len(self.client_profiles)
+                if len(self.client_profiles) > 0
+                else 1
+            )
             systemProfile = self.client_profiles.get(
-                mapped_id, {'computation': 1.0, 'communication': 1.0})
+                mapped_id, {"computation": 1.0, "communication": 1.0}
+            )
 
             client_id = (
-                    self.num_of_clients + 1) if self.experiment_mode == commons.SIMULATION_MODE else executorId
+                (self.num_of_clients + 1)
+                if self.experiment_mode == commons.SIMULATION_MODE
+                else executorId
+            )
             self.client_manager.register_client(
-                executorId, client_id, size=_size, speed=systemProfile)
+                executorId, client_id, size=_size, speed=systemProfile
+            )
             self.client_manager.registerDuration(
                 client_id,
                 batch_size=self.args.batch_size,
                 local_steps=self.args.local_steps,
                 upload_size=self.model_update_size,
-                download_size=self.model_update_size
+                download_size=self.model_update_size,
             )
             self.num_of_clients += 1
 
-        logging.info("Info of all feasible clients {}".format(
-            self.client_manager.getDataInfo()))
+        logging.info(
+            "Info of all feasible clients {}".format(self.client_manager.getDataInfo())
+        )
 
     def executor_info_handler(self, executorId, info):
         """Handler for register executor info and it will start the round after number of
@@ -296,12 +315,12 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         self.registered_executor_info.add(executorId)
         logging.info(
-            f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}")
+            f"Received executor {executorId} information, {len(self.registered_executor_info)}/{len(self.executors)}"
+        )
 
         # In this simulation, we run data split on each worker, so collecting info from one executor is enough
         # Waiting for data information from executors, or timeout
         if self.experiment_mode == commons.SIMULATION_MODE:
-
             if len(self.registered_executor_info) == len(self.executors):
                 self.client_register_handler(executorId, info)
                 # start to sample clients
@@ -335,42 +354,58 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             for client_to_run in sampled_clients:
                 client_cfg = self.client_conf.get(client_to_run, self.args)
 
-                exe_cost = self.client_manager.get_completion_time(client_to_run,
-                                                                   batch_size=client_cfg.batch_size,
-                                                                   local_steps=client_cfg.local_steps,
-                                                                   upload_size=self.model_update_size,
-                                                                   download_size=self.model_update_size)
+                exe_cost = self.client_manager.get_completion_time(
+                    client_to_run,
+                    batch_size=client_cfg.batch_size,
+                    local_steps=client_cfg.local_steps,
+                    upload_size=self.model_update_size,
+                    download_size=self.model_update_size,
+                )
 
-                roundDuration = exe_cost['computation'] + \
-                                exe_cost['communication']
+                roundDuration = exe_cost["computation"] + exe_cost["communication"]
                 # if the client is not active by the time of collection, we consider it is lost in this round
-                if self.client_manager.isClientActive(client_to_run, roundDuration + self.global_virtual_clock):
+                if self.client_manager.isClientActive(
+                    client_to_run, roundDuration + self.global_virtual_clock
+                ):
                     sampledClientsReal.append(client_to_run)
                     completionTimes.append(roundDuration)
                     completed_client_clock[client_to_run] = exe_cost
 
-            num_clients_to_collect = min(
-                num_clients_to_collect, len(completionTimes))
+            num_clients_to_collect = min(num_clients_to_collect, len(completionTimes))
             # 2. get the top-k completions to remove stragglers
             workers_sorted_by_completion_time = sorted(
-                range(len(completionTimes)), key=lambda k: completionTimes[k])
+                range(len(completionTimes)), key=lambda k: completionTimes[k]
+            )
             top_k_index = workers_sorted_by_completion_time[:num_clients_to_collect]
             clients_to_run = [sampledClientsReal[k] for k in top_k_index]
 
-            stragglers = [sampledClientsReal[k]
-                          for k in workers_sorted_by_completion_time[num_clients_to_collect:]]
+            stragglers = [
+                sampledClientsReal[k]
+                for k in workers_sorted_by_completion_time[num_clients_to_collect:]
+            ]
             round_duration = completionTimes[top_k_index[-1]]
             completionTimes.sort()
 
-            return (clients_to_run, stragglers,
-                    completed_client_clock, round_duration,
-                    completionTimes[:num_clients_to_collect])
+            return (
+                clients_to_run,
+                stragglers,
+                completed_client_clock,
+                round_duration,
+                completionTimes[:num_clients_to_collect],
+            )
         else:
             completed_client_clock = {
-                client: {'computation': 1, 'communication': 1} for client in sampled_clients}
+                client: {"computation": 1, "communication": 1}
+                for client in sampled_clients
+            }
             completionTimes = [1 for c in sampled_clients]
-            return (sampled_clients, sampled_clients, completed_client_clock,
-                    1, completionTimes)
+            return (
+                sampled_clients,
+                sampled_clients,
+                completed_client_clock,
+                1,
+                completionTimes,
+            )
 
     def run(self):
         """Start running the aggregator server by setting up execution
@@ -378,14 +413,16 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         self.setup_env()
         self.client_profiles = self.load_client_profile(
-            file_path=self.args.device_conf_file)
-            
+            file_path=self.args.device_conf_file
+        )
+
         self.init_control_communication()
         self.init_data_communication()
 
         self.init_model()
-        self.model_update_size = sys.getsizeof(
-            pickle.dumps(self.model_wrapper)) / 1024.0 * 8.  # kbits
+        self.model_update_size = (
+            sys.getsizeof(pickle.dumps(self.model_wrapper)) / 1024.0 * 8.0
+        )  # kbits
 
         self.event_monitor()
         self.stop()
@@ -407,9 +444,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             list of int: The list of sampled clients id.
 
         """
-        return sorted(self.client_manager.select_participants(
-            int(select_num_participants * overcommitment),
-            cur_time=self.global_virtual_clock),
+        return sorted(
+            self.client_manager.select_participants(
+                int(select_num_participants * overcommitment),
+                cur_time=self.global_virtual_clock,
+            ),
         )
 
     def client_completion_handler(self, results):
@@ -424,19 +463,20 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         #       -results = {'client_id':client_id, 'update_weight': model_param, 'moving_loss': round_train_loss,
         #       'trained_size': count, 'wall_duration': time_cost, 'success': is_success 'utility': utility}
 
-        if self.args.gradient_policy in ['q-fedavg']:
+        if self.args.gradient_policy in ["q-fedavg"]:
             self.client_training_results.append(results)
         # Feed metrics to client sampler
-        self.stats_util_accumulator.append(results['utility'])
-        self.loss_accumulator.append(results['moving_loss'])
+        self.stats_util_accumulator.append(results["utility"])
+        self.loss_accumulator.append(results["moving_loss"])
 
-        self.client_manager.register_feedback(results['client_id'], results['utility'],
-                                              auxi=math.sqrt(
-                                                  results['moving_loss']),
-                                              time_stamp=self.round,
-                                              duration=self.virtual_client_clock[results['client_id']]['computation'] +
-                                                       self.virtual_client_clock[results['client_id']]['communication']
-                                              )
+        self.client_manager.register_feedback(
+            results["client_id"],
+            results["utility"],
+            auxi=math.sqrt(results["moving_loss"]),
+            time_stamp=self.round,
+            duration=self.virtual_client_clock[results["client_id"]]["computation"]
+            + self.virtual_client_clock[results["client_id"]]["communication"],
+        )
 
         # ================== Aggregate weights ======================
         self.update_lock.acquire()
@@ -451,20 +491,24 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         :param results: the results collected from the client.
         """
-        update_weights = results['update_weight']
+        update_weights = results["update_weight"]
         if type(update_weights) is dict:
             update_weights = [x for x in update_weights.values()]
         if self._is_first_result_in_round():
             self.model_weights = update_weights
         else:
-            self.model_weights = [weight + update_weights[i] for i, weight in enumerate(self.model_weights)]
+            self.model_weights = [
+                weight + update_weights[i]
+                for i, weight in enumerate(self.model_weights)
+            ]
         if self._is_last_result_in_round():
-            self.model_weights = [np.divide(weight, self.tasks_round) for weight in self.model_weights]
+            self.model_weights = [
+                np.divide(weight, self.tasks_round) for weight in self.model_weights
+            ]
             self.model_wrapper.set_weights(
                 copy.deepcopy(self.model_weights),
-                client_training_results=self.client_training_results
-                )
-
+                client_training_results=self.client_training_results,
+            )
 
     def aggregate_test_result(self):
         accumulator = self.test_result_accumulator[0]
@@ -473,33 +517,45 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 for key in accumulator:
                     if key == "boxes":
                         for j in range(596):
-                            accumulator[key][j] = accumulator[key][j] + \
-                                                  self.test_result_accumulator[i][key][j]
+                            accumulator[key][j] = (
+                                accumulator[key][j]
+                                + self.test_result_accumulator[i][key][j]
+                            )
                     else:
                         accumulator[key] += self.test_result_accumulator[i][key]
             else:
                 for key in accumulator:
                     accumulator[key] += self.test_result_accumulator[i][key]
-        self.testing_history['perf'][self.round] = {'round': self.round, 'clock': self.global_virtual_clock}
+        self.testing_history["perf"][self.round] = {
+            "round": self.round,
+            "clock": self.global_virtual_clock,
+        }
         for metric_name in accumulator.keys():
-            if metric_name == 'test_loss':
-                self.testing_history['perf'][self.round]['loss'] = accumulator['test_loss'] \
-                    if self.args.task == "detection" else accumulator['test_loss'] / accumulator['test_len']
-            elif metric_name not in ['test_len']:
-                self.testing_history['perf'][self.round][metric_name] \
-                    = accumulator[metric_name] / accumulator['test_len']
+            if metric_name == "test_loss":
+                self.testing_history["perf"][self.round]["loss"] = (
+                    accumulator["test_loss"]
+                    if self.args.task == "detection"
+                    else accumulator["test_loss"] / accumulator["test_len"]
+                )
+            elif metric_name not in ["test_len"]:
+                self.testing_history["perf"][self.round][metric_name] = (
+                    accumulator[metric_name] / accumulator["test_len"]
+                )
 
-        round_perf = self.testing_history['perf'][self.round]
+        round_perf = self.testing_history["perf"][self.round]
         logging.info(
-            "FL Testing in round: {}, virtual_clock: {}, results: {}"
-            .format(self.round, self.global_virtual_clock, round_perf))
+            "FL Testing in round: {}, virtual_clock: {}, results: {}".format(
+                self.round, self.global_virtual_clock, round_perf
+            )
+        )
 
     def update_default_task_config(self):
-        """Update the default task configuration after each round
-        """
+        """Update the default task configuration after each round"""
         if self.round % self.args.decay_round == 0:
             self.args.learning_rate = max(
-                self.args.learning_rate * self.args.decay_factor, self.args.min_learning_rate)
+                self.args.learning_rate * self.args.decay_factor,
+                self.args.min_learning_rate,
+            )
 
     def round_completion_handler(self):
         """Triggered upon the round completion, it registers the last round execution info,
@@ -507,18 +563,25 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         """
         self.global_virtual_clock += self.round_duration
         self.round += 1
-        last_round_avg_util = sum(self.stats_util_accumulator) / max(1, len(self.stats_util_accumulator))
+        last_round_avg_util = sum(self.stats_util_accumulator) / max(
+            1, len(self.stats_util_accumulator)
+        )
         # assign avg reward to explored, but not ran workers
         for client_id in self.round_stragglers:
-            self.client_manager.register_feedback(client_id, last_round_avg_util,
-                                                  time_stamp=self.round,
-                                                  duration=self.virtual_client_clock[client_id]['computation'] +
-                                                           self.virtual_client_clock[client_id]['communication'],
-                                                  success=False)
+            self.client_manager.register_feedback(
+                client_id,
+                last_round_avg_util,
+                time_stamp=self.round,
+                duration=self.virtual_client_clock[client_id]["computation"]
+                + self.virtual_client_clock[client_id]["communication"],
+                success=False,
+            )
 
         avg_loss = sum(self.loss_accumulator) / max(1, len(self.loss_accumulator))
-        logging.info(f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Planned participants: " +
-                     f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}")
+        logging.info(
+            f"Wall clock: {round(self.global_virtual_clock)} s, round: {self.round}, Planned participants: "
+            + f"{len(self.sampled_participants)}, Succeed participants: {len(self.stats_util_accumulator)}, Training loss: {avg_loss}"
+        )
 
         # dump round completion information to tensorboard
         if len(self.loss_accumulator):
@@ -526,10 +589,18 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # update select participants
         self.sampled_participants = self.select_participants(
-            select_num_participants=self.args.num_participants, overcommitment=self.args.overcommitment)
-        (clients_to_run, round_stragglers, virtual_client_clock, round_duration,
-         flatten_client_duration) = self.tictak_client_tasks(
-            self.sampled_participants, self.args.num_participants)
+            select_num_participants=self.args.num_participants,
+            overcommitment=self.args.overcommitment,
+        )
+        (
+            clients_to_run,
+            round_stragglers,
+            virtual_client_clock,
+            round_duration,
+            flatten_client_duration,
+        ) = self.tictak_client_tasks(
+            self.sampled_participants, self.args.num_participants
+        )
 
         logging.info(f"Selected participants to run: {clients_to_run}")
 
@@ -539,11 +610,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # Update executors and participants
         if self.experiment_mode == commons.SIMULATION_MODE:
-            self.sampled_executors = list(
-                self.individual_client_events.keys())
+            self.sampled_executors = list(self.individual_client_events.keys())
         else:
-            self.sampled_executors = [str(c_id)
-                                      for c_id in self.sampled_participants]
+            self.sampled_executors = [str(c_id) for c_id in self.sampled_participants]
         self.round_stragglers = round_stragglers
         self.virtual_client_clock = virtual_client_clock
         self.flatten_client_duration = np.array(flatten_client_duration)
@@ -565,45 +634,61 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             self.broadcast_aggregator_events(commons.START_ROUND)
 
     def log_train_result(self, avg_loss):
-        """Log training result on TensorBoard and optionally WanDB
-        """
-        self.log_writer.add_scalar('Train/round_to_loss', avg_loss, self.round)
+        """Log training result on TensorBoard and optionally WanDB"""
+        self.log_writer.add_scalar("Train/round_to_loss", avg_loss, self.round)
         self.log_writer.add_scalar(
-            'Train/time_to_train_loss (min)', avg_loss, self.global_virtual_clock / 60.)
+            "Train/time_to_train_loss (min)", avg_loss, self.global_virtual_clock / 60.0
+        )
         self.log_writer.add_scalar(
-            'Train/round_duration (min)', self.round_duration / 60., self.round)
+            "Train/round_duration (min)", self.round_duration / 60.0, self.round
+        )
         self.log_writer.add_histogram(
-            'Train/client_duration (min)', self.flatten_client_duration, self.round)
+            "Train/client_duration (min)", self.flatten_client_duration, self.round
+        )
 
         if self.wandb != None:
-            self.wandb.log({
-                'Train/round_to_loss': avg_loss,
-                'Train/round_duration (min)': self.round_duration/60.,
-                'Train/client_duration (min)': self.flatten_client_duration,
-                'Train/time_to_round (min)': self.global_virtual_clock/60.,
-            }, step=self.round)
-        
+            self.wandb.log(
+                {
+                    "Train/round_to_loss": avg_loss,
+                    "Train/round_duration (min)": self.round_duration / 60.0,
+                    "Train/client_duration (min)": self.flatten_client_duration,
+                    "Train/time_to_round (min)": self.global_virtual_clock / 60.0,
+                },
+                step=self.round,
+            )
+
     def log_test_result(self):
-        """Log testing result on TensorBoard and optionally WanDB
-        """
+        """Log testing result on TensorBoard and optionally WanDB"""
         self.log_writer.add_scalar(
-            'Test/round_to_loss', self.testing_history['perf'][self.round]['loss'], self.round)
+            "Test/round_to_loss",
+            self.testing_history["perf"][self.round]["loss"],
+            self.round,
+        )
         self.log_writer.add_scalar(
-            'Test/round_to_accuracy', self.testing_history['perf'][self.round]['top_1'], self.round)
-        self.log_writer.add_scalar('Test/time_to_test_loss (min)', self.testing_history['perf'][self.round]['loss'],
-                                   self.global_virtual_clock / 60.)
-        self.log_writer.add_scalar('Test/time_to_test_accuracy (min)', self.testing_history['perf'][self.round]['top_1'],
-                                   self.global_virtual_clock / 60.)
+            "Test/round_to_accuracy",
+            self.testing_history["perf"][self.round]["top_1"],
+            self.round,
+        )
+        self.log_writer.add_scalar(
+            "Test/time_to_test_loss (min)",
+            self.testing_history["perf"][self.round]["loss"],
+            self.global_virtual_clock / 60.0,
+        )
+        self.log_writer.add_scalar(
+            "Test/time_to_test_accuracy (min)",
+            self.testing_history["perf"][self.round]["top_1"],
+            self.global_virtual_clock / 60.0,
+        )
 
     def save_model(self):
-        """Save model to the wandb server if enabled
-        
-        """
+        """Save model to the wandb server if enabled"""
         if parser.args.save_checkpoint and self.last_saved_round < self.round:
             self.last_saved_round = self.round
             np.save(self.temp_model_path, self.model_weights)
             if self.wandb != None:
-                artifact = self.wandb.Artifact(name='model_'+str(self.this_rank), type='model')
+                artifact = self.wandb.Artifact(
+                    name="model_" + str(self.this_rank), type="model"
+                )
                 artifact.add_file(local_path=self.temp_model_path)
                 self.wandb.log_artifact(artifact)
 
@@ -619,7 +704,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         return pickle.loads(responses)
 
     def serialize_response(self, responses):
-        """ Serialize the response to send to server upon assigned job completion
+        """Serialize the response to send to server upon assigned job completion
 
         Args:
             responses (ServerResponse): Serialized response from server.
@@ -639,7 +724,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         """
 
-        results = results['results']
+        results = results["results"]
 
         # List append is thread-safe
         self.test_result_accumulator.append(results)
@@ -647,10 +732,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # Have collected all testing results
 
         if len(self.test_result_accumulator) == len(self.executors):
-
             self.aggregate_test_result()
             # Dump the testing result
-            with open(os.path.join(logger.logDir, 'testing_perf'), 'wb') as fout:
+            with open(os.path.join(logger.logDir, "testing_perf"), "wb") as fout:
                 pickle.dump(self.testing_history, fout)
 
             self.save_model()
@@ -697,7 +781,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         """
         conf = {
-            'learning_rate': self.args.learning_rate,
+            "learning_rate": self.args.learning_rate,
         }
         return conf
 
@@ -716,7 +800,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         # NOTE: model = None then the executor will load the global model broadcasted in UPDATE_MODEL
         if next_client_id is not None:
             config = self.get_client_conf(next_client_id)
-            train_config = {'client_id': next_client_id, 'task_config': config}
+            train_config = {"client_id": next_client_id, "task_config": config}
         return train_config, self.model_wrapper.get_weights()
 
     def get_test_config(self, client_id):
@@ -729,7 +813,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             dictionary: The testing config for new task.
 
         """
-        return {'client_id': client_id}
+        return {"client_id": client_id}, self.model_wrapper.get_weights()
 
     def get_shutdown_config(self, client_id):
         """Shutdown config for client, developers can further define personalized client config here.
@@ -741,10 +825,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             dictionary: Shutdown config for new task.
 
         """
-        return {'client_id': client_id}
+        return {"client_id": client_id}
 
     def add_event_handler(self, client_id, event, meta, data):
-        """ Due to the large volume of requests, we will put all events into a queue first.
+        """Due to the large volume of requests, we will put all events into a queue first.
 
         Args:
             client_id (int): The client id.
@@ -780,8 +864,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.executor_info_handler(executor_id, executor_info)
         dummy_data = self.serialize_response(commons.DUMMY_RESPONSE)
 
-        return job_api_pb2.ServerResponse(event=commons.DUMMY_EVENT,
-                                          meta=dummy_data, data=dummy_data)
+        return job_api_pb2.ServerResponse(
+            event=commons.DUMMY_EVENT, meta=dummy_data, data=dummy_data
+        )
 
     def CLIENT_PING(self, request, context):
         """Handle client ping requests
@@ -805,25 +890,27 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         else:
             current_event = self.individual_client_events[executor_id].popleft()
             if current_event == commons.CLIENT_TRAIN:
-                response_msg, response_data = self.create_client_task(
-                    executor_id)
+                response_msg, response_data = self.create_client_task(executor_id)
                 if response_msg is None:
                     current_event = commons.DUMMY_EVENT
                     if self.experiment_mode != commons.SIMULATION_MODE:
                         self.individual_client_events[executor_id].append(
-                            commons.CLIENT_TRAIN)
+                            commons.CLIENT_TRAIN
+                        )
             elif current_event == commons.MODEL_TEST:
-                response_msg = self.get_test_config(client_id)
+                response_msg, response_data = self.get_test_config(client_id)
             elif current_event == commons.UPDATE_MODEL:
                 response_data = self.model_wrapper.get_weights()
             elif current_event == commons.SHUT_DOWN:
                 response_msg = self.get_shutdown_config(executor_id)
 
         response_msg, response_data = self.serialize_response(
-            response_msg), self.serialize_response(response_data)
+            response_msg
+        ), self.serialize_response(response_data)
         # NOTE: in simulation mode, response data is pickle for faster (de)serialization
-        response = job_api_pb2.ServerResponse(event=current_event,
-                                              meta=response_msg, data=response_data)
+        response = job_api_pb2.ServerResponse(
+            event=current_event, meta=response_msg, data=response_data
+        )
         if current_event != commons.DUMMY_EVENT:
             logging.info(f"Issue EVENT ({current_event}) to EXECUTOR ({executor_id})")
 
@@ -840,7 +927,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         """
 
-        executor_id, client_id, event = request.executor_id, request.client_id, request.event
+        executor_id, client_id, event = (
+            request.executor_id,
+            request.client_id,
+            request.event,
+        )
         execution_status, execution_msg = request.status, request.msg
         meta_result, data_result = request.meta_result, request.data_result
 
@@ -848,27 +939,31 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             # Training results may be uploaded in CLIENT_EXECUTE_RESULT request later,
             # so we need to specify whether to ask client to do so (in case of straggler/timeout in real FL).
             if execution_status is False:
-                logging.error(f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}")
+                logging.error(
+                    f"Executor {executor_id} fails to run client {client_id}, due to {execution_msg}"
+                )
 
             # TODO: whether we should schedule tasks when client_ping or client_complete
             if self.resource_manager.has_next_task(executor_id):
                 # NOTE: we do not pop the train immediately in simulation mode,
                 # since the executor may run multiple clients
-                if commons.CLIENT_TRAIN not in self.individual_client_events[executor_id]:
+                if (
+                    commons.CLIENT_TRAIN
+                    not in self.individual_client_events[executor_id]
+                ):
                     self.individual_client_events[executor_id].append(
-                        commons.CLIENT_TRAIN)
+                        commons.CLIENT_TRAIN
+                    )
 
         elif event in (commons.MODEL_TEST, commons.UPLOAD_MODEL):
-            self.add_event_handler(
-                executor_id, event, meta_result, data_result)
+            self.add_event_handler(executor_id, event, meta_result, data_result)
         else:
             logging.error(f"Received undefined event {event} from client {client_id}")
 
         return self.CLIENT_PING(request, context)
 
     def event_monitor(self):
-        """Activate event handler according to the received new message
-        """
+        """Activate event handler according to the received new message"""
         logging.info("Start monitoring events ...")
 
         while True:
@@ -880,7 +975,6 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                     self.dispatch_client_events(current_event)
 
                 elif current_event == commons.START_ROUND:
-
                     self.dispatch_client_events(commons.CLIENT_TRAIN)
 
                 elif current_event == commons.SHUT_DOWN:
@@ -889,17 +983,22 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
             # Handle events queued on the aggregator
             elif len(self.server_events_queue) > 0:
-                client_id, current_event, meta, data = self.server_events_queue.popleft()
+                (
+                    client_id,
+                    current_event,
+                    meta,
+                    data,
+                ) = self.server_events_queue.popleft()
 
                 if current_event == commons.UPLOAD_MODEL:
-                    self.client_completion_handler(
-                        self.deserialize_response(data))
+                    self.client_completion_handler(self.deserialize_response(data))
                     if len(self.stats_util_accumulator) == self.tasks_round:
                         self.round_completion_handler()
 
                 elif current_event == commons.MODEL_TEST:
                     self.testing_completion_handler(
-                        client_id, self.deserialize_response(data))
+                        client_id, self.deserialize_response(data)
+                    )
 
                 else:
                     logging.error(f"Event {current_event} is not defined")
@@ -909,8 +1008,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 time.sleep(0.1)
 
     def stop(self):
-        """Stop the aggregator
-        """
+        """Stop the aggregator"""
         logging.info(f"Terminating the aggregator ...")
         if self.wandb != None:
             self.wandb.finish()

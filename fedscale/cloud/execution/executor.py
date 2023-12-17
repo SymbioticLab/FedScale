@@ -234,7 +234,7 @@ class Executor(object):
             config (dictionary): The client testing config.
 
         """
-        test_res = self.testing_handler()
+        test_res = self.testing_handler(model=config["model"])
         test_res = {"executorId": self.this_rank, "results": test_res}
 
         # Report execution completion information
@@ -332,7 +332,7 @@ class Executor(object):
 
         return train_res
 
-    def testing_handler(self):
+    def testing_handler(self, model):
         """Test model
 
         Args:
@@ -342,6 +342,7 @@ class Executor(object):
             dictionary: The test result
 
         """
+        self.model_adapter.set_weights(model, is_aggregator=False)
         test_config = self.override_conf(
             {
                 "rank": self.this_rank,
@@ -360,7 +361,7 @@ class Executor(object):
         )
 
         test_results = client.test(
-            data_loader, self.model_adapter.get_model(), test_config
+            data_loader, model=self.model_adapter.get_model(), conf=test_config
         )
         self.log_test_result(test_results)
         gc.collect()
@@ -434,7 +435,11 @@ class Executor(object):
                     )
 
                 elif current_event == commons.MODEL_TEST:
-                    self.Test(self.deserialize_response(request.meta))
+                    test_config = self.deserialize_response(request.meta)
+                    test_model = self.deserialize_response(request.data)
+                    test_config["model"] = test_model
+                    test_config["client_id"] = int(test_config["client_id"])
+                    self.Test(test_config)
 
                 elif current_event == commons.UPDATE_MODEL:
                     model_weights = self.deserialize_response(request.data)
