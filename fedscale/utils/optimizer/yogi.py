@@ -1,7 +1,8 @@
 import torch
 import numpy as np
 
-class YoGi():
+
+class YoGi:
     def __init__(self, eta=1e-2, tau=1e-3, beta=0.9, beta2=0.99):
         self.eta = eta
         self.tau = tau
@@ -14,19 +15,18 @@ class YoGi():
     def update(self, gradients):
         update_gradients = []
         if not self.v_t:
-            self.v_t = [ np.asarray([self.tau**2 for _ in g], dtype=np.float32) for g in gradients]
-            self.m_t = [ np.full(len(g), 0.0, dtype=np.float32) for g in gradients]
+            self.v_t = [np.full(len(g), self.tau**2, dtype=np.float32) for g in gradients]
+            self.m_t = [np.full(len(g), 0.0, dtype=np.float32) for g in gradients]
 
         for idx, gradient in enumerate(gradients):
             gradient_square = gradient**2
-            
-            self.m_t[idx] = self.beta * \
-                self.m_t[idx] + (1.-self.beta) * gradient
- 
-            self.v_t[idx] = self.v_t[idx] - (1.-self.beta2) * gradient_square * torch.sign(
-                self.v_t[idx] - gradient_square)
-            yogi_learning_rate = self.eta / \
-                (torch.sqrt(self.v_t[idx]) + self.tau)
+
+            self.m_t[idx] = self.beta * self.m_t[idx] + (1.0 - self.beta) * gradient
+
+            self.v_t[idx] = self.v_t[idx] - (
+                1.0 - self.beta2
+            ) * gradient_square * torch.sign(self.v_t[idx] - gradient_square)
+            yogi_learning_rate = self.eta / (torch.sqrt(self.v_t[idx]) + self.tau)
 
             update_gradients.append(yogi_learning_rate * self.m_t[idx])
 
