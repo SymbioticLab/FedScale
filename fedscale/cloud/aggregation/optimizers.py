@@ -72,11 +72,15 @@ class TorchServerOptimizer(object):
 
             for result in client_training_results:
                 # plug in the weight updates into the gradient
+                update_weights = result["update_weights"]
+                if type(update_weights) is dict:
+                    update_weights = [x for x in update_weights.values()]
+                weights = [torch.tensor(x).to(device=self.device) for x in update_weights]
                 grads = [
-                    (u - torch.from_numpy(v).to(device=self.device))
+                    (u - v)
                     * 1.0
                     / learning_rate
-                    for u, v in zip(last_model, result["update_weight"].values())
+                    for u, v in zip(last_model, weights)
                 ]
                 loss = result["moving_loss"]
 
