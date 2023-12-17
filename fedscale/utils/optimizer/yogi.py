@@ -15,7 +15,7 @@ class YoGi:
     def update(self, gradients):
         update_gradients = []
         if not self.v_t:
-            self.v_t = [torch.full_like(g, self.tau**2) for g in gradients]
+            self.v_t = [g**2 for g in gradients]
             self.m_t = [torch.full_like(g, 0.0) for g in gradients]
 
         for idx, gradient in enumerate(gradients):
