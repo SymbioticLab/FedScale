@@ -20,10 +20,12 @@ class TorchModelAdapter(ModelAdapterBase):
         self.model = model
         self.optimizer = optimizer
 
-    def set_weights(self, weights: List[np.ndarray]):
+    def set_weights(self, weights: List[np.ndarray], is_aggregator=True, client_training_results=None):
         """
         Set the model's weights to the numpy weights array.
         :param weights: numpy weights array
+        :param is_aggregator: boolean indicating whether the caller is the aggregator
+        :param client_training_results: list of gradients from every clients, for q-fedavg
         """
         last_grad_weights = [param.data.clone() for param in self.model.state_dict().values()]
         new_state_dict = {
@@ -31,10 +33,10 @@ class TorchModelAdapter(ModelAdapterBase):
             for i, name in enumerate(self.model.state_dict().keys())
         }
         self.model.load_state_dict(new_state_dict)
-        if self.optimizer:
+        if self.optimizer and is_aggregator:
             weights_origin = copy.deepcopy(weights)
             weights = [torch.tensor(x) for x in weights_origin]
-            self.optimizer.update_round_gradient(last_grad_weights, weights, self.model)
+            self.optimizer.update_round_gradient(last_grad_weights, weights, self.model, client_training_results)
 
     def get_weights(self) -> List[np.ndarray]:
         """
