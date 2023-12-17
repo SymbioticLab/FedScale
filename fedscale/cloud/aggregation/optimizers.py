@@ -46,8 +46,8 @@ class TorchServerOptimizer(object):
             Sashank J. Reddi, Zachary Charles, Manzil Zaheer, Zachary Garrett, Keith Rush, Jakub Konecný, Sanjiv Kumar, H. Brendan McMahan,
             ICLR 2021.
             """
-            last_model = [x.to(device=self.device) for x in last_model]
-            current_model = [x.to(device=self.device) for x in current_model]
+            # last_model = [x.to(device=self.device) for x in last_model]
+            # current_model = [x.to(device=self.device) for x in current_model]
 
             diff_weight = self.gradient_controller.update(
                 [pb - pa for pa, pb in zip(last_model, current_model)]
@@ -75,12 +75,14 @@ class TorchServerOptimizer(object):
                 update_weights = result["update_weight"]
                 if type(update_weights) is dict:
                     update_weights = [x for x in update_weights.values()]
-                weights = [torch.tensor(x).to(device=self.device) for x in update_weights]
+                weights = [
+                    torch.from_numpy(np.asarray(x, dtype=np.float32)).to(
+                        device=self.device
+                    )
+                    for x in update_weights
+                ]
                 grads = [
-                    (u - v)
-                    * 1.0
-                    / learning_rate
-                    for u, v in zip(last_model, weights)
+                    (u - v) * 1.0 / learning_rate for u, v in zip(last_model, weights)
                 ]
                 loss = result["moving_loss"]
 
