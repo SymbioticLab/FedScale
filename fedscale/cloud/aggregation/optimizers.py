@@ -72,7 +72,7 @@ class TorchServerOptimizer(object):
 
             for result in client_training_results:
                 # plug in the weight updates into the gradient
-                update_weights = result["update_weights"]
+                update_weights = result["update_weight"]
                 if type(update_weights) is dict:
                     update_weights = [x for x in update_weights.values()]
                 weights = [torch.tensor(x).to(device=self.device) for x in update_weights]
