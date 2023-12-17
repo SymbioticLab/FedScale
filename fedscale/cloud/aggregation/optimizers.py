@@ -75,11 +75,9 @@ class TorchServerOptimizer(object):
                 update_weights = result["update_weight"]
                 if type(update_weights) is dict:
                     update_weights = [x for x in update_weights.values()]
+
                 weights = [
-                    torch.from_numpy(np.asarray(x, dtype=np.float32)).to(
-                        device=self.device
-                    )
-                    for x in update_weights
+                    torch.tensor(x).to(device=self.device) for x in update_weights
                 ]
                 grads = [
                     (u - v) * 1.0 / learning_rate for u, v in zip(last_model, weights)
