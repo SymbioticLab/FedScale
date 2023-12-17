@@ -46,8 +46,8 @@ class TorchServerOptimizer(object):
             Sashank J. Reddi, Zachary Charles, Manzil Zaheer, Zachary Garrett, Keith Rush, Jakub Konecný, Sanjiv Kumar, H. Brendan McMahan,
             ICLR 2021.
             """
-            # last_model = [x.to(device=self.device) for x in last_model]
-            # current_model = [x.to(device=self.device) for x in current_model]
+            last_model = [x.to(device=self.device) for x in last_model]
+            current_model = [x.to(device=self.device) for x in current_model]
 
             diff_weight = self.gradient_controller.update(
                 [pb - pa for pa, pb in zip(last_model, current_model)]
