@@ -75,11 +75,9 @@ class TorchServerOptimizer(object):
                 update_weights = result["update_weight"]
                 if type(update_weights) is dict:
                     update_weights = [x for x in update_weights.values()]
+
                 weights = [
-                    torch.from_numpy(np.asarray(x, dtype=np.float32)).to(
-                        device=self.device
-                    )
-                    for x in update_weights
+                    torch.tensor(x).to(device=self.device) for x in update_weights
                 ]
                 grads = [
                     (u - v) * 1.0 / learning_rate for u, v in zip(last_model, weights)
@@ -100,8 +98,10 @@ class TorchServerOptimizer(object):
                 ) + (1.0 / learning_rate) * np.float_power(loss + 1e-10, qfedq)
 
             # update global model
-            for idx, param in enumerate(target_model.parameters()):
-                param.data = last_model[idx] - Deltas[idx] / (hs + 1e-10)
+            new_state_dict = {
+                name: last_model[idx] - Deltas[idx] / (hs + 1e-10) for idx, name in enumerate(target_model.state_dict().keys())
+            }
+            target_model.load_state_dict(new_state_dict)
 
         else:
             # The default optimizer, FedAvg, has been applied in aggregator.py on the fly

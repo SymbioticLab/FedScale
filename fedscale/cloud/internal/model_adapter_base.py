@@ -7,11 +7,16 @@ class ModelAdapterBase(abc.ABC):
     """
     Represents an adapter that operates on a framework-specific model.
     """
+
     @abc.abstractmethod
-    def set_weights(self, weights: np.ndarray):
+    def set_weights(
+        self, weights: np.ndarray, is_aggregator=True, client_training_results=None
+    ):
         """
         Set the model's weights to the numpy weights array.
         :param weights: numpy weights array
+        :param is_aggregator: boolean indicating whether the caller is the aggregator
+        :param client_training_results: list of gradients from every clients, for q-fedavg
         """
         pass
 
