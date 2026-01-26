@@ -93,6 +93,26 @@ parser.add_argument("--cut_off_util", type=float, default=0.05)  # 95 percentile
 
 parser.add_argument("--gradient_policy", type=str, default=None)
 
+# for pso_dqn
+parser.add_argument("--pso_dqn_gamma", type=float, default=0.95)
+parser.add_argument("--pso_dqn_epsilon", type=float, default=1.0)
+parser.add_argument("--pso_dqn_epsilon_decay", type=float, default=0.999)
+parser.add_argument("--pso_dqn_min_epsilon", type=float, default=0.01)
+parser.add_argument("--pso_dqn_learning_rate", type=float, default=1e-3)
+parser.add_argument("--pso_dqn_replay_batch", type=int, default=64)
+parser.add_argument("--pso_dqn_memory_size", type=int, default=2000)
+parser.add_argument("--pso_dqn_hidden1", type=int, default=128)
+parser.add_argument("--pso_dqn_hidden2", type=int, default=64)
+parser.add_argument("--pso_dqn_reward_scale", type=float, default=100.0)
+
+# for pso aggregation
+parser.add_argument("--pso_inertia", type=float, default=0.5)
+parser.add_argument("--pso_local_acc", type=float, default=1.5)
+parser.add_argument("--pso_global_acc", type=float, default=1.5)
+parser.add_argument("--pso_iterations", type=int, default=5)
+parser.add_argument("--pso_validation_ratio", type=float, default=0.2)
+parser.add_argument("--pso_validation_batch", type=int, default=0)
+
 # for yogi
 parser.add_argument("--yogi_eta", type=float, default=3e-3)
 parser.add_argument("--yogi_tau", type=float, default=1e-8)

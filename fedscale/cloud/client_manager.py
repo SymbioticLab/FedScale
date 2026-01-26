@@ -2,7 +2,9 @@ import logging
 import math
 import pickle
 from random import Random
-from typing import Dict, List
+from typing import Dict, Iterable, List
+
+import torch
 
 from fedscale.cloud.internal.client_metadata import ClientMetadata
 
@@ -17,6 +19,8 @@ class ClientManager:
         self.filter_more = args.filter_more
 
         self.ucb_sampler = None
+        self.dqn_selector = None
+        self.client_diversity = {}
 
         if self.mode == 'oort':
             from thirdparty.oort.oort import create_training_selector
@@ -36,7 +40,7 @@ class ClientManager:
             self.user_trace_keys = list(self.user_trace.keys())
 
     def register_client(self, host_id: int, client_id: int, size: int, speed: Dict[str, float],
-                        duration: float = 1) -> None:
+                        duration: float = 1, diversity: float = None) -> None:
         """Register client information to the client manager.
 
         Args:
@@ -57,6 +61,8 @@ class ClientManager:
         if size >= self.filter_less and size <= self.filter_more:
             self.feasibleClients.append(client_id)
             self.feasible_samples += size
+            if diversity is not None:
+                self.client_diversity[client_id] = diversity
 
             if self.mode == "oort":
                 feedbacks = {'reward': min(size, self.args.local_steps * self.args.batch_size),
@@ -134,6 +140,22 @@ class ClientManager:
             client = self.client_metadata[client_id]
             clientInfo[client.client_id] = client.distance
         return clientInfo
+
+    def get_client_diversities(self):
+        return [self.client_diversity.get(client_id, 1.0) for client_id in self.feasibleClients]
+
+    def _init_dqn_selector(self):
+        from fedscale.cloud.aggregation.pso_dqn import DqnClientSelector
+        if self.args.use_cuda:
+            device = torch.device(self.args.cuda_device or "cuda")
+        else:
+            device = torch.device("cpu")
+        self.dqn_selector = DqnClientSelector(
+            client_ids=self.feasibleClients,
+            diversities=self.get_client_diversities(),
+            args=self.args,
+            device=device,
+        )
 
     def next_client_id_to_run(self, host_id):
         init_id = host_id - 1
@@ -215,6 +237,13 @@ class ClientManager:
         clients_online = self.getFeasibleClients(cur_time)
 
         if len(clients_online) <= num_of_clients:
+            if self.mode == "pso_dqn":
+                if self.dqn_selector is None or self.dqn_selector.num_clients != len(self.feasibleClients):
+                    self._init_dqn_selector()
+                return self.dqn_selector.select_clients(
+                    num_to_select=num_of_clients,
+                    feasible_clients=clients_online,
+                )
             return clients_online
 
         pickled_clients = None
@@ -223,12 +252,33 @@ class ClientManager:
         if self.mode == "oort" and self.count > 1:
             pickled_clients = self.ucb_sampler.select_participant(
                 num_of_clients, feasible_clients=clients_online_set)
+        elif self.mode == "pso_dqn":
+            if self.dqn_selector is None or self.dqn_selector.num_clients != len(self.feasibleClients):
+                self._init_dqn_selector()
+            pickled_clients = self.dqn_selector.select_clients(
+                num_to_select=num_of_clients,
+                feasible_clients=clients_online,
+            )
         else:
             self.rng.shuffle(clients_online)
             client_len = min(num_of_clients, len(clients_online) - 1)
             pickled_clients = clients_online[:client_len]
 
         return pickled_clients
+
+    def update_dqn_losses(self, client_ids: Iterable[int], losses: Iterable[float]) -> None:
+        if self.mode != "pso_dqn":
+            return
+        if self.dqn_selector is None or self.dqn_selector.num_clients != len(self.feasibleClients):
+            self._init_dqn_selector()
+        self.dqn_selector.update_losses(client_ids, losses)
+
+    def update_dqn_reward(self, reward: float) -> None:
+        if self.mode != "pso_dqn":
+            return
+        if self.dqn_selector is None or self.dqn_selector.num_clients != len(self.feasibleClients):
+            self._init_dqn_selector()
+        self.dqn_selector.update_with_reward(reward)
 
     def resampleClients(self, num_of_clients, cur_time=0):
         return self.select_participants(num_of_clients, cur_time)

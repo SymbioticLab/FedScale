@@ -13,10 +13,11 @@ import grpc
 import numpy as np
 import torch
 import wandb
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader, Subset
 
 import fedscale.cloud.channels.job_api_pb2_grpc as job_api_pb2_grpc
 import fedscale.cloud.logger.aggregator_logging as logger
+from fedscale.cloud.aggregation.pso_dqn import PsoAggregator
 from fedscale.cloud.aggregation.optimizers import TorchServerOptimizer
 from fedscale.cloud.channels import job_api_pb2
 from fedscale.cloud.client_manager import ClientManager
@@ -24,7 +25,9 @@ from fedscale.cloud.internal.tensorflow_model_adapter import TensorflowModelAdap
 from fedscale.cloud.internal.torch_model_adapter import TorchModelAdapter
 from fedscale.cloud.resource_manager import ResourceManager
 from fedscale.cloud.fllibs import *
+from fedscale.cloud.execution.data_processor import collate, voice_collate_fn
 from torch.utils.tensorboard import SummaryWriter
+from fedscale.utils.model_test_module import test_pytorch_model
 
 MAX_MESSAGE_LENGTH = 1 * 1024 * 1024 * 1024  # 1GB
 
@@ -97,6 +100,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.stats_util_accumulator = []
         self.loss_accumulator = []
         self.client_training_results = []
+        self.pso_client_ids = []
+        self.pso_client_weights = []
 
         # number of registered executors
         self.registered_executor_info = set()
@@ -110,6 +115,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             "perf": collections.OrderedDict(),
         }
         self.log_writer = SummaryWriter(log_dir=logger.logDir)
+        self.prev_test_accuracy = 0.0
+        self.prev_test_loss = None
+        self.pso_validation_loader = None
         if args.wandb_token != "":
             os.environ["WANDB_API_KEY"] = args.wandb_token
             self.wandb = wandb
@@ -139,6 +147,10 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         # ======== Task specific ============
         self.init_task_context()
+
+        self.pso_aggregator = None
+        if self.args.sample_mode == "pso_dqn":
+            self.pso_aggregator = PsoAggregator(self.args)
 
     def setup_env(self):
         """Set up experiments environment and server optimizer"""
@@ -210,6 +222,44 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             raise ValueError(f"{self.args.engine} is not a supported engine.")
         self.model_weights = self.model_wrapper.get_weights()
 
+    def _get_pso_validation_loader(self):
+        if self.pso_validation_loader is not None:
+            return self.pso_validation_loader
+        if self.args.engine != commons.PYTORCH:
+            raise ValueError("pso_dqn requires the PyTorch engine for server-side validation.")
+
+        _, test_dataset = init_dataset()
+        if hasattr(test_dataset, "__len__") and self.args.pso_validation_ratio < 1.0:
+            dataset_size = len(test_dataset)
+            subset_size = max(1, int(dataset_size * self.args.pso_validation_ratio))
+            rng = np.random.RandomState(self.args.sample_seed)
+            indices = rng.choice(dataset_size, subset_size, replace=False)
+            test_dataset = Subset(test_dataset, indices)
+
+        collate_fn = None
+        if self.args.task == "nlp":
+            collate_fn = collate
+        elif self.args.task == "voice":
+            collate_fn = voice_collate_fn
+
+        self.pso_validation_loader = DataLoader(
+            test_dataset,
+            batch_size=self.args.pso_validation_batch or self.args.test_bsz,
+            shuffle=False,
+            num_workers=self.args.num_loaders,
+            collate_fn=collate_fn,
+        )
+        return self.pso_validation_loader
+
+    def _evaluate_pso_weights(self, weights):
+        self.model_wrapper.set_weights(copy.deepcopy(weights), is_aggregator=False)
+        model = self.model_wrapper.get_model()
+        data_loader = self._get_pso_validation_loader()
+        loss, _, _, _ = test_pytorch_model(
+            self.args.this_rank, model, data_loader, device=self.device
+        )
+        return float(loss)
+
     def init_task_context(self):
         """Initiate execution context for specific tasks"""
         if self.args.task == "detection":
@@ -272,7 +322,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         """
         logging.info(f"Loading {len(info['size'])} client traces ...")
-        for _size in info["size"]:
+        diversities = info.get("diversity", [])
+        for idx, _size in enumerate(info["size"]):
             # since the worker rankId starts from 1, we also configure the initial dataId as 1
             mapped_id = (
                 (self.num_of_clients + 1) % len(self.client_profiles)
@@ -282,6 +333,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             systemProfile = self.client_profiles.get(
                 mapped_id, {"computation": 1.0, "communication": 1.0}
             )
+            diversity = diversities[idx] if idx < len(diversities) else None
 
             client_id = (
                 (self.num_of_clients + 1)
@@ -289,7 +341,11 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
                 else executorId
             )
             self.client_manager.register_client(
-                executorId, client_id, size=_size, speed=systemProfile
+                executorId,
+                client_id,
+                size=_size,
+                speed=systemProfile,
+                diversity=diversity,
             )
             self.client_manager.registerDuration(
                 client_id,
@@ -477,6 +533,9 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
             duration=self.virtual_client_clock[results["client_id"]]["computation"]
             + self.virtual_client_clock[results["client_id"]]["communication"],
         )
+        self.client_manager.update_dqn_losses(
+            [results["client_id"]], [results["moving_loss"]]
+        )
 
         # ================== Aggregate weights ======================
         self.update_lock.acquire()
@@ -491,6 +550,25 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         :param results: the results collected from the client.
         """
+        if self.args.sample_mode == "pso_dqn":
+            update_weights = results["update_weight"]
+            if type(update_weights) is dict:
+                update_weights = [x for x in update_weights.values()]
+            client_id = results["client_id"]
+            self.pso_client_ids.append(client_id)
+            self.pso_client_weights.append(update_weights)
+            if self._is_last_result_in_round():
+                gbest_weights = self.pso_aggregator.run_pso(
+                    client_ids=self.pso_client_ids,
+                    initial_weights=self.pso_client_weights,
+                    eval_fn=self._evaluate_pso_weights,
+                    iterations=self.args.pso_iterations,
+                )
+                if gbest_weights is not None:
+                    self.model_weights = gbest_weights
+                    self.model_wrapper.set_weights(copy.deepcopy(self.model_weights))
+            return
+
         update_weights = results["update_weight"]
         if type(update_weights) is dict:
             update_weights = [x for x in update_weights.values()]
@@ -622,6 +700,8 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.stats_util_accumulator = []
         self.client_training_results = []
         self.loss_accumulator = []
+        self.pso_client_ids = []
+        self.pso_client_weights = []
         self.update_default_task_config()
 
         if self.round >= self.args.rounds:
@@ -733,6 +813,20 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
 
         if len(self.test_result_accumulator) == len(self.executors):
             self.aggregate_test_result()
+            if self.args.sample_mode == "pso_dqn":
+                perf = self.testing_history["perf"][self.round]
+                if "top_1" in perf:
+                    reward = (perf["top_1"] - self.prev_test_accuracy) * self.args.pso_dqn_reward_scale
+                    self.prev_test_accuracy = perf["top_1"]
+                else:
+                    current_loss = perf.get("loss")
+                    if self.prev_test_loss is None or current_loss is None:
+                        reward = 0.0
+                    else:
+                        reward = (self.prev_test_loss - current_loss) * self.args.pso_dqn_reward_scale
+                    if current_loss is not None:
+                        self.prev_test_loss = current_loss
+                self.client_manager.update_dqn_reward(reward)
             # Dump the testing result
             with open(os.path.join(logger.logDir, "testing_perf"), "wb") as fout:
                 pickle.dump(self.testing_history, fout)
