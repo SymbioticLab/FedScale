@@ -266,7 +266,9 @@ class Executor(object):
             int: Return the statistics of training dataset, in simulation return the number of clients
 
         """
-        return self.training_sets.getSize()
+        info = self.training_sets.getSize()
+        info["diversity"] = self.training_sets.get_client_diversities()
+        return info
 
     def override_conf(self, config):
         """Override the variable arguments for different client

@@ -44,6 +44,7 @@ class DataPartitioner(object):
         self.data_len = len(self.data)
         self.numOfLabels = numOfClass
         self.client_label_cnt = defaultdict(set)
+        self.client_diversities = []
 
     def getNumOfLabels(self):
         return self.numOfLabels
@@ -56,6 +57,13 @@ class DataPartitioner(object):
 
     def getClientLabel(self):
         return [len(self.client_label_cnt[i]) for i in range(self.getClientLen())]
+
+    def get_client_diversities(self):
+        if self.client_diversities:
+            return self.client_diversities
+        if self.client_label_cnt:
+            return [len(self.client_label_cnt[i]) for i in range(self.getClientLen())]
+        return [1 for _ in range(self.getClientLen())]
 
     def trace_partition(self, data_map_file):
         """Read data mapping from data_map_file. Format: <client_id, sample_name, sample_category, category_id>"""
@@ -89,6 +97,9 @@ class DataPartitioner(object):
 
         for idx in range(sample_id):
             self.partitions[client_id_maps[idx]].append(idx)
+        self.client_diversities = [
+            len(self.client_label_cnt[i]) for i in range(len(self.partitions))
+        ]
 
     def partition_data_helper(self, num_clients, data_map_file=None):
 
@@ -111,6 +122,17 @@ class DataPartitioner(object):
             part_len = int(1./num_clients * data_len)
             self.partitions.append(indexes[0:part_len])
             indexes = indexes[part_len:]
+
+        self.client_diversities = []
+        for client_idx, partition in enumerate(self.partitions):
+            label_set = set()
+            for sample_idx in partition:
+                label = self.labels[sample_idx]
+                if hasattr(label, "item"):
+                    label = label.item()
+                label_set.add(label)
+            self.client_label_cnt[client_idx] = label_set
+            self.client_diversities.append(len(label_set))
 
     def use(self, partition, istest):
         resultIndex = self.partitions[partition % len(self.partitions)]
